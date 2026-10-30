@@ -27,7 +27,6 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import AdmissionFailure, PairAdmission
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     NativeObject,
@@ -135,7 +134,8 @@ def core_unit(oid, capture=None):
         with GitCore.for_transaction(db) as core:
             core.admit_object(oid)
             if capture is not None:
-                core.admit_capture(capture)
+                core.admit_ref_observation(capture[0])
+                core.admit_ref_observation_claim(capture[1])
 
     return apply
 
@@ -145,8 +145,25 @@ def test_original_capture_retry_after_core_success_context_rollback(tmp_path, fm
     directory = tmp_path / "catalog"
     build(directory)
     oid = nominal(fmt)
-    capture = Capture(
-        ORIGIN, CAPTURE, REPOSITORY, "original-source", "refs/notes/review", oid
+    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.ref_observation import (
+        RefObservation,
+        RefObservationClaim,
+        RefObservationKey,
+        new_uuid7,
+    )
+
+    key = RefObservationKey(ORIGIN, new_uuid7())
+    capture = (
+        RefObservation(
+            key, REPOSITORY, b"refs/notes/review", "original-source", "visible"
+        ),
+        RefObservationClaim(
+            key,
+            Provenance("source", "read", "claim", "fixture", "1"),
+            "present",
+            root_oid=oid,
+        ),
     )
     coordinator = PairCoordinator(directory)
     original_context = context_unit(directory, oid)
@@ -160,7 +177,8 @@ def test_original_capture_retry_after_core_success_context_rollback(tmp_path, fm
     assert failed.value.outcome == PairAdmission(True, False)
     with coordinator.snapshots() as pair:
         assert (
-            tuple(pair.core.execute("SELECT * FROM captures").fetchone()) == capture.key
+            tuple(pair.core.execute("SELECT * FROM ref_observations").fetchone())
+            == capture[0].key
         )
         assert pair.context.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
         assert pair.context.execute("SELECT count(*) FROM providers").fetchone()[0] == 0
@@ -169,7 +187,10 @@ def test_original_capture_retry_after_core_success_context_rollback(tmp_path, fm
             coordinator, core_unit(oid, capture), original_context
         ) == PairAdmission(True, True)
     with coordinator.snapshots() as pair:
-        assert pair.core.execute("SELECT count(*) FROM captures").fetchone()[0] == 1
+        assert (
+            pair.core.execute("SELECT count(*) FROM ref_observations").fetchone()[0]
+            == 1
+        )
         assert pair.core.execute("SELECT count(*) FROM git_objects").fetchone()[0] == 1
         assert pair.context.execute("SELECT count(*) FROM resources").fetchone()[0] == 1
         assert (

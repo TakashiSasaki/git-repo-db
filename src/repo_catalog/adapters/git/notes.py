@@ -20,7 +20,6 @@ from repo_catalog.domain.p1_core import (
     OID,
     CoreFailure,
     NativeObject,
-    NotesProof,
     account_verification,
     encode,
 )
@@ -194,21 +193,16 @@ class GitNotesSource:
     def lookup_ref_presence(self, name: bytes, work: WorkBudget) -> bool:
         return self.source.lookup_ref_presence(name, work)
 
-    def note_body(
-        self, proof: NotesProof | NotesMappingEvidence, work: WorkBudget
-    ) -> NativeObject:
+    def note_body(self, proof: NotesMappingEvidence, work: WorkBudget) -> NativeObject:
         """Read only the exact blob whose relevant structure the receiver checks."""
         account_proof_bundle(proof.structures, work)
         with account_verification(work):
             proof.validate()
-        if isinstance(proof, NotesMappingEvidence):
-            root, note, scope = (
-                proof.mapping.root_oid,
-                proof.mapping.note_oid,
-                proof.ref_claim.identity,
-            )
-        else:
-            root, note, scope = proof.capture.root, proof.note, proof.capture.pair
+        root, note, scope = (
+            proof.mapping.root_oid,
+            proof.mapping.note_oid,
+            proof.ref_claim.identity,
+        )
         if root.object_format != self.object_format:
             raise CoreFailure("NATIVE_FORMAT", scope, "proof storage format mismatch")
         return self._native(note, ("blob",), work.limits.note_bytes, work)

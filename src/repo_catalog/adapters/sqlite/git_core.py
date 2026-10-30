@@ -19,23 +19,12 @@ from repo_catalog.adapters.sqlite.p1_core import (
     _sqlite_authority_failure,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
-from repo_catalog.domain.notes import (
-    GRAMMAR,
-    NotesInventory,
-    decode_inventory_group,
-    mapping_proof,
-    verify_inventory,
-)
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreFailure,
     NativeObject,
-    NotesGroup,
-    NotesProof,
     Provenance,
     ScalarClaim,
-    _notes_group,
     account_verification,
     encode,
     uuid4_value,
@@ -202,44 +191,12 @@ _EXCHANGE_METADATA_ROWS = {
         ),
         0,
     ),
-    "captures": (
-        "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root FROM captures ORDER BY capture_origin_uuidv4,capture_uuidv4",
-        (
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "repository_uuidv4",
-            "source",
-            "ref",
-            "object_format",
-            "root",
-        ),
-        0,
-    ),
-    "notes_claims": (
-        "SELECT capture_origin_uuidv4,capture_uuidv4,object_format,target,note,provenance FROM notes_claims ORDER BY capture_origin_uuidv4,capture_uuidv4,object_format,target,note,provenance",
-        (
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "object_format",
-            "target",
-            "note",
-            "provenance",
-        ),
-        0,
-    ),
-    "note_role_targets": (
-        "SELECT DISTINCT object_format,target FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? ORDER BY object_format,target",
-        ("object_format", "target"),
-        2,
-    ),
     "coverage_scopes": (
-        "SELECT owner_kind,owner_coordinates_json,repository_uuidv4,capture_origin_uuidv4,capture_uuidv4,object_format,full_oid,field,coverage_kind,observation_origin_uuidv4,ref_observation_uuidv7 FROM coverage_scopes ORDER BY owner_kind,owner_coordinates_json",
+        "SELECT owner_kind,owner_coordinates_json,repository_uuidv4,object_format,full_oid,field,coverage_kind,observation_origin_uuidv4,ref_observation_uuidv7 FROM coverage_scopes ORDER BY owner_kind,owner_coordinates_json",
         (
             "owner_kind",
             "owner_coordinates_json",
             "repository_uuidv4",
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
             "object_format",
             "full_oid",
             "field",
@@ -276,36 +233,6 @@ _EXCHANGE_METADATA_ROWS = {
         "SELECT object_format,full_oid FROM git_objects ORDER BY object_format,full_oid",
         ("object_format", "full_oid"),
         0,
-    ),
-}
-
-# These legacy selections include protected proof/provenance and are available
-# only to the internal Exchange path that validates each emitted role/copy.
-_EXCHANGE_LEGACY_ROWS = {
-    "notes_groups": (
-        "SELECT scope,status,membership,provenance FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? ORDER BY scope,status,membership,provenance",
-        ("scope", "status", "membership", "provenance"),
-        3,
-    ),
-    "note_roles": (
-        "SELECT object_format,root,target,note,path,proof_bundle FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=? ORDER BY object_format,root,target,note,path,proof_bundle",
-        ("object_format", "root", "target", "note", "path", "proof_bundle"),
-        2,
-    ),
-    "retained_notes": (
-        "SELECT object_format,full_oid,physical_copy_uuidv4,size,digest_sha256,root,target,path,proof_bundle FROM retained_notes WHERE capture_origin_uuidv4=? AND capture_uuidv4=? ORDER BY object_format,full_oid,physical_copy_uuidv4",
-        (
-            "object_format",
-            "full_oid",
-            "physical_copy_uuidv4",
-            "size",
-            "digest_sha256",
-            "root",
-            "target",
-            "path",
-            "proof_bundle",
-        ),
-        2,
     ),
 }
 
@@ -472,10 +399,8 @@ class GitCore(Core):
         self._available()
 
     @_decoded_read
-    def _open_export_metadata_cursor(
-        self, selector, parameters, *, lengths, protected=False
-    ):
-        selectors = _EXCHANGE_LEGACY_ROWS if protected else _EXCHANGE_METADATA_ROWS
+    def _open_export_metadata_cursor(self, selector, parameters, *, lengths):
+        selectors = _EXCHANGE_METADATA_ROWS
         query, columns, _arity = selectors[selector]
         # Each fixed query orders by its complete immutable key, so the
         # measurement and value cursors traverse the same rows. Non-key payload
@@ -510,22 +435,10 @@ class GitCore(Core):
         Both cursors use one pinned snapshot and a complete deterministic order.
         User work callbacks execute outside the narrow fixed-SQL decode boundary.
         """
-        return self._scan_exchange_metadata_rows(selector, parameters, work, False)
+        return self._scan_exchange_metadata_rows(selector, parameters, work)
 
-    @_completed_read
-    def _legacy_exchange_metadata_rows(self, selector, parameters, work):
-        """Internal Exchange rows; the caller validates every emitted proof/copy."""
-        prior = getattr(self, "_checked_byte_read", False)
-        self._checked_byte_read = True
-        try:
-            return self._scan_exchange_metadata_rows(
-                selector, parameters, _CheckedReadBudget(self, work), True
-            )
-        finally:
-            self._checked_byte_read = prior
-
-    def _scan_exchange_metadata_rows(self, selector, parameters, work, protected):
-        selectors = _EXCHANGE_LEGACY_ROWS if protected else _EXCHANGE_METADATA_ROWS
+    def _scan_exchange_metadata_rows(self, selector, parameters, work):
+        selectors = _EXCHANGE_METADATA_ROWS
         spec = selectors.get(selector) if type(selector) is str else None
         if (
             spec is None
@@ -538,11 +451,11 @@ class GitCore(Core):
             )
         with self._snapshot():
             measured = self._open_export_metadata_cursor(
-                selector, parameters, lengths=True, protected=protected
+                selector, parameters, lengths=True
             )
             try:
                 values = self._open_export_metadata_cursor(
-                    selector, parameters, lengths=False, protected=protected
+                    selector, parameters, lengths=False
                 )
                 try:
                     result = []
@@ -982,66 +895,11 @@ class GitCore(Core):
                 self._stored("Core identity", uuid4_value, value) for value in rows[0]
             )
 
-    @_completed_read
-    @_decoded_read
-    def capture_binding(self, pair: tuple[str, str]) -> Capture | None:
-        """Reconstruct one original binding and verify its required parents.
-
-        Invalid caller coordinates are input errors; invalid stored authority
-        enters the existing persistent stop boundary before acquisition can
-        mistake damage for a conflict or recreate a missing parent.
-        """
-        if type(pair) is not tuple or len(pair) != 2:
-            raise CoreFailure("CAPTURE", "binding", "actual Capture pair required")
-        for value in pair:
-            uuid4_value(value)
-        with self._snapshot():
-            rows = self.sql(
-                "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root "
-                "FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                pair,
-            )
-            if not rows:
-                return None
-
-            def decode(row):
-                origin, capture, repository, source, stored_ref, fmt, oid = row
-                ref = json.loads(stored_ref)
-                if type(ref) is not list or len(ref) != 2 or ref[0] != "native-ref":
-                    raise ValueError("invalid stored Capture ref")
-                actual = Capture(
-                    origin,
-                    capture,
-                    repository,
-                    source,
-                    bytes.fromhex(ref[1]).decode("utf-8", "surrogateescape"),
-                    OID(fmt, oid),
-                )
-                if actual.key != tuple(row):
-                    raise ValueError("noncanonical stored Capture binding")
-                return actual
-
-            result = self._stored("Capture binding", decode, rows[0])
-            repository = self.sql(
-                "SELECT 1 FROM repositories WHERE repository_uuidv4=?",
-                (result.repository_uuidv4,),
-            )
-            root = self.sql(
-                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                result.root.key,
-            )
-            if not repository or not root:
-                self._integrity_stop(("Capture binding", "missing required parent"))
-            return result
-
     def _authorize(self, action, table, column, database, trigger):
         import sqlite3
 
-        protected = (
-            column == "body" and table in ("retained_metadata", "retained_notes")
-        ) or (column == "proof_bundle" and table in ("note_roles", "retained_notes"))
-        # Ref-observation roles have the same retained-byte boundary as the
-        # legacy Capture roles. Generic metadata SQL cannot emit their bodies or
+        protected = column == "body" and table == "retained_metadata"
+        # Generic metadata SQL cannot emit Ref-observation bodies or
         # structural proofs without the claim-scoped typed validation below.
         protected = (
             protected
@@ -1053,7 +911,6 @@ class GitCore(Core):
         )
         # P4 receiver inventory provenance contains exact structural evidence.
         # It must follow the same checked output boundary as proof_bundle.
-        protected = protected or (table == "notes_groups" and column == "provenance")
         if (
             action == sqlite3.SQLITE_READ
             and protected
@@ -1167,43 +1024,6 @@ class GitCore(Core):
                     oid, "blob", body, row["size"], row["digest_sha256"]
                 )
                 return claim, evidence, native
-        finally:
-            self._checked_byte_read = prior
-
-    @_completed_read
-    def read_legacy_note_copy(
-        self,
-        oid: OID,
-        physical_copy_uuidv4: str,
-        work,
-        *,
-        max_metadata_bytes: int = 64 * 1024 * 1024,
-        max_proof_bytes: int = 64 * 1024 * 1024,
-    ):
-        """Verify and return the exact legacy note copy and its stored role."""
-        if not isinstance(oid, OID):
-            raise CoreFailure("IDENTITY", oid, "typed note OID required")
-        uuid4_value(physical_copy_uuidv4)
-        work = _CheckedReadBudget(self, work)
-        prior = getattr(self, "_checked_byte_read", False)
-        self._checked_byte_read = True
-        try:
-            with self._snapshot():
-                row = self._bounded_stored_row(
-                    "retained_notes",
-                    (*oid.key, physical_copy_uuidv4),
-                    work,
-                    max_metadata_bytes,
-                    max_proof_bytes,
-                )
-                if row is None:
-                    raise CoreFailure(
-                        "NOTES_ROLE_UNAVAILABLE", oid, "physical note copy not found"
-                    )
-                self._validate_stored_legacy_note(
-                    row, work, max_metadata_bytes, max_proof_bytes
-                )
-                return row
         finally:
             self._checked_byte_read = prior
 
@@ -1377,164 +1197,3 @@ class GitCore(Core):
                 return super().read_metadata(oid)
         finally:
             self._checked_byte_read = False
-
-    @_completed_read
-    def read_note(self, capture, target: OID, note: OID) -> bytes:
-        self._checked_byte_read = True
-        try:
-            return super().read_note(capture, target, note)
-        finally:
-            self._checked_byte_read = False
-
-    @_completed_read
-    def notes_projection(self, capture, target: OID):
-        self._checked_byte_read = True
-        try:
-            with self._snapshot():
-                self.notes_inventories(capture)
-                return super().notes_projection(capture, target)
-        finally:
-            self._checked_byte_read = False
-
-    def admit_notes_role(self, proof: NotesProof, work) -> None:
-        # P1 valid_note_role delegates full production grammar before trusting
-        # the relevant mapping, including every supplied commit/tree structure.
-        return super().admit_notes_role(proof, work)
-
-    def admit_notes_inventory(self, inventory: NotesInventory, work) -> None:
-        """Admit one receiver-recomputed whole group without body dependencies.
-
-        Exact structural evidence forms part of the group's semantic provenance;
-        no generic sender group can claim this receiver-intrinsic qualification.
-        The group and its positive object identities commit as one Core unit.
-        """
-        self._available()
-        with account_verification(work):
-            for native in inventory.structures:
-                self._charge(work, "input_bytes", len(native.body))
-            verify_inventory(inventory, work)
-            supplied = {native.oid: native for native in inventory.structures}
-            proofs = tuple(
-                mapping_proof(
-                    inventory.capture,
-                    OID(inventory.capture.root.object_format, target),
-                    supplied.__getitem__,
-                    work,
-                )
-                for target, _note, _path in inventory.members
-            )
-            evidence = [
-                [
-                    *native.oid.key,
-                    native.native_type,
-                    native.body.hex(),
-                    native.declared_size,
-                    native.digest_sha256,
-                ]
-                for native in inventory.structures
-            ]
-            diagnostic = (
-                None
-                if inventory.failure is None
-                else [inventory.failure.code, str(inventory.failure)]
-            )
-            provenance = Provenance(
-                "receiver-intrinsic",
-                encode(inventory.capture.key),
-                encode(["inventory", GRAMMAR, evidence, diagnostic]),
-                "git-native-notes-inventory",
-                "1",
-                "receiver_intrinsic",
-            )
-            group = NotesGroup(
-                inventory.capture,
-                "all-notes-mappings",
-                inventory.status,
-                inventory.members,
-                provenance,
-            )
-            self._charge(work, "metadata_units", 1 + 3 * len(group.members))
-            with self._transaction():
-                self._capture(group.capture)
-                for target, note, _path in group.members:
-                    self._object(OID(group.capture.root.object_format, target))
-                    self._object(OID(group.capture.root.object_format, note))
-                self._insert("notes_groups", group.key)
-                for proof in proofs:
-                    self._insert("note_roles", proof.key)
-
-    @_completed_read
-    @_decoded_read
-    def original_notes_group_payload(self, pair, object_format, scope, provenance_json):
-        """Read one reported immutable UNIQUE binding through the checked boundary."""
-        previous = getattr(self, "_checked_byte_read", False)
-        self._checked_byte_read = True
-        try:
-            with self._snapshot():
-                rows = self.sql(
-                    "SELECT status,membership,provenance FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? AND scope=? AND provenance=?",
-                    (*pair, object_format, scope, provenance_json),
-                )
-                if not rows:
-                    return None
-                row = rows[0]
-                self._provenance_value(pair, row[2])
-                if not _notes_group(object_format, row[0], row[1]):
-                    self._integrity_stop((pair, "invalid-stored-notes-group"))
-                return tuple(row[:2])
-        finally:
-            self._checked_byte_read = previous
-
-    @_completed_read
-    @_decoded_read
-    def notes_inventories(self, capture) -> tuple[NotesInventory, ...]:
-        """Emit distinct rechecked receiver inventories, never merged reports.
-
-        Original reported alternatives remain available through notes_projection.
-        No earlier group supplies terminal evidence to this group's capture.
-        Persisted intrinsic structural damage stops the catalog before output.
-        """
-        previous = getattr(self, "_checked_byte_read", False)
-        self._checked_byte_read = True
-        try:
-            with self._snapshot():
-                bindings = self.sql(
-                    "SELECT * FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                    capture.pair,
-                )
-                if bindings and tuple(bindings[0]) != capture.key:
-                    raise CoreFailure(
-                        "INCOMPATIBLE_REPLAY",
-                        capture.pair,
-                        "immutable Capture binding conflict",
-                    )
-                rows = self.sql(
-                    "SELECT scope,status,membership,provenance FROM notes_groups "
-                    "WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? "
-                    "ORDER BY scope,status,membership,provenance",
-                    (*capture.pair, capture.root.object_format),
-                )
-                result = []
-                for row in rows:
-                    provenance = self._provenance_value(capture.pair, row[3])
-                    if provenance.qualification != "receiver_intrinsic":
-                        continue
-                    try:
-                        inventory = decode_inventory_group(
-                            encode(capture.key), row[0], row[1], row[2], row[3]
-                        )
-                    except (
-                        ValueError,
-                        TypeError,
-                        KeyError,
-                        IndexError,
-                        AttributeError,
-                        RecursionError,
-                    ) as error:
-                        self._integrity_stop(
-                            (capture.pair, "notes-inventory", str(error))
-                        )
-                    result.append(inventory)
-                return tuple(result)
-        finally:
-            self._checked_byte_read = previous

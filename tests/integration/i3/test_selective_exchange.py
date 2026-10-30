@@ -716,101 +716,6 @@ ExchangeService(Path(p)).import_package(raw,request=RequestIdentity(origin,reque
     assert len(rows(b, "context", "resources")) == 1
 
 
-def test_native_metadata_notes_and_capture_coverage_without_provider_intake(tmp_path):
-    from repo_catalog.adapters.git.native import GitNativeSource
-    from repo_catalog.application.acquisition import GitAcquisition
-    from repo_catalog.domain.acquisition import (
-        GitNativeAcquisitionRequest,
-    )
-    from repo_catalog.domain.p1_core import Capture
-    from tests.integration.p5.conftest import build_sample_git_repo
-
-    a, b = tmp_path / "a", tmp_path / "b"
-    r1 = catalog(a)
-    catalog(b)
-    native = tmp_path / "native"
-    oids = build_sample_git_repo(native)
-    origin, capture = str(uuid4()), str(uuid4())
-    request = GitNativeAcquisitionRequest(
-        repository_uuidv4=r1,
-        capture_origin_uuidv4=origin,
-        capture_uuidv4=capture,
-        source_attribution="original-git",
-        observed_at_us=50,
-        select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
-        retain_bytes=True,
-        include_refs=False,
-    )
-    GitAcquisition(a, operational=a).acquire_from_native(
-        GitNativeSource(native), request, new_request=True
-    )
-    from contextlib import closing
-
-    # Deferred physical-family Exchange fixture, deliberately outside the
-    # public producer which no longer accepts Capture input.
-    from repo_catalog.adapters.git.notes import GitNotesSource
-    from repo_catalog.adapters.sqlite.acquisition import (
-        InMemoryNotesProgress,
-        UnlimitedWorkBudget,
-    )
-    from repo_catalog.application.notes import NotesAcquisition
-    from repo_catalog.domain.p1_core import CoreCoverageScope
-    from repo_catalog.domain.p1_coverage import CoverageClaim
-
-    with closing(GitCore(a / "core.sqlite3")) as core:
-        legacy = NotesAcquisition(
-            core,
-            GitNotesSource(GitNativeSource(native)),
-            UnlimitedWorkBudget(),
-            InMemoryNotesProgress(),
-            source_attribution="original-git",
-            repository_uuidv4=r1,
-        )
-        old = Capture(
-            origin,
-            capture,
-            r1,
-            "original-git",
-            "refs/notes/commits",
-            oids["notes_commit"],
-        )
-        legacy._legacy_acquire_note(old, oids["commit2"])
-        legacy._legacy_inventory(old)
-    pair = tuple(rows(a, "core", "captures")[0][:2])
-    cap_scope = CoreCoverageScope("capture", (*pair, "notes_inventory"))
-    with closing(GitCore(a / "core.sqlite3")) as core:
-        core.admit_coverage_scope(cap_scope)
-        core.admit_coverage(CoverageClaim(cap_scope, 51, "partial"))
-    package = ExchangeService(a).export_package(selection=scope())
-    assert (
-        package.core["captures"]
-        and package.core["retained_metadata"]
-        and package.core["retained_notes"]
-    )
-    receive(b, package, (r1,))
-    assert rows(a, "core", "captures") == rows(b, "core", "captures")
-    assert rows(a, "core", "coverage_claims") == rows(b, "core", "coverage_claims")
-    assert rows(a, "core", "notes_claims") == rows(b, "core", "notes_claims")
-    assert rows(a, "core", "notes_groups") == rows(b, "core", "notes_groups")
-    for section in ("note_roles", "retained_notes"):
-        original_root = package.core[section][0]["root"]
-        package.core[section][0]["root"] = "2" * 40
-        changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
-        with pytest.raises(ExchangeError, match="NOTES_CAPTURE_ROOT"):
-            receive(b, changed, (r1,))
-        assert not any(
-            changed.package_id in r[2] and "adr0030-package-binding" in r[2]
-            for r in rows(b, "operational", "request_continuations")
-        )
-        package.core[section][0]["root"] = original_root
-    for limited in (scope(max_units=10), scope(max_bytes=500)):
-        partial = ExchangeService(a).export_package(selection=limited)
-        c = tmp_path / str(uuid4())
-        catalog(c)
-        receive(c, partial, (r1,))
-        assert partial.selection_report["omissions"]
-
-
 def test_receiver_selection_stop_and_access_unchanged(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     r1, *_ = fixture(a)
@@ -1141,30 +1046,6 @@ def test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness(
             assert len(bounded.context["source_inventories"]) == 2
 
 
-def test_capture_non_utf8_ref_preserves_native_key(tmp_path):
-    from contextlib import closing
-
-    from repo_catalog.domain.p1_core import Capture
-
-    a, b = tmp_path / "a", tmp_path / "b"
-    r1, _, _, oid = fixture(a)
-    catalog(b)
-    capture = Capture(
-        str(uuid4()),
-        str(uuid4()),
-        r1,
-        "original-source",
-        b"refs/notes/non-utf8-\xff".decode("utf-8", "surrogateescape"),
-        oid,
-    )
-    with closing(GitCore(a / "core.sqlite3")) as core:
-        core.admit_capture(capture)
-    package = ExchangeService(a).export_package(selection=scope())
-    wire = encode_package(package)
-    receive(b, decode_package(wire), (r1,))
-    assert rows(a, "core", "captures") == rows(b, "core", "captures")
-
-
 @pytest.mark.parametrize(
     "section",
     ["resource_repository_relations", "field_candidates", "resource_relations"],
@@ -1228,27 +1109,6 @@ def test_existing_relation_time_conflict_rejected_before_independent_core_commit
         changed.package_id in r[2] and "adr0030-package-binding" in r[2]
         for r in rows(b, "operational", "request_continuations")
     )
-
-
-def test_capture_pair_conflicting_payload_rejected_before_binding(tmp_path):
-    from contextlib import closing
-
-    from repo_catalog.domain.p1_core import Capture
-
-    a, b = tmp_path / "a", tmp_path / "b"
-    r1, _, _, oid = fixture(a)
-    catalog(b)
-    capture = Capture(str(uuid4()), str(uuid4()), r1, "source", "refs/heads/main", oid)
-    with closing(GitCore(a / "core.sqlite3")) as core:
-        core.admit_capture(capture)
-    package = ExchangeService(a).export_package(selection=scope())
-    package.core["captures"].append(
-        {**package.core["captures"][0], "source": "contradictory-source"}
-    )
-    malformed = replace(package, digest_sha256=None)
-    with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
-        receive(b, malformed, (r1,))
-    assert not rows(b, "core", "git_objects")
 
 
 def test_shared_oid_does_not_coalesce_repository_membership_reports(tmp_path):
@@ -1384,17 +1244,12 @@ def test_modeled_collection_member_cannot_borrow_another_parent(tmp_path, sectio
         "repository_claims",
         "scalar_claims",
         "relation_groups",
-        "notes_claims",
-        "notes_groups",
     ],
 )
 def test_core_immutable_unique_payload_preflight(tmp_path, section, existing):
     from contextlib import closing
 
     from repo_catalog.domain.p1_core import (
-        Capture,
-        NotesClaim,
-        NotesGroup,
         Provenance,
         RelationGroup,
         RepositoryClaim,
@@ -1405,15 +1260,12 @@ def test_core_immutable_unique_payload_preflight(tmp_path, section, existing):
     r1, r2, _, oid = fixture(a)
     catalog(b)
     prov = Provenance("fixture", "same-original", "claim", "fixture", "1")
-    capture = Capture(str(uuid4()), str(uuid4()), r1, "fixture", "refs/notes/test", oid)
     with closing(GitCore(a / "core.sqlite3")) as core:
         core.admit_repository_claim(RepositoryClaim(r1, "name", "one", prov))
         core.admit_claim(ScalarClaim(oid, "type", "blob", prov))
         core.admit_group(
             RelationGroup(oid, "commit_parents", "all", "known_empty", (), prov)
         )
-        core.admit_notes_claim(NotesClaim(capture, oid, oid, prov))
-        core.admit_notes_group(NotesGroup(capture, "all", "unknown", (), prov))
     package = ExchangeService(a).export_package(selection=scope())
     if existing:
         receive(b, package, (r1, r2))
@@ -1426,10 +1278,6 @@ def test_core_immutable_unique_payload_preflight(tmp_path, section, existing):
         changed_row["value_json"] = '["known","tree"]'
     elif section == "relation_groups":
         changed_row["status"] = "unknown"
-    elif section == "notes_claims":
-        changed_row["note"] = "2" * 40
-    else:
-        changed_row["status"] = "partial"
     package.core[section] = [changed_row] if existing else [original, changed_row]
     package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)

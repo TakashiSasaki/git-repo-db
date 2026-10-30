@@ -28,9 +28,9 @@ def core_facts(data):
             "repository_claims",
             "git_objects",
             "git_observations",
-            "captures",
+            "ref_observations",
             "retained_metadata",
-            "retained_notes",
+            "ref_retained_notes",
         )
     }
 

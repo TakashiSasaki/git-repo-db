@@ -13,14 +13,7 @@ from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.git_native import parse_metadata, parse_tree
-from repo_catalog.domain.p1_core import (
-    Capture,
-    CoreFailure,
-    GitObservation,
-    NotesClaim,
-    NotesProof,
-    ScalarClaim,
-)
+from repo_catalog.domain.p1_core import CoreFailure, GitObservation, ScalarClaim
 from tests.integration.p1.test_core import Budget, native, oid, provenance
 
 
@@ -312,8 +305,8 @@ def test_corruption_metadata_history_independent_until_byte_read_stops_catalog(c
     [
         "SELECT body FROM retained_metadata",
         "SELECT hex(body) FROM retained_metadata",
-        "SELECT body FROM retained_notes",
-        "SELECT proof_bundle FROM note_roles",
+        "SELECT body FROM ref_retained_notes",
+        "SELECT proof_bundle FROM notes_mapping_evidence",
     ],
 )
 def test_generic_sql_cannot_emit_unchecked_retained_payloads(core, query):
@@ -375,50 +368,6 @@ def test_real_ref_root_observations_retain_force_push_and_replay(core, repositor
         c.admit_observation(observation)
         c.admit_observation(observation)
     assert len(c.sql("SELECT * FROM git_observations")) == 2
-
-
-def test_receiver_notes_role_checks_full_native_commit_and_metadata_without_body(
-    core, repository
-):
-    c, _, repo = core
-    path, fmt = repository
-    note = write(path, fmt, "blob", b"purpose-bound note")
-    target = oid("a", fmt)
-    root = write(
-        path, fmt, "tree", entry(b"100644", target.full_oid.encode(), note.oid)
-    )
-    commit = write(
-        path,
-        fmt,
-        "commit",
-        commit_body(root.oid, extra=b"gpgsig signature\n continuation\n"),
-    )
-    capture = Capture(
-        str(uuid4()),
-        str(uuid4()),
-        repo,
-        "original",
-        "refs/notes/nested/review",
-        commit.oid,
-    )
-    proof = NotesProof(capture, target, note.oid, target.full_oid, (commit, root))
-    c.admit_notes_claim(NotesClaim(capture, target, note.oid, provenance()))
-    c.admit_notes_role(proof, Budget())
-    assert c.notes_projection(capture, target).canonical == note.oid
-    assert c.sql("SELECT physical_copy_uuidv4 FROM retained_notes") == []
-    c.admit_note(proof, note, str(uuid4()), Budget())
-    assert c.read_note(capture, target, note.oid) == note.body
-    malformed = native(
-        "commit",
-        b"tree " + root.oid.full_oid.encode() + b"\n\ninvalid missing identities",
-        fmt,
-    )
-    bad_capture = replace(capture, capture_uuidv4=str(uuid4()), root=malformed.oid)
-    bad_proof = replace(proof, capture=bad_capture, structures=(malformed, root))
-    with pytest.raises(CoreFailure) as error:
-        c.admit_notes_role(bad_proof, Budget())
-    assert error.value.code == "NOTES_ROLE"
-    assert len(c.sql("SELECT * FROM captures")) == 1
 
 
 def test_parser_format_and_tag_refusals_are_typed():
@@ -748,37 +697,6 @@ def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_synt
         c.read_metadata(incoming.oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
-
-
-def test_typed_utf8_corruption_persists_stop_before_snapshot_rollback(core):
-    from repo_catalog.domain.p1_core import NotesClaim
-    from tests.integration.p1.test_notes import mapping
-
-    c, path, repository = core
-    proof, _ = mapping(repository)
-    c.admit_notes_claim(
-        NotesClaim(proof.capture, proof.target, proof.note, provenance())
-    )
-    db = sqlite3.connect(path)
-    db.execute("PRAGMA ignore_check_constraints=ON")
-    db.execute("DROP TRIGGER p1_immutable_notes_claims_update")
-    db.execute("UPDATE notes_claims SET note=CAST(x'ff' AS TEXT)")
-    db.commit()
-    db.close()
-    rollback_stop_states = []
-
-    def trace(statement):
-        if statement == "ROLLBACK":
-            rollback_stop_states.append(
-                (path.parent / "p1-recovery-stop.json").exists()
-            )
-
-    c._db.set_trace_callback(trace)
-    with pytest.raises(CoreFailure) as error:
-        c.notes_projection(proof.capture, proof.target)
-    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert rollback_stop_states == [True]
-    assert not c._db.in_transaction
 
 
 def test_caller_text_encoding_error_is_not_stored_corruption(core):

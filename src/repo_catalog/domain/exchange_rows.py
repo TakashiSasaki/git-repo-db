@@ -1,4 +1,4 @@
-"""Exact v6 row envelopes. No legacy row aliases or opaque extra fields."""
+"""Exact v7 row envelopes. No legacy row aliases or opaque extra fields."""
 
 import json
 
@@ -167,17 +167,6 @@ ROW_KEYS = {
         "text_bodies": (("sha256", "text_value"),),
     },
     "core": {
-        "captures": (
-            (
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "object_format",
-                "ref",
-                "repository_uuidv4",
-                "root",
-                "source",
-            ),
-        ),
         "coverage_claims": (
             (
                 "coverage_state",
@@ -210,50 +199,6 @@ ROW_KEYS = {
                 "value_json",
             ),
         ),
-        "note_roles": (
-            (
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "note",
-                "object_format",
-                "path",
-                "proof_bundle_json",
-                "root",
-                "target",
-            ),
-        ),
-        "notes_claims": (
-            (
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "note",
-                "object_format",
-                "provenance_json",
-                "target",
-            ),
-        ),
-        "notes_groups": (
-            (
-                "authority",
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "membership_json",
-                "object_format",
-                "provenance_json",
-                "scope",
-                "status",
-            ),
-        ),
-        "notes_inventories": (
-            (
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "failure",
-                "members",
-                "status",
-                "structures",
-            ),
-        ),
         "relation_groups": (
             (
                 "authority",
@@ -279,22 +224,6 @@ ROW_KEYS = {
                 "object_format",
                 "physical_copy_uuidv4",
                 "size",
-            ),
-        ),
-        "retained_notes": (
-            (
-                "body_hex",
-                "capture_origin_uuidv4",
-                "capture_uuidv4",
-                "digest_sha256",
-                "full_oid",
-                "object_format",
-                "path",
-                "physical_copy_uuidv4",
-                "proof_bundle_json",
-                "root",
-                "size",
-                "target",
             ),
         ),
         "scalar_claims": (
@@ -603,8 +532,6 @@ def validate_rows(core, context):
                         raise ExchangeError(
                             "MALFORMED_ROW", ["core", section, "typed_members"]
                         )
-                if store == "core" and section == "captures":
-                    decode_native_ref(row["ref"])
                 if store == "core" and section in (
                     "ref_observations",
                     "ref_observation_claims",
@@ -662,35 +589,11 @@ def _transfer_scope_references(row, scope):
             ResourceKey(row["service_instance_uuidv4"], "repository", scope[name])
 
 
-def decode_native_ref(value):
-    from repo_catalog.domain.exchange import ExchangeError
-
-    try:
-        pair = json.loads(value)
-        if (
-            not isinstance(pair, list)
-            or len(pair) != 2
-            or pair[0] != "native-ref"
-            or type(pair[1]) is not str
-            or len(pair[1]) % 2
-            or any(c not in "0123456789abcdef" for c in pair[1])
-            or encode(pair) != value
-        ):
-            raise ValueError("canonical native-ref hex required")
-        ref = bytes.fromhex(pair[1]).decode("utf-8", "surrogateescape")
-        if not ref.startswith("refs/") or "\x00" in ref:
-            raise ValueError("full native ref required")
-        return ref
-    except (ValueError, TypeError) as error:
-        raise ExchangeError("INVALID_NATIVE_REF", "captures") from error
-
-
 # Direct immutable identities, using the v4 names of the actual PK coordinates.
 # Other row types have their entire asserted value in the key; authority flags
 # are payload, so contradictory sender annotations do not get an arrival winner.
 IDENTITY_KEYS = {
     "core": {
-        "captures": ("capture_origin_uuidv4", "capture_uuidv4"),
         "ref_observations": ("observation_origin_uuidv4", "ref_observation_uuidv7"),
         "ref_observation_claims": (
             "observation_origin_uuidv4",
@@ -733,23 +636,7 @@ IDENTITY_KEYS = {
             "provenance_json",
             "authority",
         ),
-        "notes_claims": (
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "object_format",
-            "target",
-            "provenance_json",
-        ),
-        "notes_groups": (
-            "capture_origin_uuidv4",
-            "capture_uuidv4",
-            "object_format",
-            "scope",
-            "provenance_json",
-            "authority",
-        ),
         "retained_metadata": ("object_format", "full_oid", "physical_copy_uuidv4"),
-        "retained_notes": ("object_format", "full_oid", "physical_copy_uuidv4"),
     },
     "context": {
         "providers": ("service_instance_uuidv4",),

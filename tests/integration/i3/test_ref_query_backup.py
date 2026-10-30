@@ -48,7 +48,6 @@ def test_ref_body_and_proof_require_checked_typed_read(acquisition):
         ("ref_retained_notes", "body"),
         ("ref_retained_notes", "proof_bundle"),
         ("notes_mapping_evidence", "proof_bundle"),
-        ("retained_notes", "body"),
     ):
         with pytest.raises(sqlite3.DatabaseError, match="prohibited"):
             app.core.sql(f"SELECT {column} FROM {table}")

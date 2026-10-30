@@ -411,3 +411,61 @@ methods/parameter, and the existing optional Search/rebuild work handle. An impo
 and annotation-resolution smoke regression preserves the public contract. No
 private DTO alias or retired report field is restored. The original independent
 FAIL remains historical evidence; no independent re-review is claimed here.
+
+
+## Final coordinated physical cut (stacked on PR 229)
+
+This unit supersedes the deferred physical-family boundary above. PRs 226–229
+remain fixed. The five old opt-in physical tables (`captures`, `notes_claims`,
+`notes_groups`, `note_roles`, `retained_notes`), their immutable/admission guards,
+Capture-owned Coverage columns/owner, Core methods/ports/domain values, private
+legacy producer/Query DTOs/readers, and legacy Exchange/backup/salvage admission
+are removed together. `notes_inventories` was an additional wire section, not a
+sixth table. The retired families are not renamed into the new tables and no
+actual catalog is migrated. The machine disposition contract and introspected
+physical schema are synchronized. Ordinary Schema 21 and unrelated observation,
+provider recording and discovery UUIDv4 meanings remain unchanged.
+
+The opt-in factory format is `repo-catalog/p1-isolated-2`; its Core factory now
+has 23 tables. Its other factory stores' physical DDL/fingerprints are unchanged
+(Context 19, Operational 8, Search 3). These are factory table counts, not a count
+of responsibility stores or open files. Core fingerprint is derived from the
+packaged DDL. Exchange accepts only `git-repo-db/adr0036-exchange-v7` with the exact
+current section/row envelopes; v6 and the six old sections are rejected. New
+backup manifests use version 2 and restore refuses version 1; actual manifest
+hashes, packaged schema fingerprints, identities/pairing and retained data are
+still revalidated. Unknown salvage types remain qualified/deferred/rejected;
+they cannot restore an old Notes family or confer body authority. No unreleased
+old-format compatibility or migration is promised.
+
+Shared `_notes_group`, `valid_note_role`, native Notes traversal and verification
+accounting remain in use by Ref Mapping/Group/evidence and copy validation.
+Same-family exact-body/copy collision checks, bounded comparison accounting,
+callback exception boundaries and unsupported Ref Coverage behavior remain.
+`legacy_source_vm_steps` is the retained generic metadata/Context extraction
+budget, not a surviving Capture Notes path. Ref subjects, Claims, alternatives,
+Group-only/partial reports, Mapping content, receiver evidence and each physical
+copy retain their separate original identities and qualifications.
+
+The ADR 0026 sequence is preserved: corruption stops ordinary service/backup;
+source DB/WAL bytes are preserved while typed salvage emits untrusted candidates;
+a checked healthy backup restores into a fresh destination; candidate merge
+rechecks dependencies, original identity, structural proof and actual bytes;
+final validation precedes activation. The new composite E2E
+[`test_physical_cut_e2e.py`](../../tests/integration/p7/test_physical_cut_e2e.py)
+combines real acquisition, two same-root Claims/Group-only reports, one eligible
+Claim's body, Query/CLI/Search, explicit Git-only Exchange, Core-only/paired
+backup/restore, damaged-copy stop, byte-preserving salvage, post-backup subject
+merge and activation. Git-only transport does not claim Context interchange.
+Existing paired Context and metadata-only regressions remain independent.
+
+Retired mechanism tests and their typed-behavior replacements are indexed in
+[`adr0036_retired_test_map.json`](../../tests/support/adr0036_retired_test_map.json).
+The map preserves original node IDs; old binary/empty-note behavior is exercised
+by a new direct Ref role test and real installed wheel/sdist-wheel scenario.
+Unrelated metadata/Context/recovery tests stay active. Cross-family copy tests
+are superseded by exact same-family replay/conflict/corruption tests; there is
+only one Notes-copy family now. No absent-name assertion alone establishes
+acceptance. The implementation report distinguishes exploratory failures,
+fixed-source tests, packaging execution and CI selection/skips from full release
+acceptance. No live recovery, merge or deployment is authorized by this contract.

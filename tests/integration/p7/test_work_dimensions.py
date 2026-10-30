@@ -20,7 +20,7 @@ def usage(catalog):
     ]
 
 
-@pytest.mark.parametrize("table", ["git_objects", "repositories", "captures"])
+@pytest.mark.parametrize("table", ["git_objects", "repositories"])
 @pytest.mark.parametrize("replay", [False, True])
 def test_nominal_metadata_cannot_bypass_single_unit_ceiling(
     synthetic_catalog, tmp_path, repo_uuid, table, replay
@@ -39,36 +39,6 @@ def test_nominal_metadata_cannot_bypass_single_unit_ceiling(
         elif table == "repositories":
             first = {"repository_uuidv4": repo_uuid if replay else str(uuid4())}
             second = {"repository_uuidv4": str(uuid4())}
-        else:
-            if replay:
-                cap = conn.execute(
-                    "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root FROM captures LIMIT 1"
-                ).fetchone()
-                first = dict(
-                    zip(
-                        (
-                            "capture_origin_uuidv4",
-                            "capture_uuidv4",
-                            "repository_uuidv4",
-                            "source",
-                            "ref",
-                            "object_format",
-                            "root",
-                        ),
-                        cap,
-                    )
-                )
-            else:
-                first = {
-                    "capture_origin_uuidv4": str(uuid4()),
-                    "capture_uuidv4": str(uuid4()),
-                    "repository_uuidv4": repo_uuid,
-                    "source": "original-source",
-                    "ref": "refs/notes/recovery",
-                    "object_format": "sha1",
-                    "root": "1" * 40,
-                }
-            second = {**first, "capture_uuidv4": str(uuid4())}
     salvage = tmp_path / "nominal.jsonl"
     rows = [
         {
@@ -121,29 +91,6 @@ def test_invalid_base64_retains_decode_expenditure():
     assert work.usage["input_bytes"] == 3
 
 
-def test_proof_hex_budget_refusal_precedes_decoder(monkeypatch):
-    class ForbiddenBytes(bytes):
-        @classmethod
-        def fromhex(cls, value):
-            pytest.fail("unreserved proof hex allocation")
-
-    monkeypatch.setattr(recovery, "bytes", ForbiddenBytes, raising=False)
-    work = recovery.RecoveryWorkBudget(work_limits={"input_bytes": 1})
-    bundle = json.dumps([["1" * 40, "tree", "aa" * 1000]])
-    with pytest.raises(CoreFailure, match="budget"):
-        recovery._decode_proof_bundle(bundle, RecoveryBudget(), "sha1", work)
-    assert work.usage["input_bytes"] == 0
-
-
-def test_invalid_proof_hex_retains_decode_expenditure():
-    work = recovery.RecoveryWorkBudget(work_limits={"input_bytes": 1})
-    with pytest.raises(ValueError):
-        recovery._decode_proof_bundle(
-            json.dumps([["1" * 40, "tree", "zz"]]), RecoveryBudget(), "sha1", work
-        )
-    assert work.usage["input_bytes"] == 1
-
-
 def test_context_encoding_reserves_decoded_input_before_allocation():
     class ForbiddenText(str):
         def encode(self, *args, **kwargs):
@@ -187,15 +134,6 @@ def test_digest_rejection_still_meters_decoded_input(
     assert result.unprocessed_units == (1 if ceiling == 1 else 0)
     assert result.rejected_units == (0 if ceiling == 1 else 1)
     assert usage(synthetic_catalog)["input_bytes"] == (0 if ceiling == 1 else len(body))
-
-
-def test_proof_hex_exact_decoded_allowance_is_available():
-    body = b"100644 name\0" + bytes.fromhex("1" * 40)
-    work = recovery.RecoveryWorkBudget(work_limits={"input_bytes": len(body)})
-    bundle = json.dumps([["2" * 40, "tree", body.hex()]])
-    structures = recovery._decode_proof_bundle(bundle, RecoveryBudget(), "sha1", work)
-    assert structures[0].body == body
-    assert work.usage["input_bytes"] == len(body)
 
 
 def test_rejected_nominal_candidate_still_consumes_metadata_work(

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import subprocess
 from contextlib import closing
@@ -33,7 +32,6 @@ from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
@@ -413,48 +411,6 @@ def test_foreign_metadata_repository_is_rejected_before_any_admission(
     assert authoritative_rows(cat) == before
 
 
-@pytest.mark.parametrize("paired", [False, True])
-@pytest.mark.parametrize("owner", ["selected", "foreign", "absent"])
-def test_metadata_capture_coverage_resolves_the_actual_capture_owner(
-    tmp_path, paired, owner
-):
-    cat = tmp_path / "catalog"
-    target, _ = init_catalog_stores(cat)
-    unit = metadata_unit(target)
-    capture = Capture(
-        str(uuid4()),
-        str(uuid4()),
-        target if owner == "selected" else str(uuid4()),
-        "original",
-        "refs/notes/test",
-        unit.nominal_objects[0],
-    )
-    if owner != "absent":
-        with closing(GitCore(cat / "core.sqlite3")) as core:
-            core.admit_repository(capture.repository_uuidv4)
-            core.admit_capture(capture)
-    unit = replace(
-        unit,
-        coverage_scopes=(CoreCoverageScope("capture", (*capture.pair, "inventory")),),
-    )
-    before = authoritative_rows(cat)
-
-    def acquire():
-        if paired:
-            return PairedAcquisitionCoordinator(cat).admit_paired(
-                git_input=unit, new_request=True
-            )
-        return GitAcquisition(cat, operational=cat).acquire_metadata_only(
-            unit, new_request=True
-        )
-
-    # Capture Coverage is a retired public input, including a selected owner.
-    with pytest.raises(CoreFailure) as error:
-        acquire()
-    assert error.value.code == "RETIRED_NOTES_INPUT"
-    assert authoritative_rows(cat) == before
-
-
 def test_metadata_nonseed_keeps_physical_operational_pairing(tmp_path):
     cat, foreign = tmp_path / "catalog", tmp_path / "foreign"
     init_catalog_stores(cat)
@@ -649,99 +605,3 @@ def test_external_metadata_cannot_switch_notes_source_with_explicit_progress(
         )
     assert error.value.code == "INCOMPATIBLE_REPLAY"
     assert authoritative_rows(cat) == before
-
-
-@pytest.mark.parametrize("paired", [False, True])
-@pytest.mark.parametrize("field", ["repository", "source", "ref", "root"])
-def test_legacy_physical_capture_binding_remains_immutable(tmp_path, paired, field):
-    cat = tmp_path / "catalog"
-    target, _ = init_catalog_stores(cat)
-    unit = metadata_unit(target)
-    capture = Capture(
-        str(uuid4()),
-        str(uuid4()),
-        str(uuid4()) if field == "repository" else target,
-        "reported-source",
-        "refs/notes/original",
-        unit.nominal_objects[0],
-    )
-    with closing(GitCore(cat / "core.sqlite3")) as core:
-        core.admit_repository(capture.repository_uuidv4)
-        core.admit_capture(capture)
-    changes = {
-        "repository": {"repository_uuidv4": target},
-        "source": {"source": "other-original-source"},
-        "ref": {"ref": "refs/notes/other"},
-        "root": {"root": OID("sha1", "2" * 40)},
-    }
-    candidate = replace(capture, **changes[field])
-    # Deferred physical family still enforces immutable replay directly.
-    before = authoritative_rows(cat)
-    with closing(GitCore(cat / "core.sqlite3")) as core:
-        with pytest.raises(CoreFailure) as error:
-            core.admit_capture(candidate)
-    assert error.value.code == "INCOMPATIBLE_REPLAY"
-    assert authoritative_rows(cat) == before
-
-
-@pytest.mark.parametrize("paired", [False, True])
-@pytest.mark.parametrize(
-    "damage", ["source", "utf8", "ref", "oid", "repository_parent", "root_parent"]
-)
-def test_legacy_physical_capture_corruption_stops_diagnostic_query(
-    tmp_path, paired, damage
-):
-    cat = tmp_path / "catalog"
-    seed, _ = init_catalog_stores(cat)
-    unit = metadata_unit(seed)
-    capture = Capture(
-        str(uuid4()),
-        str(uuid4()),
-        seed,
-        "original",
-        "refs/notes/test",
-        unit.nominal_objects[0],
-    )
-    with closing(GitCore(cat / "core.sqlite3")) as core:
-        core.admit_capture(capture)
-    with closing(connect(cat / "core.sqlite3", "core")) as db:
-        db.execute("PRAGMA foreign_keys=OFF")
-        db.execute("PRAGMA ignore_check_constraints=ON")
-        table = {"repository_parent": "repositories", "root_parent": "git_objects"}.get(
-            damage, "captures"
-        )
-        action = "update" if table == "captures" else "delete"
-        trigger = f"p1_immutable_{table}_{action}"
-        sql = db.execute(
-            "SELECT sql FROM sqlite_schema WHERE name=?", (trigger,)
-        ).fetchone()[0]
-        db.execute(f"DROP TRIGGER {trigger}")
-        if damage == "source":
-            db.execute("UPDATE captures SET source=''")
-        elif damage == "utf8":
-            db.execute("UPDATE captures SET source=CAST(X'ff' AS TEXT)")
-        elif damage == "ref":
-            db.execute('UPDATE captures SET ref=\'["wrong","00"]\'')
-        elif damage == "oid":
-            db.execute("UPDATE captures SET root='invalid'")
-        elif damage == "repository_parent":
-            db.execute("DELETE FROM repositories WHERE repository_uuidv4=?", (seed,))
-        else:
-            db.execute(
-                "DELETE FROM git_objects WHERE object_format=? AND full_oid=?",
-                capture.root.key,
-            )
-        db.execute(sql)
-        db.commit()
-    # The synthetic attack restores the exact trusted physical schema. Only
-    # domain data/FKs are damaged; rejection cannot rely on schema drift.
-    path = cat / "core.sqlite3"
-    before = hashlib.sha256(path.read_bytes()).hexdigest()
-    # Diagnostic reader retains corruption fencing until the physical cut.
-    from repo_catalog.application.production_query import ProductionQueryService
-
-    with pytest.raises((CoreFailure, CoordinationError)) as error:
-        ProductionQueryService(cat)._legacy_list_notes_captures()
-    assert error.value.code in {"AUTHORITATIVE_CORRUPTION", "CORRUPTION", "FOREIGN_KEY"}
-    assert (cat / "p1-recovery-stop.json").exists()
-    assert hashlib.sha256(path.read_bytes()).hexdigest() == before

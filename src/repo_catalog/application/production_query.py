@@ -43,7 +43,6 @@ from repo_catalog.application.ref_observations import encode_metered
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
@@ -74,9 +73,6 @@ from repo_catalog.domain.production_query import (
     SearchResponse,
     SnapshotFenceToken,
     SourceView,
-    _LegacyNotesCaptureView,
-    _LegacyNotesInventoryView,
-    _LegacyNotesTargetView,
     filter_digest,
     ref_projection_json,
 )
@@ -961,212 +957,6 @@ class ProductionQueryService:
             )
         )
 
-    @_stored_view
-    def _legacy_all_captures_in_snapshot(self, core: GitCore) -> tuple[Capture, ...]:
-        rows = core.sql(
-            "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root "
-            "FROM captures ORDER BY ref,capture_origin_uuidv4,capture_uuidv4"
-        )
-        captures: list[Capture] = []
-        for row in rows:
-            raw_ref = bytes.fromhex(json.loads(row[4])[1]).decode(
-                "utf-8", "surrogateescape"
-            )
-            captures.append(
-                self._stored(
-                    Capture,
-                    row[0],
-                    row[1],
-                    row[2],
-                    row[3],
-                    raw_ref,
-                    self._stored(OID, row[5], row[6]),
-                )
-            )
-        return tuple(captures)
-
-    def _legacy_list_notes_captures(
-        self,
-        page: PageRequest = PageRequest(),
-        *,
-        notes_ref: str | None = None,
-    ) -> PageResult[_LegacyNotesCaptureView]:
-        with self.open_snapshot(required_store="core") as snap:
-            assert snap.core is not None
-            token_str = snap.token.encode()
-            all_captures = self._legacy_all_captures_in_snapshot(snap.core)
-
-            def views():
-                for cap in all_captures:
-                    if notes_ref is not None and cap.ref != notes_ref:
-                        continue
-                    fmt = cap.root.object_format
-                    target_hexes: set[str] = set()
-                    for r in snap.core.sql(
-                        "SELECT DISTINCT target FROM notes_claims WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                        cap.pair,
-                    ):
-                        target_hexes.add(r[0])
-                    for r in snap.core.sql(
-                        "SELECT DISTINCT target FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                        cap.pair,
-                    ):
-                        target_hexes.add(r[0])
-                    for r in snap.core.sql(
-                        "SELECT membership FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                        cap.pair,
-                    ):
-                        for m in json.loads(r[0]):
-                            target_hexes.add(m[0])
-                    targets = tuple(
-                        self._stored(OID, fmt, h) for h in sorted(target_hexes)
-                    )
-                    inventories = self._legacy_notes_inventories_in_snapshot(
-                        snap.core, cap
-                    )
-                    yield _LegacyNotesCaptureView(
-                        capture=cap,
-                        targets=targets,
-                        inventories=inventories,
-                    )
-
-            return _paginate_items(
-                views(),
-                key_fn=lambda v: v.semantic_key,
-                page=page,
-                endpoint_kind="notes_captures",
-                filters={"notes_ref": notes_ref},
-                snapshot_token=token_str,
-            )
-
-    def _legacy_get_notes_target(
-        self,
-        capture: Capture,
-        target: OID,
-        *,
-        include_bytes: bool = False,
-    ) -> _LegacyNotesTargetView:
-        with self.open_snapshot(required_store="core") as snap:
-            assert snap.core is not None
-            return self._legacy_notes_target_in_snapshot(
-                snap.core, capture, target, include_bytes=include_bytes
-            )
-
-    def _legacy_notes_target_in_snapshot(
-        self,
-        core: GitCore,
-        capture: Capture,
-        target: OID,
-        *,
-        include_bytes: bool = False,
-    ) -> _LegacyNotesTargetView:
-        proj = core.notes_projection(capture, target)
-        role_verified = proj.canonical is not None
-        note_retained = False
-        note_bytes: ByteReadResult | None = None
-        if proj.canonical is not None:
-            retained_rows = core.sql(
-                "SELECT n.size,n.digest_sha256 FROM retained_notes n JOIN note_roles r "
-                "ON r.object_format=n.object_format AND r.note=n.full_oid "
-                "WHERE r.capture_origin_uuidv4=? AND r.capture_uuidv4=? "
-                "AND r.object_format=? AND r.target=? AND r.note=? "
-                "ORDER BY n.physical_copy_uuidv4 LIMIT 1",
-                (
-                    *capture.pair,
-                    target.object_format,
-                    target.full_oid,
-                    proj.canonical.full_oid,
-                ),
-            )
-            note_retained = bool(retained_rows)
-            if include_bytes:
-                note_bytes = self._legacy_read_note_bytes_in_snapshot(
-                    core, capture, target, proj.canonical
-                )
-
-        return _LegacyNotesTargetView(
-            capture=capture,
-            target=target,
-            canonical=proj.canonical,
-            alternatives=proj.alternatives,
-            reported_conflict=proj.reported_conflict,
-            checked_scope=proj.checked_scope,
-            role_verified=role_verified,
-            note_retained=note_retained,
-            note_bytes=note_bytes,
-        )
-
-    def _legacy_list_notes_inventories(
-        self, capture: Capture
-    ) -> tuple[_LegacyNotesInventoryView, ...]:
-        with self.open_snapshot(required_store="core") as snap:
-            assert snap.core is not None
-            return self._legacy_notes_inventories_in_snapshot(snap.core, capture)
-
-    @_stored_view
-    def _legacy_notes_inventories_in_snapshot(
-        self, core: GitCore, capture: Capture
-    ) -> tuple[_LegacyNotesInventoryView, ...]:
-        # Validate receiver-intrinsic inventories via GitCore.notes_inventories
-        verified_inventories = core.notes_inventories(capture)
-        views: list[_LegacyNotesInventoryView] = []
-        for inv in verified_inventories:
-            diag = (
-                (inv.failure.code, str(inv.failure))
-                if inv.failure is not None
-                else None
-            )
-            prov = self._stored(
-                Provenance,
-                "receiver-intrinsic",
-                encode(capture.key),
-                "inventory",
-                "git-native-notes-inventory",
-                "1",
-                "receiver_intrinsic",
-            )
-            views.append(
-                _LegacyNotesInventoryView(
-                    capture=capture,
-                    scope="all-notes-mappings",
-                    status=inv.status,
-                    members=inv.members,
-                    provenance=prov,
-                    receiver_verified=True,
-                    diagnostic=diag,
-                )
-            )
-        # Also include reported notes_groups
-        previous = getattr(core, "_checked_byte_read", False)
-        core._checked_byte_read = True
-        try:
-            rows = core.sql(
-                "SELECT scope,status,membership,provenance FROM notes_groups "
-                "WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND object_format=? "
-                "ORDER BY scope,status,membership,provenance",
-                (*capture.pair, capture.root.object_format),
-            )
-        finally:
-            core._checked_byte_read = previous
-
-        for row in rows:
-            prov = self._stored(Provenance, *json.loads(row[3]))
-            if prov.qualification == "receiver_intrinsic":
-                continue
-            members = tuple(tuple(m) for m in json.loads(row[2]))
-            views.append(
-                _LegacyNotesInventoryView(
-                    capture=capture,
-                    scope=row[0],
-                    status=row[1],
-                    members=members,
-                    provenance=prov,
-                    receiver_verified=False,
-                    diagnostic=None,
-                )
-            )
-        return tuple(views)
-
     def read_metadata_bytes(self, oid: OID) -> ByteReadResult:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
@@ -1179,34 +969,6 @@ class ProductionQueryService:
             body = core.read_metadata(oid)
         except CoreFailure as error:
             if error.code == "BYTES_UNAVAILABLE":
-                return ByteReadResult(available=False, verified=False)
-            raise
-        digest = hashlib.sha256(body).hexdigest()
-        return ByteReadResult(
-            available=True,
-            verified=True,
-            body_bytes=body,
-            text_value=body.decode("utf-8", "surrogateescape"),
-            declared_size=len(body),
-            digest_sha256=digest,
-        )
-
-    def _legacy_read_note_bytes(
-        self, capture: Capture, target: OID, note_oid: OID
-    ) -> ByteReadResult:
-        with self.open_snapshot(required_store="core") as snap:
-            assert snap.core is not None
-            return self._legacy_read_note_bytes_in_snapshot(
-                snap.core, capture, target, note_oid
-            )
-
-    def _legacy_read_note_bytes_in_snapshot(
-        self, core: GitCore, capture: Capture, target: OID, note_oid: OID
-    ) -> ByteReadResult:
-        try:
-            body = core.read_note(capture, target, note_oid)
-        except CoreFailure as error:
-            if error.code == "NOTES_ROLE_UNAVAILABLE":
                 return ByteReadResult(available=False, verified=False)
             raise
         digest = hashlib.sha256(body).hexdigest()

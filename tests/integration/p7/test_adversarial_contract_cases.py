@@ -200,9 +200,11 @@ def test_case_04_verified_notes_body_survives_recovery(
     )
     register_functions(conn)
     rows = conn.execute(
-        "SELECT object_format, full_oid, body, size, digest_sha256 FROM retained_notes"
+        "SELECT object_format, full_oid, body, size, digest_sha256 FROM ref_retained_notes"
     ).fetchall()
-    role_count = conn.execute("SELECT count(*) FROM note_roles").fetchone()[0]
+    role_count = conn.execute("SELECT count(*) FROM notes_mapping_evidence").fetchone()[
+        0
+    ]
     conn.close()
 
     assert len(rows) == 1
@@ -211,53 +213,6 @@ def test_case_04_verified_notes_body_survives_recovery(
     assert hashlib.sha256(body).hexdigest() == digest
     assert b"Reviewed-by: Admin" in body
     assert role_count == 1
-
-
-def test_case_05_notes_blob_lacking_role_evidence_rejected(
-    synthetic_catalog, tmp_path, repo_uuid
-):
-    """Case 5: A Notes blob lacking role evidence is not admitted."""
-    service = RecoveryService()
-    backup_path = tmp_path / "backups" / "case5_backup"
-    service.create_consistent_backup(
-        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
-    )
-
-    fresh_dest = tmp_path / "restored_case5"
-    service.restore_backup(backup_path, fresh_dest, repo_uuid)
-
-    # Construct candidate with arbitrary note body but missing/forged role proof
-    salvage_file = tmp_path / "unproven_note_candidate.jsonl"
-    fake_note_body = b"Unauthenticated note payload\n"
-    import base64
-
-    unproven_cand = {
-        "candidate_id": "unproven-note-1",
-        "candidate_type": CandidateType.NOTES_MAPPING.value,
-        "capture_origin_uuidv4": str(uuid4()),
-        "capture_uuidv4": str(uuid4()),
-        "provenance": {"store": "core", "table": "retained_notes"},
-        "payload": {
-            "object_format": "sha1",
-            "full_oid": "4" * 40,
-            "native_type": "blob",
-            "size": len(fake_note_body),
-            "digest_sha256": hashlib.sha256(fake_note_body).hexdigest(),
-            "body_base64": base64.b64encode(fake_note_body).decode("ascii"),
-            # missing proof_bundle, root, target, etc.
-        },
-        "extraction_status": ExtractionStatus.CLEAN.value,
-        "error": None,
-    }
-    salvage_file.write_text(json.dumps(unproven_cand) + "\n", encoding="utf-8")
-
-    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
-    assert merge_receipt.admitted_units == 0
-    assert merge_receipt.rejected_units == 1
-    assert (
-        "Missing required notes role proof or body"
-        in merge_receipt.rejections[0]["reason"]
-    )
 
 
 def test_case_06_context_text_survives_with_verified_sha256(
@@ -412,76 +367,6 @@ def test_case_08_rejected_candidates_cause_no_mutation(
     conn.close()
 
     assert init_rows == post_rows
-
-
-def test_case_09_original_capture_and_provenance_survive_replay(
-    synthetic_catalog, tmp_path, repo_uuid
-):
-    """Case 9: Original Capture and provenance survive replay when supported."""
-    service = RecoveryService()
-    salvage_file = tmp_path / "salvage_case9.jsonl"
-    receipt = service.extract_salvage(synthetic_catalog, salvage_file)
-    assert receipt.candidate_count > 0
-
-    lines = [
-        json.loads(line)
-        for line in salvage_file.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    note_candidates = [
-        c for c in lines if c["candidate_type"] == CandidateType.NOTES_MAPPING.value
-    ]
-    assert len(note_candidates) == 1
-    cand = note_candidates[0]
-    assert cand["capture_origin_uuidv4"] is not None
-    assert cand["capture_uuidv4"] is not None
-    # Forensic extraction coordinates are separated from domain provenance
-    assert cand["extraction_provenance"] == {"store": "core", "table": "retained_notes"}
-
-    # Reopen fresh destination and replay salvage candidates
-    backup_path = tmp_path / "backup_case9"
-    service.create_consistent_backup(
-        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
-    )
-    fresh_dest = tmp_path / "fresh_case9"
-    service.restore_backup(backup_path, fresh_dest, repo_uuid)
-
-    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
-    assert merge_receipt.replayed_units >= 1
-
-    # Reopen database to verify original domain coordinates survive replay intact
-    conn = sqlite3.connect(
-        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
-    )
-    register_functions(conn)
-    row = conn.execute(
-        "SELECT capture_origin_uuidv4, capture_uuidv4, full_oid, root, target, path "
-        "FROM retained_notes WHERE full_oid=?",
-        (cand["payload"]["full_oid"],),
-    ).fetchone()
-    # Assert original Capture binding preserved without inventing arbitrary replacement
-    cap_row = conn.execute(
-        "SELECT source, ref FROM captures WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-        (cand["capture_origin_uuidv4"], cand["capture_uuidv4"]),
-    ).fetchone()
-    conn.close()
-
-    assert row is not None
-    assert row[0] == cand["capture_origin_uuidv4"]
-    assert row[1] == cand["capture_uuidv4"]
-    assert row[2] == cand["payload"]["full_oid"]
-    assert row[3] == cand["payload"]["root"]
-    assert row[4] == cand["payload"]["target"]
-    assert row[5] == cand["payload"]["path"]
-
-    assert cap_row is not None
-    assert cap_row[0] == "local-notes"
-    ref_decoded = cap_row[1]
-    if not ref_decoded.startswith("refs/"):
-        parsed = json.loads(ref_decoded)
-        if isinstance(parsed, list) and len(parsed) == 2 and parsed[0] == "native-ref":
-            ref_decoded = bytes.fromhex(parsed[1]).decode("utf-8")
-    assert ref_decoded == "refs/notes/commits"
 
 
 def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_path):
@@ -1138,89 +1023,6 @@ def test_case_26_completion_fence_aborts_backup_publication_if_stopped(
         )
 
     assert not backup_path.exists()
-
-
-def test_case_27_conflicting_immutable_capture_rebinding_rejected(
-    synthetic_catalog, tmp_path, repo_uuid
-):
-    """Case 27: Conflicting immutable Capture rebinding is rejected closed."""
-    service = RecoveryService()
-    backup_path = tmp_path / "backups" / "case27_backup"
-    service.create_consistent_backup(
-        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
-    )
-    fresh_dest = tmp_path / "fresh_case27"
-    service.restore_backup(backup_path, fresh_dest, repo_uuid)
-
-    salvage_file = tmp_path / "salvage_case27.jsonl"
-    cand = {
-        "candidate_id": "conflicting-cap-1",
-        "candidate_type": CandidateType.GIT_METADATA.value,
-        "capture_origin_uuidv4": "66666666-6666-4666-8666-666666666666",
-        "capture_uuidv4": "77777777-7777-4777-8777-777777777777",
-        "extraction_provenance": {"store": "core", "table": "captures"},
-        "payload": {
-            "capture_origin_uuidv4": "66666666-6666-4666-8666-666666666666",
-            "capture_uuidv4": "77777777-7777-4777-8777-777777777777",
-            "repository_uuidv4": repo_uuid,
-            "source": "evil-source",
-            "ref": "refs/heads/main",
-            "object_format": "sha1",
-            "root": "1" * 40,
-        },
-        "extraction_status": ExtractionStatus.CLEAN.value,
-        "error": None,
-    }
-    salvage_file.write_text(json.dumps(cand) + "\n", encoding="utf-8")
-
-    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
-    assert merge_receipt.rejected_units == 1
-    assert merge_receipt.admitted_units == 0
-
-
-def test_case_28_missing_capture_binding_records_qualified_observation(
-    synthetic_catalog, tmp_path, repo_uuid
-):
-    """Case 28: Missing Capture binding records qualified observation without authoritative mutation."""
-    service = RecoveryService()
-    backup_path = tmp_path / "backups" / "case28_backup"
-    service.create_consistent_backup(
-        synthetic_catalog, backup_path, scope=BackupScope.PAIRED
-    )
-    fresh_dest = tmp_path / "fresh_case28"
-    service.restore_backup(backup_path, fresh_dest, repo_uuid)
-
-    salvage_file = tmp_path / "salvage_case28.jsonl"
-    unknown_origin = str(uuid4())
-    unknown_id = str(uuid4())
-    note_blob = make_commit("sha1", "0" * 40, [], message="Unbound note\n")
-    cand = {
-        "candidate_id": "unbound-note-1",
-        "candidate_type": CandidateType.NOTES_MAPPING.value,
-        "capture_origin_uuidv4": unknown_origin,
-        "capture_uuidv4": unknown_id,
-        "extraction_provenance": {"store": "core", "table": "retained_notes"},
-        "payload": {
-            "object_format": "sha1",
-            "full_oid": note_blob.oid.full_oid,
-            "physical_copy_uuidv4": str(uuid4()),
-            "native_type": "blob",
-            "size": len(note_blob.body),
-            "digest_sha256": hashlib.sha256(note_blob.body).hexdigest(),
-            "root": "0" * 40,
-            "target": "1" * 40,
-            "path": "0" * 40,
-            "proof_bundle": json.dumps([]),
-            "body_base64": "dGVzdA==",
-        },
-        "extraction_status": ExtractionStatus.CLEAN.value,
-        "error": None,
-    }
-    salvage_file.write_text(json.dumps(cand) + "\n", encoding="utf-8")
-
-    merge_receipt = service.merge_salvage(fresh_dest, salvage_file)
-    assert merge_receipt.observation_units == 1
-    assert merge_receipt.admitted_units == 0
 
 
 def test_case_29_cumulative_request_budget_persists_across_retries(

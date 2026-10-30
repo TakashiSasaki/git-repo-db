@@ -44,7 +44,6 @@ from repo_catalog.domain.exchange import (
     empty_core_section,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
-from repo_catalog.domain.notes import NotesInventory, verify_inventory
 from repo_catalog.domain.p1_coordination import (
     AdmissionFailure,
     CoordinationError,
@@ -52,20 +51,15 @@ from repo_catalog.domain.p1_coordination import (
 )
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
     NativeObject,
-    NotesClaim,
-    NotesGroup,
-    NotesProof,
     Provenance,
     RelationGroup,
     RelationMember,
     RepositoryClaim,
     ScalarClaim,
-    _notes_group,
     _performed,
     account_verification,
     encode,
@@ -73,7 +67,6 @@ from repo_catalog.domain.p1_core import (
     uuid4_value,
     valid_coverage_members,
     valid_group,
-    valid_note_role,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.p1_core import WorkBudget
@@ -169,56 +162,6 @@ def _recomputed_intrinsic_keys(
         group_keys.add(group.key)
 
     return claim_keys, group_keys
-
-
-def _decode_capture_ref(raw_ref: str) -> str:
-    if raw_ref.startswith("refs/"):
-        return raw_ref
-    try:
-        parsed = json.loads(raw_ref)
-        if isinstance(parsed, list) and len(parsed) == 2 and parsed[0] == "native-ref":
-            return bytes.fromhex(parsed[1]).decode("utf-8", "surrogateescape")
-    except Exception:
-        pass
-    return raw_ref
-
-
-def _notes_proof_from_bundle_json(
-    cap: Capture,
-    target: OID,
-    note: OID,
-    path: str,
-    bundle_json: str,
-) -> NotesProof:
-    try:
-        raw_bundle = json.loads(bundle_json)
-        fmt = cap.root.object_format
-        structures = []
-        for item in raw_bundle:
-            body_hex = item[2]
-            if (
-                type(body_hex) is not str
-                or len(body_hex) % 2
-                or any(char not in "0123456789abcdef" for char in body_hex)
-            ):
-                raise ValueError("lowercase contiguous proof body hex required")
-            body = bytes.fromhex(body_hex)
-            _performed("verification_bytes", len(body))
-            structures.append(
-                NativeObject(
-                    OID(fmt, item[0]),
-                    item[1],
-                    body,
-                    len(body),
-                    hashlib.sha256(body).hexdigest(),
-                )
-            )
-        structures = tuple(structures)
-    except (ValueError, TypeError, KeyError, IndexError) as exc:
-        raise CoreFailure(
-            "NOTES_PROOF", (cap.pair, target), f"invalid proof bundle: {exc}"
-        ) from exc
-    return NotesProof(cap, target, note, path, structures)
 
 
 def _checked_registration(ctx: Context, kind: str, encoded: str) -> str:
@@ -750,10 +693,6 @@ class ExchangeService:
         section = empty_core_section()
         selected_oids = None if scope.object_oids is None else set(scope.object_oids)
 
-        selected_notes_refs = (
-            None if scope.notes_refs is None else set(scope.notes_refs)
-        )
-
         core = GitCore(self.directory / "core.sqlite3")
         try:
             self._bound_export_connection(core._db)
@@ -1004,275 +943,6 @@ class ExchangeService:
                         }
                     )
 
-                capture_rows = core.exchange_metadata_rows("captures", (), ref_work)
-                exported_captures: list[Capture] = []
-                exported_capture_pairs: set[tuple[str, str]] = set()
-                captures_by_pair = {}
-                for row in capture_rows:
-
-                    def stored_capture(value):
-                        capture = Capture(
-                            value[0],
-                            value[1],
-                            value[2],
-                            value[3],
-                            _decode_capture_ref(value[4]),
-                            OID(value[5], value[6]),
-                        )
-                        if capture.key != tuple(value):
-                            raise ValueError("noncanonical stored Capture")
-                        return capture
-
-                    if type(row[4]) is not str:
-                        core._integrity_stop(("Capture", "invalid ref type"))
-                    ref_work.require("input_bytes", 13 * len(row[4]) + 2)
-                    try:
-                        cap = core._stored("Capture", stored_capture, row)
-                    except BaseException:
-                        ref_work.abandon("input_bytes")
-                        raise
-                    ref_work.charge("input_bytes", 2 * len(row[4]))
-                    if selected_oids is not None and cap.root not in selected_oids:
-                        continue
-                    if (
-                        selected_notes_refs is not None
-                        and cap.ref not in selected_notes_refs
-                    ):
-                        continue
-                    exported_captures.append(cap)
-                    exported_capture_pairs.add(cap.pair)
-                    captures_by_pair[cap.pair] = cap
-                    referenced_oids.add(cap.root)
-                    section["captures"].append(
-                        {
-                            "capture_origin_uuidv4": row[0],
-                            "capture_uuidv4": row[1],
-                            "repository_uuidv4": row[2],
-                            "source": row[3],
-                            "ref": row[4],
-                            "object_format": row[5],
-                            "root": row[6],
-                        }
-                    )
-
-                for row in core.exchange_metadata_rows("notes_claims", (), ref_work):
-                    if (row[0], row[1]) not in exported_capture_pairs:
-                        continue
-                    target_oid = core._stored("notes claim", OID, row[2], row[3])
-                    if selected_oids is not None and target_oid not in selected_oids:
-                        continue
-                    note_oid = core._stored("notes claim", OID, row[2], row[4])
-                    if type(row[5]) is not str:
-                        core._integrity_stop(("notes claim", "invalid provenance type"))
-
-                    def stored_notes_claim(value):
-                        claim = NotesClaim(
-                            captures_by_pair[(value[0], value[1])],
-                            target_oid,
-                            note_oid,
-                            Provenance(*json.loads(value[5])),
-                        )
-                        if claim.key != tuple(value):
-                            raise ValueError("noncanonical stored notes claim")
-                        return claim
-
-                    ref_work.require("input_bytes", 13 * len(row[5]) + 2)
-                    try:
-                        core._stored("notes claim", stored_notes_claim, row)
-                    except BaseException:
-                        ref_work.abandon("input_bytes")
-                        raise
-                    ref_work.charge("input_bytes", 2 * len(row[5]))
-                    referenced_oids.add(target_oid)
-                    referenced_oids.add(note_oid)
-                    section["notes_claims"].append(
-                        {
-                            "capture_origin_uuidv4": row[0],
-                            "capture_uuidv4": row[1],
-                            "object_format": row[2],
-                            "target": row[3],
-                            "note": row[4],
-                            "provenance_json": row[5],
-                        }
-                    )
-
-                for cap in exported_captures:
-                    # 1. Verify receiver_intrinsic notes_inventories via core.notes_inventories(cap)
-                    invs = core.notes_inventories(cap)
-                    for inv in invs:
-                        for t_hex, n_hex, _p in inv.members:
-                            referenced_oids.add(OID(cap.root.object_format, t_hex))
-                            referenced_oids.add(OID(cap.root.object_format, n_hex))
-                        if scope.include_retained_bytes:
-                            section["notes_inventories"].append(
-                                {
-                                    "capture_origin_uuidv4": cap.capture_origin_uuidv4,
-                                    "capture_uuidv4": cap.capture_uuidv4,
-                                    "status": inv.status,
-                                    "members": [list(m) for m in inv.members],
-                                    "structures": [
-                                        {
-                                            "object_format": s.oid.object_format,
-                                            "full_oid": s.oid.full_oid,
-                                            "native_type": s.native_type,
-                                            "body_hex": s.body.hex(),
-                                            "declared_size": s.declared_size,
-                                            "digest_sha256": s.digest_sha256,
-                                        }
-                                        for s in inv.structures
-                                    ],
-                                    "failure": (
-                                        None
-                                        if inv.failure is None
-                                        else [inv.failure.code, inv.failure.detail]
-                                    ),
-                                }
-                            )
-                        else:
-                            downgraded_prov = Provenance(
-                                cap.source,
-                                encode(cap.key),
-                                "notes-inventory",
-                                "git-native-notes-inventory",
-                                "1",
-                                "reported",
-                            )
-                            section["notes_groups"].append(
-                                {
-                                    "capture_origin_uuidv4": cap.capture_origin_uuidv4,
-                                    "capture_uuidv4": cap.capture_uuidv4,
-                                    "object_format": cap.root.object_format,
-                                    "scope": "all-notes-mappings",
-                                    "status": inv.status,
-                                    "membership_json": encode(
-                                        [list(m) for m in inv.members]
-                                    ),
-                                    "provenance_json": downgraded_prov.encoded,
-                                    "authority": "reported",
-                                }
-                            )
-
-                    # 2. Verify notes_groups and note_roles via core.notes_projection
-                    core.notes_projection(cap, cap.root)
-                    role_targets = core.exchange_metadata_rows(
-                        "note_role_targets", cap.pair, ref_work
-                    )
-                    for rt in role_targets:
-                        t_oid = core._stored(cap.pair, OID, rt[0], rt[1])
-                        if selected_oids is not None and t_oid not in selected_oids:
-                            continue
-                        core.notes_projection(cap, t_oid)
-
-                    ng_rows = core._legacy_exchange_metadata_rows(
-                        "notes_groups", (*cap.pair, cap.root.object_format), ref_work
-                    )
-                    for ng in ng_rows:
-                        if not ng[0] or not _notes_group(
-                            cap.root.object_format, ng[1], ng[2]
-                        ):
-                            core._integrity_stop(
-                                (cap.pair, "invalid-stored-notes-group")
-                            )
-                        prov = core._provenance_value(cap.pair, ng[3])
-                        if prov.qualification != "reported":
-                            continue
-                        for m in json.loads(ng[2]):
-                            referenced_oids.add(OID(cap.root.object_format, m[0]))
-                            referenced_oids.add(OID(cap.root.object_format, m[1]))
-                        section["notes_groups"].append(
-                            {
-                                "capture_origin_uuidv4": cap.capture_origin_uuidv4,
-                                "capture_uuidv4": cap.capture_uuidv4,
-                                "object_format": cap.root.object_format,
-                                "scope": ng[0],
-                                "status": ng[1],
-                                "membership_json": ng[2],
-                                "provenance_json": ng[3],
-                                "authority": "reported",
-                            }
-                        )
-
-                    nr_rows = core._legacy_exchange_metadata_rows(
-                        "note_roles", cap.pair, ref_work
-                    )
-                    for nr in nr_rows:
-                        t_oid = core._stored(cap.pair, OID, nr[0], nr[2])
-                        n_oid = core._stored(cap.pair, OID, nr[0], nr[3])
-                        if selected_oids is not None and t_oid not in selected_oids:
-                            continue
-                        if not valid_note_role(
-                            nr[0], nr[1], nr[2], nr[3], nr[4], nr[5]
-                        ):
-                            core._integrity_stop((cap.pair, t_oid, "notes-role"))
-                        referenced_oids.add(t_oid)
-                        referenced_oids.add(n_oid)
-                        section["note_roles"].append(
-                            {
-                                "capture_origin_uuidv4": cap.capture_origin_uuidv4,
-                                "capture_uuidv4": cap.capture_uuidv4,
-                                "object_format": nr[0],
-                                "root": nr[1],
-                                "target": nr[2],
-                                "note": nr[3],
-                                "path": nr[4],
-                                "proof_bundle_json": nr[5],
-                            }
-                        )
-
-                    rn_rows = core._legacy_exchange_metadata_rows(
-                        "retained_notes", cap.pair, ref_work
-                    )
-
-                    for rn in rn_rows:
-                        t_oid = core._stored(cap.pair, OID, rn[0], rn[6])
-                        n_oid = core._stored(cap.pair, OID, rn[0], rn[1])
-                        copy = core._stored(cap.pair, uuid4_value, rn[2])
-                        if selected_oids is not None and t_oid not in selected_oids:
-                            continue
-                        # Verify the specific physical copy being emitted, not
-                        # another retained copy of the same content OID.
-                        actual = core.read_legacy_note_copy(n_oid, copy, ref_work)
-                        if (
-                            actual["capture_origin_uuidv4"],
-                            actual["capture_uuidv4"],
-                        ) != cap.pair or tuple(
-                            actual[name]
-                            for name in (
-                                "object_format",
-                                "full_oid",
-                                "physical_copy_uuidv4",
-                                "size",
-                                "digest_sha256",
-                                "root",
-                                "target",
-                                "path",
-                                "proof_bundle",
-                            )
-                        ) != tuple(rn):
-                            core._integrity_stop(
-                                (cap.pair, n_oid, "changed legacy note copy")
-                            )
-                        note_bytes = actual["body"]
-                        referenced_oids.add(t_oid)
-                        referenced_oids.add(n_oid)
-                        if scope.include_retained_bytes:
-                            section["retained_notes"].append(
-                                {
-                                    "object_format": rn[0],
-                                    "full_oid": rn[1],
-                                    "physical_copy_uuidv4": rn[2],
-                                    "body_hex": note_bytes.hex(),
-                                    "size": rn[3],
-                                    "digest_sha256": rn[4],
-                                    "capture_origin_uuidv4": cap.capture_origin_uuidv4,
-                                    "capture_uuidv4": cap.capture_uuidv4,
-                                    "root": rn[5],
-                                    "target": rn[6],
-                                    "path": rn[7],
-                                    "proof_bundle_json": rn[8],
-                                }
-                            )
-
                 cov_scope_rows = core.exchange_metadata_rows(
                     "coverage_scopes", (), ref_work
                 )
@@ -1288,23 +958,37 @@ class ExchangeService:
                     if type(coordinates) is not list:
                         raise ValueError("Coverage coordinates must be a list")
                     stored = CoreCoverageScope(row[0], tuple(coordinates))
-                    if stored.encoded != row[1] or stored.coordinates[-1] != row[8]:
-                        raise ValueError("noncanonical Coverage scope")
-                    values = [None] * 8
-                    positions = {
-                        "repository": (0,),
-                        "capture": (1, 2),
-                        "ref_observation": (6, 7),
-                        "object": (3, 4),
-                        "field": (3, 4, 5),
-                    }
-                    for position, value in zip(
-                        positions[stored.owner_kind],
-                        stored.coordinates[:-1],
-                        strict=True,
+                    if (
+                        stored.encoded != row["owner_coordinates_json"]
+                        or stored.coordinates[-1] != row["coverage_kind"]
                     ):
-                        values[position] = value
-                    if tuple(values) != (*row[2:8], *row[9:11]):
+                        raise ValueError("noncanonical Coverage scope")
+                    columns = (
+                        "repository_uuidv4",
+                        "object_format",
+                        "full_oid",
+                        "field",
+                        "observation_origin_uuidv4",
+                        "ref_observation_uuidv7",
+                    )
+                    expected = dict.fromkeys(columns)
+                    bindings = {
+                        "repository": ("repository_uuidv4",),
+                        "ref_observation": (
+                            "observation_origin_uuidv4",
+                            "ref_observation_uuidv7",
+                        ),
+                        "object": ("object_format", "full_oid"),
+                        "field": ("object_format", "full_oid", "field"),
+                    }
+                    expected.update(
+                        zip(
+                            bindings[stored.owner_kind],
+                            stored.coordinates[:-1],
+                            strict=True,
+                        )
+                    )
+                    if any(expected[column] != row[column] for column in columns):
                         raise ValueError("Coverage scope columns disagree")
                     return stored
 
@@ -1323,11 +1007,6 @@ class ExchangeService:
                         ref_work.abandon("input_bytes")
                         raise
                     ref_work.charge("input_bytes", 2 * len(row[1]))
-                    if (
-                        owner_kind == "capture"
-                        and (row[3], row[4]) not in exported_capture_pairs
-                    ):
-                        continue
                     if owner_kind in ("object", "field") and selected_oids is not None:
                         if OID(row[5], row[6]) not in selected_oids:
                             continue
@@ -3070,28 +2749,6 @@ class ExchangeService:
                     ),
                     ("status", "membership_json"),
                 ),
-                (
-                    "notes_claims",
-                    (
-                        "capture_origin_uuidv4",
-                        "capture_uuidv4",
-                        "object_format",
-                        "target",
-                        "provenance_json",
-                    ),
-                    ("note",),
-                ),
-                (
-                    "notes_groups",
-                    (
-                        "capture_origin_uuidv4",
-                        "capture_uuidv4",
-                        "object_format",
-                        "scope",
-                        "provenance_json",
-                    ),
-                    ("status", "membership_json"),
-                ),
             ):
 
                 def column(name):
@@ -3100,51 +2757,24 @@ class ExchangeService:
                 for row in data[section]:
                     if row.get("authority", "reported") != "reported":
                         continue
-                    if section == "notes_groups":
-                        prior = core.original_notes_group_payload(
-                            (row["capture_origin_uuidv4"], row["capture_uuidv4"]),
-                            row["object_format"],
-                            row["scope"],
-                            row["provenance_json"],
-                        )
-                        found = [] if prior is None else [prior]
-                    else:
-                        found = core.sql(
-                            "SELECT "
-                            + ",".join(column(k) for k in payload)
-                            + " FROM "
-                            + section
-                            + " WHERE "
-                            + " AND ".join(column(k) + "=?" for k in keys),
-                            tuple(row[k] for k in keys),
-                        )
+                    found = core.sql(
+                        "SELECT "
+                        + ",".join((column(k) for k in payload))
+                        + " FROM "
+                        + section
+                        + " WHERE "
+                        + " AND ".join((column(k) + "=?" for k in keys)),
+                        tuple((row[k] for k in keys)),
+                    )
                     if found:
                         self._dependency_rows += 1
-                        if tuple(found[0]) != tuple(row[k] for k in payload):
+                        if tuple(found[0]) != tuple((row[k] for k in payload)):
                             raise ExchangeError(
                                 "IMMUTABLE_REPLAY_CONFLICT", ["core", section]
                             )
             repos = {
                 r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
             }
-            for row in data["captures"]:
-                existing = core.capture_binding(
-                    (row["capture_origin_uuidv4"], row["capture_uuidv4"])
-                )
-                if existing is not None:
-                    self._dependency_rows += 1
-                    incoming = Capture(
-                        row["capture_origin_uuidv4"],
-                        row["capture_uuidv4"],
-                        row["repository_uuidv4"],
-                        row["source"],
-                        _decode_capture_ref(row["ref"]),
-                        OID(row["object_format"], row["root"]),
-                    )
-                    if existing != incoming:
-                        raise ExchangeError(
-                            "IMMUTABLE_REPLAY_CONFLICT", ["core", "captures"]
-                        )
             for row in data["git_observations"]:
                 existing = core.sql(
                     "SELECT value FROM git_observations WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND repository_uuidv4=? AND kind=? AND scope=? AND provenance=?",
@@ -3167,13 +2797,7 @@ class ExchangeService:
                 tuple(r)
                 for r in core.sql("SELECT object_format,full_oid FROM git_objects")
             }
-            captures = {
-                tuple(r)
-                for r in core.sql(
-                    "SELECT capture_origin_uuidv4,capture_uuidv4 FROM captures"
-                )
-            }
-        self._dependency_rows += len(repos) + len(captures) + len(oids)
+        self._dependency_rows += len(repos) + len(oids)
         repos.update(r["repository_uuidv4"] for r in data["repositories"])
         oids.update((r["object_format"], r["full_oid"]) for r in data["git_objects"])
 
@@ -3192,7 +2816,7 @@ class ExchangeService:
                     )
             data[key] = kept
 
-        for key in ("repository_claims", "git_observations", "captures"):
+        for key in ("repository_claims", "git_observations"):
             keep(key, lambda r: r["repository_uuidv4"] in repos)
         keep("ref_observations", lambda r: r["repository_uuidv4"] in repos)
         ref_keys = {
@@ -3300,27 +2924,11 @@ class ExchangeService:
                 (r["enumeration_origin_uuidv4"], r["enumeration_uuidv7"]) in event_keys
             ),
         )
-        captures.update(
-            (r["capture_origin_uuidv4"], r["capture_uuidv4"]) for r in data["captures"]
-        )
-        for key in (
-            "notes_claims",
-            "notes_groups",
-            "notes_inventories",
-            "note_roles",
-            "retained_notes",
-        ):
-            keep(
-                key,
-                lambda r: (r["capture_origin_uuidv4"], r["capture_uuidv4"]) in captures,
-            )
 
         def scope_available(r):
             coordinates = json.loads(r["owner_coordinates_json"])
             if r["owner_kind"] == "repository":
                 return coordinates[0] in repos
-            if r["owner_kind"] == "capture":
-                return tuple(coordinates[:2]) in captures
             if r["owner_kind"] == "ref_observation":
                 return tuple(coordinates[:2]) in ref_keys
             return tuple(coordinates[:2]) in oids
@@ -3812,17 +3420,6 @@ class ExchangeService:
                 raise ExchangeError(
                     "REPOSITORY_CLAIM", "core", "canonical value required"
                 )
-        captures_by_pair: dict[tuple[str, str], Capture] = {}
-        for c_item in core_data["captures"]:
-            cap = Capture(
-                c_item["capture_origin_uuidv4"],
-                c_item["capture_uuidv4"],
-                c_item["repository_uuidv4"],
-                c_item["source"],
-                _decode_capture_ref(c_item["ref"]),
-                OID(c_item["object_format"], c_item["root"]),
-            )
-            captures_by_pair[cap.pair] = cap
 
         for meta in core_data["retained_metadata"]:
             oid = OID(meta["object_format"], meta["full_oid"])
@@ -3848,86 +3445,6 @@ class ExchangeService:
             )
             native.validate()
             parse_metadata(oid.object_format, native_type, body)
-
-        for inv_item in core_data["notes_inventories"]:
-            pair = (
-                inv_item["capture_origin_uuidv4"],
-                inv_item["capture_uuidv4"],
-            )
-            if pair not in captures_by_pair:
-                raise CoreFailure(
-                    "NOTES_INVENTORY", pair, "missing Capture for notes_inventory"
-                )
-            cap = captures_by_pair[pair]
-            structures = tuple(
-                NativeObject(
-                    OID(s["object_format"], s["full_oid"]),
-                    s["native_type"],
-                    bytes.fromhex(s["body_hex"]),
-                    s["declared_size"],
-                    str(s["digest_sha256"]),
-                )
-                for s in inv_item["structures"]
-            )
-            fail_raw = inv_item.get("failure")
-            failure = (
-                None
-                if fail_raw is None
-                else CoreFailure(fail_raw[0], cap.pair, fail_raw[1])
-            )
-            members = tuple(tuple(m) for m in inv_item["members"])
-            inv = NotesInventory(cap, inv_item["status"], members, structures, failure)
-            verify_inventory(inv, work)
-
-        for nr in core_data["note_roles"]:
-            pair = (nr["capture_origin_uuidv4"], nr["capture_uuidv4"])
-            cap = captures_by_pair.get(pair)
-            if cap is None:
-                raise CoreFailure("NOTES_PROOF", pair, "missing Capture for note_role")
-            if (nr["object_format"], nr["root"]) != cap.root.key:
-                raise ExchangeError("NOTES_CAPTURE_ROOT", "note_roles")
-            proof = _notes_proof_from_bundle_json(
-                cap,
-                OID(nr["object_format"], nr["target"]),
-                OID(nr["object_format"], nr["note"]),
-                nr["path"],
-                nr["proof_bundle_json"],
-            )
-            proof.validate()
-
-        for rn in core_data["retained_notes"]:
-            pair = (rn["capture_origin_uuidv4"], rn["capture_uuidv4"])
-            cap = captures_by_pair.get(pair)
-            if cap is None:
-                raise CoreFailure(
-                    "NOTES_PROOF", pair, "missing Capture for retained_note"
-                )
-            if (rn["object_format"], rn["root"]) != cap.root.key:
-                raise ExchangeError("NOTES_CAPTURE_ROOT", "retained_notes")
-            note_oid = OID(rn["object_format"], rn["full_oid"])
-            target_oid = OID(rn["object_format"], rn["target"])
-            proof = _notes_proof_from_bundle_json(
-                cap,
-                target_oid,
-                note_oid,
-                rn["path"],
-                rn["proof_bundle_json"],
-            )
-            proof.validate()
-            try:
-                body = bytes.fromhex(rn["body_hex"])
-            except (ValueError, TypeError) as exc:
-                raise CoreFailure(
-                    "NATIVE_INTEGRITY", note_oid, "invalid hex body in retained_notes"
-                ) from exc
-            native = NativeObject(
-                note_oid,
-                "blob",
-                body,
-                rn["size"],
-                str(rn["digest_sha256"]),
-            )
-            native.validate()
 
     def _prevalidate_context_section(
         self,
@@ -4119,114 +3636,9 @@ class ExchangeService:
                 )
             )
 
-        captures_by_pair: dict[tuple[str, str], Capture] = {}
-        for cap_item in core_data["captures"]:
-            _performed("metadata_units", 1)
-            decoded_ref = _decode_capture_ref(cap_item["ref"])
-            cap = Capture(
-                cap_item["capture_origin_uuidv4"],
-                cap_item["capture_uuidv4"],
-                cap_item["repository_uuidv4"],
-                cap_item["source"],
-                decoded_ref,
-                OID(cap_item["object_format"], cap_item["root"]),
-            )
-            captures_by_pair[cap.pair] = cap
-            core_cap.admit_capture(cap)
-
-        for nc in core_data["notes_claims"]:
-            _performed("metadata_units", 1)
-            cap = captures_by_pair[(nc["capture_origin_uuidv4"], nc["capture_uuidv4"])]
-            prov = Provenance(*json.loads(nc["provenance_json"]))
-            core_cap.admit_notes_claim(
-                NotesClaim(
-                    cap,
-                    OID(nc["object_format"], nc["target"]),
-                    OID(nc["object_format"], nc["note"]),
-                    prov,
-                )
-            )
-
-        verified_inventory_captures: set[tuple[str, str]] = set()
-        for inv_item in core_data["notes_inventories"]:
-            _performed("metadata_units", 1)
-            cap = captures_by_pair[
-                (
-                    inv_item["capture_origin_uuidv4"],
-                    inv_item["capture_uuidv4"],
-                )
-            ]
-            structures = tuple(
-                NativeObject(
-                    OID(s["object_format"], s["full_oid"]),
-                    s["native_type"],
-                    bytes.fromhex(s["body_hex"]),
-                    s["declared_size"],
-                    str(s["digest_sha256"]),
-                )
-                for s in inv_item["structures"]
-            )
-            fail_raw = inv_item.get("failure")
-            failure = (
-                None
-                if fail_raw is None
-                else CoreFailure(fail_raw[0], cap.pair, fail_raw[1])
-            )
-            members = tuple(tuple(m) for m in inv_item["members"])
-            inv = NotesInventory(cap, inv_item["status"], members, structures, failure)
-            core_cap.admit_notes_inventory(inv, work)
-            verified_inventory_captures.add(cap.pair)
-
-        for ng in core_data["notes_groups"]:
-            _performed("metadata_units", 1)
-            cap = captures_by_pair[(ng["capture_origin_uuidv4"], ng["capture_uuidv4"])]
-            prov = Provenance(*json.loads(ng["provenance_json"]))
-            authority = ng.get("authority", "reported")
-            if authority == "intrinsic" or prov.qualification == "receiver_intrinsic":
-                if cap.pair not in verified_inventory_captures:
-                    ignored_groups += 1
-                continue
-            members = tuple(tuple(m) for m in json.loads(ng["membership_json"]))
-            core_cap.admit_notes_group(
-                NotesGroup(cap, ng["scope"], ng["status"], members, prov)
-            )
-
         admitted_roles = len(core_data["notes_mapping_evidence"])
-        for nr in core_data["note_roles"]:
-            _performed("metadata_units", 1)
-            cap = captures_by_pair[(nr["capture_origin_uuidv4"], nr["capture_uuidv4"])]
-            proof = _notes_proof_from_bundle_json(
-                cap,
-                OID(nr["object_format"], nr["target"]),
-                OID(nr["object_format"], nr["note"]),
-                nr["path"],
-                nr["proof_bundle_json"],
-            )
-            core_cap.admit_notes_role(proof, work)
-            admitted_roles += 1
 
         admitted_notes = len(core_data["ref_retained_notes"])
-        for rn in core_data["retained_notes"]:
-            _performed("metadata_units", 1)
-            cap = captures_by_pair[(rn["capture_origin_uuidv4"], rn["capture_uuidv4"])]
-            note_oid = OID(rn["object_format"], rn["full_oid"])
-            target_oid = OID(rn["object_format"], rn["target"])
-            proof = _notes_proof_from_bundle_json(
-                cap,
-                target_oid,
-                note_oid,
-                rn["path"],
-                rn["proof_bundle_json"],
-            )
-            native = NativeObject(
-                note_oid,
-                "blob",
-                bytes.fromhex(rn["body_hex"]),
-                rn["size"],
-                str(rn["digest_sha256"]),
-            )
-            core_cap.admit_note(proof, native, rn["physical_copy_uuidv4"], work)
-            admitted_notes += 1
 
         for cs in core_data["coverage_scopes"]:
             _performed("metadata_units", 1)

@@ -19,7 +19,7 @@ from uuid import UUID
 # Access has a separate opt-in factory: adapters/sqlite/access_schema.py.
 STORES = ("core", "context", "operational", "search")
 MIN_SQLITE = (3, 51, 3)  # Includes the verified WAL-reset fix, STRICT and JSON.
-FORMAT = "repo-catalog/p1-isolated-1"
+FORMAT = "repo-catalog/p1-isolated-2"
 
 REQUIRED_PRAGMAS = {
     "foreign_keys": 1,
@@ -186,14 +186,12 @@ def verify_connection(db: sqlite3.Connection, store: str | None = None) -> None:
             ("p1_ref_absence", 1),
             ("p1_mapping_path", 1),
             ("p1_ref_result_formats", 4),
-            ("p1_ref", 1),
             ("p1_coverage_members", 1),
             ("p1_claim", 2),
             ("p1_group", 4),
             ("p1_native", 6),
             ("p1_note_role", 6),
             ("p1_notes_group", 3),
-            ("p4_notes_inventory", 5),
             ("p1_intrinsic_claim", 4),
             ("p1_intrinsic_group", 6),
             ("p1_provenance", 1),

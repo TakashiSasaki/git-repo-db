@@ -42,7 +42,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import WorkLedger, NotesWorkBu
 from repo_catalog.adapters.sqlite.p1_schema import initialize, connect, verify_declared
 from repo_catalog.application.notes import NotesAcquisition
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_core import OID, Capture
+from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.ports.notes import request_scope
 from repo_catalog.domain.p1_coordination import RequestIdentity, NotesLimits
 assert "site-packages" in str(Path(__import__("repo_catalog.application.notes",fromlist=["x"]).__file__))
@@ -75,12 +75,26 @@ result=app.acquire_ref_note(ref_claim,OID("FORMAT",target))
 assert result.body_retained
 projection=core.notes_mapping_projection(ref_claim,OID("FORMAT",target),"git-notes","1","native-notes-tree",work)
 assert core.read_ref_note(ref_claim,projection.evidence[0].mapping,work)==body
-assert not core.sql("SELECT 1 FROM captures")
+assert not core.sql("SELECT 1 FROM sqlite_schema WHERE name='captures'")
 reported=app.inventory_ref(ref_claim).group
 assert app.verify_ref_inventory(reported).verified
 view=ProductionQueryService(Path("."),mode="core_only").list_ref_notes_inventories(ref_claim,work)
 assert view.coverage.state=="complete" and view.groups[0].current_verified
 assert view.groups[0].group==reported
+from repo_catalog.application.exchange import ExchangeService
+from repo_catalog.domain.exchange import FORMAT, ExchangeSelectionScope
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.domain.recovery import BackupScope
+package=ExchangeService(Path("."),operational=Path(".")).export_package(selection=ExchangeSelectionScope(all_selected=True,include_context=False))
+assert FORMAT==package.format=="git-repo-db/adr0036-exchange-v7"
+receiver=Path("receiver"); receiver.mkdir()
+for role in ("core","operational"):
+    initialize(receiver/(role+".sqlite3"),role,repo,instance)
+ExchangeService(receiver,operational=receiver).import_package(package,new_request=True,permitted_repository_uuidv4s=(repo,))
+adapter=SQLiteRecoveryAdapter()
+assert adapter.create_consistent_backup(receiver,Path("backup"),BackupScope.GIT_ONLY).verified_clean
+assert adapter.restore_backup(Path("backup"),Path("fresh"),repo).revalidated_clean
+assert ProductionQueryService(Path("fresh")).read_ref_note_bytes(ref_claim,projection.evidence[0].mapping,work).body_bytes==body
 assert not Path("context.sqlite3").exists()
 core.close(); db.close()
 """.replace("FORMAT", fmt)

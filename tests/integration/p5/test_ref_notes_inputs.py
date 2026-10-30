@@ -245,7 +245,9 @@ def test_original_reports_never_become_receiver_proof(acquisition, paired, metad
             value.claims[0], value.mapping_claims[0].mapping, app.work
         )
     assert unavailable.value.code == "NOTES_ROLE_UNAVAILABLE"
-    assert not app.core.sql("SELECT 1 FROM captures")
+    assert not app.core.sql(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
+    )
     assert not hasattr(first, "notes_inventories") and not hasattr(
         first, "note_acquisitions"
     )
@@ -290,8 +292,12 @@ def test_explicit_claims_use_real_root_specific_checks(acquisition, paired, meta
     assert result.ref_note_acquisitions[0].body_retained
     assert all(check.verified for check in result.ref_inventory_verifications)
     assert result.ref_note_acquisitions[0].claim == value.claims[0]
-    assert not app.core.sql("SELECT 1 FROM captures")
-    assert not app.core.sql("SELECT 1 FROM retained_notes")
+    assert not app.core.sql(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
+    )
+    assert not app.core.sql(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='retained_notes'"
+    )
     assert not app.core.sql(
         "SELECT 1 FROM retained_metadata WHERE full_oid=?", (target.full_oid,)
     )
@@ -355,7 +361,9 @@ def test_all_competing_claims_keep_their_roots_and_permissions(acquisition, pair
         first,
         second,
     }
-    assert not app.core.sql("SELECT 1 FROM captures")
+    assert not app.core.sql(
+        "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
+    )
 
 
 def test_missing_source_defers_checks_but_preserves_reports(acquisition):

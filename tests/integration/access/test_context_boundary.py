@@ -270,7 +270,7 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
     package = ExchangeService(directory).export_package(
         selection=ExchangeSelectionScope(all_selected=True)
     )
-    assert package.format == "git-repo-db/adr0036-exchange-v6"
+    assert package.format == "git-repo-db/adr0036-exchange-v7"
     target = catalog(tmp_path / "target")
     ExchangeService(target).import_package(
         package,

@@ -1,4 +1,4 @@
-"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0036-exchange-v6`).
+"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0036-exchange-v7`).
 
 Enforces strict separation between:
 - Transport envelope identity (`package_id`, `exported_at_us`, `sender_catalog_instance_uuidv4`)
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from repo_catalog.domain.p1_context import ResourceKey
     from repo_catalog.domain.ref_observation import RefObservationKey
 
-FORMAT = "git-repo-db/adr0036-exchange-v6"
+FORMAT = "git-repo-db/adr0036-exchange-v7"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 MAX_DEPTH = 32
 MAX_ELEMENTS = 200_000
@@ -396,7 +396,6 @@ CORE_SECTION_KEYS = (
     "scalar_claims",
     "relation_groups",
     "git_observations",
-    "captures",
     "ref_observations",
     "ref_observation_claims",
     "ref_enumeration_observations",
@@ -406,12 +405,7 @@ CORE_SECTION_KEYS = (
     "notes_mapping_evidence",
     "ref_retained_notes",
     "ref_coverage_proofs",
-    "notes_claims",
-    "notes_groups",
-    "notes_inventories",
     "retained_metadata",
-    "note_roles",
-    "retained_notes",
     "coverage_scopes",
     "coverage_claims",
     "coverage_proofs",
@@ -703,7 +697,7 @@ def empty_context_section() -> dict[str, list[dict[str, Any]]]:
 
 @dataclass(frozen=True)
 class ExchangePackage:
-    """Portable typed Exchange package (`git-repo-db/adr0036-exchange-v6`)."""
+    """Portable typed Exchange package (`git-repo-db/adr0036-exchange-v7`)."""
 
     package_id: str
     exported_at_us: int | None

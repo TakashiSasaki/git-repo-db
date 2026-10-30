@@ -18,15 +18,9 @@ from repo_catalog.application.ref_observations import (
     encode_metered,
     pin_scan,
 )
-from repo_catalog.domain.notes import (
-    mapping_evidence,
-    mapping_inventory,
-    mapping_proof,
-    ref_mapping_inventory,
-)
+from repo_catalog.domain.notes import mapping_evidence, ref_mapping_inventory
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
@@ -57,29 +51,6 @@ class Discovery:
     failure_code: str | None
     detail: str
     enumerations: tuple = ()
-
-
-@dataclass(frozen=True)
-class _LegacyDiscovery:
-    """Internal deferred-family diagnostic result; not normal acquisition."""
-
-    observation: GitObservation
-    captures: tuple[Capture, ...]
-    failure_code: str | None
-    detail: str
-    enumerations: tuple = ()
-
-
-@dataclass(frozen=True)
-class _LegacyNoteAcquisition:
-    capture: Capture
-    target: OID
-    note: OID | None
-    physical_copy_uuidv4: str | None
-    role_verified: bool
-    body_retained: bool
-    failure_code: str | None = None
-    detail: str = ""
 
 
 @dataclass(frozen=True)
@@ -208,10 +179,6 @@ class NotesAcquisition:
             nominated,
         )
 
-    def _legacy_discover(self, *args, **kwargs):
-        """Deferred physical-family diagnostics only; normal discovery never calls this."""
-        return self._discover(*args, **kwargs, _legacy=True)
-
     def _discover(
         self,
         repository_uuidv4: str,
@@ -220,8 +187,6 @@ class NotesAcquisition:
         observation_uuidv4: str,
         observed_at_us: int,
         nominated: tuple[str, ...] = (),
-        *,
-        _legacy=False,
     ) -> Discovery:
         actual_repository = self._ready()
         if (
@@ -277,8 +242,7 @@ class NotesAcquisition:
                     candidate = {
                         "binding": binding,
                         "refs": [
-                            [name.hex(), *oid.key] + ([str(uuid4())] if _legacy else [])
-                            for name, oid in inventory.refs
+                            [name.hex(), *oid.key] for name, oid in inventory.refs
                         ],
                         "status": inventory.status,
                         "terminal": inventory.terminal,
@@ -352,21 +316,6 @@ class NotesAcquisition:
         self.work.require("metadata_units", 1 + len(refs))
         self.work.charge("metadata_units", 1 + len(refs))
         self.core.admit_observation(observation)
-        captures = ()
-        if _legacy:
-            captures = tuple(
-                Capture(
-                    origin_uuidv4,
-                    row[3],
-                    repository_uuidv4,
-                    source_attribution,
-                    name,
-                    oid,
-                )
-                for row, (name, oid) in zip(saved["refs"], refs)
-            )
-            for capture in captures:
-                self.core.admit_capture(capture)
         enumerations = []
         names = tuple(
             sorted(set(n.encode("utf-8", "surrogateescape") for n in nominated))
@@ -463,24 +412,7 @@ class NotesAcquisition:
                 except CoreFailure as error:
                     failure_code, detail = error.code, str(error)
                     break
-        if _legacy:
-            return _LegacyDiscovery(
-                observation, captures, failure_code, detail, tuple(enumerations)
-            )
         return Discovery(observation, failure_code, detail, tuple(enumerations))
-
-    def _legacy_inventory(self, capture):
-        actual_repository = self._ready()
-        if capture.repository_uuidv4 != actual_repository:
-            raise CoreFailure(
-                "NOTES_SCOPE", capture.pair, "request source/repository mismatch"
-            )
-        self.core.admit_capture(capture)
-        result = mapping_inventory(
-            capture, lambda oid: self.source.metadata(oid, self.work), self.work
-        )
-        self.core.admit_notes_inventory(result, self.work)
-        return result
 
     def inventory_ref(self, claim: RefObservationClaim) -> RefNotesInventory:
         """Pin and report one whole root-scoped inventory for this exact Claim."""
@@ -786,59 +718,6 @@ class NotesAcquisition:
                     "INCOMPATIBLE_REPLAY", slot, "verification pin changed"
                 )
             return RefNotesInventoryVerification(group, coverage, provenance, True)
-
-    def _legacy_acquire_note(
-        self, capture, target, *, retain_body=True, physical_copy_uuidv4=None
-    ):
-        actual_repository = self._ready()
-        if capture.repository_uuidv4 != actual_repository:
-            raise CoreFailure(
-                "NOTES_SCOPE", capture.pair, "request source/repository mismatch"
-            )
-        self.core.admit_capture(capture)
-        try:
-            proof = mapping_proof(
-                capture,
-                target,
-                lambda oid: self.source.metadata(oid, self.work),
-                self.work,
-            )
-        except CoreFailure as error:
-            return _LegacyNoteAcquisition(
-                capture, target, None, None, False, False, error.code, str(error)
-            )
-        # Independently admissible role metadata survives body input refusal.
-        self.core.admit_notes_role(proof, self.work)
-        if not retain_body:
-            return _LegacyNoteAcquisition(
-                capture, target, proof.note, None, True, False
-            )
-        try:
-            native = self.source.note_body(proof, self.work)
-            if physical_copy_uuidv4 is None:
-                scope = encode(
-                    [
-                        "p4-note-copy",
-                        *capture.pair,
-                        *target.key,
-                        *proof.note.key,
-                        proof.path,
-                    ]
-                )
-                saved = self.progress.load(scope)
-                if saved is None:
-                    saved = self.progress.save_once(
-                        scope, {"physical_copy_uuidv4": str(uuid4())}
-                    )
-                physical_copy_uuidv4 = saved["physical_copy_uuidv4"]
-            self.core.admit_note(proof, native, physical_copy_uuidv4, self.work)
-            return _LegacyNoteAcquisition(
-                capture, target, proof.note, physical_copy_uuidv4, True, True
-            )
-        except CoreFailure as error:
-            return _LegacyNoteAcquisition(
-                capture, target, proof.note, None, True, False, error.code, str(error)
-            )
 
     def acquire_ref_note(
         self,

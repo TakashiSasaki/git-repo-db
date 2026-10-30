@@ -1,5 +1,5 @@
 {
-  "format": "repo-catalog/p1-isolated-1",
+  "format": "repo-catalog/p1-isolated-2",
   "stores": {
     "context": {
       "ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
@@ -27,10 +27,9 @@
       ]
     },
     "core": {
-      "ddl_sha256": "bd937c2dbe3d308c4d4e7167f02b85d4c4613392d1bf8ebe2ce8403678e981ca",
-      "sqlite_schema_sha256": "8d546e7cb93b2fb9584edf7ef89898f3d2c75149b3b4e011b71356ab4d6f217e",
+      "ddl_sha256": "753f97a2126f18311d6029483dffb9846fd2442db9908eba5a1c1aff98e4f8fc",
+      "sqlite_schema_sha256": "73e0c663331158558eb6b572a72a9008f8f7b053aa091b5410a397aa9b15ea34",
       "tables": [
-        "captures",
         "core_coverage_proofs",
         "coverage_claims",
         "coverage_scopes",
@@ -38,9 +37,6 @@
         "git_observations",
         "intrinsic_claims",
         "intrinsic_groups",
-        "note_roles",
-        "notes_claims",
-        "notes_groups",
         "notes_mapping_claims",
         "notes_mapping_evidence",
         "notes_mapping_groups",
@@ -55,7 +51,6 @@
         "repositories",
         "repository_claims",
         "retained_metadata",
-        "retained_notes",
         "scalar_claims",
         "store_identity"
       ]

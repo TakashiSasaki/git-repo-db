@@ -262,7 +262,7 @@ def test_retry_preserves_notes_capture_and_all_copy_ids(tmp_path, git_format):
     core = GitCore(cat / "core.sqlite3")
     try:
         assert core.sql("SELECT count(*) FROM retained_metadata")[0][0] == 1
-        assert core.sql("SELECT count(*) FROM retained_notes")[0][0] == 1
+        assert core.sql("SELECT count(*) FROM ref_retained_notes")[0][0] == 2
         assert (
             core.coverage(CoreCoverageScope("repository", (repo, "git_metadata"))).state
             == "partial"

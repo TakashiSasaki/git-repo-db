@@ -1097,41 +1097,6 @@ def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
     assert c.read_ref_note(claim, mapping, Budget()) == note.body
 
 
-def test_legacy_copy_identity_conflict_is_not_misclassified_as_corruption(core):
-    c, path, repository = core
-    proof, note = old_mapping(repository)
-    copy = str(uuid4())
-    c.admit_note(proof, note, copy, Budget())
-    obs = subject(repository)
-    c.admit_ref_observation(obs)
-    claim = RefObservationClaim(
-        obs.ref_observation_key,
-        provenance("ref"),
-        "present",
-        root_oid=proof.capture.root,
-    )
-    c.admit_ref_observation_claim(claim)
-    mapping = NotesMapping(
-        proof.capture.root,
-        "git-notes",
-        "1",
-        "tree",
-        proof.target,
-        proof.note,
-        proof.path,
-    )
-    evidence = NotesMappingEvidence(
-        claim, mapping, "single-path", received("e"), proof.structures
-    )
-    with pytest.raises(
-        sqlite3.IntegrityError, match="conflicting exact note representation"
-    ):
-        c.admit_ref_note(evidence, note, copy, Budget())
-    assert not c.sql("SELECT 1 FROM ref_retained_notes")
-    assert not (path.parent / "p1-recovery-stop.json").exists()
-    assert c.read_note(proof.capture, proof.target, proof.note) == note.body
-
-
 def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(core):
     c, path, repository = core
     proof, note = old_mapping(repository, b"original note")
@@ -1532,93 +1497,6 @@ def test_budget_exhaustion_inside_stored_decoder_is_not_corruption(core):
     assert error.value.code == "BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert c.read_ref_note(claim, mapping, Budget()) == note.body
-
-
-@pytest.mark.parametrize("corruption", ["body", "digest", "missing-role"])
-@pytest.mark.parametrize("with_ref_copy", [False, True])
-def test_corrupt_legacy_note_conflict_stops_new_note_admission(
-    core, corruption, with_ref_copy
-):
-    c, path, repository = core
-    proof, note = old_mapping(repository, b"original legacy note")
-    legacy_copy = str(uuid4())
-    c.admit_note(proof, note, legacy_copy, Budget())
-    obs = subject(repository)
-    c.admit_ref_observation(obs)
-    claim = RefObservationClaim(
-        obs.ref_observation_key,
-        provenance("ref"),
-        "present",
-        root_oid=proof.capture.root,
-    )
-    c.admit_ref_observation_claim(claim)
-    mapping = NotesMapping(
-        proof.capture.root,
-        "git-notes",
-        "1",
-        "tree",
-        proof.target,
-        proof.note,
-        proof.path,
-    )
-    evidence = NotesMappingEvidence(
-        claim, mapping, "single-path", received("e"), proof.structures
-    )
-    if with_ref_copy:
-        c.admit_ref_note(evidence, note, str(uuid4()), Budget())
-    db = connect(path, "core")
-    try:
-        if corruption == "missing-role":
-            trigger = db.execute(
-                "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_note_roles_delete'"
-            ).fetchone()[0]
-            db.execute("PRAGMA foreign_keys=OFF")
-            db.execute("DROP TRIGGER p1_immutable_note_roles_delete")
-            db.execute("DELETE FROM note_roles")
-            db.execute(trigger)
-            db.execute("PRAGMA foreign_keys=ON")
-        else:
-            trigger = db.execute(
-                "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_notes_update'"
-            ).fetchone()[0]
-            db.execute("DROP TRIGGER p1_immutable_retained_notes_update")
-            db.execute("PRAGMA ignore_check_constraints=ON")
-            if corruption == "body":
-                db.execute("UPDATE retained_notes SET body=?", (b"X" + note.body[1:],))
-            else:
-                db.execute("UPDATE retained_notes SET digest_sha256=?", ("0" * 64,))
-            db.execute(trigger)
-            db.execute("PRAGMA ignore_check_constraints=OFF")
-    finally:
-        db.close()
-    requested_copy = str(uuid4()) if corruption == "body" else legacy_copy
-    diagnosing = {"active": False}
-    original_diagnosis = c._diagnose_ref_note_conflict
-
-    def track_diagnosis(*args):
-        diagnosing["active"] = True
-        return original_diagnosis(*args)
-
-    class NoDiagnosticInput(Budget):
-        def require(self, unit, amount=1):
-            if unit == "input_bytes" and diagnosing["active"]:
-                raise CoreFailure("BUDGET", unit, "no diagnostic input budget")
-            super().require(unit, amount)
-
-    c._diagnose_ref_note_conflict = track_diagnosis
-    try:
-        with pytest.raises(CoreFailure) as limited:
-            c.admit_ref_note(evidence, note, requested_copy, NoDiagnosticInput())
-    finally:
-        c._diagnose_ref_note_conflict = original_diagnosis
-    assert limited.value.code == "BUDGET"
-    assert diagnosing["active"]
-    assert not (path.parent / "p1-recovery-stop.json").exists()
-    assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == int(with_ref_copy)
-    with pytest.raises(CoreFailure) as error:
-        c.admit_ref_note(evidence, note, requested_copy, Budget())
-    assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (path.parent / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("field", ["direct", "symbolic", "resolved", "peeled"])

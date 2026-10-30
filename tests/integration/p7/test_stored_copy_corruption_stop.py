@@ -39,11 +39,6 @@ def _damage(catalog, table, column, value):
         ("retained_metadata", "size", 999),
         ("retained_metadata", "native_type", "blob"),
         ("retained_metadata", "body", b"damaged native bytes"),
-        ("retained_notes", "size", 999),
-        ("retained_notes", "body", b"damaged Notes bytes"),
-        ("retained_notes", "proof_bundle", "[]"),
-        ("retained_notes", "path", "f" * 40),
-        ("retained_notes", "root", "f" * 40),
     ],
 )
 def test_invalid_existing_physical_copy_stops_without_repair(
@@ -58,7 +53,7 @@ def test_invalid_existing_physical_copy_stops_without_repair(
     assert _authority(synthetic_catalog) == before
 
 
-@pytest.mark.parametrize("table", ["retained_metadata", "retained_notes"])
+@pytest.mark.parametrize("table", ["retained_metadata"])
 @pytest.mark.parametrize("refusal", ["payload", "verification"])
 def test_existing_copy_resource_refusal_never_claims_corruption(
     synthetic_catalog, table, refusal

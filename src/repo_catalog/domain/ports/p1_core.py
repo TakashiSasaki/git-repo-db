@@ -11,14 +11,9 @@ from typing import Protocol
 
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     GitObservation,
     NativeObject,
-    NotesClaim,
-    NotesGroup,
-    NotesProjection,
-    NotesProof,
     Projection,
     RelationGroup,
     RepositoryClaim,
@@ -108,19 +103,8 @@ class CoreAdmission(Protocol):
     def admit_object(self, oid: OID) -> None: ...
     def admit_claim(self, claim: ScalarClaim) -> None: ...
     def admit_group(self, group: RelationGroup) -> None: ...
-    def admit_capture(self, capture: Capture) -> None: ...
-    def admit_notes_claim(self, claim: NotesClaim) -> None: ...
-    def admit_notes_group(self, group: NotesGroup) -> None: ...
-    def admit_notes_role(self, proof: NotesProof, work: WorkBudget) -> None: ...
     def admit_metadata(
         self, native: NativeObject, physical_copy_uuidv4: str, work: WorkBudget
-    ) -> None: ...
-    def admit_note(
-        self,
-        proof: NotesProof,
-        native: NativeObject,
-        physical_copy_uuidv4: str,
-        work: WorkBudget,
     ) -> None: ...
 
 
@@ -181,7 +165,6 @@ class CoreRead(Protocol):
         max_proof_bytes: int = 64 * 1024 * 1024,
         max_metadata_bytes: int = 64 * 1024 * 1024,
     ) -> bytes: ...
-    def notes_projection(self, capture: Capture, target: OID) -> NotesProjection: ...
     def coverage(
         self,
         scope: CoreCoverageScope,
@@ -206,4 +189,3 @@ class CoreRead(Protocol):
         self, oid: OID, relation: str, scope: str | None = None
     ) -> Projection: ...
     def read_metadata(self, oid: OID) -> bytes: ...
-    def read_note(self, capture: Capture, target: OID, note: OID) -> bytes: ...

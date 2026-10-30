@@ -211,7 +211,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             for values in data.values():
                 values.clear()
     if core is not None and not scope.include_retained_bytes:
-        for name in ("retained_metadata", "retained_notes", "ref_retained_notes"):
+        for name in ("retained_metadata", "ref_retained_notes"):
             if core[name]:
                 omissions.append(
                     {
@@ -530,72 +530,19 @@ def filter_sections(core, context, scope, *, permitted=None):
             "repositories",
             "repository_claims",
             "git_observations",
-            "captures",
         ):
             retain(
                 core,
                 key,
-                lambda r: (
-                    allowed(r["repository_uuidv4"])
-                    and (key != "captures" or (r["object_format"], r["root"]) in chosen)
-                ),
-                "repository_or_capture_not_selected_or_permitted",
+                lambda r: allowed(r["repository_uuidv4"]),
+                "repository_not_selected_or_permitted",
             )
-        if scope.notes_refs is not None:
-            from repo_catalog.domain.exchange_rows import decode_native_ref
-
-            retain(
-                core,
-                "captures",
-                lambda r: decode_native_ref(r["ref"]) in scope.notes_refs,
-                "notes_ref_not_selected",
-            )
-        captures = {
-            (r["capture_origin_uuidv4"], r["capture_uuidv4"]) for r in core["captures"]
-        }
-        for key in (
-            "notes_claims",
-            "notes_groups",
-            "notes_inventories",
-            "note_roles",
-            "retained_notes",
-        ):
-
-            def selected(r):
-                if (r["capture_origin_uuidv4"], r["capture_uuidv4"]) not in captures:
-                    return False
-                fmt = r.get("object_format")
-                if key == "notes_groups":
-                    return all(
-                        (fmt, m[0]) in chosen and (fmt, m[1]) in chosen
-                        for m in json.loads(r["membership_json"])
-                    )
-                if key == "notes_inventories":
-                    cap = next(
-                        c
-                        for c in core["captures"]
-                        if (c["capture_origin_uuidv4"], c["capture_uuidv4"])
-                        == (r["capture_origin_uuidv4"], r["capture_uuidv4"])
-                    )
-                    return all(
-                        (cap["object_format"], m[0]) in chosen
-                        and (cap["object_format"], m[1]) in chosen
-                        for m in r["members"]
-                    )
-                return (fmt, r["target"]) in chosen and (
-                    fmt,
-                    r.get("note", r.get("full_oid")),
-                ) in chosen
-
-            retain(core, key, selected, "whole_notes_unit_not_selected_or_permitted")
         denied_claims = set()
 
         def core_scope_selected(r):
             coords = json.loads(r["owner_coordinates_json"])
             if r["owner_kind"] == "repository":
                 return allowed(coords[0])
-            if r["owner_kind"] == "capture":
-                return tuple(coords[:2]) in captures
             if r["owner_kind"] == "ref_observation":
                 return tuple(coords[:2]) in selected_refs
             return tuple(coords[:2]) in chosen
@@ -1311,14 +1258,7 @@ def bound_sections(core, context, scope, *, work=None):
                         row["clock_json"],
                         row["provenance_json"],
                     )
-                if store == "core" and section in (
-                    "captures",
-                    "notes_claims",
-                    "notes_groups",
-                    "notes_inventories",
-                    "note_roles",
-                    "retained_notes",
-                ):
+                if store == "core" and section in ():
                     unit = (
                         store,
                         "capture",
@@ -1391,8 +1331,6 @@ def bound_sections(core, context, scope, *, work=None):
         if len(key) < 3 or key[1] != "coverage":
             continue
         targets = set()
-        if key[0] == "core" and key[2] == "capture":
-            targets.add(("core", "capture", *json.loads(key[3])[:2]))
         if key[0] == "core" and key[2] == "ref_observation":
             targets.add(("core", "ref-observation", *json.loads(key[3])[:2]))
         if key[0] == "context":

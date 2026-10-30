@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextlib import AbstractContextManager
 from typing import Protocol
 
-from repo_catalog.domain.p1_core import OID, NativeObject, NotesProof
+from repo_catalog.domain.p1_core import OID, NativeObject
 from repo_catalog.domain.ports.p1_core import WorkBudget
 from repo_catalog.domain.ref_observation import NotesMappingEvidence
 
@@ -18,7 +18,7 @@ class NotesSource(Protocol):
 
     def metadata(self, oid: OID, work: WorkBudget) -> NativeObject: ...
     def note_body(
-        self, proof: NotesProof | NotesMappingEvidence, work: WorkBudget
+        self, proof: NotesMappingEvidence, work: WorkBudget
     ) -> NativeObject: ...
     def discover(self, work: WorkBudget, nominated: tuple[str, ...] = ()): ...
 

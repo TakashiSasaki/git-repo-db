@@ -1,0 +1,392 @@
+[
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_exact_role_body_inventory_and_replay",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_discovery_full_scope_original_pair_and_historical_refs",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_real_scans_have_distinct_keys_and_replay_exactly",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_ref_movement_new_observation_does_not_modify_old_capture",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_real_scans_have_distinct_keys_and_replay_exactly",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_missing_targets_unrelated_subtrees_and_file_role",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_valid_reports_survive_wrong_association_and_body_refusal",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_source_wrong_type_and_wrong_proof_never_reads_arbitrary_blob",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_discovery_detects_change_and_truncated_enumeration",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_body_atomic_rollback_and_existing_stop",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_corruption_stops_persistently_without_copy_failover",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_actual_git_notes_command_and_no_lazy_network",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_source_incoming_loose_object_corruption_is_refusal_without_stop",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_lost_progress_cannot_mint_new_capture_on_retry",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_request_must_bind_actual_catalog_and_source",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_local_reader_preserves_external_capture_attribution",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_real_sqlite_core_commit_denial_rolls_back_body_unit",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_sigkill_after_body_insert_preserves_atomicity_and_original_copy",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_proof_and_terminal_inventory_real_native_git",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_forged_group_and_source_failure_never_prove_completeness",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_known_empty_requires_checked_empty_tree_and_capture_scope",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_narrow_mapping_does_not_require_unrelated_subtree_inventory_does",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_forged_group_and_source_failure_never_prove_completeness",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_unsupported_inventory_grammar_never_terminal",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_forged_group_and_source_failure_never_prove_completeness",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_body_reader_not_used_and_wrong_callback_oid_rejected",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_reports_remain_original_and_receiver_group_is_distinct",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_competing_claims_keep_separate_groups_and_no_winner",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_native_corruption_in_receiver_inventory_persistently_stops",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_inventory_atomic_rollback_on_core_insert_failure",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_forged_group_and_source_failure_never_prove_completeness",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_actual_failed_attempt_is_prepaid_and_never_terminal",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_budget_stop_after_first_mapping_preserves_partial_prefix",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_real_git_notes_generated_commit_is_supported",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_structural_integrity_and_syntax_refusals_do_not_retain_incoming_bytes",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_real_scans_have_distinct_keys_and_replay_exactly",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_ambiguous_flat_and_fanout_mapping_rejected",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_persisted_inventory_invalid_utf8_publishes_stop",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_forged_group_and_source_failure_never_prove_completeness",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory.py::test_persisted_inventory_deep_json_publishes_stop",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_forged_group_and_source_failure_never_prove_completeness",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_raw_callback_receiver_words_do_not_replace_structural_proof",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_raw_callback_actual_native_terminal_proof_and_report_alternatives",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_raw_callback_checks_actual_fk_capture_scope_and_structural_bytes",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p4/test_inventory_callback.py::test_receiver_sql_rechecks_respect_actual_work_budget",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_direct_tree_binary_empty_unknown_targets_and_native_git_hash",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_notes_commit_root_and_fanout_relevant_only",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_same_capture_reports_alternatives_groups_and_replay",
+    "replacement_node": "tests/integration/p5/test_legacy_retirement_e2e.py::test_new_only_acquisition_query_cli_search_replay",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_same_blob_file_role_and_multiple_namespaces",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_false_relevant_mode_or_name_rejects_body",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_sender_claim_hash_prefix_and_ref_do_not_authorize_retention",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_real_scans_have_distinct_keys_and_replay_exactly",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_invalid_body_exact_checks_without_irrelevant_lexical_failure",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_capture_binding_immutable_no_new_retry_identity",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_atomic_note_admission_work_survives_rollback_and_budget_stop",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_recovery_stop_on_retained_corruption_never_sibling_failover",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_semantic_proof_bundle_contains_entire_native_bytes_not_hash_alias",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_raw_non_utf8_ref_is_losslessly_encoded_without_alias",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_real_scans_have_distinct_keys_and_replay_exactly",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_metadata_only_notes_projection_preserves_reports_groups_and_local_role",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_competing_claims_keep_separate_groups_and_no_winner",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_notes_projection_closed_scope_does_not_borrow_other_scope_absence",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_notes.py::test_metadata_only_notes_role_obeys_zero_proof_step_budget",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/access/test_review_corrections.py::test_metadata_capture_coverage_resolves_the_actual_capture_owner",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/access/test_review_corrections.py::test_legacy_physical_capture_binding_remains_immutable",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/access/test_review_corrections.py::test_legacy_physical_capture_corruption_stops_diagnostic_query",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/i3/test_ref_exchange_i3.py::test_export_legacy_notes_metadata_utf8_corruption_stops_catalog",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/i3/test_ref_exchange_i3.py::test_legacy_export_budget_callback_cannot_read_proofs",
+    "replacement_node": "tests/integration/p4/test_ref_inventory_transition.py::test_inventory_limit_and_callback_error_do_not_stop_catalog",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/i3/test_ref_exchange_i3.py::test_export_verifies_each_legacy_note_copy",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/i3/test_selective_exchange.py::test_native_metadata_notes_and_capture_coverage_without_provider_intake",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/i3/test_selective_exchange.py::test_capture_non_utf8_ref_preserves_native_key",
+    "replacement_node": "tests/integration/p4/test_ref_observation_i2.py::test_two_real_scans_have_distinct_keys_and_replay_exactly",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/i3/test_selective_exchange.py::test_capture_pair_conflicting_payload_rejected_before_binding",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_ref_observation_i1.py::test_legacy_copy_identity_conflict_is_not_misclassified_as_corruption",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p1/test_ref_observation_i1.py::test_corrupt_legacy_note_conflict_stops_new_note_admission",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p2/test_native.py::test_receiver_notes_role_checks_full_native_commit_and_metadata_without_body",
+    "replacement_node": "tests/integration/p1/test_notes.py::test_new_role_exact_binary_body_and_git_hash",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p2/test_native.py::test_typed_utf8_corruption_persists_stop_before_snapshot_rollback",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p5/test_legacy_retirement_e2e.py::test_legacy_only_rows_do_not_invent_new_claims_or_search_authority",
+    "replacement_node": "tests/integration/p1/test_ref_observation_i1.py::test_note_transaction_rolls_back_all_new_units_on_failure",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_ref_typed_salvage.py::test_legacy_note_bytes_are_staged_only_with_valid_original_proof",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Capture physical/API mechanism retired; typed Ref behavior retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_notes_extraction_preserves_original_repository_binding",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_original_repository_is_not_replaced_by_destination_identity",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_disagreeing_capture_coordinates_rejected",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_invalid_new_note_does_not_leave_capture_or_objects",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_capture_replay_cannot_rebind_repository",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_exact_replay.py::test_note_replay_requires_all_capture_role_and_byte_evidence",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_work_dimensions.py::test_proof_hex_exact_decoded_allowance_is_available",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_candidate_decode_limit_stops_before_admission_and_survives_retry",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_work_dimensions.py::test_invalid_proof_hex_retains_decode_expenditure",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_candidate_decode_limit_stops_before_admission_and_survives_retry",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_work_dimensions.py::test_proof_hex_budget_refusal_precedes_decoder",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_candidate_decode_limit_stops_before_admission_and_survives_retry",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_28_missing_capture_binding_records_qualified_observation",
+    "replacement_node": "tests/integration/p7/test_physical_cut_e2e.py::test_ref_only_transport_backup_and_corrupt_source_recovery",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_27_conflicting_immutable_capture_rebinding_rejected",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_09_original_capture_and_provenance_survive_replay",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  },
+  {
+    "retired_node": "tests/integration/p7/test_adversarial_contract_cases.py::test_case_05_notes_blob_lacking_role_evidence_rejected",
+    "replacement_node": "tests/integration/p7/test_ref_typed_salvage.py::test_full_fresh_restore_salvage_and_activation",
+    "reason": "Old Capture payload/cross-family mechanism removed; exact typed Ref equivalent retained"
+  }
+]
