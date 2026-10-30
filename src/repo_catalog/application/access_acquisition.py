@@ -9,7 +9,7 @@ local executor activation, including retries of a durably budgeted request.
 from __future__ import annotations
 
 import copy
-from contextlib import closing
+from contextlib import ExitStack, closing
 from dataclasses import replace
 from pathlib import Path
 
@@ -28,7 +28,11 @@ from repo_catalog.domain.acquisition import (
     GitAcquisitionReport,
     GitNativeAcquisitionRequest,
 )
-from repo_catalog.domain.native_acquisition import native_request_intent
+from repo_catalog.domain.native_acquisition import (
+    native_request_intent,
+    ref_input_processing,
+    without_ref_inputs,
+)
 from repo_catalog.domain.p1_coordination import (
     CoordinationError,
     NotesLimits,
@@ -61,9 +65,11 @@ class AccessGitAcquisition:
         cancelled=lambda: False,
     ) -> GitAcquisitionReport:
         selection = AccessWorkflow._selection(selection)
-        native_request_intent(request)
-        request = copy.deepcopy(request)
-        intent = native_request_intent(request)
+        native_request_intent(without_ref_inputs(request))
+        has_ref_inputs = request.notes is not None and bool(request.notes.ref_inputs)
+        if not has_ref_inputs:
+            request = copy.deepcopy(request)
+            intent = native_request_intent(request)
         if type(metadata_bytes) is not int or not 0 < metadata_bytes < 2**63:
             raise AccessRegistryError(
                 "LIMIT", "positive finite metadata byte bound required"
@@ -86,7 +92,10 @@ class AccessGitAcquisition:
                 "request",
                 "durable Operational store required",
             )
-        with closing(GitCore(self.catalog / "core.sqlite3")) as core:
+        with (
+            closing(GitCore(self.catalog / "core.sqlite3")) as core,
+            ExitStack() as preparation,
+        ):
 
             def catalog_guard():
                 core.ensure_available()
@@ -97,26 +106,69 @@ class AccessGitAcquisition:
 
             catalog_guard()
             catalog_seed, instance = core.catalog_identity()
+            early = None
+            if has_ref_inputs:
+                # Existing approval must exist before spending request work. Only
+                # settings are read here; executor activation still requires review.
+                approved = self.store.current_grant(
+                    selection.repository_uuidv4,
+                    selection.scope_uuidv4,
+                    **selection.options,
+                )
+                source_path = _path(approved.plan.assignment.locator_text)
+                source_scope = encode(
+                    ["local-git", source_path.encode().hex(), object_format]
+                )
+                scope = request_scope(
+                    request.repository_uuidv4,
+                    instance,
+                    request.source_attribution,
+                    source_scope,
+                )
+                ledger = preparation.enter_context(
+                    closing(
+                        OperationalAcquisitionLedger(
+                            self.catalog / "operational.sqlite3",
+                            repository_uuidv4=catalog_seed,
+                            catalog_instance_uuidv4=instance,
+                        )
+                    )
+                )
+                _, _, early_work, early_progress = ledger.create_budget(
+                    scope=scope,
+                    request=req,
+                    new_request=new_request,
+                    work_limits=work_limits,
+                    limits=note_limits,
+                )
+                with ref_input_processing(request.notes.ref_inputs, early_work):
+                    request = copy.deepcopy(request)
+                intent = native_request_intent(request, early_work)
+                early = (approved.plan, early_work, early_progress)
             with AccessWorkflow(self.store) as workflow:
 
                 def confirm(document):
                     # The caller sees the acquisition intent as well as the exact
                     # Access route. Its mutable display copy cannot alter intent.
-                    return reviewer(
-                        copy.deepcopy(
-                            {
-                                **document,
-                                "operation": "acquire-local-git",
-                                "catalog": str(self.catalog),
-                                "catalog_seed": catalog_seed,
-                                "catalog_instance_uuidv4": instance,
-                                "request": intent,
-                                "expected_object_format": object_format,
-                                "request_identity": list(req.values()),
-                                "new_request": new_request,
-                            }
+                    with ref_input_processing(
+                        request.notes.ref_inputs if has_ref_inputs else (),
+                        early[1] if early is not None else None,
+                    ):
+                        return reviewer(
+                            copy.deepcopy(
+                                {
+                                    **document,
+                                    "operation": "acquire-local-git",
+                                    "catalog": str(self.catalog),
+                                    "catalog_seed": catalog_seed,
+                                    "catalog_instance_uuidv4": instance,
+                                    "request": intent,
+                                    "expected_object_format": object_format,
+                                    "request_identity": list(req.values()),
+                                    "new_request": new_request,
+                                }
+                            )
                         )
-                    )
 
                 token = workflow.activate(selection, LocalDirectoryExecutor(), confirm)
 
@@ -172,13 +224,20 @@ class AccessGitAcquisition:
                         repository_uuidv4=catalog_seed,
                         catalog_instance_uuidv4=instance,
                     ) as ledger:
-                        _, _, work, progress = ledger.create_budget(
-                            scope=scope,
-                            request=req,
-                            new_request=new_request,
-                            work_limits=work_limits,
-                            limits=note_limits,
-                        )
+                        if early is None:
+                            _, _, work, progress = ledger.create_budget(
+                                scope=scope,
+                                request=req,
+                                new_request=new_request,
+                                work_limits=work_limits,
+                                limits=note_limits,
+                            )
+                        else:
+                            if early[0] != plan:
+                                raise AccessRegistryError(
+                                    "GRANT_CHANGED", "preparation plan changed"
+                                )
+                            _, work, progress = early
                         frozen = {
                             "plan": review_document(plan),
                             "object_format": object_format,
@@ -191,12 +250,15 @@ class AccessGitAcquisition:
                                 request.capture_uuidv4,
                             ]
                         )
-                        if progress.save_once(coordinate, frozen) != frozen:
-                            raise CoreFailure(
-                                "INCOMPATIBLE_REPLAY",
-                                "access-plan",
-                                "original request cannot change its route or intent",
-                            )
+                        with ref_input_processing(
+                            request.notes.ref_inputs if has_ref_inputs else (), work
+                        ):
+                            if progress.save_once(coordinate, frozen) != frozen:
+                                raise CoreFailure(
+                                    "INCOMPATIBLE_REPLAY",
+                                    "access-plan",
+                                    "original request cannot change its route or intent",
+                                )
 
                         def bind_identity(identity):
                             coordinate = encode(

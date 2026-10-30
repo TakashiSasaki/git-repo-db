@@ -237,3 +237,36 @@ cover each listed behavior: `test_inventory_report_and_receiver_proof_remain_cla
 I1–I3 and P7 suites cover the preserved admission, Exchange, Query, backup and
 salvage boundaries; the later Search and producer transitions are not claimed
 by these tests.
+
+## R226 input-preparation correction
+
+R226-01 requires revalidating supplied nested Mapping values and every supported
+OID at the application input boundary. Frozen dataclass construction alone does
+not establish that a supplied object's fields remain valid; SQLite affinity is
+not an input-type validator. Reject malformed incoming metadata without diagnosing
+a healthy catalog or removing previously admitted reports.
+
+R226-02 places new-carrier processing inside the original request budget. A
+shallow legacy preflight excludes carrier contents. Once the existing request
+budget is open, a bounded shape walk reserves metadata visits before scheduling
+children, using only exact allowed types and constant-time lengths. Before text
+scanning, set/hash comparison, deep copy, semantic keys or JSON, reserve a finite
+conservative input/output bound. Successful stages settle actual scalar UTF-8
+input plus encoded carrier output; failed stages retain the reservation when
+performed work is uncertain. The shape/text/depth limits are engineering bounds,
+not new completeness or trust semantics. Value-only intent helpers also enforce
+the same hard bounds, but confer no request or receiver authority.
+
+Native and metadata acquisition meter initial intent, replay comparison and the
+subsequent explicit-input admission preparation independently because each stage
+performs work. The former post-encoding charge is removed. Paired preparation
+passes its existing work/progress into these stages without creating another
+request or resetting accumulated work. For a new carrier via Access, require an
+existing approved grant before metered request copying/display preparation;
+executor activation still requires review. That preparation and the later Git
+acquisition reuse the same work/progress and attempt. Declining activation after
+new-carrier preparation does not erase work already performed. The legacy
+no-carrier approval flow is unchanged. No extra budget, sender authority or
+unbounded pre-intent serialization supplies a shortcut around the original
+request. Original FAIL evidence and independent re-review remain distinct from
+the author's regression results.

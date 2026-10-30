@@ -6,6 +6,9 @@ No remote endpoint lookup, credential resolution or arbitrary dataclass codec.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from dataclasses import fields, replace
+
 from repo_catalog.domain.acquisition import (
     GitMetadataInput,
     GitNativeAcquisitionRequest,
@@ -29,7 +32,15 @@ from repo_catalog.domain.p1_core import (
     uuid4_value,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
-from repo_catalog.domain.ref_observation import RefObservationKey
+from repo_catalog.domain.ref_observation import (
+    NotesMapping,
+    NotesMappingClaim,
+    NotesMappingGroup,
+    RefAbsenceEvidence,
+    RefObservation,
+    RefObservationClaim,
+    RefObservationKey,
+)
 
 
 def _typed(value, expected):
@@ -56,7 +67,111 @@ def _text_tuple(values):
         raise CoreFailure("REQUEST", "native", "bounded nonempty ref text required")
 
 
-def ref_notes_input_intent(value, repository):
+def without_ref_inputs(request):
+    """Shallow legacy preflight: never inspect or hash supplied carrier contents."""
+    if (
+        type(request) in (GitNativeAcquisitionRequest, GitMetadataInput)
+        and type(request.notes) is NotesAcquisitionSpec
+    ):
+        if (
+            type(request.notes.ref_inputs) is not tuple
+            or len(request.notes.ref_inputs) > 100_000
+        ):
+            raise CoreFailure("REQUEST", "ref-notes", "bounded tuple required")
+        return replace(request, notes=replace(request.notes, ref_inputs=()))
+    return request
+
+
+@contextmanager
+def ref_input_processing(values, work=None):
+    """Bound shape without content scans, then reserve before any variable work.
+
+    A stage consumes its actual scalar input and encoded output. Failed stages
+    retain the conservative reservation, as with other uncertain input work.
+    Pure value-only callers have the same hard bound but no request authority.
+    """
+    allowed = (
+        RefNotesInput,
+        RefObservation,
+        RefObservationKey,
+        RefObservationClaim,
+        RefAbsenceEvidence,
+        NotesMapping,
+        NotesMappingClaim,
+        NotesMappingGroup,
+        OID,
+        Provenance,
+    )
+    if type(values) is tuple and not values:
+        yield [0]
+        return
+
+    def schedule(count):
+        if work is not None:
+            work.require("metadata_units", count)
+            work.charge("metadata_units", count)
+
+    schedule(1)
+    pending = [(values, 0)]
+    texts = []
+    chars = nodes = 0
+    while pending:
+        item, depth = pending.pop()
+        nodes += 1
+        if nodes > 100_000 or depth > 16:
+            raise CoreFailure("BUDGET", "ref-input", "finite input shape required")
+        kind = type(item)
+        if kind in (str, bytes):
+            chars += len(item)
+            if chars > 1_000_000:
+                raise CoreFailure("BUDGET", "ref-input", "finite input text required")
+            texts.append(item)
+        elif kind is tuple:
+            if len(item) > 100_000 - nodes - len(pending):
+                raise CoreFailure("BUDGET", "ref-input", "finite input shape required")
+            schedule(len(item))
+            pending.extend((child, depth + 1) for child in item)
+        elif kind in allowed:
+            schedule(len(fields(kind)))
+            pending.extend((getattr(item, f.name), depth + 1) for f in fields(kind))
+        elif item is not None and kind not in (int, bool):
+            raise CoreFailure("REQUEST", "ref-input", "typed scalar or report required")
+    # ASCII JSON can expand Unicode, encoded nested semantic keys and escapes.
+    # This bound covers validation, comparisons and encoded input/output buffers.
+    upper = 128 * chars + 256 * nodes
+    if work is not None:
+        work.require("input_bytes", upper)
+    try:
+        actual = sum(
+            len(t) if type(t) is bytes else len(t.encode("utf-8", "surrogatepass"))
+            for t in texts
+        )
+        output = [0]
+        yield output
+        actual += output[0]
+        if actual > upper:
+            raise CoreFailure("BUDGET", "ref-input", "processing bound exceeded")
+    except BaseException:
+        if work is not None:
+            abandon = getattr(work, "abandon", None)
+            if abandon is None:
+                work.charge("input_bytes", upper)
+            else:
+                abandon("input_bytes")
+        raise
+    else:
+        if work is not None:
+            work.charge("input_bytes", actual)
+
+
+def ref_notes_input_intent(value, repository, work=None):
+    with ref_input_processing((value,), work) as output:
+        result = _ref_notes_input_intent(value, repository)
+        output[0] = len(encode(result))
+        return result
+
+
+def _ref_notes_input_intent(value, repository):
     """Lossless original metadata coordinates for bounded request replay."""
     _typed(value, RefNotesInput)
     subject = value.observation
@@ -93,6 +208,14 @@ def ref_notes_input_intent(value, repository):
     for item in (*value.mapping_claims, *value.mapping_groups):
         item.__post_init__()
         _typed(item.provenance, Provenance)
+    for item in value.mapping_claims:
+        _typed(item.mapping, NotesMapping)
+        for oid in (
+            item.mapping.root_oid,
+            item.mapping.annotated_object_oid,
+            item.mapping.note_oid,
+        ):
+            _oid(oid)
     return {
         "subject": [
             *subject.ref_observation_key.key,
@@ -108,7 +231,22 @@ def ref_notes_input_intent(value, repository):
     }
 
 
-def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
+def native_request_intent(request: GitNativeAcquisitionRequest, work=None) -> dict:
+    values = (
+        request.notes.ref_inputs
+        if type(request) is GitNativeAcquisitionRequest
+        and type(request.notes) is NotesAcquisitionSpec
+        else ()
+    )
+    if not values:
+        return _native_request_intent(request)
+    with ref_input_processing(values, work) as output:
+        result = _native_request_intent(request)
+        output[0] = len(encode(result["notes"]["ref_inputs"]))
+        return result
+
+
+def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     """Validate repository ownership and preserve every request-defining input."""
     if type(request) is not GitNativeAcquisitionRequest:
         raise CoreFailure("REQUEST", "native", "typed native request required")
@@ -245,7 +383,7 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
                 for item in notes.external_groups
             ],
             "ref_inputs": [
-                ref_notes_input_intent(item, repo) for item in notes.ref_inputs
+                _ref_notes_input_intent(item, repo) for item in notes.ref_inputs
             ],
         }
     result = {
@@ -285,7 +423,21 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     return result
 
 
-def metadata_input_intent(unit: GitMetadataInput) -> dict:
+def metadata_input_intent(unit: GitMetadataInput, work=None) -> dict:
+    values = (
+        unit.notes.ref_inputs
+        if type(unit) is GitMetadataInput and type(unit.notes) is NotesAcquisitionSpec
+        else ()
+    )
+    if not values:
+        return _metadata_input_intent(unit)
+    with ref_input_processing(values, work) as output:
+        result = _metadata_input_intent(unit)
+        output[0] = len(encode(result["common"]["notes"]["ref_inputs"]))
+        return result
+
+
+def _metadata_input_intent(unit: GitMetadataInput) -> dict:
     """Validate one selected repository and freeze external input without bodies.
 
     Reuse the native request's shared claims/Notes validation as a value-only
@@ -293,7 +445,7 @@ def metadata_input_intent(unit: GitMetadataInput) -> dict:
     execute a native request or infer repository membership for global OIDs.
     """
     _typed(unit, GitMetadataInput)
-    common = native_request_intent(
+    common = _native_request_intent(
         GitNativeAcquisitionRequest(
             unit.repository_uuidv4,
             unit.capture_origin_uuidv4,

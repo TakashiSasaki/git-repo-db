@@ -728,3 +728,99 @@ def test_cli_actual_pty_confirmation_executes_only_after_reply(setup):
             child.kill()
         child.wait()
         os.close(master)
+
+
+# R226-02: approved Access must budget display preparation and reuse that
+# request's work/progress in actual acquisition, without a second attempt.
+def ref_input_request(data, path="reported"):
+    from repo_catalog.domain.acquisition import RefNotesInput
+    from repo_catalog.domain.ref_observation import (
+        NotesMappingGroup,
+        RefObservation,
+        RefObservationClaim,
+        RefObservationKey,
+        new_uuid7,
+    )
+
+    subject = RefObservation(
+        RefObservationKey(str(uuid4()), new_uuid7()),
+        data["target"],
+        b"refs/notes/external",
+        "external",
+        "visible",
+    )
+    report = Provenance("external", "read", "result", "test", "1")
+    root = data["objects"]["tree"]
+    claim = RefObservationClaim(
+        subject.ref_observation_key, report, "present", root_oid=root
+    )
+    group = NotesMappingGroup(
+        claim,
+        "git-notes",
+        "1",
+        "tree",
+        "all",
+        "complete",
+        ((root.full_oid, root.full_oid, path),),
+        report,
+    )
+    return replace(
+        data["unit"],
+        notes=NotesAcquisitionSpec(
+            ref_inputs=(RefNotesInput(subject, (claim,), mapping_groups=(group,)),)
+        ),
+    )
+
+
+def test_r226_02_access_preparation_uses_one_cumulative_request(setup, monkeypatch):
+    from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
+
+    original = OperationalAcquisitionLedger.create_budget
+    attempts = []
+
+    def create(self, **kw):
+        result = original(self, **kw)
+        attempts.append(result[1])
+        return result
+
+    monkeypatch.setattr(OperationalAcquisitionLedger, "create_budget", create)
+    request = ref_input_request(setup)
+    acquire(setup, unit=request, new_request=True)
+    first = usage(setup)
+    acquire(setup, unit=request, new_request=False)
+    assert len(attempts) == 2 and len(set(attempts)) == 2
+    assert usage(setup) > first
+    assert len(rows(setup, "notes_mapping_groups")) == 1
+    assert not (setup["cat"] / "p1-recovery-stop.json").exists()
+
+
+def test_r226_02_access_tiny_budget_stops_before_encoding_or_activation(
+    setup, monkeypatch
+):
+    import repo_catalog.domain.ref_observation as refs
+
+    original = refs.encode
+    request = ref_input_request(setup, "x" * 200_000)
+
+    def checked(value):
+        result = original(value)
+        assert len(result) < 100_000, "unreserved large serialization"
+        return result
+
+    monkeypatch.setattr(refs, "encode", checked)
+
+    def no_activation(_):
+        pytest.fail("input preparation must fail before executor activation review")
+
+    for fresh in (True, False):
+        with pytest.raises(CoreFailure) as failure:
+            acquire(
+                setup,
+                unit=request,
+                new_request=fresh,
+                work_limits={"input_bytes": 1},
+                reviewer=no_activation,
+            )
+        assert failure.value.code == "BUDGET"
+    assert not rows(setup, "ref_observations")
+    assert not (setup["cat"] / "p1-recovery-stop.json").exists()

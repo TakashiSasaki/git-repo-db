@@ -7,6 +7,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import (
     InMemoryNotesProgress,
+    OperationalAcquisitionLedger,
     UnlimitedWorkBudget,
 )
 from repo_catalog.application.acquisition import GitAcquisition
@@ -32,6 +33,153 @@ from tests.integration.p5.test_ref_inventory_wiring import (
 )
 
 acquisition = fixtures.acquisition
+
+
+@pytest.mark.parametrize("metadata", [False, True])
+@pytest.mark.parametrize("paired", [False, True])
+@pytest.mark.parametrize("mutation", ["version", "oid"])
+def test_r226_01_rejects_mutated_mapping(acquisition, metadata, paired, mutation):
+    app, _, _, _, _, core_path, _ = acquisition
+    value, _, _ = original_input(acquisition)
+    if mutation == "version":
+        object.__setattr__(
+            value.mapping_claims[0].mapping, "interpretation_version", 17
+        )
+    else:
+        object.__setattr__(
+            value.mapping_claims[0].mapping.note_oid, "full_oid", "not-an-oid"
+        )
+    if paired:
+        enable_context(acquisition)
+    request = with_input(acquisition, value, metadata=metadata)
+    from repo_catalog.domain.p1_coordination import AdmissionFailure
+
+    with pytest.raises((CoreFailure, AdmissionFailure)):
+        run_request(acquisition, request, paired=paired, metadata=metadata)
+    assert not app.core.sql("SELECT 1 FROM notes_mappings")
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+
+
+@pytest.mark.parametrize("metadata", [False, True])
+@pytest.mark.parametrize("paired", [False, True])
+def test_r226_02_no_large_encoding_before_request_budget(
+    acquisition, monkeypatch, metadata, paired
+):
+    import repo_catalog.domain.ref_observation as ref_module
+
+    app, _, _, _, _, core_path, _ = acquisition
+    value, _, _ = original_input(acquisition)
+    member = value.mapping_groups[0].members[0]
+    group = replace(
+        value.mapping_groups[0], members=((member[0], member[1], "x" * 200_000),)
+    )
+    value = replace(value, mapping_claims=(), mapping_groups=(group,))
+    request = with_input(acquisition, value, metadata=metadata)
+    if paired:
+        enable_context(acquisition)
+    encodes = []
+    encode_original = ref_module.encode
+
+    def tracked_encode(value):
+        result = encode_original(value)
+        if len(result) > 100_000:
+            encodes.append(len(result))
+        return result
+
+    monkeypatch.setattr(ref_module, "encode", tracked_encode)
+    original_budget = OperationalAcquisitionLedger.create_budget
+
+    def tiny_budget(self, **kwargs):
+        kwargs["work_limits"] = {"input_bytes": 1}
+        return original_budget(self, **kwargs)
+
+    monkeypatch.setattr(OperationalAcquisitionLedger, "create_budget", tiny_budget)
+    from repo_catalog.domain.p1_coordination import AdmissionFailure
+
+    before = None
+    for fresh in (True, False):
+        with pytest.raises((CoreFailure, AdmissionFailure)) as failure:
+            run_request(
+                acquisition,
+                request,
+                metadata=metadata,
+                paired=paired,
+                new_request=fresh,
+            )
+        assert failure.value.code == "BUDGET"
+        spent = budget_spent(acquisition, request)
+        assert spent["metadata_units"] > (before or 0)
+        before = spent["metadata_units"]
+    assert not encodes
+    assert not app.core.sql("SELECT 1 FROM ref_observations")
+    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_r226_02_caller_budget_prevents_large_serialization(acquisition, monkeypatch):
+    import repo_catalog.domain.ref_observation as ref_module
+
+    _, _, _, _, _, core_path, _ = acquisition
+    value, _, _ = original_input(acquisition)
+    member = value.mapping_groups[0].members[0]
+    value = replace(
+        value,
+        mapping_claims=(),
+        mapping_groups=(
+            replace(
+                value.mapping_groups[0],
+                members=((member[0], member[1], "x" * 200_000),),
+            ),
+        ),
+    )
+    request = with_input(acquisition, value, metadata=True)
+    original = ref_module.encode
+
+    def checked(value):
+        result = original(value)
+        assert len(result) < 100_000, "unreserved large serialization"
+        return result
+
+    monkeypatch.setattr(ref_module, "encode", checked)
+    budget = UnlimitedWorkBudget(work_limits={"input_bytes": 1})
+    for _ in range(2):
+        with pytest.raises(CoreFailure) as failure:
+            GitAcquisition(core_path).acquire_metadata_only(
+                request, work=budget, progress=InMemoryNotesProgress()
+            )
+        assert failure.value.code == "BUDGET"
+    assert budget.usage["metadata_units"] > 0
+
+
+@pytest.mark.parametrize("metadata", [False, True])
+def test_r226_02_failed_preparation_keeps_work_and_healthy_reports(
+    acquisition, metadata
+):
+    app, _, _, _, _, core_path, _ = acquisition
+    value, _, _ = original_input(acquisition)
+    request = with_input(acquisition, value, metadata=metadata)
+    run_request(acquisition, request, metadata=metadata)
+    mapping = replace(value.mapping_claims[0].mapping)
+    invalid = replace(
+        value, mapping_claims=(replace(value.mapping_claims[0], mapping=mapping),)
+    )
+    retry = replace(
+        request,
+        capture_uuidv4=str(uuid4()),
+        notes=replace(request.notes, ref_inputs=(invalid,)),
+    )
+    object.__setattr__(mapping, "interpretation_version", 17)
+    before = 0
+    for fresh in (True, False):
+        with pytest.raises(CoreFailure):
+            run_request(acquisition, retry, metadata=metadata, new_request=fresh)
+        spent = budget_spent(acquisition, retry)["input_bytes"]
+        assert spent > before
+        before = spent
+        assert len(app.core.sql("SELECT 1 FROM notes_mappings")) == 1
+        assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    object.__setattr__(mapping, "interpretation_version", "1")
+    run_request(acquisition, retry, metadata=metadata, new_request=False)
+    assert budget_spent(acquisition, retry)["input_bytes"] > before
 
 
 def original_input(case, *, body=b"\x00\xfforiginal\n", commit=False):

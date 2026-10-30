@@ -177,3 +177,17 @@ read `HEAD`, so a staged-only relocation produces a different inventory mismatch
 When launching from the root environment, select `documentation/.venv/bin/python`
 explicitly (or clear `UV_PROJECT_ENVIRONMENT` before `uv --project documentation`)
 so the root launcher's environment does not select its Python for docs tests.
+
+## Probe supplied metadata before its first serialization
+
+When testing an input boundary that accepts frozen dataclasses, construct valid
+fixtures first, then mutate a nested scalar/OID with `object.__setattr__` before
+calling the actual application entry point. Constructors and SQLite affinity do
+not replace boundary revalidation. Start encoder instrumentation after fixture
+construction; pair a large path/provenance value with an exhausted request budget.
+Check that reservation precedes validation, hashing, key/JSON construction and
+replay comparison, that failed/repeated work accumulates, and that rejected input
+does not stop a healthy catalog. Trace native, metadata, paired and Access paths:
+a value-only helper's hard bound alone does not establish request accounting.
+PR #226 findings R226-01/R226-02 and the scoped regression nodes document this
+procedure; do not reinterpret the author's green run as independent approval.

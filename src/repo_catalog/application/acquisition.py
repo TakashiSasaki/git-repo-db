@@ -67,7 +67,9 @@ from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metad
 from repo_catalog.domain.native_acquisition import (
     metadata_input_intent,
     native_request_intent,
+    ref_input_processing,
     ref_notes_input_intent,
+    without_ref_inputs,
 )
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
@@ -580,8 +582,7 @@ class GitAcquisition:
 
         active_ref_claims = []
         for unit in spec.ref_inputs:
-            value = ref_notes_input_intent(unit, repository_uuidv4)
-            _charge(work, "input_bytes", len(encode(value)))
+            ref_notes_input_intent(unit, repository_uuidv4, work)
             _charge(work, "metadata_units", 1)
             core_cap.admit_ref_observation(unit.observation)
             for claim in unit.claims:
@@ -747,7 +748,7 @@ class GitAcquisition:
         Validate all repository-owned claims/captures before any admission. Physical
         Core/Operational identity pairing remains anchored to store_identity.
         """
-        semantic_intent = native_request_intent(request)
+        preflight_intent = native_request_intent(without_ref_inputs(request))
         with ExitStack() as stack:
             core_cap = stack.enter_context(_open_core(self.core))
             core_cap.ensure_available()
@@ -776,6 +777,11 @@ class GitAcquisition:
                 )
             )
 
+            semantic_intent = (
+                native_request_intent(request, active_work)
+                if request.notes is not None and request.notes.ref_inputs
+                else preflight_intent
+            )
             _charge(active_work, "metadata_units", 1)
             intent_scope = encode(
                 [
@@ -805,12 +811,18 @@ class GitAcquisition:
                     [name.hex() for name in request.nominated_ref_names],
                 ],
                 "traverse_structural_targets": request.traverse_structural_targets,
-                "notes": repr(request.notes),
+                "notes": semantic_intent["notes"]
+                if request.notes is not None and request.notes.ref_inputs
+                else repr(request.notes),
             }
-            if active_progress.save_once(intent_scope, intent) != intent:
-                raise CoreFailure(
-                    "INCOMPATIBLE_REPLAY", intent_scope, "request intent changed"
-                )
+            with ref_input_processing(
+                request.notes.ref_inputs if request.notes is not None else (),
+                active_work,
+            ):
+                if active_progress.save_once(intent_scope, intent) != intent:
+                    raise CoreFailure(
+                        "INCOMPATIBLE_REPLAY", intent_scope, "request intent changed"
+                    )
             core_cap.admit_repository(request.repository_uuidv4)
 
             for repo_claim in request.repository_claims:
@@ -1270,12 +1282,7 @@ class GitAcquisition:
         request_identity: RequestIdentity | None = None,
     ) -> GitAcquisitionReport:
         """Admit a GitMetadataInput unit (with optional retained NativeObjects and Notes)."""
-        semantic_intent = metadata_input_intent(unit)
-        semantic_intent["notes_source"] = (
-            None
-            if notes_source is None
-            else [notes_source.scope, notes_source.object_format]
-        )
+        preflight_intent = metadata_input_intent(without_ref_inputs(unit))
         with ExitStack() as stack:
             core_cap = stack.enter_context(_open_core(self.core))
             core_cap.ensure_available()
@@ -1302,18 +1309,31 @@ class GitAcquisition:
                 )
             )
 
+            semantic_intent = (
+                metadata_input_intent(unit, active_work)
+                if unit.notes is not None and unit.notes.ref_inputs
+                else preflight_intent
+            )
+            semantic_intent["notes_source"] = (
+                None
+                if notes_source is None
+                else [notes_source.scope, notes_source.object_format]
+            )
             _charge(active_work, "metadata_units", 1)
             _validate_metadata_capture_coverage(core_cap, unit, active_work)
             intent_scope = encode(
                 ["p5-metadata-intent", unit.capture_origin_uuidv4, unit.capture_uuidv4]
             )
-            if (
-                active_progress.save_once(intent_scope, semantic_intent)
-                != semantic_intent
+            with ref_input_processing(
+                unit.notes.ref_inputs if unit.notes is not None else (), active_work
             ):
-                raise CoreFailure(
-                    "INCOMPATIBLE_REPLAY", "metadata", "request intent changed"
-                )
+                if (
+                    active_progress.save_once(intent_scope, semantic_intent)
+                    != semantic_intent
+                ):
+                    raise CoreFailure(
+                        "INCOMPATIBLE_REPLAY", "metadata", "request intent changed"
+                    )
             core_cap.admit_repository(unit.repository_uuidv4)
 
             admitted_order: list[OID] = []
