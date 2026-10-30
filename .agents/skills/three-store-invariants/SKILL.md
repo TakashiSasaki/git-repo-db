@@ -1024,3 +1024,22 @@ a refusal, while confirmed source corruption stops that catalog. Keep typed
 salvage's unsupported families explicitly partial until their own receiving
 validation exists. These tests do not establish release acceptance or activate
 the normal Schema 21 runtime.
+
+For typed salvage, test callbacks at the actual writer transaction as well as
+the checked reader. During a callback, withdraw both admission and checked-byte
+capabilities, then restore them in `finally`; otherwise reentry can borrow a
+legitimate verification's protected read. Keep the caller's exception object
+separate from stored-data validation failures so a callback `ValueError` or an
+exception shaped like SQLite corruption cannot stop a healthy target. Keep the
+SQLite statement cache disabled where the authorizer depends on that capability.
+Use a valid replay, denied reentrant body read, real damaged target and forged
+incoming proof as separate controls, for example:
+`scripts/local-run.sh pytest -q -n 2 tests/integration/p7/test_ref_typed_salvage.py`.
+
+Recovery extraction must copy the stopped files without opening the original
+with SQLite, and reserve reads before unbuffered I/O; a buffered short read can
+otherwise prefetch beyond its reservation. Test source bytes across a killed
+copy, then resume the same durable request and run concurrent continuations.
+Successful decoding, a digest and claimed source coordinates do not establish
+issuer authenticity. These controls exercise cooperating local processes; they
+do not prove host power-loss safety or authorize a live recovery.

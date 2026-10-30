@@ -20,9 +20,10 @@ def test_oversized_sqlite_row_never_materializes_in_python(tmp_path, kind, size)
     catalog = tmp_path / "suspect"
     catalog.mkdir()
     conn = sqlite3.connect(catalog / "core.sqlite3")
-    conn.execute(f'CREATE TABLE "large" (value {kind})')
+    conn.execute(f'CREATE TABLE "repository_claims" (value {kind})')
     conn.execute(
-        "INSERT INTO large VALUES (?)", (b"x" * size if kind == "BLOB" else "x" * size,)
+        "INSERT INTO repository_claims VALUES (?)",
+        (b"x" * size if kind == "BLOB" else "x" * size,),
     )
     conn.commit()
     conn.close()
@@ -49,16 +50,17 @@ def test_oversized_sqlite_row_never_materializes_in_python(tmp_path, kind, size)
         assert "finite payload limit" in candidate["error"]
 
 
-def test_sqlite_table_names_are_quoted_and_output_budget_is_honest(tmp_path):
+def test_unknown_source_table_is_omitted_without_generic_payload(tmp_path):
     catalog = tmp_path / "suspect"
     catalog.mkdir()
     with sqlite3.connect(catalog / "core.sqlite3") as conn:
         conn.execute('CREATE TABLE "odd""table" ("odd""column" TEXT)')
         conn.execute('INSERT INTO "odd""table" VALUES (?)', ("hello",))
     receipt = RecoveryService().extract_salvage(catalog, tmp_path / "out")
-    assert receipt.candidate_count == 1
-    assert not receipt.partial
-    assert not receipt.unreadable_scope
+    assert receipt.candidate_count == 0
+    assert receipt.partial
+    assert any('odd"table' in item for item in receipt.unreadable_scope)
+    assert (tmp_path / "out").read_text() == ""
 
 
 def test_missing_authority_is_not_complete_enumeration(tmp_path):

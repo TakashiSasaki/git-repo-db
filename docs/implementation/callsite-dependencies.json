@@ -2245,6 +2245,132 @@
       ]
     },
     {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "sha256": "e7004174ef54aa4086d6d0c09e598c3e79ab4452cbdb5d70925c55b9caf401ed",
+      "functions": [
+        {
+          "name": "__init__",
+          "line": 230,
+          "end_line": 232
+        },
+        {
+          "name": "__init__",
+          "line": 236,
+          "end_line": 237
+        },
+        {
+          "name": "note_bytes",
+          "line": 240,
+          "end_line": 241
+        },
+        {
+          "name": "__init__",
+          "line": 247,
+          "end_line": 249
+        },
+        {
+          "name": "_invoke",
+          "line": 251,
+          "end_line": 262
+        },
+        {
+          "name": "require",
+          "line": 264,
+          "end_line": 265
+        },
+        {
+          "name": "charge",
+          "line": 267,
+          "end_line": 268
+        },
+        {
+          "name": "__getattr__",
+          "line": 270,
+          "end_line": 274
+        },
+        {
+          "name": "_charge",
+          "line": 277,
+          "end_line": 279
+        },
+        {
+          "name": "_wire_key",
+          "line": 282,
+          "end_line": 287
+        },
+        {
+          "name": "_rows",
+          "line": 290,
+          "end_line": 370
+        },
+        {
+          "name": "_observation_wire",
+          "line": 373,
+          "end_line": 382
+        },
+        {
+          "name": "_claim_wire",
+          "line": 385,
+          "end_line": 410
+        },
+        {
+          "name": "pair",
+          "line": 386,
+          "end_line": 390
+        },
+        {
+          "name": "_record",
+          "line": 413,
+          "end_line": 422
+        },
+        {
+          "name": "_notes_wire",
+          "line": 425,
+          "end_line": 459
+        },
+        {
+          "name": "scan_ref_units",
+          "line": 462,
+          "end_line": 477
+        },
+        {
+          "name": "_scan_ref_units",
+          "line": 480,
+          "end_line": 1053
+        },
+        {
+          "name": "_complete_enumeration_section",
+          "line": 1056,
+          "end_line": 1118
+        },
+        {
+          "name": "_repository_dependency",
+          "line": 1121,
+          "end_line": 1131
+        },
+        {
+          "name": "admit_ref_unit",
+          "line": 1134,
+          "end_line": 1454
+        },
+        {
+          "name": "admit_ref_unit_atomic",
+          "line": 1457,
+          "end_line": 1485
+        },
+        {
+          "name": "_coverage_history",
+          "line": 1488,
+          "end_line": 1521
+        },
+        {
+          "name": "_admit_coverage_history",
+          "line": 1524,
+          "end_line": 1547
+        }
+      ]
+    },
+    {
       "path": "src/repo_catalog/adapters/sqlite/schema.py",
       "sha256": "4167f9f7395dac8277f4129db6470bf1ba67a503d950fcfe7f5625fa654bdb39",
       "functions": [
@@ -12987,6 +13113,339 @@
       "sql_operations": [
         "INSERT"
       ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 22,
+      "function": null,
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 53,
+      "function": null,
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 54,
+      "function": null,
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 179,
+      "function": null,
+      "subjects": [
+        "coverage_scopes"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 192,
+      "function": null,
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 521,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 523,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 537,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 539,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 545,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 548,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 550,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 585,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 600,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 666,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 704,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 844,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 861,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "coverage_scopes"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 886,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 924,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 928,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 934,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 937,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 939,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 942,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "coverage_claims",
+        "coverage_scopes"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1026,
+      "function": "_scan_ref_units",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1059,
+      "function": "_complete_enumeration_section",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1074,
+      "function": "_complete_enumeration_section",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1104,
+      "function": "_complete_enumeration_section",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1127,
+      "function": "_repository_dependency",
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1172,
+      "function": "admit_ref_unit",
+      "subjects": [
+        "coverage_scopes"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1190,
+      "function": "admit_ref_unit",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1236,
+      "function": "admit_ref_unit",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1291,
+      "function": "admit_ref_unit",
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1424,
+      "function": "admit_ref_unit",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "src/repo_catalog/adapters/sqlite/ref_salvage.py",
+      "line": 1529,
+      "function": "_admit_coverage_history",
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/schema.py",

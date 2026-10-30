@@ -498,8 +498,10 @@ def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_p
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
     conn.execute("PRAGMA wal_autocheckpoint = 0;")
-    conn.execute("CREATE TABLE IF NOT EXISTS _wal_test (x INT);")
-    conn.execute("INSERT INTO _wal_test VALUES (42);")
+    wal_repository = str(uuid4())
+    conn.execute(
+        "INSERT INTO repositories (repository_uuidv4) VALUES (?)", (wal_repository,)
+    )
     conn.commit()
 
     assert wal_path.exists(), "WAL file must exist after committed transaction"
@@ -527,10 +529,10 @@ def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_p
     wal_test_cands = [
         c
         for c in lines
-        if c.get("extraction_provenance", {}).get("table") == "_wal_test"
+        if c.get("extraction_provenance", {}).get("table") == "repositories"
+        and c.get("payload", {}).get("repository_uuidv4") == wal_repository
     ]
     assert len(wal_test_cands) == 1
-    assert wal_test_cands[0]["payload"]["x"] == 42
 
     conn.close()
 
