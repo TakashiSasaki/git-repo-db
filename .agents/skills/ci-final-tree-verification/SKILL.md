@@ -254,7 +254,7 @@ scope, use the existing conftest registration once through direct pytest:
 
 ```bash
 focused_artifact_dir=$(mktemp -d)
-uv run --no-sync pytest tests/integration/architecture_spikes -q \
+scripts/local-run.sh pytest tests/integration/architecture_spikes -q -n 2 \
   -o junit_family=xunit1 \
   --junitxml "$focused_artifact_dir/junit.xml" \
   --journal "$focused_artifact_dir/journal.jsonl"
@@ -319,9 +319,9 @@ does not authorize a new workflow, release validation, deployment or policy bypa
 In parallel worktrees, use a separate editable environment for each tested tree:
 
 ```sh
-uv sync --locked --group dev
-uv run --no-sync python -c 'import repo_catalog; print(repo_catalog.__file__)'
-uv run --no-sync pytest <focused-targets> -q
+./scripts/setup-local-python.sh
+scripts/local-run.sh python -c 'import repo_catalog; print(repo_catalog.__file__)'
+scripts/local-run.sh pytest <focused-targets> -q -n 2
 ```
 
 P2/P3 review reproduced a misleading failure when a reviewer launched pytest with
@@ -377,7 +377,7 @@ stored rows, translated endpoints or Event coordinates. Keep the original
 clock/provenance/time and full endpoint declaration. Verify with:
 
 ```sh
-python -m pytest tests/integration/i6a/test_originals_revalidation.py -q
+scripts/local-run.sh pytest tests/integration/i6a/test_originals_revalidation.py -q -n 2
 ```
 
 ORIGINALS-M1 demonstrated constructor/replace refusal alongside actual
@@ -396,7 +396,7 @@ or both is an explicit provenance failure, not evidence of equality. Equal
 missing dictionary values do not prove complete evidence.
 
 ```sh
-python -m pytest tests/unit/test_i6a_regression_bindings.py -q
+scripts/local-run.sh pytest tests/unit/test_i6a_regression_bindings.py -q -n 2
 ```
 
 I6A-IR-L01 reproduced consistent=true with null source bindings on the actual
@@ -404,11 +404,13 @@ published compressed evidence. Verify the repaired parser on unchanged archives
 and separately copied compressed mismatch/missing controls. Never rewrite old
 ZIP/JSON evidence to make a new parser pass.
 
-Set UV_CACHE_DIR to a writable external directory in the parent execution
-driver before every uv subprocess, including uv pip install into artifact venvs.
-Setting it only on uv sync leaves later offline installs using a read-only
-home cache. Preserve that setup failure and use a new output directory for the
-corrected execution; compare source and artifact hashes across the retry.
+If the effective uv cache is read-only, select a writable external directory in
+the parent execution driver and inherit that setting in every uv subprocess,
+including artifact installs. Prepare the locked wheels or prime the chosen cache
+before offline work; changing only the build's cache can select an empty one.
+When the native default is writable, preserve it. Preserve the setup failure and
+use a new output directory for corrected execution; compare source and artifact
+hashes across the retry.
 
 ## Size acceptance storage and inspect fetch scope
 
@@ -608,10 +610,10 @@ the actual backend output and review bounded keys/values and budgets first.
 Reproduce the positive build and bounded negative controls with:
 
 ```sh
-uv run --no-sync python scripts/check_sdist_contract.py --build \
+scripts/local-run.sh python scripts/check_sdist_contract.py --build \
   --output artifacts/sdist-contract.json
-uv run --no-sync pytest tests/packaging/test_sdist_contract.py \
-  tests/packaging/test_sdist_hardening.py -q
+scripts/local-run.sh pytest tests/packaging/test_sdist_contract.py \
+  tests/packaging/test_sdist_hardening.py -q -n 2
 ```
 
 Keep runtime and distribution input fingerprints distinct. README prose is
@@ -671,7 +673,7 @@ distinct input trees, corrupt/missing evidence, mid-build mutation and xdist
 workers. Focused commands (through the verified project environment):
 
 ```sh
-scripts/local-run.sh pytest -q tests/packaging/test_p1_distribution.py \
+scripts/local-run.sh pytest -q -n 2 tests/packaging/test_p1_distribution.py \
   tests/packaging/test_sdist_hardening.py tests/packaging/test_distribution.py \
   tests/unit/test_build_input_identity.py tests/unit/test_test_efficiency.py
 scripts/local-run.sh pytest -q -n 2 tests/unit/test_build_input_identity.py
