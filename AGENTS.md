@@ -17,6 +17,9 @@ authorize destructive operations, security-setting changes, merges or deployment
 
 For documentation content refresh, see [documentation/AGENTS.md](documentation/AGENTS.md#content-structure-and-refresh).
 
+**Owner priority:** minimize avoidable token consumption and duplicate local or
+offline CI work. Apply the [efficient agent execution policy](#efficient-agent-execution).
+
 ## Architecture orientation
 
 - [Accepted design](docs/adr/0029-independent-access-store.md) defines five responsibility stores: Core, Context, Access, Operational and Search. This is a target boundary, not a count of databases opened by every startup.
@@ -137,10 +140,36 @@ LFS objects and ordinary LFS pointer file bodies are outside new file archival; 
 
 For substantial architectural changes, fix owner decisions in a focused ADR/design PR, then implement coherent stacked PRs only when authorized. Independent subagents and executable counterexamples are permitted. The four-scope review requirement applies to the large Schema 20 redesign and tasks explicitly requiring it, not automatically to a prose fix. Reviewers must not approve their own production changes. Fix root causes, add regressions and re-review material findings.
 
+### Efficient agent execution
+
 **Development versus release:** run risk-relevant focused local tests, expanding by dependency and correctness risk rather than demanding full suites after every edit/PR. Ordinary development CI uses inexpensive static/lint/format/configuration checks and smoke tests, inspecting local evidence and reporting gaps without automatically duplicating a full locally verified suite. A green development run means selected checks passed, not full runtime acceptance. Only explicit user-invoked release validation requires full independent pytest locally AND hosted CI, isolated wheel/sdist packaging, schema/integrity checks and exact test-node reconciliation. Release validation itself authorizes no release, deployment, tag or merge. Preserve meaningful behavior tests; retire obsolete mechanism assertions only with explicit replacement-node mapping. Report versions, failures, skips, exclusions and unexecuted tests.
 
-**Token-efficient test and CI investigation:** Coding agents MUST minimize text consumed by model context during local test runs and CI triage, while preserving complete evidence on disk:
+- Choose each run to answer a concrete unresolved question. Use the existing CI
+  planner, input bindings and execution records across **all triggered workflows**;
+  do not create a second selection policy or duplicate evidence ledger.
+- Repeat a completed cohort only for changed relevant inputs, unresolved risk,
+  incomplete evidence, or required independent/release verification. For prose or
+  evidence-only followups, verify unchanged relevant inputs instead of rerunning
+  tests; identify the original execution SHA and do not claim fresh execution.
+  After a setup failure, rerun affected failed/unexecuted scopes, preserving
+  successful unrelated evidence and the original failure record.
+- Prepare the verified environment and actual offline dependency/build inputs
+  before a long run. Keep cache settings consistent with setup and reuse only
+  complete, hash-validated immutable artifacts. Never gain speed by hiding
+  failures, weakening checks or skipping required independent verification.
+
+**Token-efficient investigation:** Coding agents MUST minimize text consumed by model context while preserving complete evidence on disk. This applies to tests, CI, source reads, tool discovery and status checks:
+Read only decision-relevant fields or excerpts. Success normally needs status,
+counts, reconciliation, source binding and evidence paths; do not repeatedly dump
+full profiles, journals, PR bodies, tool catalogs or unchanged documents.
+Expand diagnostics only for a concrete unresolved question. Redirect raw JSON,
+full logs and receipt/Base64 payloads to files, then select needed fields/ranges.
+If output is truncated, narrow the query rather than merely raising its budget.
+
 1. **Mandatory 5-step investigation sequence:**
+   Escalate only as needed: a completed successful summary with known scope and
+   source binding ends the investigation; later steps apply to failures or
+   unresolved results, not every successful run.
    - *Step 1 (Summary):* Run `scripts/ci_query.py summary <evidence_dir>` or inspect the 1–2 line machine-readable terminal summary. Never ingest multi-megabyte raw logs into context.
    - *Step 2 (Failure counts):* Inspect failure counts and categories with `scripts/ci_query.py status <evidence_dir>`. Check total, passed, failed, and inherited vs unclassified counts.
    - *Step 3 (Bounded failure list):* Query only new or changed failures with a strict limit: `scripts/ci_query.py failures <evidence_dir> --new-only --limit 10`. Never query unbounded failure lists.
@@ -149,6 +178,15 @@ For substantial architectural changes, fix owner decisions in a focused ADR/desi
 2. **Execution defaults:** Never run bare, unbudgeted pytest in agent sessions. Always use `scripts/ci_profile.py` or pass `--quiet` (`-q`) and worker budgeting (`-n auto` or `--max-workers`) through verified `./scripts/local-run.sh`. Non-test commands must not print "0 passed" test statistics.
 
 Use one controlled workload at a time for comparable timing; concurrent timings are not sequential benchmark evidence. Keep historical reports and submit real dependencies/findings. Synchronize authoritative contracts and machine inputs with product changes; derived documentation follows independently under ADR 0035 and does not block routine product checks. Complete release acceptance still requires independent local and hosted product and documentation evidence. Named merges require authorization and independent integration-ancestry/effective-tree verification. ADR 0014 does not authorize any implementation, real-catalog extraction or data deletion.
+
+At stable checkpoints, use existing timing/size summaries to identify the slowest
+steps, repeated work and excessive output. Improve recurring causes within the
+authorized scope and capture verified reusable lessons in existing helpers or
+skills. Distinguish elapsed time from summed worker time, and output bytes from
+measured tokens/billing; do not add heavyweight measurements or process gates
+when existing evidence answers the question. Use
+[efficient repository investigation](.agents/skills/efficient-repository-investigation/SKILL.md)
+and [CI verification](.agents/skills/ci-final-tree-verification/SKILL.md) for procedures.
 
 ## Reuse lessons as repository Agent Skills
 
