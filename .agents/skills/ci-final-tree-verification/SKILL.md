@@ -221,10 +221,10 @@ existence and passing counts are separate evidence.
 1. Release validation is an explicit, user-invoked operation requiring complete independent testing in both environments (local AND hosted).
 2. Local requirement: execute the complete applicable ordinary pytest suite and packaging checks locally on a clean tree, generating a verified receipt:
    ```bash
-   python scripts/ci_execute.py receipt --output-dir artifacts/ci-profile
+   scripts/local-run.sh python scripts/ci_execute.py receipt --output-dir artifacts/ci-profile
    ```
 3. Hosted requirement: execute the complete hosted suite (invoked via workflow dispatch with `mode: release`), isolated wheel/sdist packaging tests, schema/integrity checks, and exact test-node reconciliation.
-4. Read the actual workflow job logs and `validation-manifest.json`. Require `full_acceptance=true`, `acceptance_status=complete_release_passed` (or `hosted_release_passed` reconciled via `python scripts/ci_execute.py reconcile-release`), zero unexpected failures/skips, exactly-once selected/executed node reconciliation, and exact input binding.
+4. Read the actual workflow job logs and `validation-manifest.json`. Require `full_acceptance=true`, `acceptance_status=complete_release_passed` (or `hosted_release_passed` reconciled via `scripts/local-run.sh python scripts/ci_execute.py reconcile-release`), zero unexpected failures/skips, exactly-once selected/executed node reconciliation, and exact input binding.
 5. An explicit release validation does not authorize merge, release, publication, or deployment without separate explicit owner authorization.
 
 ## Frequent failure modes
@@ -491,7 +491,7 @@ coordinates while differing in their Provider target. Assert that both survive
 Search rebuild and result projection. Preserve current/historical qualifiers and
 recompute qualification from authority on every search read. I4's counterexamples
 in `tests/integration/i4/test_query_search_backup.py` exercise this boundary;
-run `pytest -q tests/integration/i4 tests/integration/p6` on the supported runtime.
+run `scripts/local-run.sh pytest -q -n 2 tests/integration/i4 tests/integration/p6`.
 These are projection rules, not permission to issue Mapping evidence, rewrite
 original keys or infer execution approval from a Mapping.
 
