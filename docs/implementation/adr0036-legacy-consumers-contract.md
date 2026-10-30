@@ -469,3 +469,35 @@ only one Notes-copy family now. No absent-name assertion alone establishes
 acceptance. The implementation report distinguishes exploratory failures,
 fixed-source tests, packaging execution and CI selection/skips from full release
 acceptance. No live recovery, merge or deployment is authorized by this contract.
+
+## R230 salvage classification and preservation-test correction
+
+Independent review of `ffeea444677b8d8bd8ae4615349bfe6769fbac1a` was
+scoped FAIL: 12/16 succeeded in 11.75s, with four post-backup metadata recovery
+failures (sha1/sha256 × Core-only/paired). Source DB/WAL preservation and the
+independent real COMMIT-denial probes succeeded. Those failures remain historical
+evidence; they are not replaced by an author PASS declaration.
+
+R230-01 (P1) changes the Context test following `retained_metadata` to `elif`:
+retained commit/tree/tag, Context document and generic candidates now have
+mutually exclusive classification. Valid native bytes/copy identity are not
+reclassified as generic untyped BLOBs. The new post-backup regression checks all
+three native types, exact original copy IDs, a damaged sibling withheld without
+staging its body, nominal metadata-only rows, Context text, fresh restore/merge
+and byte-for-byte source DB/WAL preservation in both formats and topologies.
+
+R230-02 (P2) replaces the old keyword-based retired-test matches with explicit
+behavioral invariants and appropriate negative/preservation tests. In particular,
+real SQLite COMMIT denial and SIGKILL immediately after the new Ref body INSERT
+have dedicated acquisition regressions: rollback, independently admitted prefix,
+existing checked copy preservation, original copy/Claim identity and cumulative
+retry work are asserted. A Group INSERT failure separately proves rollback of
+new nominal objects while retaining an original Group. Narrow-path, unsupported
+mode/ambiguous path and bad incoming-body regressions keep the corresponding
+refusal/preservation behavior executable. Current typed Group/Claim/proof and
+retired-interface differences are stated in the mapping; this is not a claim
+that every old parameter matrix was rerun. The first map's target-existence
+check did not establish behavioral equivalence. All 78 entries were reviewed;
+the implementation report lists the small executed scope and remaining gaps.
+No schema/wire change, legacy alias, runtime permission change or new recovery
+policy is part of these corrections.

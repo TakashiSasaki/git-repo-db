@@ -2305,7 +2305,7 @@ class SQLiteRecoveryAdapter:
                                 payload["body_base64"] = _encode_salvage_base64(
                                     raw_body, work
                                 )
-                        if store_name == "context" and table == "text_bodies":
+                        elif store_name == "context" and table == "text_bodies":
                             c_type = CandidateType.CONTEXT_DOCUMENT
                             c_id = str(row_dict.get("sha256"))
                             payload = {
