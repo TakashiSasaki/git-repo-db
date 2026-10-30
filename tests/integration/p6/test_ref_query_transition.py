@@ -29,7 +29,14 @@ def test_reported_notes_visible_without_capture(acquisition, paired, capsys):
         root_oid=None,
         provenance=replace(value.claims[0].provenance, coordinate="unknown"),
     )
-    value = replace(value, claims=(*value.claims, unknown))
+    from repo_catalog.domain.p1_core import OID
+
+    alternative = replace(
+        value.claims[0],
+        root_oid=OID(target.object_format, "b" * len(target.full_oid)),
+        provenance=replace(value.claims[0].provenance, coordinate="competing-root"),
+    )
+    value = replace(value, claims=(*value.claims, unknown, alternative))
     if paired:
         enable_context(acquisition)
     run_request(acquisition, with_input(acquisition, value), paired=paired)
@@ -39,6 +46,8 @@ def test_reported_notes_visible_without_capture(acquisition, paired, capsys):
     assert len(view.ref_notes_targets) == 1
     result = view.ref_notes_targets[0]
     assert set(result.observation.claims) == set(value.claims)
+    assert result.observation.conflict
+    assert result.mapping.ref_claim != alternative
     assert result.mapping.ref_claim == value.claims[0]
     assert result.mapping.claims == value.mapping_claims
     assert not result.mapping.evidence
