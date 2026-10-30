@@ -11263,6 +11263,24 @@
       "producer": "ADR 0036 input implementation and fixed-tree local validation.",
       "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
       "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/R226-FIXES.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "R226-01/R226-02 author repair evidence; independent FAIL remains historical and re-review is separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/R226-FIXES.md",
+      "producer": "PR 226 scoped remediation and clean-tree development profile.",
+      "consumers": "PR 226 independent re-review and parent handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/r226-fixes-local-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "R226-01/R226-02 author repair evidence; independent FAIL remains historical and re-review is separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/r226-fixes-local-profile.tar.gz",
+      "producer": "PR 226 scoped remediation and clean-tree development profile.",
+      "consumers": "PR 226 independent re-review and parent handoff.",
+      "publication": "not staged"
     }
   }
 }
