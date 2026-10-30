@@ -400,7 +400,7 @@
       "source": "docs/adr/0001-validation-lifecycle-architecture.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0001: Development and Release Validation Lifecycle Architecture",
       "cited_adrs": [
         "0001"
@@ -439,7 +439,7 @@
       "source": "docs/adr/0002-three-store-boundary-architecture.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# Architecture Decision Record: Three-Store Boundary (PF-P01–PF-P17)",
       "cited_adrs": [
         "0001",
@@ -480,7 +480,7 @@
       "source": "docs/adr/0004-metadata-only-git-core.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0004: Mandatory metadata-only Git Core",
       "cited_adrs": [
         "0001",
@@ -518,7 +518,7 @@
       "source": "docs/adr/0005-common-oid-identity-with-attributed-metadata.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0005: Common OID identity with attributed Git metadata",
       "cited_adrs": [
         "0001",
@@ -557,7 +557,7 @@
       "source": "docs/adr/0006-field-claims-and-observation-scoped-relations.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0006: Field-level claims and observation-scoped Git relation groups",
       "cited_adrs": [
         "0001",
@@ -598,7 +598,7 @@
       "source": "docs/adr/0007-verification-aware-git-metadata-reads.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0007: Verification-aware canonical Git metadata reads",
       "cited_adrs": [
         "0001",
@@ -636,7 +636,7 @@
       "source": "docs/adr/0008-domain-split-git-verification-ownership.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0008: Domain-split Git verification ownership",
       "cited_adrs": [
         "0001",
@@ -677,7 +677,7 @@
       "source": "docs/adr/0009-bounded-byte-admission-and-physical-health.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0009: Bounded immutable verified-byte admission and independent physical health",
       "cited_adrs": [
         "0001",
@@ -716,7 +716,7 @@
       "source": "docs/adr/0010-operation-scoped-cas-physical-integrity.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0010: Operation-scoped physical integrity assurance for Git Core CAS",
       "cited_adrs": [
         "0010",
@@ -754,7 +754,7 @@
       "source": "docs/adr/0011-adr-governance.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0011: Shared ADR policy and an optional procedural skill",
       "cited_adrs": [
         "0011",
@@ -785,7 +785,7 @@
       "source": "docs/adr/0012-append-only-multiple-cas-physical-instances.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0012: Append-only physical-instance variants and Git CAS recovery",
       "cited_adrs": [
         "0010",
@@ -825,7 +825,7 @@
       "source": "docs/adr/0013-deterministic-cas-instance-eligibility.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0013: Evidence-derived eligible CAS instances and deterministic byte selection",
       "cited_adrs": [
         "0010",
@@ -863,7 +863,7 @@
       "source": "docs/adr/0014-history-and-notes-catalog-without-file-archive.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0014: A Git history and notes catalog, not a file-content archive",
       "cited_adrs": [
         "0011",
@@ -911,7 +911,7 @@
       "source": "docs/adr/0015-automatic-git-notes-ref-discovery.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0015: Automatically discover Git notes refs and allow explicit additional namespaces",
       "cited_adrs": [
         "0011",
@@ -958,7 +958,7 @@
       "source": "docs/adr/0016-immutable-notes-ref-capture-observations.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0016: Immutable capture-scoped identity for Git notes-ref observations",
       "cited_adrs": [
         "0011",
@@ -1006,7 +1006,7 @@
       "source": "docs/adr/0017-domain-keys-without-storage-surrogates.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0017: Prefer domain primary keys; prohibit storage-only surrogates",
       "cited_adrs": [
         "0001",
@@ -1060,7 +1060,7 @@
       "source": "docs/adr/0022-receiver-verified-notes-role-admission.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0022: Require receiver-verified structural notes-role evidence before retaining note bodies",
       "cited_adrs": [
         "0011",
@@ -1111,7 +1111,7 @@
       "source": "docs/adr/0023-configurable-finite-notes-resource-budgets.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0023: Configurable finite budgets for Git notes body admission and proof work",
       "cited_adrs": [
         "0000",
@@ -1159,7 +1159,7 @@
       "source": "docs/adr/0024-actual-notes-resource-work-accounting.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0024: Account for actual notes-processing work, including reprocessed deliveries",
       "cited_adrs": [
         "0011",
@@ -1205,7 +1205,7 @@
       "source": "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0025: Cumulative acquisition-request budgets and scoped architectural blockers",
       "cited_adrs": [
         "0001",
@@ -1254,7 +1254,7 @@
       "source": "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0026: Stop, salvage read-only, restore a verified backup, then merge validated recovery data",
       "cited_adrs": [
         "0011",
@@ -1311,7 +1311,7 @@
       "source": "docs/adr/0028-classified-times-and-sha256-exchange.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0028: Classified epoch times and SHA-256-only Exchange integrity",
       "cited_adrs": [
         "0001",
@@ -1349,7 +1349,7 @@
       "source": "docs/adr/0029-independent-access-store.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0029: Independent Access store for locators and connection configurations",
       "cited_adrs": [
         "0017",
@@ -1402,7 +1402,7 @@
       "source": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0030: Typed Repository Context relations and selective Exchange without Witness storage",
       "cited_adrs": [
         "0027",
@@ -1441,7 +1441,7 @@
       "source": "docs/adr/0031-generalized-context-resources.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0031: Generalized Context Resource identity and relationships",
       "cited_adrs": [
         "0017",
@@ -1473,7 +1473,7 @@
       "source": "docs/adr/0032-environment-sqlite-validation.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0032: Validate with the execution environment's SQLite",
       "cited_adrs": [
         "0001",
@@ -1511,7 +1511,7 @@
       "source": "docs/adr/0033-minimal-product-sdist.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0033: Minimal product sdist with distribution equivalence",
       "cited_adrs": [
         "0001",
@@ -1544,7 +1544,7 @@
       "source": "docs/adr/0034-repository-test-and-ci-efficiency.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0034: Repository-wide test and CI efficiency architecture",
       "cited_adrs": [
         "0001",
@@ -1574,7 +1574,7 @@
       "source": "docs/adr/0035-independent-documentation-workspace.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0035: Independent documentation workspace",
       "cited_adrs": [
         "0035"
@@ -1644,7 +1644,7 @@
       "source": "docs/adr/policy.md",
       "producer": "Owner decision or ADR governance source; see the file and Git history.",
       "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "staged only for ADR 0001 and 0002; others remain repository sources",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR operating policy for developers and coding agents",
       "cited_adrs": [
         "0011"
@@ -7139,7 +7139,7 @@
       "source": "docs/phase2/no-independent-publication-adr.md",
       "producer": "Committed owner-decision record.",
       "consumers": "Decision register and linked implementation/design records.",
-      "publication": "not staged",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# Decision: no independent Publication; reassess the whole design before implementation",
       "baseline_git_object": {
         "mode": "100644",
@@ -8512,7 +8512,7 @@
       "source": "docs/transport-independent-core-adr.md",
       "producer": "Committed owner-decision record.",
       "consumers": "Decision register and linked implementation/design records.",
-      "publication": "not staged",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR: Transport-independent core persistence and minimal parser provenance",
       "baseline_git_object": {
         "mode": "100644",
@@ -9561,7 +9561,7 @@
       "producer": "Authored site source.",
       "consumers": "documentation/tools/build_docs_site.py and site visitors.",
       "publication": "existing staging input",
-      "source_heading": "# Architecture Decision Records (ADRs)",
+      "source_heading": "# 現在有効な設計決定",
       "cited_adrs": [
         "0001",
         "0002",
@@ -9826,8 +9826,8 @@
       "authority": "Derived presentation, not an authoritative contract.",
       "source": "documentation/content/development/index.md",
       "producer": "Authored site source.",
-      "consumers": "documentation/tools/build_docs_site.py and site visitors.",
-      "publication": "existing staging input",
+      "consumers": "Repository contributors and documentation tests.",
+      "publication": "not staged; repository-only development guide",
       "source_heading": "# 開発・テストおよびコントリビューションガイド",
       "cited_adrs": [
         "0001"
@@ -9847,7 +9847,7 @@
       "producer": "Authored site source.",
       "consumers": "documentation/tools/build_docs_site.py and site visitors.",
       "publication": "existing staging input",
-      "source_heading": "# git-repo-db 開発者ドキュメント",
+      "source_heading": "# git-repo-db の設計を読む",
       "cited_adrs": [
         "0001",
         "0002",
@@ -11152,7 +11152,7 @@
       "source": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
       "producer": "Owner decision and reviewed ADR governance source.",
       "consumers": "ADR index, implementation stages and independent reviewers.",
-      "publication": "not staged",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0036: Ref observations, immutable result claims, and shared Notes interpretation",
       "status_in_source": "accepted"
     },
@@ -11325,6 +11325,60 @@
       "source": "docs/implementation/adr0036-inputs-evidence-20261030/SEARCH-TRANSITION.md",
       "producer": "PR227 dependent Search implementation and selective verification.",
       "consumers": "Independent review and parent handoff.",
+      "publication": "not staged"
+    },
+    "documentation/tools/design_viz.py": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Read-only semantic-model validation and rendering, no product DDL input.",
+      "source": "documentation/tools/design_viz.py",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "not staged"
+    },
+    "documentation/tools/design_viewer.html": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Standalone presentation template; no design authority.",
+      "source": "documentation/tools/design_viewer.html",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "rendered as design/index.html"
+    },
+    "documentation/tools/adr_publication.py": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Explicit owner-authorized current ADR publication selection and read-only staging.",
+      "source": "documentation/tools/adr_publication.py",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "not staged"
+    },
+    "documentation/tests/test_design_viz.py": {
+      "status": "documentation-test",
+      "owner": "documentation/tests/",
+      "authority": "Development regression tests, not release acceptance by themselves.",
+      "source": "documentation/tests/test_design_viz.py",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "not staged"
+    },
+    "documentation/content/design/model.json": {
+      "status": "derived-design-model",
+      "owner": "documentation/content/design/",
+      "authority": "Cited semantic projection of accepted ADRs; proposals and unknowns explicitly labeled.",
+      "source": "documentation/content/design/model.json",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "embedded in design/index.html"
+    },
+    "documentation/tools/test_design_browser.mjs": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Optional real-browser checks of static documentation only.",
+      "source": "documentation/tools/test_design_browser.mjs",
+      "producer": "Authored browser regressions with disposable synthetic UI data.",
+      "consumers": "Documentation maintainers and independent reviewers.",
       "publication": "not staged"
     }
   }

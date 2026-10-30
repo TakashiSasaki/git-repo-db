@@ -51,6 +51,7 @@ markdown_extensions:
 
 nav:
   - ホーム: index.md
+  - 5ストア設計を探索: /design/
   - アーキテクチャ:
       - 概要: architecture/index.md
       - Three-Store Boundary: architecture/three-store-boundary.md
@@ -73,5 +74,6 @@ nav:
   - 設計決定 (ADR):
       - ADR 一覧: adr/index.md
       - "ADR 0001: 開発・リリース検証ライフサイクル": adr/0001-validation-lifecycle-architecture.md
-      - "ADR 0002: Three-Store Boundary": adr/0002-three-store-boundary-architecture.md
-  - 開発・テスト: development/index.md
+      - "ADR 0029: 5ストアの責務": adr/0029-independent-access-store.md
+      - "ADR 0031: Context Resource": adr/0031-generalized-context-resources.md
+      - "ADR 0036: Ref 観測・Claim・Notes": adr/0036-ref-observations-and-shared-notes-mappings.md

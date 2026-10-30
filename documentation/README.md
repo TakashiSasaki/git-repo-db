@@ -3,7 +3,7 @@
 This project provides isolated dependencies, output paths and mechanical
 input-provenance checks. Rendering, human sources and documentation tests now live here; product structural tests and canonical design/evidence remain outside. ADR 0035 was adopted 2026-10-26; publication/deployment remain separately authorized.
 The existing explicit staging/publication allowlist and rendering conventions in
-`documentation/tools/build_docs_site.py` remain the only implementation; no duplicate MkDocs
+`documentation/tools/build_docs_site.py` and `documentation/tools/adr_publication.py` remain the only implementation; no duplicate MkDocs
 configuration, renderer or editable ADR source is introduced here.
 
 For the documented product-to-documentation workflow, first establish the
@@ -87,7 +87,7 @@ env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python do
 
 Local examples unset `UV_PROJECT_ENVIRONMENT` so a product launcher setting cannot redirect the documentation project environment. Pages runs its own hosted setup; its commands should not be treated as proof of a developer shell's environment.
 
-Choose both full SHAs once; do not chase latest HEAD. A different selected product checkout may export its manifest/IR for the documentation checkout to consume. Product CI does not render documentation. Existing Pages owns documentation checks/preview and the unchanged publication allowlist. Product receipts explicitly report `full_acceptance=false` and missing documentation. `verify_documentation.py` executes all documentation obligations and retains private receipts in unique attempt directories; `--preview` receipts cannot establish complete release acceptance. After producing the pinned IR, the repository-root preview command is `documentation/.venv/bin/python documentation/tools/verify_documentation.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --preview`. An explicit `scripts/ci_execute.py reconcile-release --documentation-local RECEIPT --documentation-hosted RECEIPT` additionally verifies independent local/hosted documentation receipts, exact node replacements and product/IR provenance, and binds hosted bytes to the successful Pages provider artifact before complete release acceptance is possible. This is a release gap, never product failure or complete acceptance.
+Choose both full SHAs once; do not chase latest HEAD. A different selected product checkout may export its manifest/IR for the documentation checkout to consume. Product CI does not render documentation. Existing Pages owns documentation checks/preview and the explicit publication allowlist. Product receipts explicitly report `full_acceptance=false` and missing documentation. `verify_documentation.py` executes all documentation obligations and retains private receipts in unique attempt directories; `--preview` receipts cannot establish complete release acceptance. After producing the pinned IR, the repository-root preview command is `documentation/.venv/bin/python documentation/tools/verify_documentation.py --product-source FULL_PRODUCT_SHA --documentation-source FULL_DOC_SHA --preview`. An explicit `scripts/ci_execute.py reconcile-release --documentation-local RECEIPT --documentation-hosted RECEIPT` additionally verifies independent local/hosted documentation receipts, exact node replacements and product/IR provenance, and binds hosted bytes to the successful Pages provider artifact before complete release acceptance is possible. This is a release gap, never product failure or complete acceptance.
 
 ## Content ownership and directory inventory
 
@@ -106,3 +106,32 @@ the two frozen evidence trees against pinned paths, modes and blobs. The checked
 file-level inventory records status, authority, provenance, consumers and
 publication intent; its bounded static reference scan does not prove the absence
 of dynamic consumers. Accepted decisions and each record still determine scope.
+
+## Cited five-store design projection
+
+The public `/design/` viewer uses `content/design/model.json`, validated and
+rendered by `tools/design_viz.py` and `tools/design_viewer.html`. It is a derived
+semantic projection, not product IR, P1 DDL or a second ADR source. The model pins
+its own design-source commit/tree; each meaning, key, constraint and relation
+cites its canonical section and labels accepted/inherited/proposed/unknown scope.
+Changing those canonical bytes requires a deliberate model/source refresh.
+`tools/adr_publication.py` selects current full decisions explicitly, checks the
+canonical index for drift and rewrites only links in read-only staging. Development
+procedures remain in the repository and are not staged. New accepted ADRs still
+require a reviewed allowlist change; this documentation does not grant deployment.
+
+For optional real-browser checks, install Puppeteer (or puppeteer-core) outside
+the product environment, point `DOCS_SITE_DIR` at the built site and run:
+
+```bash
+DOCS_SITE_DIR=/absolute/path/to/built-site \
+DOCS_PUPPETEER_MODULE=/absolute/path/to/node_modules/puppeteer-core \
+DOCS_BROWSER=/usr/bin/chromium node documentation/tools/test_design_browser.mjs
+```
+
+The tool serves only a local preview, exercises 1280px/375px navigation,
+relationships, back, constraints, citations and duplicate names, and records
+screenshots/results under `.build/browser-evidence/`. Its synthetic in-browser
+runtime data also checks omitted composite-FK target columns without changing the
+neutral IR or any catalog. Static Mermaid preview placeholders are not full
+rendering or release acceptance.

@@ -23,7 +23,7 @@ Directly pointing MkDocs `docs_dir` to the repository `docs/` or building the re
 
 ### Rule & Invariant
 - **Never publish unvetted repository files**: Build through an explicit staging directory (`.build/docs-source/`).
-- Preserve the approved public document set selected by the current staging code. Its baseline homepage, architecture overview, ADR 0001/0002 and schema assets do not imply that every later ADR or implementation report is approved for publication.
+- Preserve the approved public document set selected by the current staging code. The current ADR set is selected explicitly by `documentation/tools/adr_publication.py` and checked against the accepted index. The separately cited five-store model and normal three-store schema viewer have different inputs. A later ADR or implementation report does not automatically enter the public set.
 - Validate the generated distribution (`site/`) with an automated allowlist checker verifying file extensions (`.html`, `.css`, `.js`, `.svg`, `.dbml`, `.json`) and rejecting forbidden patterns (`*.sqlite3`, `*.py`, `*.sh`, `*.key`, `*.pem`, `*.env*`).
 
 ---
@@ -148,3 +148,16 @@ Re-audit the build command and conditional imports when changing it. Repository
 links in published Markdown do not copy their targets into the site. The homepage
 commit/tree metadata identifies the built revision; skipping an internal-only
 commit intentionally leaves the previous site's revision displayed.
+
+
+## 10. Parse rendered HTML links, not JavaScript templates
+
+A standalone viewer builds links in JavaScript template strings. A regex over the
+entire HTML falsely reports `${route()}` as a missing file. Parse actual HTML
+`href` attributes with `HTMLParser`; script text is not an element. Keep a positive
+missing-HTML-link counterexample alongside the ignored-script counterexample:
+`documentation/.venv/bin/python -m pytest -q documentation/tests/test_build_docs_site.py -k link`.
+This static check does not execute dynamic navigation. Run the optional
+`documentation/tools/test_design_browser.mjs` against a local preview to validate
+selection, relationship navigation, return paths and cited ADR routes at desktop
+and mobile widths. Preserve raw logs and record unverified browser scope.

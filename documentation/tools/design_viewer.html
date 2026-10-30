@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>5ストア設計を探索 — git-repo-db</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/assets/images/icons/icon.svg" />
+    <meta name="theme-color" content="#15263c" />
+    <style>
+      :root {
+        color-scheme: light;
+        font:
+          16px/1.65 system-ui,
+          sans-serif;
+        color: #172c40;
+        background: #f3f6fa;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      header {
+        background: #15263c;
+        color: #fff;
+        padding: 1.5rem max(1rem, calc((100vw - 1160px) / 2));
+      }
+      header a {
+        color: #b9e6fc;
+      }
+      h1 {
+        font-size: clamp(1.5rem, 4vw, 2.25rem);
+        line-height: 1.3;
+        margin: 0.5rem 0;
+      }
+      h2 {
+        font-size: 1.4rem;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0.4rem 0;
+      }
+      main {
+        max-width: 1200px;
+        padding: 1.25rem;
+        margin: auto;
+      }
+      a {
+        color: #075b94;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button,
+      .button {
+        border: 1px solid #8ba6ba;
+        background: white;
+        border-radius: 6px;
+        padding: 0.5rem 0.8rem;
+        color: #134d72;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        min-height: 44px;
+      }
+      button:hover,
+      .button:hover {
+        background: #e6f3fc;
+      }
+      button[aria-pressed="true"] {
+        background: #164c70;
+        color: white;
+      }
+      .controls {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 1rem 0;
+      }
+      input {
+        padding: 0.6rem;
+        width: min(100%, 30rem);
+        border: 1px solid #8ba6ba;
+        border-radius: 6px;
+        min-width: 0;
+      }
+      nav {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      #scope {
+        margin: 1rem 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+        gap: 1rem;
+      }
+      article,
+      .panel {
+        background: white;
+        border: 1px solid #c9d6e2;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        min-width: 0;
+      }
+      .grid article {
+        margin: 0;
+      }
+      .muted {
+        color: #486277;
+      }
+      .badge {
+        display: inline-block;
+        border-radius: 4px;
+        padding: 0.1rem 0.4rem;
+        font-weight: 700;
+        background: #e3f2e9;
+        color: #205c3d;
+        font-size: 0.85rem;
+      }
+      .P,
+      .U {
+        background: #fff0cf;
+        color: #76510d;
+      }
+      .I {
+        background: #e8ebff;
+        color: #414f88;
+      }
+      .citations {
+        font-size: 0.85rem;
+        margin: 0.3rem 0 0.7rem;
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+      p {
+        margin: 0.4rem 0 0.8rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+        font-size: 0.9em;
+      }
+      .identity {
+        color: #486277;
+        font-size: 0.85rem;
+        overflow-wrap: anywhere;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(100px, 1fr) minmax(0, 1fr);
+        align-items: center;
+        gap: 0.7rem;
+        margin: 0.7rem 0;
+        padding: 1rem;
+        border: 1px dashed #92adc2;
+        background: white;
+        border-radius: 8px;
+        overflow-wrap: anywhere;
+      }
+      .flow .edge {
+        text-align: center;
+        font-size: 0.95rem;
+      }
+      .arrow {
+        display: block;
+        font-size: 1.5rem;
+        color: #376d91;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        background: white;
+      }
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 0.75rem;
+        border-bottom: 1px solid #cad6e1;
+        overflow-wrap: anywhere;
+      }
+      .table-scroll {
+        overflow: auto;
+      }
+      :focus-visible {
+        outline: 3px solid #bf6a00;
+        outline-offset: 3px;
+      }
+      .empty {
+        padding: 1rem;
+      }
+      .legend {
+        font-size: 0.9rem;
+      }
+      #result h2 {
+        scroll-margin-top: 1rem;
+      }
+      .facts {
+        padding-left: 1.3rem;
+      }
+      @media (max-width: 640px) {
+        main {
+          padding: 0.8rem;
+        }
+        .flow {
+          grid-template-columns: 1fr;
+        }
+        .flow .edge {
+          text-align: left;
+        }
+        .flow .arrow {
+          font-size: 1.3rem;
+        }
+        th,
+        td {
+          padding: 0.6rem;
+        }
+        header {
+          padding: 1rem;
+        }
+        .table-scroll table {
+          min-width: 500px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/">git-repo-db</a> / <a href="/adr/">設計決定の全文</a> /
+      <a href="/schema/viewer/">通常3ストアの実装スキーマ</a>
+      <h1>5ストアの設計を、関係から読む</h1>
+      <p>ストア間の責務から、エンティティ・意味キー・制約へ。</p>
+    </header>
+    <main>
+      <details>
+        <summary>出典・採択状態の読み方</summary>
+        <p id="scope"></p>
+        <p class="legend">
+          <span class="badge A">A 採択</span>
+          <span class="badge I">I 継承</span>
+          <span class="badge P">P 実装提案</span>
+          <span class="badge U">U 未確定</span
+          >　状態は意味・キー・制約ごとに表示します。関係図の矢印は意味上の参照で、物理
+          FK を断定しません。
+        </p>
+      </details>
+      <nav id="breadcrumbs" aria-label="現在位置"></nav>
+      <div class="controls">
+        <button id="back" type="button">戻る</button
+        ><button id="diagram" type="button">関係図</button
+        ><button id="list" type="button">一覧</button
+        ><label for="query">絞り込み</label
+        ><input id="query" type="search" placeholder="名前・意味・制約を検索" />
+      </div>
+      <div id="result" aria-live="polite"></div>
+      <footer class="muted" id="revision"></footer>
+    </main>
+    <script id="design-model" type="application/json">
+      __DESIGN_MODEL__
+    </script>
+    <script>
+      "use strict";
+      const model = JSON.parse(
+        document.getElementById("design-model").textContent,
+      );
+      const entities = new Map(model.entities.map((e) => [e.id, e]));
+      const stores = new Map(model.stores.map((s) => [s.id, s]));
+      const result = document.getElementById("result");
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const statuses = { A: "採択", I: "継承", P: "実装提案", U: "未確定" };
+      function state() {
+        const p = new URLSearchParams(location.hash.slice(1));
+        return {
+          store: p.get("store") || "",
+          entity: p.get("entity") || "",
+          level: p.get("level") || "",
+          view: p.get("view") === "list" ? "list" : "diagram",
+          query: p.get("q") || "",
+          model: p.get("model") || model.id,
+        };
+      }
+      function url(s) {
+        const p = new URLSearchParams({ model: model.id });
+        for (const k of ["store", "entity", "level", "view"])
+          if (s[k]) p.set(k, s[k]);
+        if (s.query) p.set("q", s.query);
+        return "#" + p;
+      }
+      function go(change) {
+        location.hash = url({ ...state(), ...change });
+      }
+      function reference(source) {
+        const path = source.path;
+        const dest = path.startsWith("docs/adr/")
+          ? "/adr/" + path.split("/").pop().replace(/\.md$/, "/")
+          : "https://github.com/TakashiSasaki/git-repo-db/blob/" +
+            model.source_revision +
+            "/" +
+            path;
+        return `<a href="${esc(dest + "#" + source.anchor)}">${esc(path.split("/").pop().replace(/\.md$/, ""))}</a>`;
+      }
+      function fact(f) {
+        return `<span class="badge ${f.status}">${f.status} ${statuses[f.status]}</span> ${esc(f.text)}<div class="citations">${f.sources.map(reference).join(" ")}</div>`;
+      }
+      function entityLink(id) {
+        const e = entities.get(id);
+        return `<a class="button" href="${url({ ...state(), store: e.store, entity: e.id, level: "" })}">${esc(stores.get(e.store).label + " / " + e.label)}</a>`;
+      }
+      function flows(rels) {
+        if (!rels.length)
+          return '<p class="empty">この範囲に記載された関係はありません。</p>';
+        return rels
+          .map(
+            (r) =>
+              `<div class="flow">${entityLink(r.source)}<div class="edge">${fact(r.meaning)}<span class="arrow" aria-label="参照先へ">${matchMedia("(max-width:640px)").matches ? "↓" : "→"}</span></div>${entityLink(r.target)}</div>`,
+          )
+          .join("");
+      }
+      function relationTable(rels) {
+        return `<div class="table-scroll"><table><thead><tr><th>参照元</th><th>意味・出典</th><th>参照先</th></tr></thead><tbody>${rels.map((r) => `<tr><td>${entityLink(r.source)}</td><td>${fact(r.meaning)}</td><td>${entityLink(r.target)}</td></tr>`).join("")}</tbody></table></div>`;
+      }
+      function cards(items) {
+        return `<div class="grid">${items.map((e) => `<article><h3>${entityLink(e.id)}</h3><div class="identity">${esc(e.id)}</div><p>${fact(e.meaning)}</p><a href="${url({ ...state(), store: e.store, entity: e.id, level: "constraints" })}">意味キー・制約 ${e.keys.length + e.constraints.length} 件を読む</a></article>`).join("")}</div>`;
+      }
+      function entityTable(items) {
+        return `<div class="table-scroll"><table><thead><tr><th>エンティティ</th><th>意味</th><th>意味キー・制約</th></tr></thead><tbody>${items.map((e) => `<tr><td>${entityLink(e.id)}<div class="identity">${esc(e.id)}</div></td><td>${fact(e.meaning)}</td><td><a href="${url({ ...state(), store: e.store, entity: e.id, level: "constraints" })}">${e.keys.length + e.constraints.length} 件を読む</a></td></tr>`).join("")}</tbody></table></div>`;
+      }
+      function render() {
+        const s = state();
+        const e = entities.get(s.entity);
+        const store = stores.get(s.store);
+        if (
+          s.model !== model.id ||
+          (s.store && !store) ||
+          (s.entity && (!e || e.store !== s.store)) ||
+          (s.level && !["constraints"].includes(s.level))
+        ) {
+          result.innerHTML =
+            "<p>指定されたモデル・ストア・エンティティが見つかりません。</p>";
+          document.getElementById("breadcrumbs").innerHTML =
+            `<a href="${url({})}">5ストアへ戻る</a>`;
+          return;
+        }
+        document
+          .getElementById("diagram")
+          .setAttribute("aria-pressed", String(s.view === "diagram"));
+        document
+          .getElementById("list")
+          .setAttribute("aria-pressed", String(s.view === "list"));
+        if (document.activeElement !== document.getElementById("query"))
+          document.getElementById("query").value = s.query;
+        let crumbs = `<a href="${url({ view: s.view })}">5ストア</a>`;
+        if (store)
+          crumbs += ` › <a href="${url({ store: store.id, view: s.view })}">${esc(store.label)}</a>`;
+        if (e)
+          crumbs += ` › <a href="${url({ store: e.store, entity: e.id, view: s.view })}">${esc(e.label)}</a>`;
+        if (s.level) crumbs += " › 意味キー・制約";
+        document.getElementById("breadcrumbs").innerHTML = crumbs;
+        const matches = (x) =>
+          JSON.stringify(x)
+            .toLocaleLowerCase()
+            .includes(s.query.toLocaleLowerCase());
+        const renderRelations = (rels) =>
+          s.view === "list" ? relationTable(rels) : flows(rels);
+        if (e) {
+          const local = model.relations.filter(
+            (r) => (r.source === e.id || r.target === e.id) && matches(r),
+          );
+          const keyFacts = e.keys.length
+            ? e.keys
+            : [
+                {
+                  text: "この案内では正確なキーの物理表現を確定していません。",
+                  status: "U",
+                  sources: e.meaning.sources,
+                },
+              ];
+          result.innerHTML =
+            `<h2 tabindex="-1">${esc(e.label)}${s.level ? " — 意味キー・制約" : ""}</h2><p class="identity">${esc(e.id)} · 意味上の名称、物理テーブルの断定ではありません</p><div class="panel">${fact(e.meaning)}</div>` +
+            (s.level
+              ? `<h3>意味キー</h3>${keyFacts
+                  .filter(matches)
+                  .map((f) => `<article>${fact(f)}</article>`)
+                  .join("")}<h3>制約・境界</h3>${
+                  e.constraints
+                    .filter(matches)
+                    .map((f) => `<article>${fact(f)}</article>`)
+                    .join("") ||
+                  "<p>個別制約の追記はありません。上記の意味・参照先 ADR の適用範囲も確認してください。</p>"
+                }`
+              : `<p><a class="button" href="${url({ ...s, level: "constraints" })}">意味キー・制約を確認する</a></p><h3>この対象の関係</h3>${renderRelations(local)}`);
+        } else if (store) {
+          const items = model.entities.filter(
+            (e) => e.store === store.id && matches(e),
+          );
+          const rels = model.relations.filter(
+            (r) =>
+              entities.get(r.source).store === store.id &&
+              entities.get(r.target).store === store.id &&
+              matches(r),
+          );
+          result.innerHTML = `<h2 tabindex="-1">${esc(store.label)} の内部</h2><div class="panel">${fact(store.meaning)}</div><p>表示中 ${items.length} 概念。選ぶとストア外への参照も追えます。</p>${s.view === "list" ? entityTable(items) : cards(items)}<h3>ストア内部の関係</h3>${renderRelations(rels)}`;
+        } else {
+          const rels = model.relations.filter(
+            (r) =>
+              entities.get(r.source).store !== entities.get(r.target).store &&
+              matches(r),
+          );
+          result.innerHTML = `<h2 tabindex="-1">5つの責務</h2><div class="grid">${model.stores
+            .filter(matches)
+            .map(
+              (st) =>
+                `<article><h3><a class="button" href="${url({ store: st.id, view: s.view })}">${esc(st.label)} を探索</a></h3>${fact(st.meaning)}</article>`,
+            )
+            .join(
+              "",
+            )}</div><h2>ストアを跨ぐ関係</h2><p>Context → Core は文脈からの参照です。Core の有効性が Context や Access に依存する意味ではありません。Core + Context の完全ドメインバックアップと、別範囲の Access を区別します。</p>${renderRelations(rels)}`;
+        }
+      }
+      document.getElementById("scope").textContent = model.scope;
+      document.getElementById("revision").innerHTML =
+        `設計根拠: <a href="https://github.com/TakashiSasaki/git-repo-db/tree/${model.source_revision}">${model.source_revision.slice(0, 8)}</a> / tree <code>${model.source_tree}</code>。<a href="/adr/">部分置換を含む現在の ADR 索引</a>。通常3ストア IR とは独立した文書モデルです。`;
+      document.getElementById("back").addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else location.hash = url({});
+      });
+      for (const v of ["diagram", "list"])
+        document
+          .getElementById(v)
+          .addEventListener("click", () => go({ view: v }));
+      document.getElementById("query").addEventListener("input", (ev) => {
+        history.replaceState(
+          null,
+          "",
+          url({ ...state(), query: ev.target.value }),
+        );
+        render();
+      });
+      addEventListener("hashchange", () => {
+        render();
+        const h = result.querySelector("h2");
+        if (h) h.focus({ preventScroll: true });
+      });
+      addEventListener("resize", render);
+      render();
+    </script>
+    <script src="/pwa.js"></script>
+  </body>
+</html>

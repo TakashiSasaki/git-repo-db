@@ -1,11 +1,11 @@
-# git-repo-db 開発者ドキュメント
+# git-repo-db の設計を読む
 
 <div class="hero-banner" style="padding: 1.5rem 0; border-bottom: 1px solid var(--md-default-fg-color--lightest); margin-bottom: 2rem;">
   <p style="font-size: 1.25rem; line-height: 1.7; font-weight: 500; color: var(--md-default-fg-color);">
     <strong>git-repo-db</strong> は、Git リポジトリおよび GitHub の Pull Request / Issue / Code データをローカルの SQLite データベースへ構造化・永続化し、オフライン環境で高速に横断検索・関係解析を可能にするデータベースエンジンおよび CLI ツールです。
   </p>
   <p style="color: var(--md-default-fg-color--light);">
-    本サイトの図は、選択した製品 revision の IR を可視化します。このページに示す Core / Operational / Search の計 84 テーブルは Schema 21 の実装基盤についての表記です。採択済み設計には５つの責務境界があり、この図の３スキーマは通常の初期化で作成されるファイル数や全構成の上限を意味しません。詳細は<a href="architecture/">アーキテクチャ概要</a>を参照してください。
+    本サイトでは採択済みの5ストア設計と、選択した製品 revision の通常3ストア IR を別々に探索できます。このページに示す Core / Operational / Search の計 84 テーブルは Schema 21 の実装基盤についての表記です。採択済み設計には５つの責務境界があり、この図の３スキーマは通常の初期化で作成されるファイル数や全構成の上限を意味しません。詳細は<a href="architecture/">アーキテクチャ概要</a>を参照してください。
   </p>
 </div>
 
@@ -20,9 +20,15 @@
 | 採択済み目標 | Core / Context / Access / Operational / Search の５責務。採択は全機能の既定起動を意味しない | [ADR 0029 正本](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/adr/0029-independent-access-store.md) |
 | 履歴・証跡 | 古い CLI、データモデル、監査や検証結果は対象 revision に限定 | [履歴文書の概要](architecture/#3-過去の-schema-20-と現行アーキテクチャの相違点) |
 
-## データベーススキーマ可視化ワークベンチ
+## 採択済みの5ストア設計を探索する
 
-リポジトリの真実（authoritative SQLite DDL）から直接生成された、4つの異なる切り口によるスキーマ可視化ツール群です。目的や用途に合わせて直接アクセスできます。
+[5ストア設計ビューアー](design/) は、Core・Context・Access・Operational・Search の責務から、ストア内の概念、意味キー・制約までを辿る入口です。関係図と一覧を切り替えて同じ対象を読み、出典の ADR 全文へ移動できます。小画面の関係図は縦方向に表示します。
+
+この案内の設計根拠は ADR 0036 を含む `a39311eb` です。採択・継承・実装提案・未確定を項目ごとに表示し、現行の P1 DDL を最終仕様へ昇格させません。[現在有効な ADR 全文](adr/) は、部分置換の適用範囲とともに読めます。
+
+## 通常3ストアの実装スキーマを調べる
+
+以下は通常ランタイムの SQLite DDL から生成した資料です。採択済み5ストア設計の図とは、入力と目的が異なります。
 
 <div class="grid cards" markdown>
 
@@ -142,16 +148,8 @@ graph TD
 
 ---
 
-## 設計決定 (ADR) と開発ガイド
+## 設計決定を読む
 
-- 📜 [**Architecture Decision Records (ADRs)**](adr/)
-  - [**ADR 0001: 開発・リリース検証ライフサイクル**](adr/0001-validation-lifecycle-architecture/)  
-    軽量な開発モード（Development Validation）と厳格なリリース受入（Release Acceptance）の分離。
-  - [**ADR 0002: Three-Store Boundary アーキテクチャ**](adr/0002-three-store-boundary-architecture/)  
-    Core / Operational / Search の 3 ストア物理分離方針と結合決定 PF-P01〜PF-P17。
-- 🛠️ [**開発・テスト・検証ガイド**](development/)  
-  Python 3.12 / uv による環境構築、単体テスト、スキーマ可視化の検証コマンド、ドキュメントサイトのビルド方法。
-- 📱 **PWA & オフライン対応**  
-  マニフェストとサービスワーカーを提供しています。インストール可否はブラウザーと環境に依存し、すべてのページがオフラインで利用できる保証はありません。
-- 🐙 [**GitHub リポジトリ (TakashiSasaki/git-repo-db)**](https://github.com/TakashiSasaki/git-repo-db)  
-  ソースコード、Issue、Pull Request の最新状態。
+[現在有効な ADR の全文と適用範囲](adr/) を掲載しています。5ストアの責務は ADR 0029、Context の Resource は ADR 0031、原観測・Claim・Notes は ADR 0036 を入口に読めます。操作手順や開発ガイドはリポジトリで管理します。
+
+PWA のインストール可否はブラウザーと環境に依存し、すべてのページがオフラインで利用できる保証はありません。

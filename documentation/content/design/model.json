@@ -1,0 +1,1591 @@
+{
+  "id": "accepted-design",
+  "source_revision": "a39311eb95293f778c1e67d24bd7a6acc272dc3e",
+  "source_tree": "557fdd46d4c69716766931966afa9a57818519af",
+  "scope": "採択済み責務と意味構造の案内。概念の分割は物理テーブル数・確定 DDL・実装進捗を表さない。A=採択、I=継承、P=実装提案、U=本モデルで未確定。物理キーが未確定でも、意味上の完全等価性と複合参照は保持する。",
+  "stores": [
+    {
+      "id": "core",
+      "label": "Core",
+      "meaning": {
+        "text": "永久 Repository 識別子、Git の属性付き事実・観測・履歴構造・Notes と許可された保持バイト。全権威レコードは INSERT-only。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "context",
+      "label": "Context",
+      "meaning": {
+        "text": "Provider / Source、PR・Issue・レビュー・テキストと競合する文脈証拠を独立して永続化。許可された現行状態は更新可能。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "access",
+      "label": "Access",
+      "meaning": {
+        "text": "Scope、ロケーター登録履歴、接続設定、ローカル承認を独立して保持。履歴やドメイン事実を認証するものではない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "operational",
+      "label": "Operational",
+      "meaning": {
+        "text": "試行・再開・有限な累積作業量・一時キャッシュ。再構築可能だが、喪失後に旧受信要求を継続して予算をリセットしない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "search",
+      "label": "Search",
+      "meaning": {
+        "text": "要求された Core / Context の検索投影。再構築可能で、ドメインの権威を持たない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    }
+  ],
+  "entities": [
+    {
+      "id": "design/core/repositories",
+      "store": "core",
+      "name": "repositories",
+      "label": "Repository",
+      "meaning": {
+        "text": "URL や Provider と独立した永久 Repository 識別子。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "repository_uuidv4",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "design/core/objects",
+      "store": "core",
+      "name": "objects",
+      "label": "Nominal object",
+      "meaning": {
+        "text": "リポジトリを跨ぐ型付き OID の名目上の対象。OID だけでは型・本文・サイズ・検証を確定しない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0005-common-oid-identity-with-attributed-metadata.md",
+            "anchor": "1-binding-identity-contract"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "(object_format, full_oid)",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0005-common-oid-identity-with-attributed-metadata.md",
+              "anchor": "1-binding-identity-contract"
+            }
+          ]
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "design/core/field_claims",
+      "store": "core",
+      "name": "field_claims",
+      "label": "Field Claims / Git relations",
+      "meaning": {
+        "text": "属性付きメタデータと順序・スコープを持つ Commit / Tree / Tag の関係群。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0006-field-claims-and-observation-scoped-relations.md",
+            "anchor": "1-decision-two-different-metadata-units"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "実際の対象・属性/関係・値・元証拠・スコープの完全な意味座標",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0006-field-claims-and-observation-scoped-relations.md",
+              "anchor": "1-decision-two-different-metadata-units"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "物理的なテーブル分割と全座標の符号化は、この表示で確定しない。",
+          "status": "U",
+          "sources": [
+            {
+              "path": "docs/adr/0017-domain-keys-without-storage-surrogates.md",
+              "anchor": "adr-0017-prefer-domain-primary-keys-prohibit-storage-only-surrogates"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/ref_observations",
+      "store": "core",
+      "name": "ref_observations",
+      "label": "RefObservation",
+      "meaning": {
+        "text": "一つの正確な ref の一回の真正な読み取り。対象と結果を分離し、発行元は未認証の帰属として保持。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d1-individual-observation-and-identity"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "(observation_origin_uuidv4, ref_observation_uuidv7)",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d1-individual-observation-and-identity"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "新しい読み取りには新しい v7。再配布・再解析・厳密な再送は元のペアを保持。UUID の時刻は観測時刻でも優先度でもない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d1-individual-observation-and-identity"
+            }
+          ]
+        },
+        {
+          "text": "不変の対象は Repository・完全な ref 名・元の出典・実際の可視性/観測範囲。Context / Access の必須 FK にしない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d1-individual-observation-and-identity"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/ref_observation_claims",
+      "store": "core",
+      "name": "ref_observation_claims",
+      "label": "RefObservationClaim",
+      "meaning": {
+        "text": "原観測についての不変で帰属付きの結果。存在・確認済み不在・対象不明・未観測・取得失敗を混同しない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d2-immutable-results-and-comparison"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "観測ペア + 不変の原報告/証拠座標 + 実際の結果・スコープの完全な意味キー",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d2-immutable-results-and-comparison"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "独立した既知対象 R/S、比較可能な present/confirmed-absent は別 Claim と明示的な派生競合。勝者を選ばない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d2-immutable-results-and-comparison"
+            }
+          ]
+        },
+        {
+          "text": "同じ不変証拠座標の別値/別対象は拒否。後続 Claim は既存の証拠や本文許可を付け替えない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d2-immutable-results-and-comparison"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/ref_enumeration_observations",
+      "store": "core",
+      "name": "ref_enumeration_observations",
+      "label": "RefEnumerationObservation",
+      "meaning": {
+        "text": "元のスキャンごとの識別・要求範囲・可視性・終了/完了証拠。リモートの原子的スナップショットではない。",
+        "status": "P",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d3-enumeration-and-scoped-absence"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "真正なイベント識別子（正確な符号化/割当は engineering work）",
+          "status": "P",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d3-enumeration-and-scoped-absence"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "確認済み不在は、名前を含む成功した実測範囲と完了証拠を要する。単独の ref 観測に列挙親を強制しない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d3-enumeration-and-scoped-absence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/notes_mappings",
+      "store": "core",
+      "name": "notes_mappings",
+      "label": "NotesMapping",
+      "meaning": {
+        "text": "共有可能な構造上の対応内容。原観測や原報告を統合しない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "型付き実 root + 解釈 kind/version/scope + annotated_object_oid / note_oid / exact mapping_path 等の全意味座標",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "同じ root だけでは等価にならない。テーブル名は意味上の名称で恒久的な物理テーブル数ではない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/notes_mapping_claims",
+      "store": "core",
+      "name": "notes_mapping_claims",
+      "label": "NotesMappingClaim",
+      "meaning": {
+        "text": "特定の原観測結果についての属性付き Mapping 報告。共有内容から独立。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "正確な結果 Claim + 実際の provenance / scope / value の完全な意味座標",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+            }
+          ]
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "design/core/notes_mapping_groups",
+      "store": "core",
+      "name": "notes_mapping_groups",
+      "label": "NotesMappingGroup",
+      "meaning": {
+        "text": "不変で整合した原報告の群。順序・全メンバー・complete/partial/unknown を保持。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "正確な結果 Claim + provenance / scope / membership / order / value の全意味座標",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "原子的に可視化。二つの部分群の和を完全群としない。",
+          "status": "I",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/notes_mapping_evidence",
+      "store": "core",
+      "name": "notes_mapping_evidence",
+      "label": "NotesMappingEvidence",
+      "meaning": {
+        "text": "各 decoder / analysis / verification の独立した証拠。受信側の検証と送信側の報告を区別。",
+        "status": "I",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "decoder name/version + interpretation kind/version/scope + verification scope + 元証拠 + 具体的な Claim/root の全意味座標",
+          "status": "P",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+            }
+          ]
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "design/core/notes_role_evidence",
+      "store": "core",
+      "name": "notes_role_evidence",
+      "label": "NotesRoleEvidence",
+      "meaning": {
+        "text": "正確な ref 結果 Claim と具体的 root、局所検証した構造、target/path/note を結ぶ役割証拠。",
+        "status": "I",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d5-root-specific-role-proof-and-retained-body"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "正確な不変 Claim/root + 局所的構造・解釈・target/path/note の全意味座標",
+          "status": "P",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d5-root-specific-role-proof-and-retained-body"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "sender verified・Mapping 存在・本文 hash だけでは保持許可にならない。直接 tree の root に架空の commit を要求しない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d5-root-specific-role-proof-and-retained-body"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/retained_representations",
+      "store": "core",
+      "name": "retained_representations",
+      "label": "Retained metadata / Notes",
+      "meaning": {
+        "text": "実際に独立検証した許可済みメタデータ・Notes バイトと物理コピー。通常ファイル本文は対象外。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0014-history-and-notes-catalog-without-file-archive.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "対象・保持目的・実コピー/証拠の完全な意味座標",
+          "status": "U",
+          "sources": [
+            {
+              "path": "docs/adr/0014-history-and-notes-catalog-without-file-archive.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "Notes 本文には同じ役割証拠と厳密な型・長さ・OID・物理 digest の検証を結ぶ。target ファイルの保持権限を伝播しない。",
+          "status": "I",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d5-root-specific-role-proof-and-retained-body"
+            }
+          ]
+        },
+        {
+          "text": "破損時は停止・原本を読取専用保全・新しい宛先へ検証済み復元・再検証マージ。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md",
+              "anchor": "2-recovery-sequence-and-admission-boundaries"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/core/coverage_claims",
+      "store": "core",
+      "name": "coverage_claims",
+      "label": "Core Coverage",
+      "meaning": {
+        "text": "型付き owner と五列の Coverage、競合・stale・最新候補を保持。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d6-exchange-query-coverage-backup-and-failure"
+          }
+        ]
+      },
+      "keys": [],
+      "constraints": [
+        {
+          "text": "ref_observation owner は実際の観測を参照。旧 complete へのフォールバックや架空の完了を認めない。",
+          "status": "I",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d6-exchange-query-coverage-backup-and-failure"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/context/sources",
+      "store": "context",
+      "name": "sources",
+      "label": "Provider / Source",
+      "meaning": {
+        "text": "Provider と Source の実識別子、既知の正の所属を保持。Access 設定ではない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "service / Source の真正な UUID 識別子",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "design/context/resources",
+      "store": "context",
+      "name": "resources",
+      "label": "Resource",
+      "meaning": {
+        "text": "Service・kind・真正な Provider identity による一般化 Resource。未知 kind や親より先の子を許す。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "(service_instance_uuidv4, resource_kind, provider_resource_id) — identity は文字列/再帰配列の canonical JSON TEXT",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0031-generalized-context-resources.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "空文字・空配列も実際のネイティブ意味があれば識別子。欠落を補う偽 ID・hash・任意 UUID は使わない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0031-generalized-context-resources.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/context/resource_parent_claims",
+      "store": "context",
+      "name": "resource_parent_claims",
+      "label": "Parent Claims / typed contracts",
+      "meaning": {
+        "text": "Parent は別の属性付き報告。Resource の識別範囲と Parent 関係を混同しない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "子/親の完全 Resource key + 実報告/出典座標",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0031-generalized-context-resources.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "Transfer は Issue 配下の正しい Timeline Event 支持を SQL 型付き参照と実イベント検査で要求。I8 Parent を保持しても I7 Event の Transfer 支持には使わない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0031-generalized-context-resources.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/context/resource_repository_relations",
+      "store": "context",
+      "name": "resource_repository_relations",
+      "label": "Repository relations",
+      "meaning": {
+        "text": "represents/owning/base/head/transfer-from/transfer-to の六つの型付き Repository 関係。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "Resource key + role + 完全な Repository Mapping Claim 参照/報告座標",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "欠落・明示 NULL・未解決 Provider→Core mapping・競合を区別。PR 所属を owning と base に重複しない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/context/repository_mapping_claims",
+      "store": "context",
+      "name": "repository_mapping_claims",
+      "label": "Repository Mapping Claims / Dispositions",
+      "meaning": {
+        "text": "Provider Repository と Core UUID の不変な対応主張と dispute/withdraw/correct。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "完全 Mapping ClaimKey。Disposition は対象の完全 ClaimKey、correct は置換 ClaimKey も参照",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "別 Witness 表や人間の勝者 authority は追加しない。発行元名の一致や輸入報告だけでローカル取消効果を認めない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/context/resource_text",
+      "store": "context",
+      "name": "resource_text",
+      "label": "Current values / text",
+      "meaning": {
+        "text": "許可された現行 PR/Issue/review/text、属性付き代替値・競合と正確な保持テキスト。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [],
+      "constraints": [
+        {
+          "text": "API 応答丸ごとの archive・全編集履歴・通常 Git blob 本文を追加しない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0031-generalized-context-resources.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/context/coverage_claims",
+      "store": "context",
+      "name": "coverage_claims",
+      "label": "Context Coverage",
+      "meaning": {
+        "text": "Context が所有する収集範囲・五列の主張と実際の観測証拠。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [],
+      "constraints": [
+        {
+          "text": "Core Coverage と責務を分離。同名の概念もストアを含めて識別する。",
+          "status": "I",
+          "sources": [
+            {
+              "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+              "anchor": "d6-exchange-query-coverage-backup-and-failure"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/access/access_scopes",
+      "store": "access",
+      "name": "access_scopes",
+      "label": "Scope",
+      "meaning": {
+        "text": "継続する論理的なロケーター解決環境。ホスト名・URI・Repository とは別の識別子。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "scope_uuidv4",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "確認済み継続性は UUID を保てる。独立した fork は新 UUID。継続性は実行承認の継続を意味しない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/access/scope_locators",
+      "store": "access",
+      "name": "scope_locators",
+      "label": "Scope Locator registrations",
+      "meaning": {
+        "text": "Scope 環境を探索する URI の登録事実。同じ表で旧登録を保存。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "提案: (scope_uuidv4, registered_at_us, scope_locator_uri)",
+          "status": "P",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "最大の元登録時刻の候補を第一候補集合とし、同時刻を残す。順位は許可ではなく、実行不能でも古い URI に黙って戻らない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/access/repository_locators",
+      "store": "access",
+      "name": "repository_locators",
+      "label": "Repository Locators",
+      "meaning": {
+        "text": "Scope 内で解釈する Git URL 等。一つの現在の Repository binding。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "(scope_uuidv4, locator_text)",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "同じ Scope/text の競合は拒否。明示再束縛は旧 binding を確認し、影響するローカル承認を無効化。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/access/connection_configurations",
+      "store": "access",
+      "name": "connection_configurations",
+      "label": "Connection Configuration",
+      "meaning": {
+        "text": "型付き接続動作と外部 credential 参照。秘密値や Provider text は保存しない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "提案: (scope_uuidv4, configuration_name)",
+          "status": "P",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": []
+    },
+    {
+      "id": "design/access/locator_connections",
+      "store": "access",
+      "name": "locator_connections",
+      "label": "Assignment / local approval",
+      "meaning": {
+        "text": "Repository Locator・設定・purpose ごとのローカル再承認。輸入設定は実行権限にならない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "提案: (scope_uuidv4, locator_text, configuration_name, purpose)",
+          "status": "P",
+          "sources": [
+            {
+              "path": "docs/adr/0029-independent-access-store.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "正確な物理キー、adapter 語彙、承認 representation は本モデルで採択しない。",
+          "status": "U",
+          "sources": [
+            {
+              "path": "docs/architecture/access-store-design.md",
+              "anchor": "2-logical-access-relations-and-direct-keys"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/operational/requests",
+      "store": "operational",
+      "name": "requests",
+      "label": "Request / attempts / work",
+      "meaning": {
+        "text": "同じ明示要求の継続・再開・retry に実際の作業を累積。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md",
+            "anchor": "1-accepted-a-one-explicit-acquisition-request-accumulates-actual-work"
+          }
+        ]
+      },
+      "keys": [],
+      "constraints": [
+        {
+          "text": "再処理・失敗・rollback でも既に使った作業は消えない。数値既定値やカウンター単位は engineering work。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0024-actual-notes-resource-work-accounting.md",
+              "anchor": "1-binding-decision-actual-work-not-logical-multiplicity-or-new-rows"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/operational/exchange_receipts",
+      "store": "operational",
+      "name": "exchange_receipts",
+      "label": "Exchange binding / checkpoints",
+      "meaning": {
+        "text": "(sender catalog instance UUID, package ID) と canonical SHA-256 の受信束縛。Domain facts の権威ではない。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [
+        {
+          "text": "(sender_catalog_instance_uuidv4, package_id)",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "text": "受信前に Operational へ束縛。喪失後に旧要求を継続しない。SHA-256 は完全性であり送信元認証ではない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design/search/projections",
+      "store": "search",
+      "name": "projections",
+      "label": "Search projections",
+      "meaning": {
+        "text": "Core / Context の許可されたデータから再構築する索引。",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      },
+      "keys": [],
+      "constraints": [
+        {
+          "text": "検索 DB の欠損・喪失はドメイン事実を無効化しない。通常ファイル本文を隠れて保存しない。",
+          "status": "A",
+          "sources": [
+            {
+              "path": "docs/adr/0014-history-and-notes-catalog-without-file-archive.md",
+              "anchor": "decision"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "source": "design/core/ref_observations",
+      "target": "design/core/repositories",
+      "kind": "semantic",
+      "meaning": {
+        "text": "実際に観測した Repository",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d1-individual-observation-and-identity"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r2",
+      "source": "design/core/ref_observation_claims",
+      "target": "design/core/ref_observations",
+      "kind": "semantic",
+      "meaning": {
+        "text": "完全な RefObservationKey を参照",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d2-immutable-results-and-comparison"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r3",
+      "source": "design/core/ref_enumeration_observations",
+      "target": "design/core/ref_observations",
+      "kind": "semantic",
+      "meaning": {
+        "text": "実際の member / absence 導出リンク。単独観測では任意",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d3-enumeration-and-scoped-absence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r4",
+      "source": "design/core/ref_observation_claims",
+      "target": "design/core/objects",
+      "kind": "semantic",
+      "meaning": {
+        "text": "実際に既知の場合のみ型付き対象。rootless は架空 OID を持たない",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d2-immutable-results-and-comparison"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r5",
+      "source": "design/core/notes_mapping_claims",
+      "target": "design/core/ref_observation_claims",
+      "kind": "semantic",
+      "meaning": {
+        "text": "原観測の正確な結果 Claim",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r6",
+      "source": "design/core/notes_mapping_claims",
+      "target": "design/core/notes_mappings",
+      "kind": "semantic",
+      "meaning": {
+        "text": "共有内容への原報告",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r7",
+      "source": "design/core/notes_mapping_groups",
+      "target": "design/core/notes_mapping_claims",
+      "kind": "semantic",
+      "meaning": {
+        "text": "全 membership / order と atomic scope",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r8",
+      "source": "design/core/notes_mapping_evidence",
+      "target": "design/core/notes_mappings",
+      "kind": "semantic",
+      "meaning": {
+        "text": "解釈内容の独立チェック",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r9",
+      "source": "design/core/notes_mapping_evidence",
+      "target": "design/core/ref_observation_claims",
+      "kind": "semantic",
+      "meaning": {
+        "text": "チェックの元 Claim / root",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d4-mapping-original-statements-and-receiver-evidence"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r10",
+      "source": "design/core/notes_role_evidence",
+      "target": "design/core/ref_observation_claims",
+      "kind": "semantic",
+      "meaning": {
+        "text": "保持許可を付け替えない正確な Claim/root",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d5-root-specific-role-proof-and-retained-body"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r11",
+      "source": "design/core/notes_role_evidence",
+      "target": "design/core/notes_mapping_evidence",
+      "kind": "semantic",
+      "meaning": {
+        "text": "必要な範囲の局所構造検証",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d5-root-specific-role-proof-and-retained-body"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r12",
+      "source": "design/core/retained_representations",
+      "target": "design/core/notes_role_evidence",
+      "kind": "semantic",
+      "meaning": {
+        "text": "Notes 保持は同じ proof と独立本文検証を結ぶ",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d5-root-specific-role-proof-and-retained-body"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r13",
+      "source": "design/core/coverage_claims",
+      "target": "design/core/ref_observations",
+      "kind": "semantic",
+      "meaning": {
+        "text": "型付き Coverage owner",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d6-exchange-query-coverage-backup-and-failure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r14",
+      "source": "design/core/field_claims",
+      "target": "design/core/objects",
+      "kind": "semantic",
+      "meaning": {
+        "text": "実対象への属性/構造主張",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0017-domain-keys-without-storage-surrogates.md",
+            "anchor": "adr-0017-prefer-domain-primary-keys-prohibit-storage-only-surrogates"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r15",
+      "source": "design/context/resources",
+      "target": "design/context/sources",
+      "kind": "semantic",
+      "meaning": {
+        "text": "Provider / Source の文脈に属する Resource。識別キーは service namespace を使う",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r16",
+      "source": "design/context/resource_parent_claims",
+      "target": "design/context/resources",
+      "kind": "semantic",
+      "meaning": {
+        "text": "完全 key による親子報告・型付き契約",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r17",
+      "source": "design/context/resource_repository_relations",
+      "target": "design/context/resources",
+      "kind": "semantic",
+      "meaning": {
+        "text": "役割を持つ Resource",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r18",
+      "source": "design/context/resource_repository_relations",
+      "target": "design/context/repository_mapping_claims",
+      "kind": "semantic",
+      "meaning": {
+        "text": "完全 Mapping Claim を参照",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r19",
+      "source": "design/context/repository_mapping_claims",
+      "target": "design/core/repositories",
+      "kind": "semantic",
+      "meaning": {
+        "text": "Core UUID 対応。Core の有効性は Context に依存しない",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r20",
+      "source": "design/context/resource_text",
+      "target": "design/context/resources",
+      "kind": "semantic",
+      "meaning": {
+        "text": "現行値/テキストの対象",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r21",
+      "source": "design/context/coverage_claims",
+      "target": "design/context/resources",
+      "kind": "semantic",
+      "meaning": {
+        "text": "Context の収集対象",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0031-generalized-context-resources.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r22",
+      "source": "design/access/scope_locators",
+      "target": "design/access/access_scopes",
+      "kind": "semantic",
+      "meaning": {
+        "text": "UUID の Scope に属する登録事実",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r23",
+      "source": "design/access/repository_locators",
+      "target": "design/access/access_scopes",
+      "kind": "semantic",
+      "meaning": {
+        "text": "Scope で locator text を解釈",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r24",
+      "source": "design/access/repository_locators",
+      "target": "design/core/repositories",
+      "kind": "semantic",
+      "meaning": {
+        "text": "アクセス先の UUID。未登録 UUID も設定可能、Core 有効性の必須 FK ではない",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r25",
+      "source": "design/access/connection_configurations",
+      "target": "design/access/access_scopes",
+      "kind": "semantic",
+      "meaning": {
+        "text": "Scope の接続設定",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r26",
+      "source": "design/access/locator_connections",
+      "target": "design/access/repository_locators",
+      "kind": "semantic",
+      "meaning": {
+        "text": "locator/configuration/purpose ごとの再承認",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r27",
+      "source": "design/access/locator_connections",
+      "target": "design/access/connection_configurations",
+      "kind": "semantic",
+      "meaning": {
+        "text": "一致する設定 assignment",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r28",
+      "source": "design/operational/exchange_receipts",
+      "target": "design/core/ref_observation_claims",
+      "kind": "semantic",
+      "meaning": {
+        "text": "型付き選択・実 commit の checkpoint。送信元検証を輸入しない",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+            "anchor": "d6-exchange-query-coverage-backup-and-failure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r29",
+      "source": "design/search/projections",
+      "target": "design/core/field_claims",
+      "kind": "semantic",
+      "meaning": {
+        "text": "許可された Core データの派生投影",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    },
+    {
+      "id": "r30",
+      "source": "design/search/projections",
+      "target": "design/context/resource_text",
+      "kind": "semantic",
+      "meaning": {
+        "text": "許可された Context データの派生投影",
+        "status": "A",
+        "sources": [
+          {
+            "path": "docs/adr/0029-independent-access-store.md",
+            "anchor": "decision"
+          }
+        ]
+      }
+    }
+  ]
+}

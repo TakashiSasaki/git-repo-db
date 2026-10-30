@@ -1625,14 +1625,23 @@ function renderColumnsTab(t) {{
   `;
 }}
 
+// SQLite REFERENCES parent without a column list means the entire parent PK.
+// Resolve only for presentation; retain null column coordinates in neutral IR.
+function referencedColumns(fk) {{
+  if (fk.to_columns.every(c => c === null)) {{
+    return SCHEMA_DATA.stores[currentStore].tables[fk.target_table].primary_key;
+  }}
+  return fk.to_columns;
+}}
+
 function renderRelationshipsTab(t) {{
   let outRows = "";
   t.foreign_keys.forEach(fk => {{
     outRows += `
       <tr>
         <td>${{fk.from_columns.map(c => `<code>${{c}}</code>`).join(", ")}}</td>
-        <td><a class="link-table" onclick="navigateTable('${{fk.target_table}}')">${{fk.target_table}}</a></td>
-        <td>${{fk.to_columns.map(c => `<code>${{c}}</code>`).join(", ")}}</td>
+        <td><a class="link-table" onclick="navigateTable(currentStore, '${{fk.target_table}}')">${{fk.target_table}}</a></td>
+        <td>${{referencedColumns(fk).map(c => `<code>${{c}}</code>`).join(", ")}}</td>
         <td style="font-family:var(--font-mono); font-size:11px">ON UPDATE ${{fk.on_update}}<br>ON DELETE ${{fk.on_delete}}</td>
       </tr>
     `;
@@ -1642,9 +1651,9 @@ function renderRelationshipsTab(t) {{
   t.incoming_foreign_keys.forEach(ifk => {{
     inRows += `
       <tr>
-        <td><a class="link-table" onclick="navigateTable('${{ifk.source_table}}')">${{ifk.source_table}}</a></td>
+        <td><a class="link-table" onclick="navigateTable(currentStore, '${{ifk.source_table}}')">${{ifk.source_table}}</a></td>
         <td>${{ifk.source_columns.map(c => `<code>${{c}}</code>`).join(", ")}}</td>
-        <td>${{ifk.target_columns.map(c => `<code>${{c}}</code>`).join(", ")}}</td>
+        <td>${{(ifk.target_columns.every(c => c === null) ? t.primary_key : ifk.target_columns).map(c => `<code>${{c}}</code>`).join(", ")}}</td>
         <td style="font-family:var(--font-mono); font-size:11px">ON UPDATE ${{ifk.on_update}}<br>ON DELETE ${{ifk.on_delete}}</td>
       </tr>
     `;
@@ -1658,8 +1667,8 @@ function renderRelationshipsTab(t) {{
     logRows += `
       <tr>
         <td><span class="badge badge-log">${{isOut ? "Outgoing" : "Incoming"}} Logical</span></td>
-        <td>${{isOut ? `<code>${{l.source_columns.join(", ")}}</code>` : `<a class="link-table" onclick="navigateTable('${{l.source_table}}')">${{l.source_table}}</a> (${{l.source_columns.join(", ")}})`}}</td>
-        <td>${{isOut ? `<a class="link-table" onclick="navigateTable('${{l.target_table}}')">${{l.target_table}}</a> (${{l.target_columns.join(", ")}})` : `<code>${{l.target_columns.join(", ")}}</code>`}}</td>
+        <td>${{isOut ? `<code>${{l.source_columns.join(", ")}}</code>` : `<a class="link-table" onclick="navigateTable('${{l.source_store}}', '${{l.source_table}}')">${{l.source_table}}</a> (${{l.source_columns.join(", ")}})`}}</td>
+        <td>${{isOut ? `<a class="link-table" onclick="navigateTable('${{l.target_store}}', '${{l.target_table}}')">${{l.target_table}}</a> (${{l.target_columns.join(", ")}})` : `<code>${{l.target_columns.join(", ")}}</code>`}}</td>
         <td style="font-size:12px; color:var(--text-muted)">${{l.description}}<br><span style="color:var(--badge-gen); font-family:var(--font-mono)">${{l.adr_reference}}</span></td>
       </tr>
     `;
@@ -1746,15 +1755,21 @@ function drawNeighborhoodSvg(t) {{
   const svg = document.getElementById("neighborhoodSvg");
   if (!svg) return;
   svg.innerHTML = "";
+  if (svg.clientWidth < 700) {{
+    svg.parentElement.innerHTML = '<p style="padding:12px">小画面では関係一覧で参照先と複合キーを確認できます。</p>' + renderRelationshipsTab(t);
+    return;
+  }}
 
   const upstream = t.foreign_keys.map(fk => ({{
     name: fk.target_table,
-    label: fk.from_columns.join(", ") + " -> " + fk.to_columns.join(", "),
+    store: currentStore,
+    label: fk.from_columns.join(", ") + " -> " + referencedColumns(fk).join(", "),
     logical: false
   }}));
   (t.logical_outgoing || []).forEach(l => {{
     upstream.push({{
       name: l.target_table,
+      store: l.target_store,
       label: l.source_columns.join(", ") + " -> " + l.target_columns.join(", "),
       logical: true
     }});
@@ -1762,12 +1777,14 @@ function drawNeighborhoodSvg(t) {{
 
   const downstream = t.incoming_foreign_keys.map(ifk => ({{
     name: ifk.source_table,
-    label: ifk.source_columns.join(", ") + " -> " + ifk.target_columns.join(", "),
+    store: currentStore,
+    label: ifk.source_columns.join(", ") + " -> " + (ifk.target_columns.every(c => c === null) ? t.primary_key : ifk.target_columns).join(", "),
     logical: false
   }}));
   (t.logical_incoming || []).forEach(l => {{
     downstream.push({{
       name: l.source_table,
+      store: l.source_store,
       label: l.source_columns.join(", ") + " -> " + l.target_columns.join(", "),
       logical: true
     }});
@@ -1804,7 +1821,7 @@ function drawNeighborhoodSvg(t) {{
   upstream.forEach((u, i) => {{
     const uy = upStartY + i * rowHeight;
     const ux = 80;
-    drawNode(svg, ux, uy - cardH/2, cardW, cardH, u.name, false, () => navigateTable(u.name));
+    drawNode(svg, ux, uy - cardH/2, cardW, cardH, u.name, false, () => navigateTable(u.store, u.name));
     drawEdge(svg, centerX - cardW/2, centerY, ux + cardW, uy, u.label, u.logical);
   }});
 
@@ -1813,7 +1830,7 @@ function drawNeighborhoodSvg(t) {{
   downstream.forEach((d, i) => {{
     const dy = downStartY + i * rowHeight;
     const dx = width - 80 - cardW;
-    drawNode(svg, dx, dy - cardH/2, cardW, cardH, d.name, false, () => navigateTable(d.name));
+    drawNode(svg, dx, dy - cardH/2, cardW, cardH, d.name, false, () => navigateTable(d.store, d.name));
     drawEdge(svg, dx, dy, centerX + cardW/2, centerY, d.label, d.logical);
   }});
 }}
@@ -1981,17 +1998,10 @@ function renderSqlTab(t) {{
   `;
 }}
 
-function navigateTable(tName) {{
-  // Check which store has this table
-  for (const [sSlug, sData] of Object.entries(SCHEMA_DATA.stores)) {{
-    if (sData.tables[tName]) {{
-      if (currentStore !== sSlug) {{
-        setStore(sSlug);
-      }}
-      selectTable(tName);
-      return;
-    }}
-  }}
+function navigateTable(storeSlug, tName) {{
+  if (!SCHEMA_DATA.stores[storeSlug]?.tables[tName]) return;
+  if (currentStore !== storeSlug) setStore(storeSlug);
+  selectTable(tName);
 }}
 
 function showArchitectureView() {{
@@ -2179,6 +2189,8 @@ def generate_readme(ir: dict[str, Any]) -> dict[str, str]:
     search = ir["stores"]["search"]
 
     content = f"""# git-repo-db Database Schema Visualization Workbench
+
+This is the implemented **normal three-store** schema reference, not the final five-store design. Explore the separately cited [accepted five-store design](/design/) and [current ADRs](/adr/) for responsibility boundaries and semantic keys.
 
 This workbench provides non-destructive, authoritative visualization and inspection tooling for the production database schema of `git-repo-db`.
 

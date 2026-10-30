@@ -10,6 +10,10 @@
 
 通常の `init` は [初期化処理](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/src/repo_catalog/application/maintenance_service.py) で１つの Core カタログを作成します。[Store の実装](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/src/repo_catalog/adapters/sqlite/store.py)では Operational は必要時に開かれ、Search の作成は明示的です。これらはこの起動経路の説明であり、既存の利用者データベースの数や全構成の上限を示すものではありません。
 
+## 採択済み設計への入口
+
+[5ストア設計ビューアー](/design/) では、責務間の関係から個別概念・意味キー・制約へ掘り下げられます。図と一覧は同じ出典付きモデルを使います。原観測・結果 Claim・共有 Notes Mapping・受信側の検証証拠の分離は [ADR 0036](../adr/0036-ref-observations-and-shared-notes-mappings.md) に従います。以下の通常3ストアの説明は、採択済み設計の全機能や物理配置を意味しません。
+
 ---
 
 ## 1. 設計原則とレイヤー依存関係
