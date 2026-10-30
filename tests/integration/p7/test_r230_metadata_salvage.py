@@ -108,7 +108,11 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
     fresh = tmp_path / "fresh"
     adapter.restore_backup(backup, fresh, repository)
     merged = adapter.merge_salvage(fresh, salvage)
-    assert merged.rejected_units == merged.deferred_units == 0
+    assert merged.rejected_units == merged.deferred_units == 0, merged.rejections
+    assert (
+        merged.admitted_units + merged.replayed_units + merged.observation_units
+        == merged.candidates_processed
+    )
     service = ProductionQueryService(fresh)
     for obj, _ in originals.values():
         read = service.read_metadata_bytes(obj.oid)

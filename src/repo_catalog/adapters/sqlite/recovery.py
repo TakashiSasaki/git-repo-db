@@ -3434,8 +3434,8 @@ class SQLiteRecoveryAdapter:
                             )
                             continue
 
-                    # 4. Admitting Retained Notes with Role Proof
-                    if c_type in (
+                    # 4. Context text is exclusive with an admitted metadata body.
+                    elif c_type in (
                         CandidateType.CONTEXT_DOCUMENT.value,
                         "context_text",
                     ):
@@ -3569,7 +3569,9 @@ class SQLiteRecoveryAdapter:
                                         replayed += 1
                                     else:
                                         admitted += 1
-                                observation += 1
+                                else:
+                                    # Unsupported generic rows remain qualified observations.
+                                    observation += 1
                             finally:
                                 work_budget.charge("metadata_units", 1)
                         except CoreFailure as error:

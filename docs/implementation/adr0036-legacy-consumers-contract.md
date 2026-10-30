@@ -481,7 +481,10 @@ evidence; they are not replaced by an author PASS declaration.
 R230-01 (P1) changes the Context test following `retained_metadata` to `elif`:
 retained commit/tree/tag, Context document and generic candidates now have
 mutually exclusive classification. Valid native bytes/copy identity are not
-reclassified as generic untyped BLOBs. The new post-backup regression checks all
+reclassified as generic untyped BLOBs. The corresponding merge dispatch is also
+exclusive: a successfully admitted retained body cannot fall into unknown-type
+rejection, and an admitted/replayed nominal row is not counted again as an
+unadmitted generic observation. The new post-backup regression checks all
 three native types, exact original copy IDs, a damaged sibling withheld without
 staging its body, nominal metadata-only rows, Context text, fresh restore/merge
 and byte-for-byte source DB/WAL preservation in both formats and topologies.
