@@ -1,5 +1,7 @@
 # git-repo-db Database Schema Visualization Workbench
 
+This is the implemented **normal three-store** schema reference, not the final five-store design. Explore the separately cited [accepted five-store design](/design/) and [current ADRs](/adr/) for responsibility boundaries and semantic keys.
+
 This workbench provides non-destructive, authoritative visualization and inspection tooling for the production database schema of `git-repo-db`.
 
 The database architecture implements the **Three-Store Boundary** under **ADR 0002** and binding owner decisions **PF-P01–PF-P17**.

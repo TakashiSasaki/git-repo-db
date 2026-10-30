@@ -83,10 +83,11 @@ def test_staging_allowlist_and_transformation():
             encoding="utf-8"
         )
         assert "../../AGENTS.md" not in adr1_text
-        assert "github.com/TakashiSasaki/git-repo-db/blob/main/AGENTS.md" in adr1_text
+        assert "github.com/TakashiSasaki/git-repo-db/blob/" in adr1_text
 
         # 4. Development Guide
-        assert (staging_dir / "development" / "index.md").is_file()
+        assert not (staging_dir / "development").exists()
+        assert (staging_dir / "design" / "index.html").is_file()
 
         # 5. Schema section
         schema_dir = staging_dir / "schema"
@@ -294,8 +295,8 @@ def test_pages_trigger_paths_decision_matrix():
         ),
         (
             ["docs/adr/0028-classified-times-and-sha256-exchange.md"],
-            False,
-            "Internal ADR 0028 not in published site allowlist",
+            True,
+            "Published accepted ADR 0028",
         ),
         (
             ["artifacts/ci-profile/journal.jsonl"],
@@ -375,3 +376,12 @@ def staging_parent():
     parent = DOCS_ROOT / ".build" / "staging"
     parent.mkdir(parents=True, exist_ok=True)
     return parent
+
+
+def test_link_scanner_ignores_script_text_but_checks_html_attributes(tmp_path):
+    (tmp_path / "index.html").write_text("""<script>
+      const template = `<a href="${route()}">dynamic link</a>`;
+    </script><a href="missing.html">real missing link</a>""")
+    errors = validate_internal_links(tmp_path)
+    assert len(errors) == 1
+    assert "missing.html" in errors[0]

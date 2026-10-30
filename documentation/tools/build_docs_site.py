@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Dict, List
 from urllib.parse import unquote, urljoin, urlparse
@@ -445,47 +446,14 @@ def stage_documentation(
         arch_staging / "three-store-boundary.md",
     )
 
-    # 3. ADRs
-    adr_staging = staging_dir / "adr"
-    adr_staging.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(DOCS_SITE_DIR / "adr" / "index.md", adr_staging / "index.md")
+    # Read-only projection of the owner-authorized current decision set.
+    from tools.adr_publication import stage_adrs
+    from tools.design_viz import generate_html as generate_design_html
 
-    # ADR 0001 with repository link adjustment
-    adr1_raw = (DOCS_ADR_DIR / "0001-validation-lifecycle-architecture.md").read_text(
-        encoding="utf-8"
-    )
-    adr1_transformed = (
-        adr1_raw.replace(
-            "[Binding Owner Decisions on Test and CI Optimization](../../AGENTS.md)",
-            "[Binding Owner Decisions on Test and CI Optimization](https://github.com/TakashiSasaki/git-repo-db/blob/main/AGENTS.md)",
-        )
-        .replace(
-            "[Change-Aware CI Architecture](../change-aware-ci.md)",
-            "[Change-Aware CI Architecture](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/change-aware-ci.md)",
-        )
-        .replace(
-            "[Testing Architecture and Guidelines](../testing.md)",
-            "[Testing Architecture and Guidelines](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/testing.md)",
-        )
-        .replace(
-            "[CI Dependencies and Classification Policy](../../scripts/ci_dependencies.json)",
-            "[CI Dependencies and Classification Policy](https://github.com/TakashiSasaki/git-repo-db/blob/main/scripts/ci_dependencies.json)",
-        )
-    )
-    (adr_staging / "0001-validation-lifecycle-architecture.md").write_text(
-        adr1_transformed, encoding="utf-8"
-    )
-
-    # ADR 0002
-    shutil.copy2(
-        DOCS_ADR_DIR / "0002-three-store-boundary-architecture.md",
-        adr_staging / "0002-three-store-boundary-architecture.md",
-    )
-
-    # 4. Development Guide
-    dev_staging = staging_dir / "development"
-    dev_staging.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(DOCS_SITE_DIR / "development" / "index.md", dev_staging / "index.md")
+    stage_adrs(staging_dir, meta["commit_sha"])
+    design = staging_dir / "design"
+    design.mkdir(parents=True, exist_ok=True)
+    (design / "index.html").write_text(generate_design_html(), encoding="utf-8")
 
     # 5. Schema section
     schema_staging = staging_dir / "schema"
@@ -672,13 +640,16 @@ def include_standalone_viewer_in_sitemap(site_dir: Path, site_url: str) -> None:
     ET.register_namespace("", namespace)
     tree = ET.parse(sitemap)
     root = tree.getroot()
-    location = urljoin(site_url, "schema/viewer/")
     locations = {
         node.text for node in root.findall(f"{{{namespace}}}url/{{{namespace}}}loc")
     }
-    if location not in locations:
-        entry = ET.SubElement(root, f"{{{namespace}}}url")
-        ET.SubElement(entry, f"{{{namespace}}}loc").text = location
+    for route in ("schema/viewer/", "design/"):
+        if not (site_dir / route / "index.html").is_file():
+            raise ValueError(f"Standalone viewer missing: {route}")
+        location = urljoin(site_url, route)
+        if location not in locations:
+            entry = ET.SubElement(root, f"{{{namespace}}}url")
+            ET.SubElement(entry, f"{{{namespace}}}loc").text = location
     xml = ET.tostring(root, encoding="utf-8", xml_declaration=True)
     sitemap.write_bytes(xml)
     (site_dir / "sitemap.xml.gz").write_bytes(gzip.compress(xml, mtime=0))
@@ -718,14 +689,24 @@ def validate_internal_links(output_dir: Path) -> List[str]:
     broken_links = []
     html_files = list(output_dir.rglob("*.html"))
 
-    href_re = re.compile(r'href=["\']([^"\']+)["\']', re.IGNORECASE)
+    class Links(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.targets = []
+
+        def handle_starttag(self, tag, attrs):
+            self.targets.extend(
+                value for key, value in attrs if key == "href" and value is not None
+            )
 
     for html_file in html_files:
         rel_html = html_file.relative_to(output_dir)
         content = html_file.read_text(encoding="utf-8", errors="replace")
 
-        for m in href_re.finditer(content):
-            target = m.group(1).strip()
+        links = Links()
+        links.feed(content)
+        for href in links.targets:
+            target = href.strip()
 
             # Ignore external links, mailto, in-page anchors, javascript
             if (
@@ -792,7 +773,7 @@ def validate_critical_endpoints(output_dir: Path) -> List[str]:
         "adr/index.html",
         "adr/0001-validation-lifecycle-architecture/index.html",
         "adr/0002-three-store-boundary-architecture/index.html",
-        "development/index.html",
+        "design/index.html",
         "manifest.webmanifest",
         "manifest.json",
         "sw.js",
@@ -804,6 +785,11 @@ def validate_critical_endpoints(output_dir: Path) -> List[str]:
         "assets/images/icons/icon-180.png",
         "assets/images/icons/favicon-32.png",
     ]
+    from tools.adr_publication import destinations
+
+    critical_rel_paths.extend(
+        str(Path(p).with_suffix("")) + "/index.html" for p in destinations().values()
+    )
     missing = []
     for rel in critical_rel_paths:
         target = output_dir / rel

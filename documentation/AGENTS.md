@@ -14,7 +14,8 @@ neutral IR digest separate. Pin explicit commits, not moving latest HEAD.
 
 Canonical ADRs/contracts/machine evidence stay at their original paths. Never
 create an editable second ADR source. Build staging may copy only the
-existing explicit publication allowlist from documentation/tools/build_docs_site.py; schema
+explicit publication allowlist from documentation/tools/build_docs_site.py
+and documentation/tools/adr_publication.py; schema
 viewer URL partitioning and dual SVG paths stay unchanged. No new public content,
 workflow, deployment or settings are authorized by these instructions. Private build
 inputs/provenance belong under .build/, not in published site outputs.
@@ -30,9 +31,9 @@ documentation evidence described in README.md.
 
 ## Content structure and refresh
 
-Audience: operators need current CLI and data behavior; contributors need source,
-contracts, validation and boundaries; reviewers need dated evidence and exact
-revisions. The published homepage and architecture pages are entry points, not
+Audience: public readers explore accepted design responsibilities, relations,
+semantic keys and constraints. Repository contributors use the CLI and development
+guides; reviewers need dated evidence and exact revisions. The published homepage and architecture pages are entry points, not
 canonical replacements for source code or accepted ADRs. The repository's
 `documentation/current-runtime-reference.md` navigates current CLI/data-model/status
 and explicitly points to the older Schema 20 and audit snapshots. This maintained
@@ -62,3 +63,10 @@ relevant repository entry points and repository skills. Consult
 [docs/README.md](../docs/README.md) for role meanings and explicit placement
 exceptions. Every new nested or root path must have an explicit file-level
 classification before completion; the ownership test refuses unknown paths.
+
+The separate five-store projection in `content/design/model.json` is derived
+presentation, never accepted physical DDL or the product neutral IR. Pin its
+canonical design revision/tree, cite individual facts and preserve A/I/P/U scope.
+Keep same-named entities qualified by model/store/name and semantic relationships
+distinct from enforced SQLite FKs. Public ADR staging follows the explicit current
+selection and copies canonical bodies read-only with applicability from the index.
