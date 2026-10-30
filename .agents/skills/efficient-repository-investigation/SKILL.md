@@ -154,3 +154,40 @@ scripts/local-run.sh pytest -q -n 2 tests/integration/p1/test_ref_observation_i1
 
 This addresses expression-index introspection in the P1 schema audit; it does
 not certify a live catalog, a migration, or all SQLite schema features.
+
+## Place new evidence outside frozen documentation collections
+
+Before committing a new report or receipt, read `documentation/AGENTS.md` and
+[the file ownership contract](../../../docs/README.md). The existing
+`docs/implementation/evidence/` directory is frozen to a historical Git tree;
+adding files there fails even if those files have explicit ownership records.
+Use a separately named non-frozen directory and register every new tracked path
+in `documentation/content-inventory.json`, with its actual scope, source,
+producer, consumers and publication intent. Preserve all frozen bytes/modes;
+do not broaden the checker or publication allowlist.
+
+PR #226 first exposed five documentation ownership failures after successful
+product checks. The root cause was new unclassified files inside that frozen
+collection. Moving only those new files and registering their exact new paths
+lets the ownership checks reach their intended assertions. Verify with the
+isolated documentation environment's `documentation/tests/test_content_ownership.py`;
+do not repeat an unchanged product cohort for this evidence-placement fix.
+Freeze the new paths/manifest first: the frozen-index negative controls deliberately
+read `HEAD`, so a staged-only relocation produces a different inventory mismatch.
+When launching from the root environment, select `documentation/.venv/bin/python`
+explicitly (or clear `UV_PROJECT_ENVIRONMENT` before `uv --project documentation`)
+so the root launcher's environment does not select its Python for docs tests.
+
+## Probe supplied metadata before its first serialization
+
+When testing an input boundary that accepts frozen dataclasses, construct valid
+fixtures first, then mutate a nested scalar/OID with `object.__setattr__` before
+calling the actual application entry point. Constructors and SQLite affinity do
+not replace boundary revalidation. Start encoder instrumentation after fixture
+construction; pair a large path/provenance value with an exhausted request budget.
+Check that reservation precedes validation, hashing, key/JSON construction and
+replay comparison, that failed/repeated work accumulates, and that rejected input
+does not stop a healthy catalog. Trace native, metadata, paired and Access paths:
+a value-only helper's hard bound alone does not establish request accounting.
+PR #226 findings R226-01/R226-02 and the scoped regression nodes document this
+procedure; do not reinterpret the author's green run as independent approval.

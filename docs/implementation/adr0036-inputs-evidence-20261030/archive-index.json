@@ -1,0 +1,131 @@
+{
+  "archive_sha256": "9770bff43469417d405811cbd68d1b12d8929972fc9f210241cc01426e4ce2c5",
+  "archive_bytes": 88288,
+  "files": [
+    {
+      "path": "adr0036-inputs-journal.jsonl",
+      "bytes": 236899,
+      "sha256": "255875e27036fe2c783fe8642af2312fa8ba03ed06fa0a2e3501981356be0bf3"
+    },
+    {
+      "path": "adr0036-inputs.json",
+      "bytes": 311973,
+      "sha256": "678123761b93932c85e274b12728200c6b412376cb0a2a1df88cbddfe2e51068"
+    },
+    {
+      "path": "adr0036-inputs.log",
+      "bytes": 4020,
+      "sha256": "f34a71bbc609c82514d1f0c4fbc95f6891eec1b5151f813f14116dcff3604a10"
+    },
+    {
+      "path": "adr0036-inputs.md",
+      "bytes": 2792,
+      "sha256": "f426d8eef5a3ad26fdc680873ef44e7d0479abcd4ec47dfbe7e3e8185790e2c9"
+    },
+    {
+      "path": "adr0036-inputs.xml",
+      "bytes": 40339,
+      "sha256": "a70e10f4d9a82f8e88d464043df55ee3a4bf5d2428ee414d095184b2f4e3154b"
+    },
+    {
+      "path": "collection.log",
+      "bytes": 30478,
+      "sha256": "1973fcb16a80264c4f02b61d8880d1ac01af2161017bcf7132aae13fd8c3db83"
+    },
+    {
+      "path": "development-plan.json",
+      "bytes": 43723,
+      "sha256": "f3a310b4b6e4a38fdfdfae37f4dcd549c849077c8c9f0699a85c99df0d9e7701"
+    },
+    {
+      "path": "execution-summary.json",
+      "bytes": 34315,
+      "sha256": "b2de8d5e8aa6ce44c156b00c3c9b93ac6d6cb24d3f726817a78d92bb59c32af3"
+    },
+    {
+      "path": "failure-index.json",
+      "bytes": 98,
+      "sha256": "d51df14d37e3c918f7b7d7ce0d06b07e826b7da0ab0b0e22ba1117fcc45fe524"
+    },
+    {
+      "path": "invocations/adr0036-inputs-adr0036-inputs-1793365359-a2ddaf8e-journal.jsonl",
+      "bytes": 236899,
+      "sha256": "255875e27036fe2c783fe8642af2312fa8ba03ed06fa0a2e3501981356be0bf3"
+    },
+    {
+      "path": "invocations/adr0036-inputs-adr0036-inputs-1793365359-a2ddaf8e.json",
+      "bytes": 311973,
+      "sha256": "678123761b93932c85e274b12728200c6b412376cb0a2a1df88cbddfe2e51068"
+    },
+    {
+      "path": "invocations/adr0036-inputs-adr0036-inputs-1793365359-a2ddaf8e.log",
+      "bytes": 4020,
+      "sha256": "f34a71bbc609c82514d1f0c4fbc95f6891eec1b5151f813f14116dcff3604a10"
+    },
+    {
+      "path": "invocations/adr0036-inputs-adr0036-inputs-1793365359-a2ddaf8e.xml",
+      "bytes": 40339,
+      "sha256": "a70e10f4d9a82f8e88d464043df55ee3a4bf5d2428ee414d095184b2f4e3154b"
+    },
+    {
+      "path": "invocations/failures-adr0036-inputs-adr0036-inputs-1793365359-a2ddaf8e.json",
+      "bytes": 98,
+      "sha256": "d51df14d37e3c918f7b7d7ce0d06b07e826b7da0ab0b0e22ba1117fcc45fe524"
+    },
+    {
+      "path": "invocations/summary-adr0036-inputs-adr0036-inputs-1793365359-a2ddaf8e.json",
+      "bytes": 34315,
+      "sha256": "b2de8d5e8aa6ce44c156b00c3c9b93ac6d6cb24d3f726817a78d92bb59c32af3"
+    },
+    {
+      "path": "local-python-receipt.json",
+      "bytes": 12472,
+      "sha256": "b19c494a66ace03cb5885a559d56ada20a43896783635d0632388ffd29fb7e2b"
+    },
+    {
+      "path": "node-reconciliation.json",
+      "bytes": 656,
+      "sha256": "789808f8f436bc1b5dcd4603b33c7038d3e73dc10625585b5f173482ba2e9d41"
+    },
+    {
+      "path": "preliminary/adr0036-collect.log",
+      "bytes": 1181,
+      "sha256": "80f03e80c59bf0fd3ebe17646fc31ba39bbac3048dd242c7ee41f7597fe24913"
+    },
+    {
+      "path": "preliminary/adr0036-final-profile.log",
+      "bytes": 309,
+      "sha256": "65629f4e86499e67f65233b05bdd6713a0665a953a7c00198ec2964ec6719390"
+    },
+    {
+      "path": "preliminary/adr0036-plan.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "preliminary/adr0036-probe.log",
+      "bytes": 143,
+      "sha256": "a8bec840599b7371c60311db2aad009f396aa250172637fb92bf44b7c992d1aa"
+    },
+    {
+      "path": "preliminary/adr0036-probe.xml",
+      "bytes": 8718,
+      "sha256": "8e30bcf8e496e64733a389ec22996d3df7d4da50153be0bc43e2f01e8e870ae0"
+    },
+    {
+      "path": "preliminary/adr0036-schema-check.log",
+      "bytes": 88,
+      "sha256": "281c78a03c3f769cc267a329b2246420c982a1d9d1825d2ae2a478f48f3f7178"
+    },
+    {
+      "path": "preliminary/adr0036-setup-workspace.log",
+      "bytes": 247,
+      "sha256": "04719e331095f74adb15091bc2a2a1d399ba8aab83c36a124d765c1e01cba696"
+    },
+    {
+      "path": "preliminary/adr0036-setup.log",
+      "bytes": 117,
+      "sha256": "e9e8f98adac88a245c2bb2fa1a330fef69e5bc78120de2db1061065b7012ded6"
+    }
+  ]
+}
