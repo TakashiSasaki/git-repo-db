@@ -703,42 +703,67 @@ class ProductionQueryService:
     def list_ref_observations(self, page: PageRequest = PageRequest(), *, work=None):
         """Page original subjects with every Claim, including rootless results."""
         work = work if work is not None else UnlimitedWorkBudget()
-        with self.open_snapshot(required_store="core") as snap:
-            core = snap.core
-            assert core is not None
-            rows = core.sql(
-                "SELECT observation_origin_uuidv4,ref_observation_uuidv7 FROM ref_observations ORDER BY observation_origin_uuidv4,ref_observation_uuidv7 LIMIT 10001"
-            )
-            if len(rows) > 10000:
-                raise QueryError(
-                    "QUERY_BUDGET",
-                    "ref-observations",
-                    "finite observation scope exceeded",
+        guarded = _QueryWorkBoundary(work)
+        try:
+            with self.open_snapshot(required_store="core") as snap:
+                core = snap.core
+                assert core is not None
+                rows = core.sql(
+                    "SELECT observation_origin_uuidv4,ref_observation_uuidv7 FROM ref_observations ORDER BY observation_origin_uuidv4,ref_observation_uuidv7 LIMIT 10001"
                 )
-            return _paginate_items(
-                (
-                    core.ref_observation(self._stored(RefObservationKey, *row), work)
-                    for row in rows
-                ),
-                key_fn=lambda v: v.ref_observation.ref_observation_key.key,
-                page=page,
-                endpoint_kind="ref_observations",
-                filters={},
-                snapshot_token=snap.token.encode(),
-            )
+                if len(rows) > 10000:
+                    raise QueryError(
+                        "QUERY_BUDGET",
+                        "ref-observations",
+                        "finite observation scope exceeded",
+                    )
+                return _paginate_items(
+                    (
+                        core.ref_observation(
+                            self._stored(RefObservationKey, *row), guarded
+                        )
+                        for row in rows
+                    ),
+                    key_fn=lambda v: v.ref_observation.ref_observation_key.key,
+                    page=page,
+                    endpoint_kind="ref_observations",
+                    filters={},
+                    snapshot_token=snap.token.encode(),
+                )
+        except _QueryWorkError as error:
+            raise error.original from None
 
     def _ref_notes_targets_in_snapshot(self, core, oid, work=None):
         work = work if work is not None else UnlimitedWorkBudget()
-        rows = core.sql(
-            "SELECT DISTINCT c.observation_origin_uuidv4,c.ref_observation_uuidv7,m.interpretation_kind,m.interpretation_version,m.interpretation_scope "
+        # Group-only reports do not create standalone Mapping rows. Discover
+        # bounded headers first, then let the checked exact-Claim reader validate
+        # memberships before deciding whether this target is actually related.
+        candidates = (
+            "WITH candidates AS ("
+            "SELECT c.observation_origin_uuidv4,c.ref_observation_uuidv7,m.interpretation_kind,m.interpretation_version,m.interpretation_scope "
             "FROM ref_observation_claims c JOIN notes_mappings m ON m.object_format=c.root_format AND m.root_oid=c.root_oid "
-            "WHERE m.object_format=? AND m.annotated_object_oid=? ORDER BY 1,2,3,4,5 LIMIT 10001",
-            oid.key,
+            "WHERE m.object_format=? AND m.annotated_object_oid=? "
+            "UNION SELECT observation_origin_uuidv4,ref_observation_uuidv7,interpretation_kind,interpretation_version,interpretation_scope "
+            "FROM notes_mapping_groups WHERE object_format=? "
+            "ORDER BY 1,2,3,4,5 LIMIT 10001) "
         )
-        if len(rows) > 10000:
+        parameters = (*oid.key, oid.object_format)
+        count, size = core.sql(
+            candidates
+            + "SELECT count(*),coalesce(sum(octet_length(observation_origin_uuidv4)+octet_length(ref_observation_uuidv7)+octet_length(interpretation_kind)+octet_length(interpretation_version)+octet_length(interpretation_scope)),0) FROM candidates",
+            parameters,
+        )[0]
+        if count > 10000 or size > 64 * 1024 * 1024:
             raise QueryError(
                 "QUERY_BUDGET", "ref-notes-targets", "finite association scope exceeded"
             )
+        work.require("metadata_units", count)
+        work.charge("metadata_units", count)
+        work.require("input_bytes", size)
+        work.charge("input_bytes", size)
+        rows = core.sql(
+            candidates + "SELECT * FROM candidates ORDER BY 1,2,3,4,5", parameters
+        )
         views = []
         for row in rows:
             observation = core.ref_observation(

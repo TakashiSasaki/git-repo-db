@@ -298,3 +298,19 @@ invalidates an old cursor. The existing `notes` command retains its explicitly
 legacy Capture meaning. A finite 10,000-subject/association scan bound refuses
 larger scope with QUERY_BUDGET rather than returning a falsely complete result;
 checked projections also retain their finite work/byte/proof limits.
+
+## R227 Query repair boundary
+
+Association discovery includes bounded interpretation headers from Group-only
+reports, which need not create standalone Mapping rows. Membership JSON is read
+and validated only by the existing exact-Claim/root projection reader, then
+matched against the requested target. Header count/bytes and checked projection
+work stay finite; shared content, another Claim and an unrelated target cannot
+acquire an invented Mapping report, canonical note or receiver proof.
+
+The new ref-observation listing wraps caller work with the existing
+`_QueryWorkBoundary` before entering Core/paired/application snapshots. Callback
+exceptions cross all corruption classifiers in that wrapper and are restored to
+the original exception object outside the application snapshot. Actual stored
+corruption retains the existing stop behavior; no classifier or stop condition
+is weakened.
