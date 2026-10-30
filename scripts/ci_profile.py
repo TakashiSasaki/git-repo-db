@@ -405,13 +405,24 @@ def build_execution_summary(record, failure_index=None, reconciliation=None):
     }
 
 
+def terminal_excerpt(value, max_chars=240, *, first_line=False):
+    """Bound presentation only; keep complete evidence in the saved records."""
+    text = str(value)
+    if first_line:
+        lines = text.splitlines()
+        text = lines[0] if lines else ""
+    if len(text) > max_chars:
+        return text[:max_chars] + f"... [truncated {len(text) - max_chars} chars]"
+    return text
+
+
 def format_terminal_summary(record, execution_summary, failure_index=None):
     counts = execution_summary["counts"]
     reconcil = execution_summary["reconciliation"]
     runtime_info = record.get("runtime", {})
     commit_short = (runtime_info.get("commit_sha") or "unknown")[:8]
     tree_short = (runtime_info.get("tree_sha") or "unknown")[:8]
-    lane = record.get("name", "test")
+    lane = terminal_excerpt(record.get("name", "test"), 80, first_line=True)
     workers = record.get("workers", 1)
     mode = record.get("mode", "sequential")
     wall = record.get("wall_seconds", 0.0)
@@ -434,7 +445,7 @@ def format_terminal_summary(record, execution_summary, failure_index=None):
         lines.append(
             f"[{lane}] {verdict} (exit={exit_code}, wall={wall:.2f}s, commit={commit_short}, tree={tree_short})"
         )
-        lines.append(f"  evidence: {evidence_dir}")
+        lines.append(f"  evidence: {terminal_excerpt(evidence_dir, 360)}")
     else:
         lines.append(
             f"[{lane}] {verdict} ({mode}, {workers}w, exit={exit_code}, wall={wall:.2f}s, commit={commit_short}, tree={tree_short})"
@@ -444,8 +455,8 @@ def format_terminal_summary(record, execution_summary, failure_index=None):
             f"{counts['error']} error, {counts['skipped']} skipped, {counts['inherited']} inherited, {counts['unexecuted']} unexecuted"
         )
         lines.append(counts_str)
-        lines.append(f"  reconciliation: {reconcil['status']}")
-        lines.append(f"  evidence: {evidence_dir}")
+        lines.append(f"  reconciliation: {terminal_excerpt(reconcil['status'], 160)}")
+        lines.append(f"  evidence: {terminal_excerpt(evidence_dir, 360)}")
 
     if failure_index and failure_index.get("failures"):
         failures = failure_index["failures"]
@@ -460,21 +471,16 @@ def format_terminal_summary(record, execution_summary, failure_index=None):
             f"  failures: {len(failures)} total ({new_or_unclass} new/unclassified, {inherited} inherited)"
         )
         for idx, f in enumerate(failures[:3], start=1):
-            msg = (
-                (f.get("message") or "").splitlines()[0]
-                if f.get("message")
-                else "error"
-            )
-            lines.append(
-                f"    {idx}. [{f.get('classification')}] {f.get('nodeid')}: {msg}"
-            )
-            samples = f.get("sample_lines", [])
-            if samples:
-                for s in samples[:3]:
-                    lines.append(f"       {s}")
+            msg = terminal_excerpt(f.get("message") or "error", first_line=True)
+            node = terminal_excerpt(f.get("nodeid"), first_line=True)
+            classification = terminal_excerpt(f.get("classification"), 80)
+            lines.append(f"    {idx}. [{classification}] {node}: {msg}")
+        lines.append(
+            "  tracebacks: retained in failure index; inspect one node with ci_query.py failure"
+        )
         if len(failures) > 3:
             lines.append(
-                f"    ... and {len(failures) - 3} more failure(s). See {evidence_dir}"
+                f"    ... and {len(failures) - 3} more failure(s). See {terminal_excerpt(evidence_dir, 360)}"
             )
 
     return "\n".join(lines) + "\n"
