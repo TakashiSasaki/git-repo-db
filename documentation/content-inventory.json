@@ -11174,6 +11174,15 @@
       "consumers": "Reviewers and integration handoffs.",
       "publication": "not staged"
     },
+    "docs/implementation/adr0036-legacy-consumers-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "Opt-in Notes consumer transition scope and limitations; ADR 0036 controls target policy.",
+      "source": "docs/implementation/adr0036-legacy-consumers-contract.md",
+      "producer": "Notes consumer transition implementation and verification.",
+      "consumers": "Reviewers and subsequent consumer migration handoffs.",
+      "publication": "not staged"
+    },
     "docs/implementation/adr0036-typed-salvage-contract.md": {
       "status": "active-scoped-contract",
       "owner": "docs/implementation/",

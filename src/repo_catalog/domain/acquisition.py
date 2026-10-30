@@ -17,6 +17,7 @@ from repo_catalog.application.notes import (
     NoteAcquisition,
     RefNoteAcquisition,
     RefNotesInventory,
+    RefNotesInventoryVerification,
 )
 from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.notes import NotesInventory
@@ -54,7 +55,10 @@ from repo_catalog.domain.production_context import (
     SourceInventory,
     json_value,
 )
-from repo_catalog.domain.ref_observation import RefEnumerationResult
+from repo_catalog.domain.ref_observation import (
+    RefEnumerationResult,
+    RefNotesInventoryProjection,
+)
 from repo_catalog.domain.time import (
     validate_observation_us,
     validate_required_observation_us,
@@ -186,6 +190,8 @@ class GitAcquisitionReport:
     coverage_claims: tuple[CoverageClaim, ...] = ()
     failure_code: str | None = None
     failure_detail: str = ""
+    ref_inventory_verifications: tuple[RefNotesInventoryVerification, ...] = ()
+    ref_inventory_projections: tuple[RefNotesInventoryProjection | None, ...] = ()
 
 
 @dataclass(frozen=True)

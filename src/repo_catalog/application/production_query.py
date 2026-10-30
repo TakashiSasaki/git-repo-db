@@ -92,6 +92,7 @@ if TYPE_CHECKING:
         NotesMapping,
         NotesMappingProjection,
         RefEnumerationResult,
+        RefNotesInventoryProjection,
         RefObservationClaim,
         RefObservationKey,
         RefObservationProjection,
@@ -226,6 +227,49 @@ def _stored_view(method):
             ) from error
 
     return call
+
+
+class _QueryWorkError(Exception):
+    def __init__(self, original):
+        super().__init__()
+        self.original = original
+
+
+class _QueryWorkLimits:
+    def __init__(self, work):
+        self.work = work
+
+    @property
+    def note_bytes(self):
+        return self.work._invoke(lambda: self.work.inner.limits.note_bytes)
+
+
+class _QueryWorkBoundary:
+    """Carry callback exceptions beyond snapshot corruption classifiers."""
+
+    def __init__(self, inner):
+        self.inner = inner
+        self.limits = _QueryWorkLimits(self)
+
+    def _invoke(self, callback):
+        try:
+            return callback()
+        except Exception as error:
+            raise _QueryWorkError(error) from error
+
+    def require(self, unit, amount=1):
+        return self._invoke(lambda: self.inner.require(unit, amount))
+
+    def charge(self, unit, amount):
+        return self._invoke(lambda: self.inner.charge(unit, amount))
+
+    def __getattr__(self, name):
+        if name != "abandon":
+            raise AttributeError(name)
+        method = self._invoke(lambda: getattr(self.inner, name, None))
+        if method is None:
+            raise AttributeError(name)
+        return lambda unit: self._invoke(lambda: method(unit))
 
 
 class ProductionQueryService:
@@ -554,6 +598,33 @@ class ProductionQueryService:
                 max_units=max_units,
                 max_bytes=max_bytes,
             )
+
+    def list_ref_notes_inventories(
+        self,
+        claim: RefObservationClaim,
+        work: WorkBudget,
+        *,
+        max_groups: int = 10_000,
+        max_members: int = 100_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_proofs: int = 1_000,
+        max_structures: int = 100_000,
+    ) -> RefNotesInventoryProjection:
+        """List original Groups and current exact-Claim receiver checks."""
+        try:
+            with self.open_snapshot(required_store="core") as snap:
+                assert snap.core is not None
+                return snap.core.ref_notes_inventory_projection(
+                    claim,
+                    _QueryWorkBoundary(work),
+                    max_groups=max_groups,
+                    max_members=max_members,
+                    max_bytes=max_bytes,
+                    max_proofs=max_proofs,
+                    max_structures=max_structures,
+                )
+        except _QueryWorkError as error:
+            raise error.original from None
 
     def read_ref_note_bytes(
         self,
@@ -1082,23 +1153,26 @@ class ProductionQueryService:
         max_structures: int = 100_000,
         max_claims: int = 10_000,
     ) -> CoverageView:
-        with self.open_snapshot(required_store="core") as snap:
-            assert snap.core is not None
-            proj = snap.core.coverage(
-                scope,
-                work=work,
-                max_proofs=max_proofs,
-                max_bytes=max_bytes,
-                max_structures=max_structures,
-                max_claims=max_claims,
-            )
-            return CoverageView(
-                scope=scope,
-                state=proj.state,
-                known_empty=proj.known_empty,
-                latest_observed_at_us=proj.observed_at_us,
-                claims=proj.claims,
-            )
+        try:
+            with self.open_snapshot(required_store="core") as snap:
+                assert snap.core is not None
+                proj = snap.core.coverage(
+                    scope,
+                    work=None if work is None else _QueryWorkBoundary(work),
+                    max_proofs=max_proofs,
+                    max_bytes=max_bytes,
+                    max_structures=max_structures,
+                    max_claims=max_claims,
+                )
+                return CoverageView(
+                    scope=scope,
+                    state=proj.state,
+                    known_empty=proj.known_empty,
+                    latest_observed_at_us=proj.observed_at_us,
+                    claims=proj.claims,
+                )
+        except _QueryWorkError as error:
+            raise error.original from None
 
     # ------------------------------------------------------------------
     # Context Authoritative Queries

@@ -32,6 +32,7 @@ from repo_catalog.domain.ref_observation import (
     NotesMapping,
     NotesMappingProjection,
     RefEnumerationResult,
+    RefNotesInventoryProjection,
     RefObservationClaim,
     RefObservationKey,
     RefObservationProjection,
@@ -97,6 +98,18 @@ class ProductionQueryPort(Protocol):
         max_units: int = 10_000,
         max_bytes: int = 64 * 1024 * 1024,
     ) -> NotesMappingProjection: ...
+
+    def list_ref_notes_inventories(
+        self,
+        claim: RefObservationClaim,
+        work: WorkBudget,
+        *,
+        max_groups: int = 10_000,
+        max_members: int = 100_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_proofs: int = 1_000,
+        max_structures: int = 100_000,
+    ) -> RefNotesInventoryProjection: ...
 
     def read_ref_note_bytes(
         self,
