@@ -10,6 +10,25 @@ large amounts of irrelevant text. Keep raw files intact outside model context;
 summarize with local tools and read only the relevant locations. A short summary
 does not establish full acceptance without the underlying execution receipts.
 
+## Keep the model's input bounded separately from stored evidence
+
+For success, read counts, exit/reconciliation status, source binding and evidence
+paths once. Do not print a complete profile JSON, journal, PR body or every job
+step to reconfirm a status. In orchestration tools, retain full results locally
+and print only the fields needed for the current decision.
+
+For failure, read the compact status and a short failure list, then inspect one
+selected node. The default terminal and query excerpts cap long exception text,
+parameterized IDs and traceback lines; complete records remain on disk.
+Use `--full` or raw `--json` only for a selected diagnostic need, redirect the
+result to a file, then project the needed fields or lines before reading it.
+Decode CI receipt/Base64 blocks to files; never print their encoded contents.
+
+An output-truncation warning means the query was too broad: narrow its scope
+instead of merely increasing the output budget. Apply the same rule to source
+reads and tool discovery. Byte/character reduction is not a measured token or
+billing reduction; report those quantities separately.
+
 ## Select the tool and scope first
 
 - Locate files with `rg --files src tests scripts` before searching their bodies.

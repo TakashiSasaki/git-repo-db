@@ -14,8 +14,10 @@ if str(ROOT) not in sys.path:
 
 try:
     from scripts.ci_execute import extract_receipt_archive
+    from scripts.ci_profile import terminal_excerpt
 except ImportError:
     from ci_execute import extract_receipt_archive
+    from ci_profile import terminal_excerpt
 
 
 def load_execution_summary(directory: Path) -> dict | None:
@@ -158,11 +160,9 @@ def query_failures(args: argparse.Namespace) -> int:
     else:
         print(f"Total matching failures: {total_matching}")
         for f in display_failures:
-            cls = f.get("classification", "FAILURE")
-            node = f.get("nodeid", "unknown")
-            msg = (
-                f.get("message", "").splitlines()[0] if f.get("message") else "unknown"
-            )
+            cls = terminal_excerpt(f.get("classification", "FAILURE"), 80)
+            node = terminal_excerpt(f.get("nodeid", "unknown"), first_line=True)
+            msg = terminal_excerpt(f.get("message") or "unknown", first_line=True)
             print(f"- [{cls}] {node}: {msg}")
         if limit and total_matching > len(display_failures):
             print(
@@ -186,7 +186,10 @@ def query_single_failure(args: argparse.Namespace) -> int:
         matches = [f for f in failures if args.node in f.get("nodeid", "")]
 
     if not matches:
-        print(f"Error: No failure matching node '{args.node}' found.", file=sys.stderr)
+        print(
+            f"Error: No failure matching node '{terminal_excerpt(args.node)}' found.",
+            file=sys.stderr,
+        )
         return 2
 
     if len(matches) > 1:
@@ -195,7 +198,10 @@ def query_single_failure(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         for m in matches[:5]:
-            print(f"  - {m.get('nodeid')}", file=sys.stderr)
+            print(
+                f"  - {terminal_excerpt(m.get('nodeid'), first_line=True)}",
+                file=sys.stderr,
+            )
         if len(matches) > 5:
             print(f"  ... and {len(matches) - 5} more", file=sys.stderr)
         print("Please specify the exact node ID.", file=sys.stderr)
@@ -205,21 +211,33 @@ def query_single_failure(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps(f, indent=2))
     else:
-        print(f"Node:           {f.get('nodeid')}")
-        print(f"Classification: {f.get('classification')}")
-        print(f"Phase:          {f.get('phase')}")
-        print(f"Exception Type: {f.get('exception_type')}")
-        print(f"Message:        {f.get('message')}")
+        full = getattr(args, "full", False)
+        shortened = False
+
+        def display(value, limit=240):
+            nonlocal shortened
+            original = str(value)
+            result = original if full else terminal_excerpt(original, limit)
+            shortened |= result != original
+            return result
+
+        print(f"Node:           {display(f.get('nodeid'))}")
+        print(f"Classification: {display(f.get('classification'), 80)}")
+        print(f"Phase:          {display(f.get('phase'), 80)}")
+        print(f"Exception Type: {display(f.get('exception_type'), 120)}")
+        print(f"Message:        {display(f.get('message'), 1024)}")
         samples = f.get("sample_lines", [])
         if samples:
             limit = None if getattr(args, "full", False) else 15
             print("\nTraceback Sample:")
             for line in samples if limit is None else samples[:limit]:
-                print(f"  {line}")
+                print(f"  {display(line, 160)}")
             if limit is not None and len(samples) > limit:
                 print(
                     f"  ... and {len(samples) - limit} more line(s). Use --full to see complete sample."
                 )
+        if shortened:
+            print("Text excerpts shortened; use --full or --json for saved detail.")
     return 0
 
 
@@ -338,7 +356,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     one_p.add_argument("--node", required=True, help="Pytest node ID or substring")
     one_p.add_argument(
-        "--full", action="store_true", help="Display complete traceback sample"
+        "--full",
+        action="store_true",
+        help="Display complete message and traceback sample (may be large)",
     )
     one_p.add_argument("--json", action="store_true", help="Output raw JSON")
 

@@ -18,6 +18,83 @@ from unittest.mock import patch
 from scripts import ci_execute, ci_profile, ci_query, resource_scheduler
 
 
+def large_failure_index():
+    payload = "X" * 100_000
+    failure = {
+        "nodeid": "tests/test_example.py::test_callback[" + payload + "]",
+        "classification": "UNCLASSIFIED_FAILURE",
+        "phase": "call",
+        "exception_type": "ValueError",
+        "message": "caller refused: " + payload,
+        "sample_lines": ["TRACE_MARKER " + payload] * 20,
+    }
+    return {"failures": [failure]}
+
+
+def test_automatic_failure_output_is_bounded_and_keeps_verdict_and_evidence():
+    index = large_failure_index()
+    original = json.dumps(index)
+    summary = {
+        "counts": {
+            "total": 1,
+            "passed": 0,
+            "failed": 1,
+            "error": 0,
+            "skipped": 0,
+            "inherited": 0,
+            "unexecuted": 0,
+        },
+        "reconciliation": {"consistent": True, "status": "ALL_EXECUTED"},
+    }
+    output = ci_profile.format_terminal_summary(
+        {"name": "example", "command": ["pytest"], "exit_code": 1}, summary, index
+    )
+    assert "FAILED" in output and "1 failed" in output
+    assert "UNCLASSIFIED_FAILURE" in output and "caller refused" in output
+    assert "TRACE_MARKER" not in output
+    assert "truncated" in output and len(output.encode()) < 2000
+    assert json.dumps(index) == original
+
+
+def test_failure_queries_bound_messages_ids_and_trace_lines_without_losing_raw_data(
+    tmp_path, capsys
+):
+    index = large_failure_index()
+    path = tmp_path / "failure-index.json"
+    original = json.dumps(index)
+    path.write_text(original)
+    assert ci_query.main(["failures", str(tmp_path), "--limit", "1"]) == 1
+    listed = capsys.readouterr().out
+    assert "Total matching failures: 1" in listed
+    assert len(listed.encode()) < 1000 and "truncated" in listed
+    node = index["failures"][0]["nodeid"]
+    assert ci_query.main(["failure", str(tmp_path), "--node", node]) == 0
+    detail = capsys.readouterr().out
+    assert "ValueError" in detail and "caller refused" in detail
+    assert "--full" in detail and len(detail.encode()) < 6000
+    assert path.read_text() == original
+
+    assert ci_query.main(["failure", str(tmp_path), "--node", node, "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == index["failures"][0]
+    assert ci_query.main(["failure", str(tmp_path), "--node", node, "--full"]) == 0
+    full = capsys.readouterr().out
+    assert index["failures"][0]["message"] in full
+    assert full.count(index["failures"][0]["sample_lines"][0]) == 20
+    assert path.read_text() == original
+
+
+def test_ambiguous_failure_lookup_keeps_long_parameter_ids_bounded(tmp_path, capsys):
+    index = large_failure_index()
+    second = dict(index["failures"][0])
+    second["nodeid"] += "other"
+    index["failures"].append(second)
+    (tmp_path / "failure-index.json").write_text(json.dumps(index))
+    assert ci_query.main(["failure", str(tmp_path), "--node", "test_callback"]) == 2
+    captured = capsys.readouterr()
+    assert len(captured.err.encode()) < 1500
+    assert "truncated" in captured.err
+
+
 def _create_signed_bundle(
     files: dict[str, bytes],
     indexed: bool = True,
