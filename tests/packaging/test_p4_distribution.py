@@ -50,12 +50,12 @@ verify_declared()
 repo, instance, origin = (str(uuid4()) for _ in range(3))
 for name in ("core", "operational"):
     initialize(Path(name+".sqlite3"), name, repo, instance)
-subprocess.run(["git","init","--bare","--object-format=FORMAT","git"],check=True,capture_output=True)
+subprocess.run(["git","init","--bare","--object-format=__NATIVE_FORMAT__","git"],check=True,capture_output=True)
 def write(kind, body):
     return subprocess.run(["git","-C","git","hash-object","-w","-t",kind,"--stdin"],input=body,check=True,capture_output=True).stdout.strip().decode()
 body=b"\0\xffexact\r\n"
 note=write("blob",body)
-target="a"*(40 if "FORMAT"=="sha1" else 64)
+target="a"*(40 if "__NATIVE_FORMAT__"=="sha1" else 64)
 root=write("tree",b"100644 "+target.encode()+b"\0"+bytes.fromhex(note))
 subprocess.run(["git","-C","git","update-ref","refs/notes/nested/p4",root],check=True)
 core=GitCore(Path("core.sqlite3"))
@@ -71,9 +71,9 @@ app=NotesAcquisition(core,source,work,NotesProgress(work),source_attribution="in
 found=app.discover(repo,"installed-local",origin,str(uuid4()),123)
 assert found.observation.value["enumeration_state"]=="complete"
 ref_claim=found.enumerations[0].links[0].claim
-result=app.acquire_ref_note(ref_claim,OID("FORMAT",target))
+result=app.acquire_ref_note(ref_claim,OID("__NATIVE_FORMAT__",target))
 assert result.body_retained
-projection=core.notes_mapping_projection(ref_claim,OID("FORMAT",target),"git-notes","1","native-notes-tree",work)
+projection=core.notes_mapping_projection(ref_claim,OID("__NATIVE_FORMAT__",target),"git-notes","1","native-notes-tree",work)
 assert core.read_ref_note(ref_claim,projection.evidence[0].mapping,work)==body
 assert not core.sql("SELECT 1 FROM sqlite_schema WHERE name='captures'")
 reported=app.inventory_ref(ref_claim).group
@@ -97,5 +97,5 @@ assert adapter.restore_backup(Path("backup"),Path("fresh"),repo).revalidated_cle
 assert ProductionQueryService(Path("fresh")).read_ref_note_bytes(ref_claim,projection.evidence[0].mapping,work).body_bytes==body
 assert not Path("context.sqlite3").exists()
 core.close(); db.close()
-""".replace("FORMAT", fmt)
+""".replace("__NATIVE_FORMAT__", fmt)
     run([python, "-c", script], outside, env)
