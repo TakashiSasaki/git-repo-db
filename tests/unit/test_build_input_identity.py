@@ -2,7 +2,9 @@
 
 import hashlib
 import json
+import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -10,6 +12,7 @@ import pytest
 from tests.support.distributions import (
     build_cache_key,
     build_once,
+    package_build_environment,
     package_build_inputs,
 )
 
@@ -18,6 +21,27 @@ SPECIMEN = (
     ROOT
     / "docs/implementation/evidence/adr0033-independent-review-20261023/archive/counterexamples/source"
 )
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_distribution_build_uses_the_dependency_setup_uv_cache(
+    tmp_path, monkeypatch, explicit
+):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "default-cache"))
+    if explicit:
+        monkeypatch.setenv("UV_CACHE_DIR", str(tmp_path / "explicit cache"))
+    else:
+        monkeypatch.delenv("UV_CACHE_DIR", raising=False)
+
+    def cache_directory(env):
+        return subprocess.check_output(
+            ["uv", "cache", "dir"], env=env, text=True
+        ).strip()
+
+    setup_cache = cache_directory(dict(os.environ))
+    build_env = package_build_environment()
+    assert cache_directory(build_env) == setup_cache
+    assert build_env["UV_PYTHON"]
 
 
 def products(root):

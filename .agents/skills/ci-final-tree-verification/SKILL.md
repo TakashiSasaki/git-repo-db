@@ -80,10 +80,12 @@ qualification. Frozen historical reports and execution input hashes stay intact.
 
 For assembled acceptance, collect `tests/` with `-o addopts=` before applying
 ordinary/live/benchmark markers. A green focused cohort does not cover omitted
-nodes. Install both locked dev and docs groups: the ordinary docs-build tests
-import PyYAML from the docs group. Prepare the locked wheelhouse before offline
-packaging tests, and verify its manifest/lock and wheel digests. Dependency
-preparation is distinct from executing Provider acquisition.
+nodes. Use the verified product environment for product checks and the separate
+`documentation/.venv` with its own lock for documentation checks, as described in
+`documentation/README.md`; do not add rendering dependencies to the product
+environment. Prepare the locked wheelhouse before offline packaging tests, and
+verify its manifest/lock and wheel digests. Dependency preparation is distinct
+from executing Provider acquisition.
 
 Use `scripts/verify_i5_offline.py --output NEW_EMPTY_DIR --execute` with the
 environment's selected Python and its actual SQLite for disjoint focused/additional/benchmark
@@ -115,6 +117,39 @@ See the [I5 merge preparation](../../../docs/implementation/adr0030-i5-merge-pla
 and its independently retained execution receipts.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
+
+### Choose and prepare the next run before executing it
+
+At an ordinary development checkpoint, inspect all workflows triggered by the
+changed paths, not only `tests.yml`. Compare each workflow's selected work with
+`docs/change-aware-ci.md` and the common planner. A separate fixed broad cohort
+can defeat development selection. Report that mismatch as workflow work; do not
+silently disable a job, skip unresolved checks or treat an old pass as coverage.
+
+Record the purpose, fixed or dirty inputs, selected cohort and expected evidence
+for the next run. Use a focused reproduction while editing, then a justified
+regression selection on the frozen candidate. Do not repeat a completed cohort
+solely to restate a result or after an evidence-only edit with unchanged inputs.
+Independent reviewer execution remains separate correctness evidence; preserve it.
+
+Before including installed-distribution tests in a long run, prepare the locked
+wheelhouse using `scripts/local-run.sh python scripts/prepare_wheelhouse.py` and
+check that the intended build path uses its current lock manifest and wheel
+hashes. If using uv's cache instead, keep explicit cache settings consistent with
+the setup command; obtain the effective default with
+`scripts/local-run.sh uv cache dir`, never assume a machine-specific path.
+Dependency setup is not test execution and does not change the selected SQLite.
+
+For a newly created external probe module or complex fixture, check collection
+and a representative executable node in the intended checkout before expanding
+to its parameterized cohort. Apply this when import/fixture setup is new, not as
+an extra gate for every unchanged test. After a setup failure, preserve its receipt
+and rerun the affected cohort after correcting setup; broaden only for remaining
+correctness concerns or changed inputs. Do not rerun successful unrelated cohorts.
+
+Report elapsed run/job time separately from summed worker time. Rank the slowest
+steps and identify the final dependency that delayed completion; parallel job
+durations must not be added to claim end-to-end waiting time.
 
 ### Local verified environment
 
@@ -168,8 +203,8 @@ existence and passing counts are separate evidence.
 
 1. Run focused tests locally while editing. Validate both lint **and format** for source/test changes:
    ```bash
-   uv run --no-sync ruff check src tests scripts
-   uv run --no-sync ruff format --check src tests scripts
+   scripts/local-run.sh ruff check src tests scripts
+   scripts/local-run.sh ruff format --check src tests scripts
    ```
    Passing `ruff check` alone does not imply format compliance. Before committing
    newly generated/untracked artifacts, stage the intended files and run

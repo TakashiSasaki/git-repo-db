@@ -20,6 +20,22 @@ main push や PR だからという理由で無条件の full acceptance は行�
 
 開発時の通常の検証（Development validation）と、明示的なリリース検証（Release acceptance）は明確に分離されます。通常の PR や push ではローカルでの焦点を絞った検証を基本とし、CI では軽量な静的検査・設定検査・スモークを実行して検証状況を報告します。開発 PR でソース変更時に無条件のホスト全件テストを実行したり、ローカル検証済みケースを自動で重複実行したりしません。完全な独立全件実行（ローカルおよびホストでの pytest 全件、isolated wheel/sdist packaging、厳密な node ID 照合）は、明示的に要求されたリリース検証（`mode=release`）でのみ行われます。
 
+`access-registry.yml` も同じ `ci_plan.py` の出力を使います。通常PRは
+developmentとして、選択された環境準備・静的検査・Accessのスモーク／境界監査を実行し、
+`artifacts/access-registry/ci-plan/` に選択理由と未実行対象を残します。
+Accessの大規模な対象別テスト、広域回帰と基準結果との照合、installed配布物検証は
+共通プランナーが `tests` / `packaging` を選んだ場合に実行します。
+明示的な `workflow_dispatch` の `mode=release` ではこれらを選択し、
+先行テストの失敗後も独立した検証・証拠保管を継続します。
+このworkflowは補助的なAccess検証であり、それ単独では完全なrelease acceptanceを成立させません。
+通常の `tests.yml` の全acceptanceとローカルの独立証拠との照合は引き続き必要です。
+
+オフライン配布テストの準備では `scripts/local-run.sh python scripts/prepare_wheelhouse.py`
+で現在のlockに対応するwheelhouseを用意します。共通配布fixtureは明示された
+`UV_CACHE_DIR` を継承し、未指定ならuv自身の既定値を使うため、依存準備と別の
+マシン固有キャッシュを暗黙に選びません。キャッシュ経由で試験する場合も、
+準備時の実際の設定を維持し、準備エラー後は影響した試験だけを再実行します。
+
 現在の manifest は catalog3 runtime と救出の動作試験を中心に、通常試験と保護境界を含みます。過去の phase export や古い DDL pin の試験は現行 acceptance の下限にしません。不要になった試験の削除も変更として扱い、残る acceptance 全体を選びます。件数の固定下限は設けません。
 
 実行前に選択した file の node ID を収集し、結果の JUnit と exactly once で照合します。失敗、skip、欠落、重複、余分な ID、別 run / attempt / SHA の古い結果、各実行自身の実測環境と異なる binding を名乗る結果は成功扱いにしません。これは実行識別の照合であり、ローカルとホスト CI の SQLite 版の一致を要求しません。確定した CI の証跡は clean tree と一致する必要があります。
