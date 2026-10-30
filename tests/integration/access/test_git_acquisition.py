@@ -48,7 +48,6 @@ from repo_catalog.domain.acquisition import (
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreFailure,
     Provenance,
     RepositoryClaim,
@@ -203,10 +202,14 @@ def test_nonseed_notes_reuse_original_capture_and_budget(setup):
     before = usage(setup)
     second = acquire(setup, unit=unit)
     assert usage(setup) > before
-    assert first.notes_discoveries[0].captures == second.notes_discoveries[0].captures
-    assert first.note_acquisitions[0].body_retained
-    assert {r[2] for r in rows(setup, "captures")} == {setup["target"]}
-    assert len(rows(setup, "retained_notes")) == 1
+    assert (
+        first.notes_discoveries[0].enumerations
+        == second.notes_discoveries[0].enumerations
+    )
+    assert first.ref_note_acquisitions[0].body_retained
+    assert not rows(setup, "captures")
+    assert not rows(setup, "retained_notes")
+    assert len(rows(setup, "ref_retained_notes")) == 2
 
 
 def test_original_native_replay_does_not_duplicate_facts(setup):
@@ -271,19 +274,30 @@ def test_foreign_repository_claim_rejected_before_admission(setup):
     assert usage(setup) == 0 and rows(setup, "repository_claims") == []
 
 
-def test_foreign_notes_capture_rejected_before_admission(setup):
-    cap = Capture(
-        str(uuid4()),
-        str(uuid4()),
-        setup["seed"],
-        "source",
-        "refs/notes/commits",
-        setup["objects"]["notes_commit"],
+def test_foreign_ref_input_rejected_before_admission(setup):
+    from repo_catalog.domain.acquisition import RefNotesInput
+    from repo_catalog.domain.ref_observation import (
+        RefObservation,
+        RefObservationKey,
+        new_uuid7,
     )
-    unit = replace(setup["unit"], notes=NotesAcquisitionSpec(explicit_captures=(cap,)))
-    with pytest.raises(CoreFailure, match="foreign Notes"):
+
+    subject = RefObservation(
+        RefObservationKey(str(uuid4()), new_uuid7()),
+        setup["seed"],
+        b"refs/notes/commits",
+        "source",
+        "visible",
+    )
+    unit = replace(
+        setup["unit"],
+        notes=NotesAcquisitionSpec(ref_inputs=(RefNotesInput(subject, ()),)),
+    )
+    with pytest.raises(CoreFailure, match="foreign"):
         acquire(setup, unit=unit, new_request=True)
-    assert usage(setup) == 0
+    assert usage(setup) > 0  # actual input preflight work is cumulative
+    assert not rows(setup, "ref_observations")
+    assert not (setup["cat"] / "p1-recovery-stop.json").exists()
 
 
 def test_core_stop_before_activation_blocks_git(setup, monkeypatch):
@@ -640,7 +654,8 @@ def test_cli_noninteractive_cannot_acquire(setup):
     assert usage(setup) == 0 and rows(setup, "git_objects") == []
 
 
-def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys):
+@pytest.mark.parametrize("notes", [False, True], ids=["without-notes", "with-notes"])
+def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys, notes):
     from repo_catalog.cli import access_acquisition as cli
 
     class Input(io.StringIO):
@@ -657,11 +672,18 @@ def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys):
         Input("acquire-local-git " + setup["scope"] + " " + setup["target"] + "\n"),
     )
     monkeypatch.setattr(sys, "stderr", Error())
-    assert cli.main(cli_args(setup)) == 0
+    args = cli_args(setup)
+    if notes:
+        args.extend(["--notes", "--note-target", setup["objects"]["commit2"].full_oid])
+    assert cli.main(args) == 0
     result = json.loads(capsys.readouterr().out)
     assert result["git_acquired"] is True
     assert result["repository_uuidv4"] == setup["target"]
     assert rows(setup, "retained_metadata")
+    assert result["retained_notes_count"] == int(notes)
+    assert len(rows(setup, "ref_retained_notes")) == (2 if notes else 0)
+    assert not rows(setup, "captures") and not rows(setup, "retained_notes")
+    assert not (setup["cat"] / "p1-recovery-stop.json").exists()
 
 
 def test_nonseed_paired_native_notes_preserves_catalog_pairing(setup):
@@ -679,7 +701,13 @@ def test_nonseed_paired_native_notes_preserves_catalog_pairing(setup):
     )
     assert result.admission.core_committed and result.admission.context_committed
     assert result.git_report.repository_uuidv4 == setup["target"]
-    assert rows(setup, "captures")
+    assert not rows(setup, "captures")
+    assert rows(setup, "ref_observations")
+    assert all(
+        link.observation.repository_uuidv4 == setup["target"]
+        for enumeration in result.git_report.ref_enumerations
+        for link in enumeration.links
+    )
     db = connect(setup["cat"] / "core.sqlite3", "core")
     try:
         assert tuple(

@@ -24,7 +24,6 @@ from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
-    NotesAcquisitionSpec,
     ProviderIntakeBatch,
     ProviderPullRequestIntake,
     ProviderRegistration,
@@ -122,12 +121,6 @@ def _setup_source_catalog(
         # I2 ref observations require I3 Exchange. These tests exercise the
         # unaffected object, legacy Notes and Context roundtrip.
         include_refs=False,
-        notes=NotesAcquisitionSpec(
-            explicit_captures=(capture,),
-            acquire_inventories=True,
-            target_oids=(oids["commit2"],),
-            retain_note_bodies=True,
-        ),
     )
 
     service_uuid = str(uuid4())
@@ -179,6 +172,29 @@ def _setup_source_catalog(
         git_request=git_req,
         provider_batch=batch,
     )
+    # The legacy physical Exchange contract remains until its coordinated cut.
+    # Seed that fixture explicitly; the public acquisition above produces no
+    # Capture/Notes rows and has no legacy input carrier.
+    from contextlib import closing
+
+    from repo_catalog.adapters.git.notes import GitNotesSource
+    from repo_catalog.adapters.sqlite.acquisition import (
+        InMemoryNotesProgress,
+        UnlimitedWorkBudget,
+    )
+    from repo_catalog.application.notes import NotesAcquisition
+
+    with closing(GitCore(cat_dir / "core.sqlite3")) as core:
+        legacy = NotesAcquisition(
+            core,
+            GitNotesSource(git_source),
+            UnlimitedWorkBudget(),
+            InMemoryNotesProgress(),
+            source_attribution="src-cat-git",
+            repository_uuidv4=repo_uuid,
+        )
+        legacy._legacy_acquire_note(capture, oids["commit2"])
+        legacy._legacy_inventory(capture)
     return oids
 
 

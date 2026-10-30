@@ -45,7 +45,6 @@ from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.notes import (
     Discovery,
-    NoteAcquisition,
     NotesAcquisition,
     RefNoteAcquisition,
     RefNotesInventory,
@@ -71,7 +70,6 @@ from repo_catalog.domain.native_acquisition import (
     ref_notes_input_intent,
     without_ref_inputs,
 )
-from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
     OMITTED_ISSUER,
     FieldClock,
@@ -85,7 +83,6 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 from repo_catalog.domain.p1_core import (
     OID,
-    Capture,
     CoreCoverageScope,
     CoreFailure,
     GitObservation,
@@ -128,12 +125,6 @@ class _PreparedCore:
             "admit_notes_mapping_group",
             "admit_ref_note",
             "admit_metadata",
-            "admit_capture",
-            "admit_notes_claim",
-            "admit_notes_group",
-            "admit_notes_inventory",
-            "admit_notes_role",
-            "admit_note",
             "admit_coverage_scope",
             "admit_coverage",
             "admit_coverage_proof",
@@ -149,9 +140,6 @@ class _PreparedCore:
 
     def catalog_identity(self):
         return self.core.catalog_identity()
-
-    def metadata_capture_binding(self, pair):
-        return _capture_binding(self.core, pair)
 
     def ref_observation(self, key, work):
         from repo_catalog.domain.ref_observation import (
@@ -324,68 +312,19 @@ def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
         core.close()
 
 
-def _capture_binding(core, pair):
-    """Read the original Capture binding, including prepared paired input."""
-    if isinstance(core, _PreparedCore):
-        return core.metadata_capture_binding(pair)
-    value = core.capture_binding(tuple(pair))
-    return value.key if value is not None else None
-
-
-def _validate_metadata_capture_coverage(core, unit, work):
+def _validate_metadata_coverage(core, unit, work):
     scopes = (
         *unit.coverage_scopes,
         *(claim.scope for claim in unit.coverage_claims),
         *(proof[0].scope for proof in unit.coverage_proofs),
     )
-    incoming = {}
-    if unit.notes is not None:
-        for capture in (
-            *unit.notes.explicit_captures,
-            *(claim.capture for claim in unit.notes.external_claims),
-            *(group.capture for group in unit.notes.external_groups),
-        ):
-            prior = incoming.get(capture.pair)
-            if prior is not None and prior != capture.key:
-                raise CoreFailure(
-                    "INCOMPATIBLE_REPLAY",
-                    "metadata",
-                    "conflicting incoming Capture binding",
-                )
-            incoming[capture.pair] = capture.key
-
-    checked = {}
-
-    def existing_binding(pair):
-        if pair not in checked:
-            _charge(work, "metadata_units", 1)
-            checked[pair] = _capture_binding(core, pair)
-        return checked[pair]
-
-    for pair, binding in incoming.items():
-        existing = existing_binding(pair)
-        if existing is not None:
-            if existing[2] != unit.repository_uuidv4:
-                raise CoreFailure(
-                    "REPOSITORY_SCOPE", "metadata", "foreign stored Capture owner"
-                )
-            if existing != binding:
-                raise CoreFailure(
-                    "INCOMPATIBLE_REPLAY", "metadata", "stored Capture binding changed"
-                )
     for scope in scopes:
         if scope.owner_kind == "capture":
-            pair = tuple(scope.coordinates[:2])
-            existing = existing_binding(pair)
-            owners = [
-                binding[2]
-                for binding in (existing, incoming.get(pair))
-                if binding is not None
-            ]
-            if not owners or any(owner != unit.repository_uuidv4 for owner in owners):
-                raise CoreFailure(
-                    "REPOSITORY_SCOPE", "metadata", "foreign or absent Capture owner"
-                )
+            raise CoreFailure(
+                "RETIRED_NOTES_INPUT",
+                "metadata",
+                "Capture-owned acquisition Coverage is retired",
+            )
 
 
 @contextmanager
@@ -567,15 +506,11 @@ class GitAcquisition:
         progress: Any,
     ) -> tuple[
         tuple[Discovery, ...],
-        tuple[NotesInventory, ...],
-        tuple[NoteAcquisition, ...],
         tuple[RefNoteAcquisition, ...],
         tuple[RefNotesInventory, ...],
         list[OID],
     ]:
         discoveries: list[Discovery] = []
-        inventories: list[NotesInventory] = []
-        note_acquisitions: list[NoteAcquisition] = []
         ref_note_acquisitions: list[RefNoteAcquisition] = []
         ref_notes_inventories: list[RefNotesInventory] = []
         extra_oids: list[OID] = []
@@ -616,26 +551,6 @@ class GitAcquisition:
                 fmt = group.ref_claim.root_oid.object_format
                 for target, note, _ in group.members:
                     extra_oids.extend((OID(fmt, target), OID(fmt, note)))
-
-        active_captures: list[Capture] = list(spec.explicit_captures)
-        for cap in spec.explicit_captures:
-            _charge(work, "metadata_units", 1)
-            core_cap.admit_capture(cap)
-            extra_oids.append(cap.root)
-
-        for n_claim in spec.external_claims:
-            _charge(work, "metadata_units", 1)
-            core_cap.admit_notes_claim(n_claim)
-            extra_oids.extend([n_claim.capture.root, n_claim.target, n_claim.note])
-
-        for n_group in spec.external_groups:
-            _charge(work, "metadata_units", 1)
-            core_cap.admit_notes_group(n_group)
-            extra_oids.append(n_group.capture.root)
-            fmt = n_group.capture.root.object_format
-            for target_hex, note_hex, _path in n_group.members:
-                extra_oids.append(OID(fmt, target_hex))
-                extra_oids.append(OID(fmt, note_hex))
 
         if notes_source is not None and (
             spec.discover_notes or spec.acquire_inventories or spec.target_oids
@@ -681,14 +596,11 @@ class GitAcquisition:
                     spec.nominated_refs,
                 )
                 discoveries.append(disc)
-                for cap in disc.captures:
-                    if cap not in active_captures:
-                        active_captures.append(cap)
-                    extra_oids.append(cap.root)
                 for enumeration in disc.enumerations:
                     for link in enumeration.links:
                         if link.claim.root_oid is None:
                             continue
+                        extra_oids.append(link.claim.root_oid)
                         if spec.acquire_inventories:
                             ref_notes_inventories.append(
                                 notes_app.inventory_ref(link.claim)
@@ -703,31 +615,17 @@ class GitAcquisition:
                             if result.note is not None:
                                 extra_oids.append(result.note)
 
-            if spec.acquire_inventories:
-                for cap in active_captures:
-                    inv = notes_app.inventory(cap)
-                    inventories.append(inv)
-                    fmt = cap.root.object_format
-                    for target_hex, note_hex, _path in inv.members:
-                        extra_oids.append(OID(fmt, target_hex))
-                        extra_oids.append(OID(fmt, note_hex))
-
-            for cap in active_captures:
-                for target_oid in spec.target_oids:
-                    na = notes_app.acquire_note(
-                        cap,
-                        target_oid,
-                        retain_body=spec.retain_note_bodies,
-                    )
-                    note_acquisitions.append(na)
-                    extra_oids.append(target_oid)
-                    if na.note is not None:
-                        extra_oids.append(na.note)
+        for inventory in ref_notes_inventories:
+            fmt = inventory.group.ref_claim.root_oid.object_format
+            for target, note, _ in inventory.group.members:
+                _charge(work, "metadata_units", 2)
+                extra_oids.extend((OID(fmt, target), OID(fmt, note)))
+        for result in ref_note_acquisitions:
+            if result.note is not None:
+                extra_oids.append(result.target)
 
         return (
             tuple(discoveries),
-            tuple(inventories),
-            tuple(note_acquisitions),
             tuple(ref_note_acquisitions),
             tuple(ref_notes_inventories),
             extra_oids,
@@ -1139,8 +1037,6 @@ class GitAcquisition:
                         metadata_only_order.append(member.target)
 
             notes_discoveries: tuple[Discovery, ...] = ()
-            notes_inventories: tuple[NotesInventory, ...] = ()
-            note_acquisitions: tuple[NoteAcquisition, ...] = ()
             ref_note_acquisitions: tuple[RefNoteAcquisition, ...] = ()
             ref_notes_inventories: tuple[RefNotesInventory, ...] = ()
             notes_src = None
@@ -1148,8 +1044,6 @@ class GitAcquisition:
                 notes_src = GitNotesSource(source)
                 (
                     notes_discoveries,
-                    notes_inventories,
-                    note_acquisitions,
                     ref_note_acquisitions,
                     ref_notes_inventories,
                     notes_oids,
@@ -1167,7 +1061,6 @@ class GitAcquisition:
                 for n_oid in notes_oids:
                     _record_admitted(n_oid)
                 for na in (
-                    *note_acquisitions,
                     *ref_note_acquisitions,
                     *ref_notes_inventories,
                 ):
@@ -1203,11 +1096,6 @@ class GitAcquisition:
                         failure_code or discovery.failure_code or "NOTES_INCOMPLETE"
                     )
                     failure_detail = failure_detail or discovery.detail
-            for inventory in notes_inventories:
-                if inventory.status in ("partial", "unknown"):
-                    status = "partial" if admitted_order else "unknown"
-                    failure_code = failure_code or "NOTES_INCOMPLETE"
-
             cov_scope = CoreCoverageScope(
                 "repository", (request.repository_uuidv4, "git_metadata")
             )
@@ -1254,8 +1142,6 @@ class GitAcquisition:
                 ref_observations=tuple(ref_observations),
                 ref_enumerations=tuple(ref_enumerations),
                 notes_discoveries=notes_discoveries,
-                notes_inventories=notes_inventories,
-                note_acquisitions=note_acquisitions,
                 ref_note_acquisitions=ref_note_acquisitions,
                 ref_notes_inventories=ref_notes_inventories,
                 coverage_claims=(cov_claim,),
@@ -1320,7 +1206,7 @@ class GitAcquisition:
                 else [notes_source.scope, notes_source.object_format]
             )
             _charge(active_work, "metadata_units", 1)
-            _validate_metadata_capture_coverage(core_cap, unit, active_work)
+            _validate_metadata_coverage(core_cap, unit, active_work)
             intent_scope = encode(
                 ["p5-metadata-intent", unit.capture_origin_uuidv4, unit.capture_uuidv4]
             )
@@ -1420,15 +1306,11 @@ class GitAcquisition:
                         metadata_only_order.append(member.target)
 
             notes_discoveries: tuple[Discovery, ...] = ()
-            notes_inventories: tuple[NotesInventory, ...] = ()
-            note_acquisitions: tuple[NoteAcquisition, ...] = ()
             ref_note_acquisitions: tuple[RefNoteAcquisition, ...] = ()
             ref_notes_inventories: tuple[RefNotesInventory, ...] = ()
             if unit.notes is not None:
                 (
                     notes_discoveries,
-                    notes_inventories,
-                    note_acquisitions,
                     ref_note_acquisitions,
                     ref_notes_inventories,
                     notes_oids,
@@ -1475,7 +1357,6 @@ class GitAcquisition:
                 (
                     item
                     for item in (
-                        *note_acquisitions,
                         *ref_note_acquisitions,
                         *ref_notes_inventories,
                     )
@@ -1501,8 +1382,6 @@ class GitAcquisition:
                 nominal_missing_objects=(),
                 ref_observations=unit.observations,
                 notes_discoveries=notes_discoveries,
-                notes_inventories=notes_inventories,
-                note_acquisitions=note_acquisitions,
                 ref_note_acquisitions=ref_note_acquisitions,
                 ref_notes_inventories=ref_notes_inventories,
                 coverage_claims=tuple(admitted_cov_claims),

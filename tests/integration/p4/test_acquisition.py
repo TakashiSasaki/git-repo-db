@@ -1,3 +1,4 @@
+# Deferred legacy-family diagnostics; normal acquisition is covered by test_legacy_retirement_e2e.
 """Actual production acquisition, exact bytes, observation/retry and failures."""
 
 import sqlite3
@@ -21,11 +22,11 @@ def test_exact_role_body_inventory_and_replay(acquisition, body, fanout, commit)
     capture, target, note = fixture_note(
         acquisition, body, fanout=fanout, commit=commit
     )
-    result = app.acquire_note(capture, target)
+    result = app._legacy_acquire_note(capture, target)
     assert result.body_retained and result.role_verified
     assert app.core.read_note(capture, target, note) == body
     usage = app.work.ledger.usage(app.work.request)
-    replay = app.acquire_note(capture, target)
+    replay = app._legacy_acquire_note(capture, target)
     assert replay == result
     assert (
         app.work.ledger.usage(app.work.request)["verification_bytes"]
@@ -33,9 +34,9 @@ def test_exact_role_body_inventory_and_replay(acquisition, body, fanout, commit)
         or body == b""
     )
     assert len(app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")) == 1
-    app.acquire_note(capture, target, physical_copy_uuidv4=str(uuid4()))
+    app._legacy_acquire_note(capture, target, physical_copy_uuidv4=str(uuid4()))
     assert len(app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")) == 2
-    inventory = app.inventory(capture)
+    inventory = app._legacy_inventory(capture)
     assert inventory.status == "complete"
     assert inventory.members == (
         (
@@ -53,26 +54,30 @@ def test_discovery_full_scope_original_pair_and_historical_refs(acquisition):
     git(path, "update-ref", "refs/custom/annotation", capture.root.full_oid)
     observation = str(uuid4())
     args = (repository, "local-test", origin, observation, 1_000_000)
-    found = app.discover(
+    found = app._legacy_discover(
         *args, nominated=("refs/custom/annotation", "refs/custom/absent")
     )
     assert found.observation.value["enumeration_state"] == "complete"
     assert {c.ref for c in found.captures} == {capture.ref, "refs/custom/annotation"}
     assert all(c.source == "local-test" for c in found.captures)
     git(path, "update-ref", "-d", capture.ref)
-    replay = app.discover(
+    replay = app._legacy_discover(
         *args, nominated=("refs/custom/annotation", "refs/custom/absent")
     )
     assert replay == found  # historical observation replay, no current-state claim
-    newer = app.discover(repository, "local-test", origin, str(uuid4()), 2_000_000)
+    newer = app._legacy_discover(
+        repository, "local-test", origin, str(uuid4()), 2_000_000
+    )
     assert newer.observation.value["enumeration_state"] == "known_empty"
     git(path, "update-ref", capture.ref, capture.root.full_oid)
-    returned = app.discover(repository, "local-test", origin, str(uuid4()), 3_000_000)
+    returned = app._legacy_discover(
+        repository, "local-test", origin, str(uuid4()), 3_000_000
+    )
     assert returned.captures[0].pair != found.captures[-1].pair
     assert returned.captures[0].root == capture.root
-    assert app.acquire_note(found.captures[-1], target).body_retained
+    assert app._legacy_acquire_note(found.captures[-1], target).body_retained
     with pytest.raises(CoreFailure, match="request source/repository mismatch"):
-        app.discover(
+        app._legacy_discover(
             repository,
             "other-source",
             origin,
@@ -82,7 +87,7 @@ def test_discovery_full_scope_original_pair_and_historical_refs(acquisition):
         )
 
     with pytest.raises(CoreFailure) as incompatible:
-        app.discover(
+        app._legacy_discover(
             repository,
             "local-test",
             origin,
@@ -96,13 +101,17 @@ def test_discovery_full_scope_original_pair_and_historical_refs(acquisition):
 def test_ref_movement_new_observation_does_not_modify_old_capture(acquisition):
     app, path, fmt, repository, origin, *_ = acquisition
     capture, target, note = fixture_note(acquisition)
-    old = app.discover(repository, "local-test", origin, str(uuid4()), 1).captures[0]
-    assert app.acquire_note(old, target).body_retained
+    old = app._legacy_discover(
+        repository, "local-test", origin, str(uuid4()), 1
+    ).captures[0]
+    assert app._legacy_acquire_note(old, target).body_retained
     empty = write(path, fmt, "tree", b"")
     git(path, "update-ref", capture.ref, empty.full_oid)
-    new = app.discover(repository, "local-test", origin, str(uuid4()), 2).captures[0]
+    new = app._legacy_discover(
+        repository, "local-test", origin, str(uuid4()), 2
+    ).captures[0]
     assert new.pair != old.pair and new.root != old.root
-    assert app.inventory(new).status == "known_empty"
+    assert app._legacy_inventory(new).status == "known_empty"
     assert app.core.read_note(old, target, note) == b"\0\xffbinary\r\n"
 
 
@@ -118,13 +127,13 @@ def test_missing_targets_unrelated_subtrees_and_file_role(acquisition):
         + entry(b"40000", b"bb", missing),
     )
     capture = replace(capture, root=root)
-    assert app.acquire_note(capture, target).body_retained
-    assert app.inventory(capture).status == "partial"
-    assert app.acquire_note(capture, missing).body_retained is False
+    assert app._legacy_acquire_note(capture, target).body_retained
+    assert app._legacy_inventory(capture).status == "partial"
+    assert app._legacy_acquire_note(capture, missing).body_retained is False
     # The note OID also serves as an ordinary file, without authorizing file access.
     file_tree = write(path, fmt, "tree", entry(b"100644", b"ordinary.txt", note))
     file_capture = replace(capture, capture_uuidv4=str(uuid4()), root=file_tree)
-    result = app.acquire_note(file_capture, target)
+    result = app._legacy_acquire_note(file_capture, target)
     assert result.failure_code == "NOTES_ROLE"
     assert not hasattr(app.source, "blob")
 
@@ -141,7 +150,7 @@ def test_valid_reports_survive_wrong_association_and_body_refusal(acquisition):
         NotesClaim(capture, target, note, replace(report, source="independent"))
     )
     app.work.limits = NotesLimits(note_bytes=1)
-    result = app.acquire_note(capture, target)
+    result = app._legacy_acquire_note(capture, target)
     assert (
         result.role_verified
         and not result.body_retained
@@ -208,24 +217,24 @@ def test_body_atomic_rollback_and_existing_stop(acquisition, monkeypatch):
 
     monkeypatch.setattr(app.core, "_insert", broken)
     with pytest.raises(sqlite3.IntegrityError):
-        app.acquire_note(capture, target)
+        app._legacy_acquire_note(capture, target)
     assert not app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")
     assert app.core.notes_projection(capture, target).canonical == note
     monkeypatch.setattr(app.core, "_insert", insert)
-    assert app.acquire_note(capture, target).body_retained
+    assert app._legacy_acquire_note(capture, target).body_retained
     from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
 
     persist_catalog_stop(path.parent, "test existing stop")
     with pytest.raises(CoreFailure) as stopped:
-        app.acquire_note(capture, target)
+        app._legacy_acquire_note(capture, target)
     assert stopped.value.code == "RECOVERY_STOP"
 
 
 def test_corruption_stops_persistently_without_copy_failover(acquisition):
     app, path, fmt, _, _, core_path, *_ = acquisition
     capture, target, note = fixture_note(acquisition)
-    assert app.acquire_note(capture, target).body_retained
-    app.acquire_note(capture, target, physical_copy_uuidv4=str(uuid4()))
+    assert app._legacy_acquire_note(capture, target).body_retained
+    app._legacy_acquire_note(capture, target, physical_copy_uuidv4=str(uuid4()))
     # Privileged fixture damage, outside supported INSERT-only boundary.
     db = connect(core_path, "core")
     db.execute("DROP TRIGGER p1_immutable_retained_notes_update")
@@ -237,7 +246,7 @@ def test_corruption_stops_persistently_without_copy_failover(acquisition):
     assert corrupted.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").is_file()
     with pytest.raises(CoreFailure):
-        app.acquire_note(capture, target)
+        app._legacy_acquire_note(capture, target)
 
 
 def test_actual_git_notes_command_and_no_lazy_network(acquisition):
@@ -260,9 +269,9 @@ def test_actual_git_notes_command_and_no_lazy_network(acquisition):
     )
     listed = git(path, "notes", "--ref=refs/notes/actual/git", "list").strip().decode()
     assert listed == note.full_oid + " " + target.full_oid
-    found = app.discover(repository, "local-test", origin, str(uuid4()), 1)
+    found = app._legacy_discover(repository, "local-test", origin, str(uuid4()), 1)
     capture = found.captures[0]
-    assert app.acquire_note(capture, target).body_retained
+    assert app._legacy_acquire_note(capture, target).body_retained
     assert app.core.read_note(capture, target, note) == b"\0\xfeoriginal\r\n"
     assert app.source.source._environment()["GIT_NO_LAZY_FETCH"] == "1"
     assert app.core.sql("SELECT full_oid FROM retained_notes")[0][0] == note.full_oid
@@ -280,7 +289,7 @@ def test_source_incoming_loose_object_corruption_is_refusal_without_stop(acquisi
     loose = object_root / note.full_oid[:2] / note.full_oid[2:]
     loose.chmod(0o600)
     loose.write_bytes(zlib.compress(b"blob 3\0bad"))
-    result = app.acquire_note(capture, target)
+    result = app._legacy_acquire_note(capture, target)
     assert not result.body_retained and result.failure_code == "NATIVE_INTEGRITY"
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert app.core.notes_projection(capture, target).canonical == note
@@ -291,7 +300,7 @@ def test_lost_progress_cannot_mint_new_capture_on_retry(acquisition):
     fixture_note(acquisition)
     observation = str(uuid4())
     args = (repository, "local-test", origin, observation, 100)
-    first = app.discover(*args)
+    first = app._legacy_discover(*args)
     from repo_catalog.domain.p1_coordination import CoordinationError
     from repo_catalog.domain.p1_core import encode
 
@@ -300,7 +309,7 @@ def test_lost_progress_cannot_mint_new_capture_on_retry(acquisition):
         (encode(["p4-discovery", origin, observation]),),
     )
     with pytest.raises(CoordinationError):
-        app.discover(*args)
+        app._legacy_discover(*args)
     assert len(app.core.sql("SELECT * FROM captures")) == len(first.captures)
 
 
@@ -352,7 +361,7 @@ def test_local_reader_preserves_external_capture_attribution(acquisition):
     app, *_ = acquisition
     capture, target, note = fixture_note(acquisition)
     external = replace(capture, source="unsigned-original-external-source")
-    assert app.acquire_note(external, target).body_retained
+    assert app._legacy_acquire_note(external, target).body_retained
     assert app.core.read_note(external, target, note) == b"\0\xffbinary\r\n"
 
 
@@ -378,13 +387,13 @@ def test_real_sqlite_core_commit_denial_rolls_back_body_unit(acquisition, monkey
     app.core._db.set_authorizer(authorizer)
     try:
         with pytest.raises(sqlite3.DatabaseError):
-            app.acquire_note(capture, target)
+            app._legacy_acquire_note(capture, target)
     finally:
         app.core._db.set_authorizer(authorize)
         monkeypatch.setattr(app.core, "_insert", insert)
     assert not app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")
     assert app.core.notes_projection(capture, target).canonical == note
-    assert app.acquire_note(capture, target).body_retained
+    assert app._legacy_acquire_note(capture, target).body_retained
 
 
 def test_sigkill_after_body_insert_preserves_atomicity_and_original_copy(acquisition):
@@ -427,7 +436,7 @@ def kill_after_insert(table,values):
     insert(table,values)
     if table=="retained_notes":os.kill(os.getpid(),signal.SIGKILL)
 core._insert=kill_after_insert
-app.acquire_note(capture,OID(*target))
+app._legacy_acquire_note(capture,OID(*target))
 """
     child = subprocess.run(
         [sys.executable, "-c", script, json.dumps(payload)],
@@ -438,7 +447,7 @@ app.acquire_note(capture,OID(*target))
     assert not app.core.sql("SELECT physical_copy_uuidv4 FROM retained_notes")
     assert app.core.notes_projection(capture, target).canonical == note
     before = app.work.ledger.usage(app.work.request)
-    result = app.acquire_note(capture, target)
+    result = app._legacy_acquire_note(capture, target)
     assert result.body_retained
     assert (
         app.work.ledger.usage(app.work.request)["input_bytes"] > before["input_bytes"]

@@ -1,3 +1,4 @@
+# Legacy-only assertions below cover deferred physical diagnostics, not public API compatibility.
 """Real Core query entry points with Context and Search implementations absent."""
 
 import json
@@ -53,7 +54,7 @@ assert service.get_git_object(OID("sha1", sys.argv[3]), include_bytes=True).reta
 first = service.list_git_objects(PageRequest(limit=1))
 assert first.items and first.next_cursor
 assert service.list_git_objects(PageRequest(limit=1, cursor=first.next_cursor)).items
-assert service.list_notes_captures().total_count == 1
+assert service.list_ref_observations().items
 assert service.snapshot_token().context_sha256 is None
 if sys.argv[4] == "absent":
     assert ProductionQueryService(sys.argv[1]).snapshot_token().mode == "core_only"

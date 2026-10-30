@@ -42,7 +42,7 @@ def test_reported_notes_visible_without_capture(acquisition, paired, capsys):
     run_request(acquisition, with_input(acquisition, value), paired=paired)
     service = ProductionQueryService(path.parent)
     view = service.get_git_object(target)
-    assert not view.notes_targets
+    assert not hasattr(view, "notes_targets")
     assert len(view.ref_notes_targets) == 1
     result = view.ref_notes_targets[0]
     assert set(result.observation.claims) == set(value.claims)

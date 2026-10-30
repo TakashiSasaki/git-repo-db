@@ -341,8 +341,8 @@ def test_export_legacy_notes_metadata_utf8_corruption_stops_catalog(
 ):
     app, _, _, _, _, core_path, _ = acquisition
     capture, target, _ = p4_fixtures.fixture_note(acquisition)
-    app.acquire_note(capture, target)
-    app.inventory(capture)
+    app._legacy_acquire_note(capture, target)
+    app._legacy_inventory(capture)
     service = ExchangeService(tmp_path, operational=tmp_path)
     selection = ExchangeSelectionScope(all_selected=True, include_context=False)
     exported_family = "notes_inventories" if family == "notes_groups" else family
@@ -381,7 +381,7 @@ def test_export_legacy_notes_metadata_utf8_corruption_stops_catalog(
 def test_legacy_export_budget_callback_cannot_read_proofs(acquisition):
     app, _, _, _, _, core_path, _ = acquisition
     capture, target, note = p4_fixtures.fixture_note(acquisition)
-    app.acquire_note(capture, target)
+    app._legacy_acquire_note(capture, target)
     rejected = []
 
     class ReentryBudget(Budget):
@@ -407,8 +407,8 @@ def test_export_verifies_each_legacy_note_copy(acquisition, tmp_path):
     app, _, _, _, _, core_path, _ = acquisition
     capture, target, note = p4_fixtures.fixture_note(acquisition)
     first, second = sorted((str(uuid4()), str(uuid4())))
-    app.acquire_note(capture, target, physical_copy_uuidv4=first)
-    app.acquire_note(capture, target, physical_copy_uuidv4=second)
+    app._legacy_acquire_note(capture, target, physical_copy_uuidv4=first)
+    app._legacy_acquire_note(capture, target, physical_copy_uuidv4=second)
     service = ExchangeService(tmp_path, operational=tmp_path)
     selection = ExchangeSelectionScope(all_selected=True, include_context=False)
     assert len(service.export_package(selection=selection).core["retained_notes"]) == 2

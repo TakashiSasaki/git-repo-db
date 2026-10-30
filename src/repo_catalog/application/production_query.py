@@ -6,7 +6,7 @@ Supports three explicit catalog topologies without requiring unused stores on di
 - `paired`: `core.sqlite3` + `context.sqlite3` pinned via `PairCoordinator.snapshots()`
 
 Every read checks `p1-recovery-stop.json` before and after execution.
-Every byte read (`read_metadata_bytes`, `read_note_bytes`, `read_context_text`)
+Every byte read (`read_metadata_bytes`, `read_ref_note_bytes`, `read_context_text`)
 runs full integrity verification on the stored representation, immediately
 persisting `p1-recovery-stop.json` and raising `AUTHORITATIVE_CORRUPTION` if
 tampered.
@@ -61,9 +61,6 @@ from repo_catalog.domain.production_query import (
     GitObjectView,
     GitObservationView,
     GitRepositoryView,
-    NotesCaptureView,
-    NotesInventoryView,
-    NotesTargetView,
     PageRequest,
     PageResult,
     PaginationCursor,
@@ -77,6 +74,9 @@ from repo_catalog.domain.production_query import (
     SearchResponse,
     SnapshotFenceToken,
     SourceView,
+    _LegacyNotesCaptureView,
+    _LegacyNotesInventoryView,
+    _LegacyNotesTargetView,
     filter_digest,
     ref_projection_json,
 )
@@ -795,7 +795,6 @@ class ProductionQueryService:
         oid: OID,
         *,
         include_bytes: bool = False,
-        note_captures: Sequence[Capture] = (),
     ) -> GitObjectView:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
@@ -803,7 +802,6 @@ class ProductionQueryService:
                 snap.core,
                 oid,
                 include_bytes=include_bytes,
-                note_captures=note_captures,
             )
 
     def _git_object_in_snapshot(
@@ -812,7 +810,6 @@ class ProductionQueryService:
         oid: OID,
         *,
         include_bytes: bool = False,
-        note_captures: Sequence[Capture] = (),
         ref_work=None,
     ) -> GitObjectView:
         exists = core.sql(
@@ -853,34 +850,12 @@ class ProductionQueryService:
         if include_bytes:
             retained_bytes = self._read_metadata_bytes_in_snapshot(core, oid)
 
-        captures_to_check = list(note_captures)
-        if not captures_to_check:
-            all_captures = self._all_captures_in_snapshot(core)
-            captures_to_check = [
-                c for c in all_captures if c.root.object_format == oid.object_format
-            ]
-
-        notes_views: list[NotesTargetView] = []
-        for cap in captures_to_check:
-            if cap.root.object_format != oid.object_format:
-                continue
-            target_view = self._notes_target_in_snapshot(
-                core, cap, oid, include_bytes=include_bytes
-            )
-            if (
-                target_view.canonical is not None
-                or target_view.alternatives
-                or target_view.reported_conflict
-            ):
-                notes_views.append(target_view)
-
         return GitObjectView(
             oid=oid,
             scalars=scalars,
             relations=relations,
             metadata_retained=metadata_retained,
             retained_bytes=retained_bytes,
-            notes_targets=tuple(notes_views),
             ref_notes_targets=self._ref_notes_targets_in_snapshot(core, oid, ref_work),
         )
 
@@ -987,7 +962,7 @@ class ProductionQueryService:
         )
 
     @_stored_view
-    def _all_captures_in_snapshot(self, core: GitCore) -> tuple[Capture, ...]:
+    def _legacy_all_captures_in_snapshot(self, core: GitCore) -> tuple[Capture, ...]:
         rows = core.sql(
             "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root "
             "FROM captures ORDER BY ref,capture_origin_uuidv4,capture_uuidv4"
@@ -1010,16 +985,16 @@ class ProductionQueryService:
             )
         return tuple(captures)
 
-    def list_notes_captures(
+    def _legacy_list_notes_captures(
         self,
         page: PageRequest = PageRequest(),
         *,
         notes_ref: str | None = None,
-    ) -> PageResult[NotesCaptureView]:
+    ) -> PageResult[_LegacyNotesCaptureView]:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
             token_str = snap.token.encode()
-            all_captures = self._all_captures_in_snapshot(snap.core)
+            all_captures = self._legacy_all_captures_in_snapshot(snap.core)
 
             def views():
                 for cap in all_captures:
@@ -1046,8 +1021,10 @@ class ProductionQueryService:
                     targets = tuple(
                         self._stored(OID, fmt, h) for h in sorted(target_hexes)
                     )
-                    inventories = self._notes_inventories_in_snapshot(snap.core, cap)
-                    yield NotesCaptureView(
+                    inventories = self._legacy_notes_inventories_in_snapshot(
+                        snap.core, cap
+                    )
+                    yield _LegacyNotesCaptureView(
                         capture=cap,
                         targets=targets,
                         inventories=inventories,
@@ -1062,27 +1039,27 @@ class ProductionQueryService:
                 snapshot_token=token_str,
             )
 
-    def get_notes_target(
+    def _legacy_get_notes_target(
         self,
         capture: Capture,
         target: OID,
         *,
         include_bytes: bool = False,
-    ) -> NotesTargetView:
+    ) -> _LegacyNotesTargetView:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
-            return self._notes_target_in_snapshot(
+            return self._legacy_notes_target_in_snapshot(
                 snap.core, capture, target, include_bytes=include_bytes
             )
 
-    def _notes_target_in_snapshot(
+    def _legacy_notes_target_in_snapshot(
         self,
         core: GitCore,
         capture: Capture,
         target: OID,
         *,
         include_bytes: bool = False,
-    ) -> NotesTargetView:
+    ) -> _LegacyNotesTargetView:
         proj = core.notes_projection(capture, target)
         role_verified = proj.canonical is not None
         note_retained = False
@@ -1103,11 +1080,11 @@ class ProductionQueryService:
             )
             note_retained = bool(retained_rows)
             if include_bytes:
-                note_bytes = self._read_note_bytes_in_snapshot(
+                note_bytes = self._legacy_read_note_bytes_in_snapshot(
                     core, capture, target, proj.canonical
                 )
 
-        return NotesTargetView(
+        return _LegacyNotesTargetView(
             capture=capture,
             target=target,
             canonical=proj.canonical,
@@ -1119,20 +1096,20 @@ class ProductionQueryService:
             note_bytes=note_bytes,
         )
 
-    def list_notes_inventories(
+    def _legacy_list_notes_inventories(
         self, capture: Capture
-    ) -> tuple[NotesInventoryView, ...]:
+    ) -> tuple[_LegacyNotesInventoryView, ...]:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
-            return self._notes_inventories_in_snapshot(snap.core, capture)
+            return self._legacy_notes_inventories_in_snapshot(snap.core, capture)
 
     @_stored_view
-    def _notes_inventories_in_snapshot(
+    def _legacy_notes_inventories_in_snapshot(
         self, core: GitCore, capture: Capture
-    ) -> tuple[NotesInventoryView, ...]:
+    ) -> tuple[_LegacyNotesInventoryView, ...]:
         # Validate receiver-intrinsic inventories via GitCore.notes_inventories
         verified_inventories = core.notes_inventories(capture)
-        views: list[NotesInventoryView] = []
+        views: list[_LegacyNotesInventoryView] = []
         for inv in verified_inventories:
             diag = (
                 (inv.failure.code, str(inv.failure))
@@ -1149,7 +1126,7 @@ class ProductionQueryService:
                 "receiver_intrinsic",
             )
             views.append(
-                NotesInventoryView(
+                _LegacyNotesInventoryView(
                     capture=capture,
                     scope="all-notes-mappings",
                     status=inv.status,
@@ -1178,7 +1155,7 @@ class ProductionQueryService:
                 continue
             members = tuple(tuple(m) for m in json.loads(row[2]))
             views.append(
-                NotesInventoryView(
+                _LegacyNotesInventoryView(
                     capture=capture,
                     scope=row[0],
                     status=row[1],
@@ -1214,16 +1191,16 @@ class ProductionQueryService:
             digest_sha256=digest,
         )
 
-    def read_note_bytes(
+    def _legacy_read_note_bytes(
         self, capture: Capture, target: OID, note_oid: OID
     ) -> ByteReadResult:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
-            return self._read_note_bytes_in_snapshot(
+            return self._legacy_read_note_bytes_in_snapshot(
                 snap.core, capture, target, note_oid
             )
 
-    def _read_note_bytes_in_snapshot(
+    def _legacy_read_note_bytes_in_snapshot(
         self, core: GitCore, capture: Capture, target: OID, note_oid: OID
     ) -> ByteReadResult:
         try:
@@ -1682,29 +1659,24 @@ class ProductionQueryService:
             include_text=include_text,
             validate_core=check_in_core,
         )
-        all_captures = self._all_captures_in_snapshot(core)
 
         resolutions: list[PairedCoreResolution] = []
         for dep in ctx_view.core_dependencies:
             oid = dep.reference.oid
             obj_view: GitObjectView | None = None
-            notes_targets: tuple[NotesTargetView, ...] = ()
             if dep.available:
                 obj_view = self._git_object_in_snapshot(
                     core,
                     oid,
                     include_bytes=include_core_bytes,
-                    note_captures=all_captures,
                     ref_work=ref_work,
                 )
-                notes_targets = obj_view.notes_targets
             resolutions.append(
                 PairedCoreResolution(
                     reference=dep.reference,
                     available_in_core=dep.available,
                     core_required=dep.required,
                     object_view=obj_view,
-                    notes_targets=notes_targets,
                     ref_notes_targets=obj_view.ref_notes_targets
                     if obj_view is not None
                     else (),
@@ -2017,23 +1989,14 @@ class ProductionQueryService:
         if kind == "git_metadata":
             return ProductionSearchAdapter.extract_git_metadata_documents(snapshot.core)
         if kind == "notes":
-            docs, summaries = ProductionSearchAdapter.extract_notes_documents(
-                snapshot.core
-            )
             try:
-                new_docs, new_summaries = self._extract_ref_notes_documents(
-                    snapshot.core, work
-                )
+                return self._extract_ref_notes_documents(snapshot.core, work)
             except CoreFailure as error:
                 if error.code in ("BUDGET", "QUERY_BUDGET"):
                     raise QueryError(
                         "QUERY_BUDGET", "ref-notes-search", str(error)
                     ) from error
                 raise
-            for key, text in new_docs.items():
-                docs[key] = text
-            summaries.update(new_summaries)
-            return docs, summaries
         return ProductionSearchAdapter.extract_context_documents(
             snapshot.context, evidence=self.mapping_evidence
         )

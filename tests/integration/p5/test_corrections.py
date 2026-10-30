@@ -251,10 +251,13 @@ def test_retry_preserves_notes_capture_and_all_copy_ids(tmp_path, git_format):
     acq = GitAcquisition(cat, operational=cat)
     first = acq.acquire_from_native(GitNativeSource(src), req, new_request=True)
     second = acq.acquire_from_native(GitNativeSource(src), req)
-    assert first.notes_discoveries[0].captures == second.notes_discoveries[0].captures
     assert (
-        first.note_acquisitions[0].physical_copy_uuidv4
-        == second.note_acquisitions[0].physical_copy_uuidv4
+        first.notes_discoveries[0].enumerations
+        == second.notes_discoveries[0].enumerations
+    )
+    assert (
+        first.ref_note_acquisitions[0].physical_copy_uuidv4
+        == second.ref_note_acquisitions[0].physical_copy_uuidv4
     )
     core = GitCore(cat / "core.sqlite3")
     try:

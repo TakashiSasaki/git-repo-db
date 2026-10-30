@@ -119,10 +119,8 @@ def test_git_acquisition_metadata_only_and_retained_modes(
     assert oids["commit1"] in report_hybrid.metadata_only_objects
     assert oids["tree"] in report_hybrid.metadata_only_objects
     assert len(report_hybrid.notes_discoveries) == 1
-    assert len(report_hybrid.notes_inventories) == 1
-    assert len(report_hybrid.note_acquisitions) == 1
-    assert report_hybrid.note_acquisitions[0].role_verified is True
-    assert report_hybrid.note_acquisitions[0].body_retained is True
+    assert not hasattr(report_hybrid, "notes_inventories")
+    assert not hasattr(report_hybrid, "note_acquisitions")
     assert len(report_hybrid.ref_note_acquisitions) == 2
     assert all(
         item.role_verified and item.body_retained
@@ -140,11 +138,20 @@ def test_git_acquisition_metadata_only_and_retained_modes(
             core_hybrid.read_metadata(oids["commit1"])
         assert exc_info.value.code == "BYTES_UNAVAILABLE"
 
-        cap = report_hybrid.notes_discoveries[0].captures[0]
-        assert (
-            core_hybrid.read_note(cap, oids["commit2"], oids["note_blob"])
-            == b"Reviewed-by: CI\n"
+        from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+
+        claim = report_hybrid.ref_note_acquisitions[0].claim
+        work = UnlimitedWorkBudget()
+        mapping = (
+            core_hybrid.notes_mapping_projection(
+                claim, oids["commit2"], "git-notes", "1", "native-notes-tree", work
+            )
+            .evidence[0]
+            .mapping
         )
+        assert core_hybrid.read_ref_note(claim, mapping, work) == b"Reviewed-by: CI\n"
+        assert not core_hybrid.sql("SELECT 1 FROM captures")
+
     finally:
         core_hybrid.close()
 

@@ -102,13 +102,13 @@ def test_cli_all_subcommands_pagination_and_error_handling(
     assert code == 0
     assert gobs_data["total_count"] == 2
 
-    # 5. notes
+    # 5. ref observations (the Capture-based notes command is retired)
     code, notes_data = _run_cli(
-        ["notes", "--catalog", cat_str, "--notes-ref", "refs/notes/commits"],
+        ["ref-observations", "--catalog", cat_str],
         capsys,
     )
     assert code == 0
-    assert notes_data["total_count"] == 1
+    assert len(notes_data["items"]) == 1
 
     # 6. context-resource
     code, cres_data = _run_cli(

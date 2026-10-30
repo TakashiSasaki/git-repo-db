@@ -28,7 +28,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
 from repo_catalog.adapters.sqlite.p1_schema import SchemaError, connect, initialize
 from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey
 from repo_catalog.domain.p1_coordination import CoordinationError
-from repo_catalog.domain.p1_core import OID, Capture, GitObservation, Provenance
+from repo_catalog.domain.p1_core import OID, GitObservation, Provenance
 from repo_catalog.domain.production_query import (
     SEARCH_PROJECTION_KINDS,
     QueryError,
@@ -395,113 +395,6 @@ class ProductionSearchAdapter:
                     "ref": ref_name,
                     "target": target,
                 }
-
-        return documents, summaries
-
-    @staticmethod
-    def extract_notes_documents(
-        core: GitCore,
-    ) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
-        """Extract searchable `notes` documents and summaries from a pinned `GitCore`.
-
-        Indexes retained note text (verified via `core.read_note`) and note target/capture
-        mappings.
-        """
-        documents: dict[str, str] = BoundedDocuments()
-        summaries: dict[str, dict[str, object]] = {}
-
-        cap_rows = core.sql(
-            "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,source,ref,object_format,root "
-            "FROM captures ORDER BY capture_origin_uuidv4,capture_uuidv4"
-        )
-        for crow in cap_rows:
-            raw_ref = bytes.fromhex(json.loads(crow[4])[1]).decode(
-                "utf-8", "backslashreplace"
-            )
-            capture = Capture(
-                crow[0],
-                crow[1],
-                crow[2],
-                crow[3],
-                raw_ref,
-                OID(crow[5], crow[6]),
-            )
-            fmt = capture.root.object_format
-            targets: set[str] = set()
-            for r in core.sql(
-                "SELECT DISTINCT target FROM notes_claims WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                capture.pair,
-            ):
-                targets.add(r[0])
-            for r in core.sql(
-                "SELECT DISTINCT target FROM note_roles WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                capture.pair,
-            ):
-                targets.add(r[0])
-            for r in core.sql(
-                "SELECT membership FROM notes_groups WHERE capture_origin_uuidv4=? AND capture_uuidv4=?",
-                capture.pair,
-            ):
-                for m in json.loads(r[0]):
-                    targets.add(m[0])
-
-            for target_hex in sorted(targets):
-                target_oid = OID(fmt, target_hex)
-                proj = core.notes_projection(capture, target_oid)
-                note_oids: set[OID] = set()
-                if proj.canonical is not None:
-                    note_oids.add(proj.canonical)
-                for alt in proj.alternatives:
-                    if alt.note is not None:
-                        note_oids.add(alt.note)
-
-                for note_oid in sorted(note_oids):
-                    body_text = ""
-                    retained = False
-                    has_retained = bool(
-                        core.sql(
-                            "SELECT 1 FROM retained_notes n JOIN note_roles r "
-                            "ON r.object_format=n.object_format AND r.note=n.full_oid "
-                            "WHERE r.capture_origin_uuidv4=? AND r.capture_uuidv4=? "
-                            "AND r.object_format=? AND r.target=? AND r.note=? LIMIT 1",
-                            (
-                                *capture.pair,
-                                fmt,
-                                target_oid.full_oid,
-                                note_oid.full_oid,
-                            ),
-                        )
-                    )
-                    if has_retained:
-                        raw_bytes = core.read_note(capture, target_oid, note_oid)
-                        body_text = raw_bytes.decode("utf-8", "backslashreplace")
-                        retained = True
-                    searchable = (
-                        f"{capture.ref} {target_oid.full_oid} {note_oid.full_oid} {body_text}"
-                        if body_text
-                        else f"{capture.ref} {target_oid.full_oid} {note_oid.full_oid}"
-                    )
-                    doc_key = canonical_json(
-                        [
-                            capture.capture_origin_uuidv4,
-                            capture.capture_uuidv4,
-                            fmt,
-                            target_oid.full_oid,
-                            note_oid.full_oid,
-                        ]
-                    )
-                    documents[doc_key] = searchable
-                    summaries[doc_key] = {
-                        "capture_origin_uuidv4": capture.capture_origin_uuidv4,
-                        "capture_uuidv4": capture.capture_uuidv4,
-                        "canonical": proj.canonical == note_oid,
-                        "note_oid": [fmt, note_oid.full_oid],
-                        "note_retained": retained,
-                        "note_text": body_text if retained else None,
-                        "ref": capture.ref,
-                        "role_verified": proj.canonical is not None,
-                        "target_oid": [fmt, target_oid.full_oid],
-                    }
 
         return documents, summaries
 

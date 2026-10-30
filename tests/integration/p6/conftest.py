@@ -388,6 +388,82 @@ def populate_rich_catalog(
             )
         )
 
+        # Independent modern fixture facts: public Query/Search never infer a
+        # RefObservation or receiver proof from the legacy rows above.
+        from repo_catalog.domain.ref_observation import (
+            NotesMapping,
+            NotesMappingClaim,
+            NotesMappingEvidence,
+            NotesMappingGroup,
+            RefObservation,
+            RefObservationClaim,
+            RefObservationKey,
+            new_uuid7,
+        )
+
+        key = RefObservationKey(ORIGIN, new_uuid7())
+        core.admit_ref_observation(
+            RefObservation(
+                key, REPOSITORY, b"refs/notes/commits", "local-notes", "visible"
+            )
+        )
+        claim = RefObservationClaim(
+            key, prov_reported, "present", root_oid=notes_tree.oid
+        )
+        core.admit_ref_observation_claim(claim)
+        mapping = NotesMapping(
+            notes_tree.oid,
+            "git-notes",
+            "1",
+            "native-notes-tree",
+            commit_obj.oid,
+            note_blob.oid,
+            commit_obj.oid.full_oid,
+        )
+        evidence = NotesMappingEvidence(
+            claim,
+            mapping,
+            "single-path",
+            Provenance(
+                "local-notes",
+                "receiver",
+                "checked",
+                "native-notes",
+                "1",
+                "receiver_intrinsic",
+            ),
+            (notes_tree,),
+        )
+        core.admit_ref_note(evidence, note_blob, str(uuid4()), budget)
+        core.admit_notes_mapping_claim(
+            NotesMappingClaim(
+                claim,
+                NotesMapping(
+                    notes_tree.oid,
+                    "git-notes",
+                    "1",
+                    "native-notes-tree",
+                    commit_obj.oid,
+                    alt_note_oid,
+                    commit_obj.oid.full_oid,
+                ),
+                prov_alt,
+            )
+        )
+        core.admit_notes_mapping_group(
+            NotesMappingGroup(
+                claim,
+                "git-notes",
+                "1",
+                "native-notes-tree",
+                "reported-subset",
+                "partial",
+                notes_inv.members,
+                prov_reported,
+            ),
+            budget,
+        )
+
         # Core Coverage
         cov_scope = CoreCoverageScope("repository", (REPOSITORY, "refs"))
         core.admit_coverage_scope(cov_scope)
