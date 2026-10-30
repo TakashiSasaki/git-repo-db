@@ -101,6 +101,43 @@ class RefNotesInventoryVerification:
     detail: str = ""
 
 
+class _VerificationWorkFailure(Exception):
+    """Carry a caller callback failure past the inventory failure classifier."""
+
+    def __init__(self, original):
+        super().__init__()
+        self.original = original
+
+
+class _VerificationWork:
+    def __init__(self, work):
+        self.work = work
+
+    @staticmethod
+    def _call(operation):
+        try:
+            return operation()
+        except Exception as error:
+            raise _VerificationWorkFailure(error) from error
+
+    def require(self, unit, amount=1):
+        return self._call(lambda: self.work.require(unit, amount))
+
+    def charge(self, unit, amount):
+        return self._call(lambda: self.work.charge(unit, amount))
+
+    def __getattr__(self, name):
+        try:
+            value = getattr(self.work, name)
+        except AttributeError:
+            raise
+        except Exception as error:
+            raise _VerificationWorkFailure(error) from error
+        if name == "abandon" and callable(value):
+            return lambda unit: self._call(lambda: value(unit))
+        return value
+
+
 class NotesAcquisition:
     def __init__(
         self,
@@ -525,6 +562,13 @@ class NotesAcquisition:
         Progress pins only the admitted proof coordinate, never structural bytes.
         A lost pin permits a fresh verification with a fresh coordinate.
         """
+        self.core.ensure_available()
+        if getattr(self.core, "_external", False):
+            raise CoreFailure(
+                "REF_INVENTORY_DEFERRED",
+                "notes-inventory",
+                "receiver verification requires an independently committed Core",
+            )
         repository = self._ready()
         if not isinstance(group, NotesMappingGroup):
             raise CoreFailure("NOTES_INVENTORY", group, "typed group required")
@@ -640,9 +684,15 @@ class NotesAcquisition:
                     )
                 return RefNotesInventoryVerification(group, coverage, provenance, True)
 
-            status, members, structures, failure = ref_mapping_inventory(
-                claim, lambda oid: self.source.metadata(oid, self.work), self.work
-            )
+            guarded_work = _VerificationWork(self.work)
+            try:
+                status, members, structures, failure = ref_mapping_inventory(
+                    claim,
+                    lambda oid: self.source.metadata(oid, guarded_work),
+                    guarded_work,
+                )
+            except _VerificationWorkFailure as error:
+                raise error.original from None
             if failure is not None:
                 if failure.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
                     raise failure

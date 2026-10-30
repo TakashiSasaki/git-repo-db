@@ -165,6 +165,13 @@ class CoreRead(Protocol):
         max_proofs: int = 1_000,
         max_structures: int = 100_000,
     ) -> RefNotesInventoryProjection: ...
+    def ref_notes_inventory_projections(
+        self,
+        groups: tuple[NotesMappingGroup, ...],
+        work: WorkBudget,
+        *,
+        max_items: int = 100_000,
+    ) -> tuple[tuple[RefNotesInventoryProjection, bool], ...]: ...
     def read_ref_note(
         self,
         claim: RefObservationClaim,

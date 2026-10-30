@@ -905,6 +905,43 @@ class GitCore(Core):
                 claim, observed.ref_observation, tuple(projected), coverage
             )
 
+    @_completed_read
+    def ref_notes_inventory_projections(self, groups, work, *, max_items=100_000):
+        """Check exact Groups and current Coverage in one protected snapshot."""
+        from repo_catalog.domain.ref_observation import (
+            NotesMappingGroup,
+            account_notes_group_comparison,
+        )
+
+        if (
+            type(groups) is not tuple
+            or type(max_items) is not int
+            or not 0 < max_items < 2**63
+            or len(groups) > max_items
+        ):
+            raise CoreFailure("QUERY_BUDGET", "ref-inventory", "finite groups required")
+        with _protected_work(self, work) as guarded, self._snapshot():
+            results = []
+            for group in groups:
+                guarded.require("metadata_units", 1)
+                guarded.charge("metadata_units", 1)
+                if not isinstance(group, NotesMappingGroup):
+                    raise CoreFailure(
+                        "NOTES_INVENTORY", "group", "typed Group required"
+                    )
+                projection = self.ref_notes_inventory_projection(
+                    group.ref_claim, guarded
+                )
+                current = False
+                for view in projection.groups:
+                    account_notes_group_comparison(view.group, group, guarded)
+                    if view.group == group and view.current_verified:
+                        current = True
+                results.append((projection, current))
+            guarded.require("metadata_units", len(results))
+            guarded.charge("metadata_units", len(results))
+            return tuple(results)
+
     def admit_ref_coverage_proof(self, proof, work, **kwargs):
         """Keep untrusted work callbacks outside the writer capability."""
         with _protected_work(self, work) as guarded:

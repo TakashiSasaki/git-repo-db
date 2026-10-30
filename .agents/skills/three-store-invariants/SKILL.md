@@ -1056,6 +1056,33 @@ mapping paths and absence evidence; charging the eventual encoding after the
 walk is too late when a small cumulative budget is already exhausted. Include a
 long-string counterexample and verify that ordinary budget refusal does not stop
 the catalog.
+An inventory walk deliberately converts source `CoreFailure` into an incomplete
+report. If a work callback itself raises that type during a receiver rewalk,
+carry it opaquely across that classifier and restore the original exception;
+otherwise a caller's budget refusal or corruption-shaped callback is silently
+misreported as a source failure. Test source loss separately from callback
+failures and from confirmed corruption already stored in Core.
+
+For paired automatic inventory checks, a prepared Core write is not committed
+evidence. Do not save a verification pin while the coordinator still owns the
+outer Core transaction: a cut before commit can roll that proof back while the
+Operational pin survives. Run the independent check after durable paired
+admission with the same cumulative work and request progress; report a deferred
+check when a caller-owned transaction offers no post-commit hook. Test cuts on
+both sides of the Core commit, then replay, and preserve the original exception
+identity and committed outcome if a post-commit check fails. The focused checks
+are `scripts/local-run.sh python -m pytest -q -n 2 tests/integration/p5/test_ref_inventory_wiring.py`.
+Also reject the direct inventory-verification API on an externally owned Core
+transaction: a real rollback reproduced a surviving Operational verification
+pin for a proof that never committed. An orchestration-only guard leaves that
+direct path open; after the outer commit, use a normal independent Core handle.
+Derive the request's current Coverage from a single protected Core snapshot after
+proof admission; retain a replayed historical verification separately. Test a
+newer partial claim, a competing result, and a write between two projected
+Groups. Work callbacks during the aggregate comparison must not reenter Core or
+gain checked-byte access, even though the individual proof readers are guarded.
+Fence final acquisition-report delivery as well: a concurrent catalog stop after
+the batch snapshot completes must still prevent an ordinary successful result.
 These checks do not replace the preserved salvage, Exchange, Query and recovery
 regressions, and do not establish release acceptance.
 

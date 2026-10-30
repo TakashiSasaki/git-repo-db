@@ -10,7 +10,7 @@ not a new owner decision, public Schema 21 change, migration or release.
 
 ## Ordered review boundaries
 
-| Boundary | Current consumer and required replacement | Scope of this candidate |
+| Boundary | Consumer at the transition baseline and required replacement | Scope of first candidate (#219) |
 | --- | --- | --- |
 | Whole Notes inventory | [`NotesAcquisition.inventory_ref`](../../src/repo_catalog/application/notes.py) currently records an attributed `NotesMappingGroup` without receiver-verified Coverage. An explicitly invoked receiver verification exhausts the exact Claim/root grammar and rechecks the ordered structures through `RefNotesInventoryCoverageProof`. Preserve reported groups independently and never promote a partial Group or imported status into proof. | Implement and test explicit verification for complete/empty, failed/partial, replay and budget behavior. Automatic paired-plan orchestration follows when the input carriers and coordinated admission are migrated. |
 | Inventory Query | [`list_notes_inventories`](../../src/repo_catalog/application/production_query.py) consumes legacy Capture Groups. A Claim-aware listing must expose original Groups and only the current, locally revalidated proof for the exact Claim. Latest/stale/conflict Coverage remains visible; a historical Group is not silently rewritten as unverified. | Add the new typed listing, with finite metadata/proof reads. The legacy listing still serves actual old-format facts during the transition. |
@@ -23,6 +23,70 @@ not a new owner decision, public Schema 21 change, migration or release.
 The candidates are sequential and may be stacked; each must identify its
 parent, its actual implemented scope and independent-review status. Old-format
 data are not silently converted or treated as evidence for a new Claim.
+
+## Automatic verification candidate
+
+The next candidate is stacked on the independently reviewed inventory boundary
+at `bb4119e3e9051b5f3a634810434198ee002cfabd`. When a Notes request discovers
+ref Claims and requests inventories, P5 also invokes the existing receiver
+verification for each reported whole Group. Its result is exposed separately
+from the original report in `GitAcquisitionReport`, alongside a freshly checked
+Claim-specific projection of Coverage. All projections contributing to one
+aggregate report share a single Core snapshot; they do not assert that later
+concurrent writes are absent. A replayed historical proof remains evidence of
+its original check; a later partial/unknown or conflicting
+Coverage cannot make the current request report complete. A partial report, a
+failed read, a rootless Claim or a conflicting alternative cannot acquire a
+fabricated proof. Replays retain the existing request-bound verification pin.
+This adds a real structural reread and proof-admission work to inventory
+requests; the same finite cumulative request budget applies, including on retry.
+An unsuccessful verification has no fabricated current projection in the report.
+
+Ordinary Core acquisition runs verification after the Group is admitted. A
+paired acquisition prepares its typed facts before the coordinator transaction,
+commits Core and Context, then runs the independent verification using the same
+work and progress handles. No proof pin is written before the Core commit. If a
+coordinator cut interrupts either commit, the verification has not run and a
+retry uses the retained facts and progress. An exception during post-commit
+verification propagates unchanged with the committed paired outcome noted; it
+does not roll back either store. Independently verified prefixes already admitted
+remain durable and are revalidated on retry. A caller-owned external Core
+transaction has no post-commit hook, so this candidate explicitly reports
+verification as deferred instead of pinning uncommitted evidence. Verification
+can be invoked after that transaction commits. The direct verification API also
+rejects an externally owned Core transaction before it can save a proof pin.
+An already orphaned pin refuses its old continuation; it is not silently
+rebound. A distinct explicit request can perform a fresh check if its source is
+available, without resetting the old request's work.
+
+This is an orchestration change, not a new authority or source of receiver
+proofs. It leaves explicit/external legacy inputs, generic Query, paired resource
+projection, Search, and the eventual schema/wire/Core/recovery cut for later
+candidates. No legacy producer is disabled while those consumers still need it.
+The associated behavior checks are
+[`test_ref_inventory_wiring.py`](../../tests/integration/p5/test_ref_inventory_wiring.py):
+`test_inventory_wiring_keeps_original_claims_and_receiver_checks` covers native
+and metadata input, independent and paired Core, replay and cumulative work;
+`test_replay_reports_current_coverage_without_losing_historical_proof` covers
+later partial Coverage and a genuine competing Claim;
+`test_aggregate_coverage_uses_one_core_snapshot` covers concurrent Coverage writes,
+`test_aggregate_snapshot_guards_work_callback` covers callback reentry, and
+`test_aggregate_snapshot_honors_finite_limits` covers bounds without a false stop;
+`test_completion_refuses_stop_after_aggregate_snapshot` and
+`test_completion_without_inventory_also_observes_stop` cover concurrent stops;
+`test_inventory_wiring_preserves_exact_source_scope` covers empty, malformed and
+non-UTF-8 refs; `test_paired_commit_failure_cannot_pin_a_future_proof` covers
+both sides of the Core commit; `test_paired_post_commit_failure_preserves_verified_prefix`
+covers failure after one proof; and the source-failure, callback-exception and
+caller-owned-transaction commit/rollback tests cover nonterminal outcomes.
+`test_direct_verification_rejects_caller_owned_transaction` checks that the
+direct API cannot create an Operational pin for a rolled-back proof.
+`test_existing_orphaned_pin_refuses_without_fabricating_a_proof` covers the
+already-orphaned continuation and a separate fresh request.
+`test_wiring_stops_on_corrupted_stored_verification` checks that a real damaged
+proof still stops the catalog when acquisition is replayed.
+The installed wheel and sdist-wheel check is
+`test_p5_installed_acquisition_and_exchange`.
 
 ## Inventory and evidence invariants
 

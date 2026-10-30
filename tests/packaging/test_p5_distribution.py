@@ -198,6 +198,35 @@ try:
 finally:
     core_i3.close()
 
+# Exercise automatic whole-inventory receiver checks from the installed artifact.
+subprocess.run(["git", "-C", str(git_dir), "update-ref", "refs/notes/empty", tree1], check=True)
+cat_inventory = Path("catalog_inventory")
+cat_inventory.mkdir()
+inventory_instance = str(uuid4())
+for role in ("core", "operational"):
+    initialize(cat_inventory / f"{role}.sqlite3", role, repo_uuid, inventory_instance)
+inventory_request = GitNativeAcquisitionRequest(
+    repository_uuidv4=repo_uuid,
+    capture_origin_uuidv4=str(uuid4()),
+    capture_uuidv4=str(uuid4()),
+    source_attribution="installed-inventory",
+    observed_at_us=1_700_000_000_000_000,
+    include_refs=False,
+    notes=NotesAcquisitionSpec(discover_notes=True, acquire_inventories=True),
+)
+inventory_report = GitAcquisition(cat_inventory, operational=cat_inventory).acquire_from_native(
+    git_source, inventory_request, new_request=True
+)
+assert inventory_report.ref_inventory_verifications
+assert all(item.verified and item.group.status == "known_empty" for item in inventory_report.ref_inventory_verifications)
+assert all(item.coverage.state == "complete" and item.coverage.known_empty for item in inventory_report.ref_inventory_projections)
+from repo_catalog.application.production_query import ProductionQueryService
+inventory_query = ProductionQueryService(cat_inventory, mode="core_only")
+for item in inventory_report.ref_inventory_verifications:
+    projection = inventory_query.list_ref_notes_inventories(item.group.ref_claim, UnlimitedWorkBudget())
+    assert projection.coverage.known_empty
+    assert any(group.current_verified for group in projection.groups)
+
 # 2. Exercise ProviderAcquisition
 service_uuid = str(uuid4())
 pr_payload = {
