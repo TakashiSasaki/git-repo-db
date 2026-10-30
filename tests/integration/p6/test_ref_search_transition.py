@@ -185,3 +185,21 @@ def test_later_partial_coverage_does_not_reuse_old_complete(acquisition):
             )
         assert error.value.code == "BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
+
+
+def test_finite_document_limit_does_not_diagnose_corruption(acquisition):
+    _, _, _, _, _, path, _ = acquisition
+    value, target = two_claims(acquisition)
+    group = value.mapping_groups[0]
+    member = group.members[0]
+    group = replace(group, members=((member[0], member[1], "x" * 100_000),))
+    value = replace(value, claims=(value.claims[0],), mapping_groups=(group,))
+    run_request(acquisition, with_input(acquisition, value))
+    from repo_catalog.domain.production_query import QueryError
+
+    with pytest.raises(QueryError) as failure:
+        ProductionQueryService(path.parent).search(
+            SearchQuery(query_text=target.full_oid, projection_kinds=("notes",))
+        )
+    assert failure.value.code == "QUERY_BUDGET"
+    assert not (path.parent / "p1-recovery-stop.json").exists()

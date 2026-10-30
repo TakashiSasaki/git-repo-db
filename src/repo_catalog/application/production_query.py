@@ -2012,9 +2012,16 @@ class ProductionQueryService:
             docs, summaries = ProductionSearchAdapter.extract_notes_documents(
                 snapshot.core
             )
-            new_docs, new_summaries = self._extract_ref_notes_documents(
-                snapshot.core, work
-            )
+            try:
+                new_docs, new_summaries = self._extract_ref_notes_documents(
+                    snapshot.core, work
+                )
+            except CoreFailure as error:
+                if error.code in ("BUDGET", "QUERY_BUDGET"):
+                    raise QueryError(
+                        "QUERY_BUDGET", "ref-notes-search", str(error)
+                    ) from error
+                raise
             for key, text in new_docs.items():
                 docs[key] = text
             summaries.update(new_summaries)
