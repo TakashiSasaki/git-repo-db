@@ -11317,6 +11317,15 @@
       "producer": "PR 227 minimal repair and selective regression.",
       "consumers": "Independent re-review and parent handoff.",
       "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/SEARCH-TRANSITION.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Search transition evidence; independent review remains separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/SEARCH-TRANSITION.md",
+      "producer": "PR227 dependent Search implementation and selective verification.",
+      "consumers": "Independent review and parent handoff.",
+      "publication": "not staged"
     }
   }
 }
