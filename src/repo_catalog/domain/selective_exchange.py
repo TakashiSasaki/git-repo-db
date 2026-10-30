@@ -211,7 +211,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             for values in data.values():
                 values.clear()
     if core is not None and not scope.include_retained_bytes:
-        for name in ("retained_metadata", "retained_notes"):
+        for name in ("retained_metadata", "retained_notes", "ref_retained_notes"):
             if core[name]:
                 omissions.append(
                     {
@@ -229,8 +229,11 @@ def filter_sections(core, context, scope, *, permitted=None):
         return repos is None or value in repos
 
     def retain(data, key, predicate, reason):
+        from repo_catalog.domain.p1_core import _performed
+
         retained = []
         for index, row in enumerate(data[key]):
+            _performed("metadata_units", 1)
             if predicate(row):
                 retained.append(row)
             else:
@@ -245,6 +248,227 @@ def filter_sections(core, context, scope, *, permitted=None):
             available.copy()
             if scope.object_oids is None
             else {o.key for o in scope.object_oids}.intersection(available)
+        )
+        # Ref keys are an independent selection route. Event dependencies are
+        # whole original occurrences; an object-only request never discovers a
+        # rootless observation through an unrelated event member.
+        from repo_catalog.domain.p1_core import _performed
+
+        refs = {
+            (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"]): r
+            for r in core["ref_observations"]
+            if allowed(r["repository_uuidv4"])
+        }
+        if scope.ref_observation_keys is None and scope.object_oids is None:
+            selected_refs = set(refs)
+        else:
+            selected_refs = {
+                k.key for k in (scope.ref_observation_keys or ()) if k.key in refs
+            }
+            if scope.object_oids is not None:
+                roots = {o.key for o in scope.object_oids}
+                for row in core["ref_observation_claims"]:
+                    _performed("metadata_units", 1)
+                    key = (
+                        row["observation_origin_uuidv4"],
+                        row["ref_observation_uuidv7"],
+                    )
+                    if (
+                        row["root_oid"] is not None
+                        and tuple(row["root_oid"]) in roots
+                        and key in refs
+                    ):
+                        selected_refs.add(key)
+        if scope.notes_refs is not None:
+            names = set(scope.notes_refs)
+            selected_refs = {
+                key
+                for key in selected_refs
+                if bytes.fromhex(refs[key]["ref_name_hex"]).decode(
+                    "utf-8", "surrogateescape"
+                )
+                in names
+            }
+        events = {
+            (r["observation_origin_uuidv4"], r["enumeration_uuidv7"]): r
+            for r in core["ref_enumeration_observations"]
+            if allowed(r["repository_uuidv4"])
+        }
+        event_links = {}
+        links_by_ref = {}
+        for row in core["ref_enumeration_links"]:
+            _performed("metadata_units", 1)
+            event_key = (row["enumeration_origin_uuidv4"], row["enumeration_uuidv7"])
+            ref_key = (row["observation_origin_uuidv4"], row["ref_observation_uuidv7"])
+            event_links.setdefault(event_key, []).append(row)
+            links_by_ref.setdefault(ref_key, set()).add(event_key)
+        selected_events = set()
+        pending_refs = list(selected_refs)
+        expand = scope.ref_observation_keys is not None or scope.object_oids is None
+        while pending_refs:
+            ref_key = pending_refs.pop()
+            for event_key in links_by_ref.get(ref_key, ()):
+                _performed("metadata_units", 1)
+                if event_key in selected_events or event_key not in events:
+                    continue
+                linked = event_links[event_key]
+                members = {
+                    (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"])
+                    for r in linked
+                }
+                if (
+                    len(linked) != events[event_key]["link_count"]
+                    or not members <= refs.keys()
+                ):
+                    continue
+                if not expand and not members <= selected_refs:
+                    continue
+                selected_events.add(event_key)
+                if expand:
+                    new = members - selected_refs
+                    selected_refs.update(new)
+                    pending_refs.extend(new)
+        if (
+            scope.object_oids is None
+            and scope.ref_observation_keys is None
+            and scope.notes_refs is None
+        ):
+            selected_events.update(
+                key
+                for key, row in events.items()
+                if row["link_count"] == 0 and not event_links.get(key)
+            )
+        retain(
+            core,
+            "ref_observations",
+            lambda r: (
+                (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"])
+                in selected_refs
+            ),
+            "ref_observation_not_selected",
+        )
+        retain(
+            core,
+            "ref_observation_claims",
+            lambda r: (
+                (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"])
+                in selected_refs
+            ),
+            "ref_observation_not_selected",
+        )
+        ref_claims = {
+            (
+                r["observation_origin_uuidv4"],
+                r["ref_observation_uuidv7"],
+                r["provenance_json"],
+            )
+            for r in core["ref_observation_claims"]
+        }
+        for row in core["ref_observation_claims"]:
+            for field in (
+                "direct_target_oid",
+                "resolved_target_oid",
+                "peeled_target_oid",
+                "root_oid",
+            ):
+                if row[field] is not None and tuple(row[field]) in available:
+                    chosen.add(tuple(row[field]))
+
+        def ref_claim_selected(row):
+            return (
+                row["observation_origin_uuidv4"],
+                row["ref_observation_uuidv7"],
+                row["ref_claim_provenance_json"],
+            ) in ref_claims
+
+        for key in (
+            "notes_mapping_claims",
+            "notes_mapping_evidence",
+            "ref_retained_notes",
+        ):
+            for row in core[key]:
+                _performed("metadata_units", 1)
+                if ref_claim_selected(row):
+                    for oid in (
+                        row["root_oid"],
+                        row["annotated_object_oid"],
+                        row["note_oid"],
+                    ):
+                        if (row["object_format"], oid) in available:
+                            chosen.add((row["object_format"], oid))
+        for row in core["notes_mapping_groups"]:
+            _performed("metadata_units", 1)
+            if ref_claim_selected(row):
+                for target, note, _ in json.loads(row["membership_json"]):
+                    for oid in (target, note):
+                        if (row["object_format"], oid) in available:
+                            chosen.add((row["object_format"], oid))
+        for key in (
+            "notes_mapping_claims",
+            "notes_mapping_evidence",
+            "ref_retained_notes",
+        ):
+            retain(
+                core,
+                key,
+                lambda r: (
+                    ref_claim_selected(r)
+                    and all(
+                        (r["object_format"], oid) in chosen
+                        for oid in (
+                            r["root_oid"],
+                            r["annotated_object_oid"],
+                            r["note_oid"],
+                        )
+                    )
+                ),
+                "claim_or_mapping_dependency_not_selected",
+            )
+        retain(
+            core,
+            "notes_mapping_groups",
+            lambda r: (
+                ref_claim_selected(r)
+                and (r["object_format"], r["root_oid"]) in chosen
+                and all(
+                    (r["object_format"], oid) in chosen
+                    for target, note, _ in json.loads(r["membership_json"])
+                    for oid in (target, note)
+                )
+            ),
+            "whole_mapping_group_dependency_not_selected",
+        )
+        # A removed claim or member also removes its entire event.
+        selected_events = {
+            key
+            for key in selected_events
+            if all(
+                (
+                    r["observation_origin_uuidv4"],
+                    r["ref_observation_uuidv7"],
+                    r["claim_provenance_json"],
+                )
+                in ref_claims
+                for r in event_links.get(key, ())
+            )
+        }
+        retain(
+            core,
+            "ref_enumeration_observations",
+            lambda r: (
+                (r["observation_origin_uuidv4"], r["enumeration_uuidv7"])
+                in selected_events
+            ),
+            "whole_enumeration_not_selected",
+        )
+        retain(
+            core,
+            "ref_enumeration_links",
+            lambda r: (
+                (r["enumeration_origin_uuidv4"], r["enumeration_uuidv7"])
+                in selected_events
+            ),
+            "whole_enumeration_not_selected",
         )
         frontier = chosen.copy()
         edges = {}
@@ -372,6 +596,8 @@ def filter_sections(core, context, scope, *, permitted=None):
                 return allowed(coords[0])
             if r["owner_kind"] == "capture":
                 return tuple(coords[:2]) in captures
+            if r["owner_kind"] == "ref_observation":
+                return tuple(coords[:2]) in selected_refs
             return tuple(coords[:2]) in chosen
 
         def proof_selected(r):
@@ -426,6 +652,33 @@ def filter_sections(core, context, scope, *, permitted=None):
         )
         retain(
             core, "coverage_scopes", core_scope_selected, "coverage_owner_not_selected"
+        )
+        from repo_catalog.domain.p1_core import encode
+
+        original_groups = {encode(row) for row in core["notes_mapping_groups"]}
+        terminals = {
+            (
+                r["owner_kind"],
+                r["owner_coordinates_json"],
+                r["observed_at_us"],
+                r["coverage_state"],
+            )
+            for r in core["coverage_claims"]
+        }
+        retain(
+            core,
+            "ref_coverage_proofs",
+            lambda r: (
+                (
+                    r["owner_kind"],
+                    r["owner_coordinates_json"],
+                    r["observed_at_us"],
+                    r["coverage_state"],
+                )
+                in terminals
+                and r["group_json"] in original_groups
+            ),
+            "whole_ref_coverage_proof_dependency_not_selected",
         )
     if context is not None:
         from repo_catalog.domain.p1_context import (
@@ -994,20 +1247,27 @@ class CorePreflight:
         return check
 
 
-def bound_sections(core, context, scope):
+def bound_sections(core, context, scope, *, work=None):
     """Budget complete wire units before emission; facts are never truncated.
 
     Coverage claim/proof sets, original inventory terminals, and Transfer reports
     share units. Registrations and nominal objects remain independent units.
     """
     groups = {}
+    from repo_catalog.domain.p1_core import _performed
+
     for store, data in (("core", core), ("context", context)):
         if data is None:
             continue
         for section, rows in data.items():
             for index, row in enumerate(rows):
+                _performed("metadata_units", 1)
                 unit = (store, section, index)
-                if section in ("coverage_claims", "coverage_proofs"):
+                if section in (
+                    "coverage_claims",
+                    "coverage_proofs",
+                    "ref_coverage_proofs",
+                ):
                     unit = (
                         store,
                         "coverage",
@@ -1065,6 +1325,29 @@ def bound_sections(core, context, scope):
                         row["capture_origin_uuidv4"],
                         row["capture_uuidv4"],
                     )
+                if store == "core" and section in (
+                    "ref_observations",
+                    "ref_observation_claims",
+                ):
+                    unit = (
+                        store,
+                        "ref-observation",
+                        row["observation_origin_uuidv4"],
+                        row["ref_observation_uuidv7"],
+                    )
+                if store == "core" and section in (
+                    "ref_enumeration_observations",
+                    "ref_enumeration_links",
+                ):
+                    unit = (
+                        store,
+                        "ref-enumeration",
+                        row.get(
+                            "enumeration_origin_uuidv4",
+                            row.get("observation_origin_uuidv4"),
+                        ),
+                        row["enumeration_uuidv7"],
+                    )
                 if store == "context" and section == "text_bodies":
                     unit = (store, "text", row["sha256"])
                 if (
@@ -1094,11 +1377,24 @@ def bound_sections(core, context, scope):
         return key
 
     for key, values in groups.items():
+        if key[0:2] == ("core", "ref-enumeration"):
+            for _, section, _, row in values:
+                if section == "ref_enumeration_links":
+                    target = (
+                        "core",
+                        "ref-observation",
+                        row["observation_origin_uuidv4"],
+                        row["ref_observation_uuidv7"],
+                    )
+                    if target in parent:
+                        parent[root(target)] = root(key)
         if len(key) < 3 or key[1] != "coverage":
             continue
         targets = set()
         if key[0] == "core" and key[2] == "capture":
             targets.add(("core", "capture", *json.loads(key[3])[:2]))
+        if key[0] == "core" and key[2] == "ref_observation":
+            targets.add(("core", "ref-observation", *json.loads(key[3])[:2]))
         if key[0] == "context":
             for _, section, _, row in values:
                 if section == "coverage_proofs":
@@ -1129,15 +1425,44 @@ def bound_sections(core, context, scope):
             str(item[0]),
         ),
     )
-    for key, values in ordered:
-        size = sum(
-            len(
+
+    def row_size(row):
+        if work is None:
+            return len(
                 json.dumps(
                     row, ensure_ascii=False, sort_keys=True, separators=(",", ":")
                 ).encode()
             )
-            for _, _, _, row in values
-        )
+        from repo_catalog.domain.exchange import _bounded_json
+
+        def spend(amount):
+            work.require("metadata_units", amount)
+            work.charge("metadata_units", amount)
+
+        _, upper = _bounded_json(row, spend=spend)
+        work.require("input_bytes", upper)
+        try:
+            actual = len(
+                json.dumps(
+                    row, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                ).encode()
+            )
+            if actual > upper:
+                raise ExchangeError(
+                    "INPUT_LIMIT", "selection", "row exceeded reserved encoding"
+                )
+        except BaseException:
+            abandon = getattr(work, "abandon", None)
+            if abandon is not None:
+                abandon("input_bytes")
+            else:
+                work.charge("input_bytes", upper)
+            raise
+        work.charge("input_bytes", actual)
+        return actual
+
+    for key, values in ordered:
+        size = sum(row_size(row) for _, _, _, row in values)
         if units + len(values) > scope.max_units or byte_count + size > scope.max_bytes:
             omissions.append(
                 {

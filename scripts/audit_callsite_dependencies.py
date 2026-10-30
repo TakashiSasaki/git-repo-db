@@ -25,6 +25,7 @@ ISOLATED_P1_MODULES = frozenset(
         "adapters/sqlite/p1_coordination.py",
         "domain/p1_core.py",
         "domain/ref_observation.py",
+        "domain/ref_coverage.py",
         "domain/p1_context.py",
         "domain/p1_coverage.py",
         "domain/p1_coordination.py",
@@ -64,6 +65,7 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "adapters/sqlite/notes.py",
         "domain/acquisition.py",
         "domain/exchange.py",
+        "domain/ref_exchange.py",
         "domain/selective_exchange.py",
         "domain/exchange_rows.py",
         # I6-B pure codecs/plans remain in the same explicit opt-in boundary.
@@ -72,6 +74,7 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/ports/acquisition.py",
         "application/acquisition.py",
         "application/exchange.py",
+        "application/ref_exchange.py",
         "adapters/github/production_intake.py",
         "adapters/sqlite/acquisition.py",
         "domain/production_query.py",

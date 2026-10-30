@@ -27,8 +27,8 @@
       ]
     },
     "core": {
-      "ddl_sha256": "e257bf0dc6eb0eb54efabc443ec5372c30c71768a6dfc008b6870f93dfbe8fac",
-      "sqlite_schema_sha256": "6bb6cc9e32328b146d0d4ba77f23bf0448fb98ceb4eaf1e8510748103c183052",
+      "ddl_sha256": "bd937c2dbe3d308c4d4e7167f02b85d4c4613392d1bf8ebe2ce8403678e981ca",
+      "sqlite_schema_sha256": "8d546e7cb93b2fb9584edf7ef89898f3d2c75149b3b4e011b71356ab4d6f217e",
       "tables": [
         "captures",
         "core_coverage_proofs",
@@ -45,6 +45,7 @@
         "notes_mapping_evidence",
         "notes_mapping_groups",
         "notes_mappings",
+        "ref_coverage_proofs",
         "ref_enumeration_links",
         "ref_enumeration_observations",
         "ref_observation_claims",

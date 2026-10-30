@@ -153,8 +153,8 @@ git_report = git_acq.acquire_from_native(git_source, git_req, new_request=True)
 assert git_report.status == "complete"
 assert len(git_report.admitted_objects) >= 1
 
-# Exercise the I2 acquisition and the pre-I3 export fence in a separate
-# disposable Core, keeping the legacy object/Context roundtrip below intact.
+# Exercise installed I2 acquisition and the I3 rootless ref exchange in a
+# separate disposable Core, retaining the object/Context roundtrip below.
 cat_i2 = Path("catalog_i2")
 cat_i2.mkdir()
 instance_i2 = str(uuid4())
@@ -175,12 +175,28 @@ observed_i2 = GitAcquisition(cat_i2, operational=cat_i2).acquire_from_native(
 )
 assert any(link.claim.presence_state == "present" for event in observed_i2.ref_enumerations for link in event.links)
 assert any(link.claim.presence_state == "absent" for event in observed_i2.ref_enumerations for link in event.links)
+absent = next(link for event in observed_i2.ref_enumerations for link in event.links if link.claim.presence_state == "absent")
+selection_i3 = ExchangeSelectionScope(
+    all_selected=True, include_context=False, include_retained_bytes=False,
+    object_oids=(), ref_observation_keys=(absent.observation.ref_observation_key,),
+)
+package_i3 = ExchangeService(cat_i2).export_package(selection=selection_i3)
+assert not package_i3.core["git_objects"]
+assert len(package_i3.core["ref_enumeration_links"]) == 1
+cat_i3 = Path("catalog_i3")
+cat_i3.mkdir()
+instance_i3 = str(uuid4())
+for role in ("core", "operational"):
+    initialize(cat_i3 / f"{role}.sqlite3", role, repo_uuid, instance_i3)
+ExchangeService(cat_i3, operational=cat_i3).import_package(
+    package_i3, new_request=True, permitted_repository_uuidv4s=(repo_uuid,)
+)
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+core_i3 = GitCore(cat_i3 / "core.sqlite3")
 try:
-    ExchangeService(cat_i2).export_package(selection=ExchangeSelectionScope(all_selected=True, include_context=False))
-except ExchangeError as error:
-    assert error.code == "UNSUPPORTED_REF_OBSERVATION_EXPORT"
-else:
-    raise AssertionError("pre-I3 ref export was not refused")
+    assert core_i3.ref_observation(absent.observation.ref_observation_key, UnlimitedWorkBudget()).claims == (absent.claim,)
+finally:
+    core_i3.close()
 
 # 2. Exercise ProviderAcquisition
 service_uuid = str(uuid4())

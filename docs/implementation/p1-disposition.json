@@ -9604,6 +9604,14 @@
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
       "semantic_key": "Direct full semantic tuple: object_format, root_oid, interpretation_kind, interpretation_version, interpretation_scope, annotated_object_oid, note_oid, mapping_path_json. Coordinates and whole values are actual domain values, not storage-only IDs or hash-only authority."
     },
+    "core.ref_coverage_proofs": {
+      "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
+      "domain": "Receiver-rechecked whole Notes inventory Coverage evidence bound to its exact ref result, source group, and Coverage claim; metadata-only structural proof does not authorize note or target-file bodies.",
+      "durability": "authoritative",
+      "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
+      "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
+      "semantic_key": "Direct full Coverage claim coordinates, original NotesMappingGroup semantic key, and genuine verification provenance; the original ordered structural bytes are immutable payload, never an authority-changing digest or generated storage identity."
+    },
     "core.ref_enumeration_links": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
       "domain": "Actual item or specific confirmed-absence derivation from an enumeration to its original ref Claim",
@@ -12497,7 +12505,7 @@
       }
     },
     "core": {
-      "ddl_sha256": "e257bf0dc6eb0eb54efabc443ec5372c30c71768a6dfc008b6870f93dfbe8fac",
+      "ddl_sha256": "bd937c2dbe3d308c4d4e7167f02b85d4c4613392d1bf8ebe2ce8403678e981ca",
       "tables": {
         "captures": {
           "columns": [
@@ -14754,6 +14762,342 @@
                 "annotated_object_oid",
                 "note_oid",
                 "mapping_path_json"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
+        "ref_coverage_proofs": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "owner_kind",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "owner_coordinates_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "observed_at_us",
+              "notnull": true,
+              "type": "INTEGER"
+            },
+            {
+              "generated": 0,
+              "name": "coverage_state",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "observation_origin_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "ref_observation_uuidv7",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "ref_claim_provenance",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "object_format",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "root_oid",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "interpretation_kind",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "interpretation_version",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "interpretation_scope",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "group_scope",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "group_status",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "group_membership",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "group_provenance",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "verification_provenance",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "structures_json",
+              "notnull": true,
+              "type": "TEXT"
+            }
+          ],
+          "foreign_keys": [
+            [
+              0,
+              0,
+              "notes_mapping_groups",
+              "observation_origin_uuidv4",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              1,
+              "notes_mapping_groups",
+              "ref_observation_uuidv7",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              2,
+              "notes_mapping_groups",
+              "ref_claim_provenance",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              3,
+              "notes_mapping_groups",
+              "object_format",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              4,
+              "notes_mapping_groups",
+              "root_oid",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              5,
+              "notes_mapping_groups",
+              "interpretation_kind",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              6,
+              "notes_mapping_groups",
+              "interpretation_version",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              7,
+              "notes_mapping_groups",
+              "interpretation_scope",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              8,
+              "notes_mapping_groups",
+              "group_scope",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              9,
+              "notes_mapping_groups",
+              "group_status",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              10,
+              "notes_mapping_groups",
+              "group_membership",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              0,
+              11,
+              "notes_mapping_groups",
+              "group_provenance",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              0,
+              "coverage_claims",
+              "owner_kind",
+              "owner_kind",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              1,
+              "coverage_claims",
+              "owner_coordinates_json",
+              "owner_coordinates_json",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              2,
+              "coverage_claims",
+              "observed_at_us",
+              "observed_at_us",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
+              1,
+              3,
+              "coverage_claims",
+              "coverage_state",
+              "coverage_state",
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ]
+          ],
+          "primary_key": [
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+            "observation_origin_uuidv4",
+            "ref_observation_uuidv7",
+            "ref_claim_provenance",
+            "object_format",
+            "root_oid",
+            "interpretation_kind",
+            "interpretation_version",
+            "interpretation_scope",
+            "group_scope",
+            "group_status",
+            "group_membership",
+            "group_provenance",
+            "verification_provenance"
+          ],
+          "sql": "CREATE TABLE ref_coverage_proofs (\n owner_kind TEXT NOT NULL CHECK(owner_kind='ref_observation'),\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state='complete'),\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,\n ref_claim_provenance TEXT NOT NULL, object_format TEXT NOT NULL, root_oid TEXT NOT NULL,\n interpretation_kind TEXT NOT NULL CHECK(interpretation_kind='git-notes'),\n interpretation_version TEXT NOT NULL CHECK(interpretation_version='1'),\n interpretation_scope TEXT NOT NULL CHECK(interpretation_scope='native-notes-tree'),\n group_scope TEXT NOT NULL CHECK(group_scope='all-notes-mappings'),\n group_status TEXT NOT NULL CHECK(group_status IN ('complete','known_empty')),\n group_membership TEXT NOT NULL CHECK(p1_notes_group(object_format,group_status,group_membership)),\n group_provenance TEXT NOT NULL CHECK(p1_provenance(group_provenance) AND json_extract(group_provenance,'$[5]')='reported'),\n verification_provenance TEXT NOT NULL CHECK(p1_provenance(verification_provenance) AND json_extract(verification_provenance,'$[5]')='receiver_intrinsic' AND json_extract(verification_provenance,'$[3]')='git-native-notes-inventory' AND json_extract(verification_provenance,'$[4]')='1'),\n structures_json TEXT NOT NULL CHECK(p1_json(structures_json) AND json_type(structures_json)='array' AND json_array_length(structures_json)>0),\n CHECK(owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,'notes-mapping-inventory')),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance,verification_provenance),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance) REFERENCES notes_mapping_groups\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "p1_immutable_ref_coverage_proofs_delete": "CREATE TRIGGER p1_immutable_ref_coverage_proofs_delete BEFORE DELETE ON ref_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
+            "p1_immutable_ref_coverage_proofs_update": "CREATE TRIGGER p1_immutable_ref_coverage_proofs_update BEFORE UPDATE ON ref_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "observation_origin_uuidv4",
+                "ref_observation_uuidv7",
+                "ref_claim_provenance",
+                "<expression:3>",
+                "<expression:4>",
+                "<expression:5>"
+              ],
+              "expression_sql": "CREATE UNIQUE INDEX ref_coverage_verification_coordinate ON ref_coverage_proofs(\n observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,\n json_extract(verification_provenance,'$[0]'),json_extract(verification_provenance,'$[1]'),json_extract(verification_provenance,'$[2]'))",
+              "origin": "c",
+              "partial": false
+            },
+            {
+              "columns": [
+                "owner_kind",
+                "owner_coordinates_json",
+                "observed_at_us",
+                "coverage_state",
+                "observation_origin_uuidv4",
+                "ref_observation_uuidv7",
+                "ref_claim_provenance",
+                "object_format",
+                "root_oid",
+                "interpretation_kind",
+                "interpretation_version",
+                "interpretation_scope",
+                "group_scope",
+                "group_status",
+                "group_membership",
+                "group_provenance",
+                "verification_provenance"
               ],
               "origin": "pk",
               "partial": false

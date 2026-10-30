@@ -323,6 +323,35 @@ WHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(
  SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[0]'))
  OR NOT EXISTS(SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[1]')))
 BEGIN SELECT RAISE(ABORT,'missing nominal notes group target'); END;
+
+-- A receiver-checked whole Notes inventory is tied to the exact original
+-- result and group.  Its structural evidence is not a note body or a claim
+-- that the source, observation time, or ref is authenticated.
+CREATE TABLE ref_coverage_proofs (
+ owner_kind TEXT NOT NULL CHECK(owner_kind='ref_observation'),
+ owner_coordinates_json TEXT NOT NULL,
+ observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),
+ coverage_state TEXT NOT NULL CHECK(coverage_state='complete'),
+ observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,
+ ref_claim_provenance TEXT NOT NULL, object_format TEXT NOT NULL, root_oid TEXT NOT NULL,
+ interpretation_kind TEXT NOT NULL CHECK(interpretation_kind='git-notes'),
+ interpretation_version TEXT NOT NULL CHECK(interpretation_version='1'),
+ interpretation_scope TEXT NOT NULL CHECK(interpretation_scope='native-notes-tree'),
+ group_scope TEXT NOT NULL CHECK(group_scope='all-notes-mappings'),
+ group_status TEXT NOT NULL CHECK(group_status IN ('complete','known_empty')),
+ group_membership TEXT NOT NULL CHECK(p1_notes_group(object_format,group_status,group_membership)),
+ group_provenance TEXT NOT NULL CHECK(p1_provenance(group_provenance) AND json_extract(group_provenance,'$[5]')='reported'),
+ verification_provenance TEXT NOT NULL CHECK(p1_provenance(verification_provenance) AND json_extract(verification_provenance,'$[5]')='receiver_intrinsic' AND json_extract(verification_provenance,'$[3]')='git-native-notes-inventory' AND json_extract(verification_provenance,'$[4]')='1'),
+ structures_json TEXT NOT NULL CHECK(p1_json(structures_json) AND json_type(structures_json)='array' AND json_array_length(structures_json)>0),
+ CHECK(owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,'notes-mapping-inventory')),
+ PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance,verification_provenance),
+ FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),
+ FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance) REFERENCES notes_mapping_groups
+) STRICT, WITHOUT ROWID;
+CREATE UNIQUE INDEX ref_coverage_verification_coordinate ON ref_coverage_proofs(
+ observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,
+ json_extract(verification_provenance,'$[0]'),json_extract(verification_provenance,'$[1]'),json_extract(verification_provenance,'$[2]'));
+
 -- Each receiver evidence row is also role evidence: its whole semantic key
 -- includes the actual claim, root, mapping, decoder, scope and checked proof.
 CREATE TABLE notes_mapping_evidence (

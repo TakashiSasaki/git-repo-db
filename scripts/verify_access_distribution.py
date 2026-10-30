@@ -211,7 +211,7 @@ with tempfile.TemporaryDirectory() as directory:
     with closing(GitCore(producer / "core.sqlite3")) as core:
         core.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
     package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
-    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0031-exchange-v5"
+    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0036-exchange-v6"
     ExchangeService(receiver).import_package(
         package,
         new_request=True,

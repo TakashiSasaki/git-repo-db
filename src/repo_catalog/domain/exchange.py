@@ -1,4 +1,4 @@
-"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0031-exchange-v5`).
+"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0036-exchange-v6`).
 
 Enforces strict separation between:
 - Transport envelope identity (`package_id`, `exported_at_us`, `sender_catalog_instance_uuidv4`)
@@ -21,8 +21,9 @@ from repo_catalog.domain.time import validate_observation_us
 
 if TYPE_CHECKING:
     from repo_catalog.domain.p1_context import ResourceKey
+    from repo_catalog.domain.ref_observation import RefObservationKey
 
-FORMAT = "git-repo-db/adr0031-exchange-v5"
+FORMAT = "git-repo-db/adr0036-exchange-v6"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 MAX_DEPTH = 32
 MAX_ELEMENTS = 200_000
@@ -396,6 +397,15 @@ CORE_SECTION_KEYS = (
     "relation_groups",
     "git_observations",
     "captures",
+    "ref_observations",
+    "ref_observation_claims",
+    "ref_enumeration_observations",
+    "ref_enumeration_links",
+    "notes_mapping_claims",
+    "notes_mapping_groups",
+    "notes_mapping_evidence",
+    "ref_retained_notes",
+    "ref_coverage_proofs",
     "notes_claims",
     "notes_groups",
     "notes_inventories",
@@ -454,6 +464,7 @@ class ExchangeSelectionScope:
     notes_refs: tuple[str, ...] | None = None
     resource_keys: tuple[ResourceKey, ...] | None = None
     source_uuidv4s: tuple[str, ...] | None = None
+    ref_observation_keys: tuple[RefObservationKey, ...] | None = None
 
     def __post_init__(self) -> None:
         for value in (
@@ -506,6 +517,16 @@ class ExchangeSelectionScope:
                     raise ExchangeError(
                         "INVALID_SELECTION", "selection_scope", "typed tuple required"
                     )
+        if self.ref_observation_keys is not None:
+            from repo_catalog.domain.ref_observation import RefObservationKey
+
+            if not isinstance(self.ref_observation_keys, tuple) or any(
+                type(value) is not RefObservationKey
+                for value in self.ref_observation_keys
+            ):
+                raise ExchangeError(
+                    "INVALID_SELECTION", "ref_observation_keys", "typed tuple required"
+                )
         for value in (*(self.source_uuidv4s or ()), *(self.repository_uuidv4s or ())):
             uuid4_value(value)
 
@@ -553,6 +574,11 @@ class ExchangeSelectionScope:
                 if self.source_uuidv4s is None
                 else sorted(set(self.source_uuidv4s))
             ),
+            "ref_observation_keys": (
+                None
+                if self.ref_observation_keys is None
+                else [list(key.key) for key in sorted(set(self.ref_observation_keys))]
+            ),
         }
 
     @classmethod
@@ -576,6 +602,7 @@ class ExchangeSelectionScope:
             "notes_refs",
             "resource_keys",
             "source_uuidv4s",
+            "ref_observation_keys",
         }:
             raise ExchangeError(
                 "INVALID_SELECTION", "selection_scope", "exact keys required"
@@ -586,10 +613,15 @@ class ExchangeSelectionScope:
             "notes_refs",
             "resource_keys",
             "source_uuidv4s",
+            "ref_observation_keys",
         ):
             if data[key] is not None and type(data[key]) is not list:
                 raise ExchangeError("INVALID_SELECTION", key, "array or null required")
-        for key, size in (("object_oids", 2), ("resource_keys", 3)):
+        for key, size in (
+            ("object_oids", 2),
+            ("resource_keys", 3),
+            ("ref_observation_keys", 2),
+        ):
             if data[key] is not None and any(
                 type(item) is not list
                 or len(item) != size
@@ -603,6 +635,7 @@ class ExchangeSelectionScope:
         raw_refs = data.get("notes_refs")
         raw_rks = data.get("resource_keys")
         raw_srcs = data.get("source_uuidv4s")
+        raw_ref_keys = data.get("ref_observation_keys")
         if raw_rks:
             from repo_catalog.domain.p1_context import ResourceKey
 
@@ -619,6 +652,13 @@ class ExchangeSelectionScope:
                 else tuple(ResourceKey(item[0], item[1], item[2]) for item in raw_rks)
             )
             srcs = None if raw_srcs is None else tuple(uuid4_value(s) for s in raw_srcs)
+            from repo_catalog.domain.ref_observation import RefObservationKey
+
+            ref_keys = (
+                None
+                if raw_ref_keys is None
+                else tuple(RefObservationKey(*item) for item in raw_ref_keys)
+            )
         except (ValueError, TypeError, IndexError, KeyError) as exc:
             raise ExchangeError(
                 "INVALID_SELECTION", "selection_scope", str(exc)
@@ -631,6 +671,7 @@ class ExchangeSelectionScope:
             notes_refs=refs,
             resource_keys=rks,
             source_uuidv4s=srcs,
+            ref_observation_keys=ref_keys,
             repository_uuidv4s=None
             if data["repository_uuidv4s"] is None
             else tuple(data["repository_uuidv4s"]),
@@ -662,7 +703,7 @@ def empty_context_section() -> dict[str, list[dict[str, Any]]]:
 
 @dataclass(frozen=True)
 class ExchangePackage:
-    """Portable typed Exchange package (`git-repo-db/adr0031-exchange-v5`)."""
+    """Portable typed Exchange package (`git-repo-db/adr0036-exchange-v6`)."""
 
     package_id: str
     exported_at_us: int | None

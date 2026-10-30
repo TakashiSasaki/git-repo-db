@@ -52,6 +52,13 @@ from repo_catalog.domain.p1_coverage import (
     derive_coverage_state,
 )
 from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ref_coverage import (
+    REF_NOTES_INVENTORY,
+    LocalRefCoverageWork,
+    RefNotesInventoryCoverageProof,
+    deserialize_structures,
+    verify_ref_notes_inventory,
+)
 from repo_catalog.domain.ref_observation import (
     NotesMapping,
     NotesMappingClaim,
@@ -3068,6 +3075,373 @@ class Core:
             )
             return "insert"
 
+    def _ref_coverage_group_key(self, group, work, max_bytes):
+        """Encode the exact reported group after charging all variable input."""
+        if len(group.members) > 100_000:
+            raise CoreFailure("BUDGET", "ref-coverage", "finite member limit")
+        values = (
+            *group.ref_claim.provenance.key,
+            *group.provenance.key,
+            group.interpretation_kind,
+            group.interpretation_version,
+            group.interpretation_scope,
+            group.group_scope,
+            group.status,
+        )
+        self._meter_input_metadata(work, values, max_bytes)
+        upper = 2
+        for member in group.members:
+            self._charge(work, "metadata_units", 1)
+            upper += 16 + sum(
+                4 if value is None else 12 * len(value) for value in member
+            )
+            if upper > max_bytes:
+                raise CoreFailure("BUDGET", "ref-coverage", "finite membership limit")
+        work.require("input_bytes", upper)
+        try:
+            membership = encode(group.members)
+            if len(membership) > upper:
+                raise CoreFailure(
+                    "BUDGET", "ref-coverage", "membership reservation exceeded"
+                )
+        except BaseException:
+            abandon = getattr(work, "abandon", None)
+            if abandon:
+                abandon("input_bytes")
+            else:
+                work.charge("input_bytes", upper)
+            raise
+        work.charge("input_bytes", len(membership))
+        self._meter_provenance_encoding(work, group.ref_claim.provenance, max_bytes)
+        self._meter_provenance_encoding(work, group.provenance, max_bytes)
+        return (
+            *group.ref_claim.identity,
+            *group.ref_claim.root_oid.key,
+            group.interpretation_kind,
+            group.interpretation_version,
+            group.interpretation_scope,
+            group.group_scope,
+            group.status,
+            membership,
+            group.provenance.encoded,
+        )
+
+    def _read_ref_coverage_proofs(
+        self, claim, work, *, max_proofs, max_bytes, max_structures=100_000
+    ):
+        """Validate stored proof rows within the caller's snapshot or writer cut."""
+        if (
+            not isinstance(claim, CoverageClaim)
+            or not isinstance(claim.scope, CoreCoverageScope)
+            or claim.scope.owner_kind != "ref_observation"
+            or claim.scope.coordinates[-1] != REF_NOTES_INVENTORY
+            or claim.state != "complete"
+        ):
+            raise CoreFailure(
+                "REF_COVERAGE_PROOF", "scope", "typed inventory scope required"
+            )
+        if (
+            type(max_proofs) is not int
+            or not 0 < max_proofs < 2**63 - 1
+            or type(max_bytes) is not int
+            or not 0 < max_bytes < 2**63
+            or type(max_structures) is not int
+            or not 0 < max_structures < 2**63
+        ):
+            raise CoreFailure(
+                "QUERY_BUDGET", "ref-coverage", "positive finite limits required"
+            )
+        scope = claim.scope
+        key = (scope.owner_kind, scope.encoded, claim.observed_at_us, claim.state)
+        columns = (
+            "owner_kind",
+            "owner_coordinates_json",
+            "coverage_state",
+            "observation_origin_uuidv4",
+            "ref_observation_uuidv7",
+            "ref_claim_provenance",
+            "object_format",
+            "root_oid",
+            "interpretation_kind",
+            "interpretation_version",
+            "interpretation_scope",
+            "group_scope",
+            "group_status",
+            "group_membership",
+            "group_provenance",
+            "verification_provenance",
+            "structures_json",
+        )
+        size = "+".join(f"coalesce(octet_length({column}),0)" for column in columns)
+        where = "owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?"
+        work.require("metadata_units", max_proofs + 1)
+        try:
+            sizes = self._ref_note_many(
+                f"SELECT {size} FROM ref_coverage_proofs WHERE {where} LIMIT ?",
+                (*key, max_proofs + 1),
+            )
+        except BaseException:
+            abandon = getattr(work, "abandon", None)
+            if abandon:
+                abandon("metadata_units")
+            else:
+                work.charge("metadata_units", max_proofs + 1)
+            raise
+        work.charge("metadata_units", len(sizes))
+        total = sum(row[0] for row in sizes)
+        if len(sizes) > max_proofs or total > max_bytes:
+            raise CoreFailure("QUERY_BUDGET", scope, "finite proof projection limit")
+        work.require("input_bytes", total)
+        try:
+            rows = self._ref_note_many(
+                f"SELECT * FROM ref_coverage_proofs WHERE {where} ORDER BY verification_provenance LIMIT ?",
+                (*key, max_proofs + 1),
+            )
+        except BaseException:
+            abandon = getattr(work, "abandon", None)
+            if abandon:
+                abandon("input_bytes")
+            else:
+                work.charge("input_bytes", total)
+            raise
+        work.charge("input_bytes", total)
+        if len(rows) != len(sizes):
+            self._integrity_stop((scope, "disappeared-ref-coverage-proof"))
+        if rows:
+            self._charge(work, "metadata_units", 1)
+            if not self._ref_note_one(
+                "SELECT 1 FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
+                key,
+            ):
+                self._integrity_stop((scope, "missing-ref-coverage-claim-parent"))
+        result = []
+        for row in rows:
+            identity = (
+                row["observation_origin_uuidv4"],
+                row["ref_observation_uuidv7"],
+                row["ref_claim_provenance"],
+            )
+            stored_claim = self._bounded_stored_row(
+                "ref_observation_claims",
+                identity,
+                work,
+                max_bytes,
+                metadata_limit_code="QUERY_BUDGET",
+            )
+            if stored_claim is None:
+                self._integrity_stop((scope, "missing-ref-coverage-claim"))
+            ref_claim = self._stored(
+                scope,
+                lambda value: self._decode_ref_claim(
+                    value,
+                    work=work,
+                    max_metadata_bytes=max_bytes,
+                    metadata_limit_code="QUERY_BUDGET",
+                ),
+                stored_claim,
+            )
+            try:
+                self._require_ref_claim(
+                    ref_claim,
+                    work=work,
+                    max_metadata_bytes=max_bytes,
+                    metadata_limit_code="QUERY_BUDGET",
+                )
+            except CoreFailure as error:
+                if error.code in ("MISSING_DEPENDENCY", "INCOMPATIBLE_REPLAY"):
+                    self._integrity_stop((scope, "invalid-ref-coverage-claim"))
+                raise
+
+            membership = row["group_membership"]
+            self._charge(work, "input_bytes", 3 * len(membership))
+            upper = max(1, len(membership))
+            work.require("metadata_units", upper)
+            try:
+
+                def decode_group():
+                    return NotesMappingGroup(
+                        ref_claim,
+                        row["interpretation_kind"],
+                        row["interpretation_version"],
+                        row["interpretation_scope"],
+                        row["group_scope"],
+                        row["group_status"],
+                        tuple(tuple(item) for item in json.loads(membership)),
+                        Provenance(*json.loads(row["group_provenance"])),
+                    )
+
+                group = self._stored(scope, decode_group)
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon:
+                    abandon("metadata_units")
+                else:
+                    work.charge("metadata_units", upper)
+                raise
+            work.charge("metadata_units", 1 + 3 * len(group.members))
+            group_key = self._ref_coverage_group_key(group, work, max_bytes)
+            if tuple(row)[4:16] != group_key:
+                self._integrity_stop((scope, "invalid-ref-coverage-group-key"))
+            self._charge(work, "metadata_units", 1)
+            self._charge(work, "input_bytes", len(group_key[-2]))
+            if not self._ref_note_one(
+                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
+                group_key,
+            ):
+                self._integrity_stop((scope, "missing-ref-coverage-group"))
+            for target, note, _path in group.members:
+                for value in (target, note):
+                    self._charge(work, "metadata_units", 1)
+                    if not self._ref_note_one(
+                        "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                        (group.ref_claim.root_oid.object_format, value),
+                    ):
+                        self._integrity_stop((scope, "missing-ref-coverage-member"))
+            provenance = self._provenance_value(
+                scope,
+                row["verification_provenance"],
+                work=work,
+                max_metadata_bytes=max_bytes,
+            )
+            structures = self._stored(
+                scope,
+                lambda value: deserialize_structures(
+                    value, work, max_structures=max_structures, max_bytes=max_bytes
+                ),
+                row["structures_json"],
+            )
+            proof = self._stored(
+                scope,
+                RefNotesInventoryCoverageProof,
+                claim,
+                group,
+                provenance,
+                structures,
+            )
+            self._stored(
+                scope,
+                lambda: verify_ref_notes_inventory(
+                    proof, work, max_structures=max_structures, max_bytes=max_bytes
+                ),
+            )
+            result.append(proof)
+        return tuple(result)
+
+    @_completed_read
+    @_decoded_read
+    def ref_coverage_proofs(
+        self,
+        claim,
+        work: WorkBudget,
+        *,
+        max_proofs=1_000,
+        max_bytes=64 * 1024 * 1024,
+        max_structures=100_000,
+    ):
+        with self._snapshot():
+            return self._read_ref_coverage_proofs(
+                claim,
+                work,
+                max_proofs=max_proofs,
+                max_bytes=max_bytes,
+                max_structures=max_structures,
+            )
+
+    def admit_ref_coverage_proof(
+        self,
+        proof: RefNotesInventoryCoverageProof,
+        work: WorkBudget,
+        *,
+        max_structures=100_000,
+        max_bytes=64 * 1024 * 1024,
+    ) -> None:
+        """Admit one locally rechecked complete inventory and its exact source group."""
+        if not isinstance(proof, RefNotesInventoryCoverageProof):
+            raise CoreFailure(
+                "REF_COVERAGE_PROOF", "notes-inventory", "typed proof required"
+            )
+        self._available()
+        group_key = self._ref_coverage_group_key(proof.group, work, max_bytes)
+        self._meter_input_metadata(work, proof.verification_provenance.key, max_bytes)
+        self._meter_provenance_encoding(work, proof.verification_provenance, max_bytes)
+        bundle = verify_ref_notes_inventory(
+            proof, work, max_structures=max_structures, max_bytes=max_bytes
+        )
+        claim, group = proof.coverage_claim, proof.group
+        scope = claim.scope
+        values = (
+            scope.owner_kind,
+            scope.encoded,
+            claim.observed_at_us,
+            claim.state,
+            *group_key,
+            proof.verification_provenance.encoded,
+            bundle,
+        )
+        provenance_coordinate = proof.verification_provenance.key[:3]
+        with self._transaction():
+            self._charge(work, "metadata_units", 1)
+            existing = self._db.execute(
+                "SELECT observed_at_us,coverage_state FROM ref_coverage_proofs WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND json_extract(verification_provenance,'$[0]')=? AND json_extract(verification_provenance,'$[1]')=? AND json_extract(verification_provenance,'$[2]')=?",
+                (*group_key[:3], *provenance_coordinate),
+            ).fetchone()
+            if existing:
+                prior_claim = CoverageClaim(scope, existing[0], existing[1])
+                prior = self._read_ref_coverage_proofs(
+                    prior_claim,
+                    work,
+                    max_proofs=1_000,
+                    max_bytes=max_bytes,
+                    max_structures=max_structures,
+                )
+                self._charge(work, "metadata_units", len(prior))
+                candidates = [
+                    p
+                    for p in prior
+                    if p.verification_provenance.key[:3] == provenance_coordinate
+                ]
+                if len(candidates) != 1:
+                    self._integrity_stop((scope, "missing-verification-coordinate"))
+                old = candidates[0]
+                self._charge(
+                    work, "metadata_units", len(old.group.members) + len(group.members)
+                )
+                self._charge(work, "input_bytes", len(bundle) + len(group_key[-2]))
+                if (
+                    old.coverage_claim.observed_at_us != claim.observed_at_us
+                    or old.group != group
+                    or old.verification_provenance != proof.verification_provenance
+                    or old.structures != proof.structures
+                ):
+                    raise CoreFailure(
+                        "INCOMPATIBLE_REPLAY",
+                        scope,
+                        "verification coordinate cannot be rebound",
+                    )
+                return
+            self._require_ref_claim(
+                group.ref_claim, work=work, max_metadata_bytes=max_bytes
+            )
+            self._charge(work, "metadata_units", 1)
+            self._charge(work, "input_bytes", len(group_key[-2]))
+            if not self._db.execute(
+                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
+                group_key,
+            ).fetchone():
+                raise CoreFailure(
+                    "MISSING_DEPENDENCY", scope, "exact reported group required"
+                )
+            self._charge(work, "metadata_units", 1 + len(group.members))
+            self._charge(
+                work,
+                "input_bytes",
+                2 * len(bundle)
+                + 2 * len(group_key[-2])
+                + len(group_key[-1])
+                + len(values[-2]),
+            )
+            self._insert("ref_coverage_proofs", values)
+
     def admit_coverage_proof(
         self, claim: CoverageClaim, members: tuple[OID, ...], provenance: Provenance
     ) -> None:
@@ -3093,19 +3467,177 @@ class Core:
                 ),
             )
 
+    def _ref_coverage_candidates(self, scope, work, max_bytes):
+        """Reserve every latest candidate's variable bytes before materialization."""
+        self._meter_input_metadata(
+            work, scope.coordinates, max_bytes, limit_code="QUERY_BUDGET"
+        )
+        self._charge(
+            work, "input_bytes", sum(len(value) for value in scope.coordinates)
+        )
+        encoded_size = (
+            2
+            + len(scope.coordinates)
+            - 1
+            + sum(self._json_string_bytes(value) for value in scope.coordinates)
+        )
+        if encoded_size > max_bytes:
+            raise CoreFailure("QUERY_BUDGET", scope, "finite Coverage scope limit")
+        self._charge(work, "input_bytes", encoded_size)
+        encoded_scope = scope.encoded
+        if len(encoded_scope) != encoded_size:
+            raise CoreFailure("QUERY_BUDGET", scope, "Coverage scope encoding mismatch")
+        coordinates = (scope.owner_kind, encoded_scope, scope.owner_kind, encoded_scope)
+        where = "owner_kind=? AND owner_coordinates_json=? AND observed_at_us=(SELECT max(observed_at_us) FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=?)"
+        work.require("metadata_units", 5)
+        try:
+            sizes = self.sql(
+                "SELECT octet_length(coverage_state),coalesce(octet_length(details_json),0) FROM coverage_claims WHERE "
+                + where
+                + " ORDER BY coverage_state LIMIT 5",
+                coordinates,
+            )
+        except BaseException:
+            abandon = getattr(work, "abandon", None)
+            if abandon:
+                abandon("metadata_units")
+            else:
+                work.charge("metadata_units", 5)
+            raise
+        work.charge("metadata_units", len(sizes))
+        if len(sizes) > 4:
+            self._integrity_stop((scope, "invalid-ref-coverage-candidate-count"))
+        if any(type(value) is not int or value < 0 for row in sizes for value in row):
+            self._integrity_stop((scope, "invalid-ref-coverage-candidate-size"))
+        total = sum(row[0] + row[1] for row in sizes)
+        if total > max_bytes:
+            raise CoreFailure(
+                "QUERY_BUDGET", scope, "finite Coverage candidate byte limit"
+            )
+        self._charge(work, "input_bytes", total)
+        rows = self.sql(
+            "SELECT observed_at_us,coverage_state,details_json FROM coverage_claims WHERE "
+            + where
+            + " ORDER BY coverage_state LIMIT 5",
+            coordinates,
+        )
+        if len(rows) != len(sizes):
+            self._integrity_stop((scope, "disappeared-ref-coverage-claim"))
+        claims = []
+        for row in rows:
+            self._charge(work, "metadata_units", 1)
+            if type(row[1]) is not str or (
+                row[2] is not None and type(row[2]) is not str
+            ):
+                self._integrity_stop((scope, "invalid-ref-coverage-claim-type"))
+            self._charge(work, "input_bytes", len(row[1]) + 2 * len(row[2] or ""))
+            claims.append(
+                self._stored(scope, CoverageClaim, scope, row[0], row[1], row[2])
+            )
+        return encoded_scope, rows, tuple(claims)
+
     @_completed_read
     @_decoded_read
-    def coverage(self, scope: CoreCoverageScope) -> CoverageProjection:
+    def coverage(
+        self,
+        scope: CoreCoverageScope,
+        work: WorkBudget | None = None,
+        *,
+        max_proofs: int = 1_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_structures: int = 100_000,
+        max_claims: int = 10_000,
+    ) -> CoverageProjection:
         with self._snapshot():
-            rows = self.sql(
-                "SELECT observed_at_us,coverage_state,details_json FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=(SELECT max(observed_at_us) FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=?) ORDER BY coverage_state",
-                (scope.owner_kind, scope.encoded, scope.owner_kind, scope.encoded),
-            )
-            claims = tuple(
-                self._stored(scope, CoverageClaim, scope, row[0], row[1], row[2])
-                for row in rows
-            )
+            ref_work = work
+            if scope.owner_kind == "ref_observation":
+                if ref_work is None:
+                    ref_work = LocalRefCoverageWork(max_bytes)
+                encoded_scope, rows, claims = self._ref_coverage_candidates(
+                    scope, ref_work, max_bytes
+                )
+            else:
+                encoded_scope = scope.encoded
+                rows = self.sql(
+                    "SELECT observed_at_us,coverage_state,details_json FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=(SELECT max(observed_at_us) FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=?) ORDER BY coverage_state",
+                    (scope.owner_kind, encoded_scope, scope.owner_kind, encoded_scope),
+                )
+                claims = tuple(
+                    self._stored(scope, CoverageClaim, scope, row[0], row[1], row[2])
+                    for row in rows
+                )
             state = derive_coverage_state(claim.state for claim in claims)
+            if scope.owner_kind == "ref_observation":
+                known_empty = False
+                if rows and state == "complete":
+                    self._charge(ref_work, "metadata_units", 1)
+                    generic = self.sql(
+                        "SELECT 1 FROM core_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? LIMIT 1",
+                        (scope.owner_kind, encoded_scope, rows[0][0]),
+                    )
+                    if generic:
+                        self._integrity_stop((scope, "unsupported-ref-coverage-proof"))
+                    self._charge(ref_work, "metadata_units", 1)
+                    has_typed = self.sql(
+                        "SELECT 1 FROM ref_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state='complete' LIMIT 1",
+                        (scope.owner_kind, encoded_scope, rows[0][0]),
+                    )
+                    if not has_typed:
+                        state = "unknown"
+                    elif work is None:
+                        raise CoreFailure(
+                            "QUERY_BUDGET",
+                            scope,
+                            "typed ref Coverage needs a finite work budget",
+                        )
+                    else:
+                        complete_claim = next(
+                            value for value in claims if value.state == "complete"
+                        )
+                        verified = self._read_ref_coverage_proofs(
+                            complete_claim,
+                            work,
+                            max_proofs=max_proofs,
+                            max_bytes=max_bytes,
+                            max_structures=max_structures,
+                        )
+                        observed = self.ref_observation(
+                            RefObservationKey(*scope.coordinates[:2]),
+                            work,
+                            max_claims=max_claims,
+                            max_bytes=max_bytes,
+                        )
+                        self._charge(work, "metadata_units", len(verified))
+                        self._charge(
+                            work,
+                            "metadata_units",
+                            sum(1 + len(value.group.members) for value in verified),
+                        )
+                        self._charge(
+                            work,
+                            "input_bytes",
+                            sum(
+                                len(part)
+                                for value in verified
+                                for member in value.group.members
+                                for part in member
+                                if isinstance(part, str)
+                            ),
+                        )
+                        alternatives = {
+                            (value.group.ref_claim.root_oid, value.group.members)
+                            for value in verified
+                        }
+                        if observed.conflict or len(alternatives) > 1:
+                            state = "conflict"
+                        else:
+                            known_empty = bool(verified) and all(
+                                value.group.status == "known_empty"
+                                for value in verified
+                            )
+                return CoverageProjection(
+                    state, rows[0][0] if rows else None, claims, known_empty
+                )
             proofs = (
                 self.sql(
                     "SELECT members_json FROM core_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state='complete'",
@@ -3114,8 +3646,6 @@ class Core:
                 if rows and state == "complete"
                 else []
             )
-            if scope.owner_kind == "ref_observation" and proofs:
-                self._integrity_stop((scope, "unsupported-ref-coverage-proof"))
             if any(not valid_coverage_members(row[0]) for row in proofs):
                 self._integrity_stop((scope, "invalid-stored-coverage-proof"))
             if state == "complete" and not proofs:

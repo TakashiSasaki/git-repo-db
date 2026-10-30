@@ -73,6 +73,187 @@ from repo_catalog.domain.resource_stage import (
     validate_stage_storage,
 )
 
+_EXPORT_CONTEXT_ROWS = {
+    "providers": (
+        "SELECT service_instance_uuidv4,provider_kind,configuration_json FROM providers ORDER BY service_instance_uuidv4",
+        ("service_instance_uuidv4", "provider_kind", "configuration_json"),
+    ),
+    "repositories": (
+        "SELECT repository_uuidv4,configuration_json FROM repository_context ORDER BY repository_uuidv4",
+        ("repository_uuidv4", "configuration_json"),
+    ),
+    "sources": (
+        "SELECT source_registration_uuidv4,service_instance_uuidv4,configuration_json FROM sources ORDER BY source_registration_uuidv4",
+        ("source_registration_uuidv4", "service_instance_uuidv4", "configuration_json"),
+    ),
+    "source_repositories": (
+        "SELECT source_registration_uuidv4,repository_uuidv4,attributes_json FROM source_repositories ORDER BY source_registration_uuidv4,repository_uuidv4",
+        ("source_registration_uuidv4", "repository_uuidv4", "attributes_json"),
+    ),
+    "source_inventories": (
+        "SELECT source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json FROM source_inventory_evidence ORDER BY source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json",
+        (
+            "source_registration_uuidv4",
+            "scope_json",
+            "observed_at_us",
+            "coverage_state",
+            "terminal",
+            "members_json",
+            "provenance_json",
+        ),
+    ),
+    "resources": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id FROM resources ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "identifier_namespace_kind",
+            "identifier_namespace_id",
+            "document_kind",
+            "provider_document_id",
+        ),
+    ),
+    "relations": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us FROM resource_relations ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "members_json",
+            "provenance_json",
+            "scope_json",
+            "observed_at_us",
+        ),
+    ),
+    "collections": (
+        "SELECT c.service_instance_uuidv4,c.resource_kind,c.provider_resource_id,c.collection_kind,c.provenance_json,c.scope_json,t.observed_at_us,t.terminal_state,t.members_json FROM collections c JOIN collection_terminals t ON c.service_instance_uuidv4=t.service_instance_uuidv4 AND c.resource_kind=t.resource_kind AND c.provider_resource_id=t.provider_resource_id AND c.collection_kind=t.collection_kind AND c.provenance_json=t.provenance_json ORDER BY c.service_instance_uuidv4,c.resource_kind,c.provider_resource_id,c.collection_kind,c.provenance_json,t.observed_at_us,t.terminal_state,t.members_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "collection_kind",
+            "provenance_json",
+            "scope_json",
+            "observed_at_us",
+            "terminal_state",
+            "members_json",
+        ),
+    ),
+    "repository_relations": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json FROM resource_repository_relations ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "target_json",
+            "clock_json",
+            "provenance_json",
+            "observed_at_us",
+            "event_report_members_json",
+            "event_report_scope_json",
+        ),
+    ),
+    "mapping_dispositions": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json,observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json FROM repository_mapping_dispositions ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "relation_kind",
+            "claim_clock_json",
+            "claim_target_json",
+            "claim_provenance_json",
+            "disposition_kind",
+            "disposition_clock_json",
+            "disposition_provenance_json",
+            "observed_at_us",
+            "replacement_clock_json",
+            "replacement_target_json",
+            "replacement_provenance_json",
+        ),
+    ),
+    "field_candidates": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,field_name,value_json,clock_domain,source_clock_us,provenance_json,observed_at_us FROM field_candidates ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "field_name",
+            "value_json",
+            "clock_domain",
+            "source_clock_us",
+            "provenance_json",
+            "observed_at_us",
+        ),
+    ),
+    "text_bodies": (
+        "SELECT sha256 FROM text_bodies ORDER BY sha256",
+        ("sha256",),
+    ),
+    "core_references": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json FROM core_references ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json",
+        (
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "role",
+            "object_format",
+            "full_oid",
+            "provenance_json",
+        ),
+    ),
+    "scopes": (
+        "SELECT owner_kind,owner_coordinates_json FROM coverage_scopes ORDER BY owner_kind,owner_coordinates_json",
+        ("owner_kind", "owner_coordinates_json"),
+    ),
+    "claims": (
+        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,details_json FROM coverage_claims ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state",
+        (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+            "details_json",
+        ),
+    ),
+    "proofs": (
+        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json FROM coverage_proofs ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json",
+        (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+            "service_instance_uuidv4",
+            "resource_kind",
+            "provider_resource_id",
+            "collection_kind",
+            "provenance_json",
+            "terminal_observed_at_us",
+            "terminal_state",
+            "members_json",
+        ),
+    ),
+    "source_proofs": (
+        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json FROM source_coverage_proofs ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json",
+        (
+            "owner_kind",
+            "owner_coordinates_json",
+            "observed_at_us",
+            "coverage_state",
+            "source_registration_uuidv4",
+            "scope_json",
+            "inventory_observed_at_us",
+            "inventory_state",
+            "terminal",
+            "members_json",
+            "provenance_json",
+        ),
+    ),
+}
+
 
 class _GuardedCursor:
     """Observe deferred SQLite read faults before the application can catch them."""
@@ -168,7 +349,13 @@ class Context(ContextStore):
     """
 
     def __init__(
-        self, connection, directory: Path, *, writable: bool = False, authorization=None
+        self,
+        connection,
+        directory: Path,
+        *,
+        writable: bool = False,
+        authorization=None,
+        validation_work=None,
     ):
         self.directory = Path(directory)
         super().__init__(
@@ -189,7 +376,7 @@ class Context(ContextStore):
         self._validate_stage()
         # Validate registration authority in the pinned transaction, including
         # raw trusted-factory writes. No incoming rejected settings cause a stop.
-        self._validate_registrations()
+        self._validate_registrations(validation_work)
 
     def _check_mutation_capability(self):
         # These are local capability facts, independent of caller authority or
@@ -263,7 +450,9 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def for_snapshot(cls, db, directory: Path) -> Iterator[Context]:
+    def for_snapshot(
+        cls, db, directory: Path, *, validation_work=None
+    ) -> Iterator[Context]:
         from repo_catalog.adapters.sqlite.p1_coordination import ReadSnapshot
 
         if (
@@ -271,7 +460,7 @@ class Context(ContextStore):
             and Path(directory).resolve() != db.catalog_directory
         ):
             raise ContextError("SNAPSHOT_OWNER", "context", "foreign catalog directory")
-        capability = cls(db, directory)
+        capability = cls(db, directory, validation_work=validation_work)
         try:
             yield capability
             capability._read_complete()
@@ -357,7 +546,14 @@ class Context(ContextStore):
 
     @classmethod
     @contextmanager
-    def snapshot(cls, directory: Path, *, read_limits=None) -> Iterator[Context]:
+    def snapshot(
+        cls,
+        directory: Path,
+        *,
+        read_limits=None,
+        validation_work=None,
+        _identity_sink=None,
+    ) -> Iterator[Context]:
         """Pin Context alone; no claimed Core pairing or derivative dependency."""
         directory = Path(directory)
         with ExitStack() as stack:
@@ -370,7 +566,9 @@ class Context(ContextStore):
                     )
                     db.execute("PRAGMA query_only=ON")
                     db.execute("BEGIN")
-                    db.execute("SELECT * FROM store_identity").fetchall()
+                    identity = db.execute("SELECT * FROM store_identity").fetchall()
+                    if _identity_sink is not None:
+                        _identity_sink(identity)
                     from repo_catalog.adapters.sqlite.p1_coordination import (
                         apply_snapshot_read_limits,
                     )
@@ -380,7 +578,9 @@ class Context(ContextStore):
                     cls._record_corruption(directory, error)
                     raise
             try:
-                with cls.for_snapshot(db, directory) as capability:
+                with cls.for_snapshot(
+                    db, directory, validation_work=validation_work
+                ) as capability:
                     yield capability
             finally:
                 db.rollback()
@@ -466,16 +666,40 @@ class Context(ContextStore):
         with self._stored("I2 staged Resource"):
             validate_stage_storage(self.db)
 
-    def _validate_registrations(self):
-        for table, column, kind in (
-            ("providers", "configuration_json", "provider"),
-            ("repository_context", "configuration_json", "repository"),
-            ("sources", "configuration_json", "source"),
-            ("source_repositories", "attributes_json", "membership"),
+    def _validate_registrations(self, work=None):
+        for table, column, kind, selector in (
+            ("providers", "configuration_json", "provider", "providers"),
+            ("repository_context", "configuration_json", "repository", "repositories"),
+            ("sources", "configuration_json", "source", "sources"),
+            (
+                "source_repositories",
+                "attributes_json",
+                "membership",
+                "source_repositories",
+            ),
         ):
-            with self._stored("registration"):
-                for row in self.db.execute(f"SELECT {column} FROM {table}"):
-                    registration_json(kind, row[0])
+            if work is None:
+                with self._stored("registration"):
+                    for row in self.db.execute(f"SELECT {column} FROM {table}"):
+                        registration_json(kind, row[0])
+                continue
+            for row in self._exchange_metadata_rows(selector, work):
+                encoded = row[-1]
+                with self._stored("registration"):
+                    if type(encoded) is not str:
+                        raise ValueError("invalid stored registration type")
+                work.require("input_bytes", 13 * len(encoded) + 2)
+                try:
+                    with self._stored("registration"):
+                        registration_json(kind, encoded)
+                except BaseException:
+                    abandon = getattr(work, "abandon", None)
+                    if abandon is None:
+                        work.charge("input_bytes", 13 * len(encoded) + 2)
+                    else:
+                        abandon("input_bytes")
+                    raise
+                work.charge("input_bytes", 2 * len(encoded))
 
     def registration_metadata(self, kind: str, encoded: str) -> dict:
         """Read a persisted registration value, never sanitize a stored violation."""
@@ -1163,6 +1387,73 @@ class Context(ContextStore):
     def admit_coverage(self, claim: CoverageClaim) -> str:
         self._check(write=True)
         return super().admit_coverage(claim)
+
+    def _exchange_metadata_rows(self, selector, work):
+        """Fetch fixed Context metadata after per-row reservations."""
+        self._check()
+        spec = _EXPORT_CONTEXT_ROWS.get(selector) if type(selector) is str else None
+        if spec is None:
+            raise ContextError(
+                "QUERY_BUDGET", "exchange-metadata", "fixed selector required"
+            )
+        query, columns = spec
+        projection = ",".join('octet_length("' + column + '")' for column in columns)
+
+        def fixed_read(operation):
+            try:
+                return operation()
+            except sqlite3.OperationalError as error:
+                if str(error).startswith("Could not decode to UTF-8 column"):
+                    # The guarded connection has already published the stop.
+                    raise ContextError(
+                        "AUTHORITATIVE_CORRUPTION", "exchange-metadata"
+                    ) from error
+                raise
+
+        measured = fixed_read(
+            lambda: self.db.execute("SELECT " + projection + " FROM (" + query + ")")
+        )
+        values = fixed_read(lambda: self.db.execute(query))
+        result = []
+        while True:
+            work.require("metadata_units", 1)
+            try:
+                lengths = fixed_read(measured.fetchone)
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon is None:
+                    work.charge("metadata_units", 1)
+                else:
+                    abandon("metadata_units")
+                raise
+            work.charge("metadata_units", int(lengths is not None))
+            if lengths is None:
+                break
+            if len(result) >= 1_000_000:
+                raise CoordinationError("QUERY_BUDGET", "exchange-metadata")
+            if any(
+                value is not None and (type(value) is not int or value < 0)
+                for value in lengths
+            ):
+                with self._stored("exchange metadata lengths"):
+                    raise ValueError("invalid stored metadata length")
+            size = sum(value or 0 for value in lengths)
+            work.require("input_bytes", size)
+            try:
+                row = fixed_read(values.fetchone)
+            except BaseException:
+                abandon = getattr(work, "abandon", None)
+                if abandon is None:
+                    work.charge("input_bytes", size)
+                else:
+                    abandon("input_bytes")
+                raise
+            work.charge("input_bytes", size if row is not None else 0)
+            if row is None:
+                with self._stored("exchange metadata rows"):
+                    raise ValueError("metadata changed in snapshot")
+            result.append(row)
+        return result
 
     def coverage(self, scope: CoverageScope) -> CoverageProjection:
         self._check()

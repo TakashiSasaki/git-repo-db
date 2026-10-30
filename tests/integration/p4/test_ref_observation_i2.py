@@ -370,13 +370,10 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
     assert fresh.links[0].claim.root_oid == updated.root
 
 
-def test_empty_enumerations_keep_i3_export_and_backup_fences(acquisition):
-    from repo_catalog.adapters.sqlite.recovery import (
-        RefObservationBackupUnsupported,
-        SQLiteRecoveryAdapter,
-    )
-    from repo_catalog.application.exchange import ExchangeService
-    from repo_catalog.domain.exchange import ExchangeError, ExchangeSelectionScope
+def test_empty_enumerations_survive_git_only_backup_and_restore(acquisition):
+    from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
     from repo_catalog.domain.recovery import BackupScope
 
     app, path, fmt, repository, origin, core_path, _ = acquisition
@@ -384,17 +381,22 @@ def test_empty_enumerations_keep_i3_export_and_backup_fences(acquisition):
     assert len(result.enumerations) == 2
     assert all(not event.links for event in result.enumerations)
     assert not app.core.sql("SELECT 1 FROM ref_observations")
-    with pytest.raises(ExchangeError) as error:
-        ExchangeService(core_path.parent).export_package(
-            selection=ExchangeSelectionScope(all_selected=True, include_context=False)
-        )
-    assert error.value.code == "UNSUPPORTED_REF_OBSERVATION_EXPORT"
     destination = path.parent / "backup-ref-i2"
-    with pytest.raises(RefObservationBackupUnsupported):
-        SQLiteRecoveryAdapter().create_consistent_backup(
-            core_path.parent, destination, BackupScope.GIT_ONLY
-        )
-    assert not destination.exists()
+    adapter = SQLiteRecoveryAdapter()
+    assert adapter.create_consistent_backup(
+        core_path.parent, destination, BackupScope.GIT_ONLY
+    ).verified_clean
+    restored = path.parent / "restored-ref-i2"
+    assert adapter.restore_backup(destination, restored, repository).revalidated_clean
+    copy = GitCore(restored / "core.sqlite3")
+    try:
+        for original in result.enumerations:
+            assert (
+                copy.ref_enumeration(*original.event.identity, UnlimitedWorkBudget())
+                == original
+            )
+    finally:
+        copy.close()
     assert not (core_path.parent / "p1-recovery-stop.json").exists()
 
 
