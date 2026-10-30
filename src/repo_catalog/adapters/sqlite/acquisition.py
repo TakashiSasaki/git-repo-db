@@ -84,6 +84,7 @@ class InMemoryNotesProgress:
 
     def __init__(self) -> None:
         self._store: dict[str, dict[str, Any]] = {}
+        self._request_identity = (str(uuid4()), str(uuid4()))
         self._scan_locks: dict[str, threading.Lock] = {}
         self._scan_locks_guard = threading.Lock()
 
@@ -120,6 +121,9 @@ class InMemoryNotesProgress:
 
     def load(self, scope: str) -> dict[str, Any] | None:
         return self._store.get(scope)
+
+    def request_identity(self) -> tuple[str, str]:
+        return self._request_identity
 
     def save_once(self, scope: str, value: dict[str, Any]) -> dict[str, Any]:
         if scope not in self._store:

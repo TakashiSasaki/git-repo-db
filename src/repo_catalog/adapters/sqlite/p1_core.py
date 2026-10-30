@@ -316,6 +316,10 @@ class Core:
         return sqlite3.SQLITE_OK if action in allowed else sqlite3.SQLITE_DENY
 
     def _available(self) -> None:
+        if getattr(self, "_work_callback_depth", 0):
+            raise sqlite3.DatabaseError(
+                "Core reentry is prohibited during a work callback"
+            )
         if not self._active:
             raise CoreFailure(
                 "CAPABILITY_EXPIRED",
@@ -577,6 +581,26 @@ class Core:
                 size += 1
         return size
 
+    def _meter_json_string_scans(
+        self, work, values, max_metadata_bytes, *, limit_code, scope
+    ):
+        """Reserve the character walk before measuring JSON-escaped lengths."""
+        length = sum(len(value) for value in values)
+        if length > max_metadata_bytes or length >= 2**63:
+            raise CoreFailure(limit_code, scope, "finite input metadata limit")
+        work.require("input_bytes", length)
+        try:
+            result = tuple(self._json_string_bytes(value) for value in values)
+        except BaseException:
+            abandon = getattr(work, "abandon", None)
+            if abandon is not None:
+                abandon("input_bytes")
+            else:
+                work.charge("input_bytes", length)
+            raise
+        work.charge("input_bytes", length)
+        return result
+
     def _meter_provenance_encoding(
         self,
         work: WorkBudget,
@@ -586,12 +610,10 @@ class Core:
         limit_code: str = "BUDGET",
     ) -> None:
         values = provenance.key
-        size = (
-            2
-            + len(values)
-            - 1
-            + sum(self._json_string_bytes(value) for value in values)
+        lengths = self._meter_json_string_scans(
+            work, values, max_metadata_bytes, limit_code=limit_code, scope="provenance"
         )
+        size = 2 + len(values) - 1 + sum(lengths)
         if size > max_metadata_bytes or size >= 2**63:
             raise CoreFailure(limit_code, "provenance", "finite encoded metadata limit")
         self._charge(work, "input_bytes", size)
@@ -604,7 +626,17 @@ class Core:
         *,
         limit_code: str = "BUDGET",
     ) -> None:
-        size = 4 if path is None else self._json_string_bytes(path)
+        size = (
+            4
+            if path is None
+            else self._meter_json_string_scans(
+                work,
+                (path,),
+                max_metadata_bytes,
+                limit_code=limit_code,
+                scope="mapping_path",
+            )[0]
+        )
         if size > max_metadata_bytes or size >= 2**63:
             raise CoreFailure(
                 limit_code, "mapping_path", "finite encoded metadata limit"
@@ -624,26 +656,23 @@ class Core:
             if evidence.enumeration_prefix_bytes is None
             else 2 + 2 * len(evidence.enumeration_prefix_bytes)
         )
-        state = (
-            4
-            if evidence.enumeration_state is None
-            else self._json_string_bytes(evidence.enumeration_state)
+        values = (
+            evidence.source_attribution,
+            evidence.visibility_scope,
+            evidence.method,
+            evidence.completion_coordinate,
+            *(
+                (evidence.enumeration_state,)
+                if evidence.enumeration_state is not None
+                else ()
+            ),
         )
+        lengths = self._meter_json_string_scans(
+            work, values, max_metadata_bytes, limit_code=limit_code, scope="absence"
+        )
+        state = 4 if evidence.enumeration_state is None else lengths[-1]
         size = (
-            8
-            + sum(
-                self._json_string_bytes(value)
-                for value in (
-                    evidence.source_attribution,
-                    evidence.visibility_scope,
-                    evidence.method,
-                    evidence.completion_coordinate,
-                )
-            )
-            + 2
-            + 2 * len(evidence.ref_name_bytes)
-            + prefix
-            + state
+            8 + sum(lengths[:4]) + 2 + 2 * len(evidence.ref_name_bytes) + prefix + state
         )
         if size > max_metadata_bytes or size >= 2**63:
             raise CoreFailure(limit_code, "absence", "finite encoded metadata limit")

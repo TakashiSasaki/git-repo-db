@@ -100,6 +100,10 @@ class NotesProgress:
         self._check()
         return self.work.ledger.get_progress(self.work.request, scope)
 
+    def request_identity(self):
+        self._check()
+        return self.work.request.values()
+
     def save_once(self, scope, value):
         self._check()
         return self.work.ledger.set_progress_once(self.work.request, scope, value)

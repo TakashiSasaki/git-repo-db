@@ -25,6 +25,7 @@ from repo_catalog.domain.p1_core import (
     encode,
 )
 from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ref_observation import NotesMappingEvidence
 
 
 def _prepay(work, unit, count=1):
@@ -193,10 +194,10 @@ class GitNotesSource:
     def lookup_ref_presence(self, name: bytes, work: WorkBudget) -> bool:
         return self.source.lookup_ref_presence(name, work)
 
-    def note_body(self, proof: NotesProof, work: WorkBudget) -> NativeObject:
+    def note_body(
+        self, proof: NotesProof | NotesMappingEvidence, work: WorkBudget
+    ) -> NativeObject:
         """Read only the exact blob whose relevant structure the receiver checks."""
-        from repo_catalog.domain.ref_observation import NotesMappingEvidence
-
         account_proof_bundle(proof.structures, work)
         with account_verification(work):
             proof.validate()

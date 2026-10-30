@@ -24,6 +24,7 @@ from repo_catalog.domain.p1_core import (
     uuid4_value,
     valid_note_role,
 )
+from repo_catalog.domain.p1_coverage import CoverageProjection
 
 
 def uuid7_value(value: str) -> str:
@@ -635,6 +636,88 @@ class NotesMappingGroup:
         )
 
 
+def _account_comparison_texts(values, work) -> None:
+    """Reserve UTF-8 measurement and the subsequent comparison before either."""
+    upper = sum(
+        len(value) if isinstance(value, bytes) or value.isascii() else 4 * len(value)
+        for value in values()
+        if isinstance(value, (str, bytes))
+    )
+    work.require("input_bytes", 2 * upper)
+    try:
+        actual = sum(
+            len(value)
+            if isinstance(value, bytes) or value.isascii()
+            else len(value.encode("utf-8", "surrogatepass"))
+            for value in values()
+            if isinstance(value, (str, bytes))
+        )
+    except BaseException:
+        abandon = getattr(work, "abandon", None)
+        if abandon is not None:
+            abandon("input_bytes")
+        else:
+            work.charge("input_bytes", 2 * upper)
+        raise
+    work.charge("input_bytes", 2 * actual)
+
+
+def account_notes_members_comparison(left, right, work) -> None:
+    """Charge the whole-member comparison before examining either collection."""
+    units = 3 * (len(left) + len(right))
+    work.require("metadata_units", units)
+    work.charge("metadata_units", units)
+
+    def values():
+        return (
+            part for members in (left, right) for member in members for part in member
+        )
+
+    _account_comparison_texts(values, work)
+
+
+def account_provenance_comparison(left, right, work) -> None:
+    """Reserve and charge both provenance values before comparing them."""
+    values = (*left.key, *right.key)
+    work.require("metadata_units", len(values))
+    work.charge("metadata_units", len(values))
+    _account_comparison_texts(lambda: iter(values), work)
+
+
+def account_notes_group_comparison(left, right, work) -> None:
+    """Charge a full immutable Group comparison, including its Claim identity."""
+    account_notes_members_comparison(left.members, right.members, work)
+    fields = []
+    for group in (left, right):
+        claim = group.ref_claim
+        fields.extend(
+            (
+                *claim.ref_observation_key.key,
+                *claim.provenance.key,
+                claim.presence_state,
+                claim.ref_form,
+                claim.symbolic_target_ref_name,
+                group.interpretation_kind,
+                group.interpretation_version,
+                group.interpretation_scope,
+                group.group_scope,
+                group.status,
+                *group.provenance.key,
+            )
+        )
+        for oid in (
+            claim.direct_target_oid,
+            claim.resolved_target_oid,
+            claim.peeled_target_oid,
+            claim.root_oid,
+        ):
+            if oid is not None:
+                fields.extend(oid.key)
+    work.require("metadata_units", 3 * len(fields))
+    work.charge("metadata_units", 3 * len(fields))
+    _account_comparison_texts(lambda: iter(fields), work)
+
+
 @dataclass(frozen=True)
 class NotesMappingEvidence:
     """A receiver-local check for one actual ref claim and one mapping."""
@@ -767,3 +850,25 @@ class NotesMappingProjection:
     evidence: tuple[NotesMappingEvidenceRecord, ...]
     canonical_note_oid: OID | None
     reported_conflict: bool
+
+
+@dataclass(frozen=True)
+class RefNotesInventoryGroupProjection:
+    """One reported whole group and its current exact-Claim receiver checks."""
+
+    group: NotesMappingGroup
+    current_verifications: tuple[Provenance, ...]
+
+    @property
+    def current_verified(self) -> bool:
+        return bool(self.current_verifications)
+
+
+@dataclass(frozen=True)
+class RefNotesInventoryProjection:
+    """Reported groups for one Claim and observation-scoped current Coverage."""
+
+    ref_claim: RefObservationClaim
+    ref_observation: RefObservation
+    groups: tuple[RefNotesInventoryGroupProjection, ...]
+    coverage: CoverageProjection
