@@ -930,6 +930,57 @@ def test_pending_note_cannot_rebind_existing_claim_to_another_root(
     assert not (destination / "p1-recovery-stop.json").exists()
 
 
+@pytest.mark.parametrize("damage", ["body", "proof", "root"])
+def test_missing_claim_never_stages_an_unproven_note(acquisition, damage):
+    app, _, fmt, repository, origin, core_path, _ = acquisition
+    _, target, _ = p4_fixtures.fixture_note(acquisition)
+    claim = (
+        discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
+    )
+    app.acquire_ref_note(claim, target)
+    db = connect(core_path, "core")
+    try:
+        db.execute("PRAGMA foreign_keys=OFF")
+        names = (
+            "p1_immutable_ref_observation_claims_delete",
+            "p1_immutable_ref_retained_notes_update",
+        )
+        triggers = [
+            db.execute(
+                "SELECT sql FROM sqlite_schema WHERE name=?", (name,)
+            ).fetchone()[0]
+            for name in names
+        ]
+        for name in names:
+            db.execute(f"DROP TRIGGER {name}")
+        db.execute("PRAGMA ignore_check_constraints=ON")
+        db.execute("DELETE FROM ref_observation_claims")
+        if damage == "body":
+            db.execute("UPDATE ref_retained_notes SET body=zeroblob(size)")
+        elif damage == "proof":
+            db.execute("UPDATE ref_retained_notes SET proof_bundle='[]'")
+        else:
+            db.execute(
+                "UPDATE ref_retained_notes SET root_oid=?",
+                ("f" * (40 if fmt == "sha1" else 64),),
+            )
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        for trigger in triggers:
+            db.execute(trigger)
+        db.commit()
+    finally:
+        db.close()
+    source = sqlite3.connect(f"file:{core_path}?mode=ro", uri=True)
+    try:
+        scan = scan_ref_units(
+            source, RecoveryWorkBudget(), max_records=500, max_row_bytes=1024 * 1024
+        )
+    finally:
+        source.close()
+    assert not any(item["candidate_type"] == "ref_note" for item in scan.candidates)
+    assert any("ref_retained_notes" in item for item in scan.omissions)
+
+
 @pytest.mark.parametrize("damage", ["body", "proof"])
 def test_damaged_note_copy_is_omitted_without_losing_valid_sibling(acquisition, damage):
     app, _, _, repository, origin, core_path, _ = acquisition
