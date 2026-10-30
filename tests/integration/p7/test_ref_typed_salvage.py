@@ -277,6 +277,41 @@ def test_corrupt_fresh_target_is_stopped_and_not_activated(acquisition, tmp_path
     assert (destination / "p1-recovery-stop.json").exists()
 
 
+def test_real_sqlite_open_corruption_stops_target(p1_core_fixture, tmp_path):
+    _, _, repository = p1_core_fixture
+    destination = tmp_path / "invalid-sqlite-target"
+    destination.mkdir()
+    database = destination / "core.sqlite3"
+    initialize(database, "core", repository, str(uuid4()))
+    database.write_bytes(b"not a sqlite database" * 500)
+    with pytest.raises(CoreFailure) as stopped:
+        admit_ref_unit_atomic(destination, "ref_subject", {}, RecoveryWorkBudget())
+    assert stopped.value.code == "AUTHORITATIVE_CORRUPTION"
+    assert (destination / "p1-recovery-stop.json").exists()
+
+
+def test_unrelated_sqlite_open_failure_does_not_stop_target(
+    p1_core_fixture, tmp_path, monkeypatch
+):
+    from repo_catalog.adapters.sqlite import ref_salvage
+
+    _, _, repository = p1_core_fixture
+    destination = tmp_path / "busy-sqlite-target"
+    destination.mkdir()
+    initialize(destination / "core.sqlite3", "core", repository, str(uuid4()))
+    failure = sqlite3.OperationalError("transient busy")
+    failure.sqlite_errorcode = sqlite3.SQLITE_BUSY
+
+    def fail(*_args, **_kwargs):
+        raise failure
+
+    monkeypatch.setattr(ref_salvage, "connect", fail)
+    with pytest.raises(sqlite3.OperationalError) as caught:
+        admit_ref_unit_atomic(destination, "ref_subject", {}, RecoveryWorkBudget())
+    assert caught.value is failure
+    assert not (destination / "p1-recovery-stop.json").exists()
+
+
 def test_scanner_keeps_original_observations_and_whole_events(acquisition):
     app, _, _, repository, origin, core_path, _ = acquisition
     p4_fixtures.fixture_note(acquisition)

@@ -16,6 +16,7 @@ from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     catalog_completion,
     catalog_gate,
+    persist_catalog_stop,
 )
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.ref_exchange import decode_ref_units
@@ -1699,14 +1700,37 @@ def admit_ref_unit(core, kind, payload, work):
     raise ValueError("unknown typed ref salvage unit")
 
 
+def _stop_for_sqlite_corruption(directory, error):
+    code = getattr(error, "sqlite_errorcode", 0)
+    if type(code) is int and code & 255 in (
+        sqlite3.SQLITE_CORRUPT,
+        sqlite3.SQLITE_NOTADB,
+    ):
+        persist_catalog_stop(
+            directory, "Confirmed Core SQLite corruption during salvage"
+        )
+        raise CoreFailure(
+            "AUTHORITATIVE_CORRUPTION", "catalog", "stored Core SQLite corruption"
+        ) from error
+
+
 def admit_ref_unit_atomic(directory: Path, kind, payload, work):
     """Commit every dependency and receiver check of one candidate together."""
     directory = Path(directory)
     with catalog_gate(directory, exclusive=True):
         if (directory / "p1-recovery-stop.json").exists():
             raise CoreFailure("RECOVERY_STOP", "catalog", "catalog stopped")
-        with closing(connect(directory / "core.sqlite3", "core")) as db:
-            db.execute("BEGIN IMMEDIATE")
+        try:
+            db = connect(directory / "core.sqlite3", "core")
+        except sqlite3.DatabaseError as error:
+            _stop_for_sqlite_corruption(directory, error)
+            raise
+        with closing(db):
+            try:
+                db.execute("BEGIN IMMEDIATE")
+            except sqlite3.DatabaseError as error:
+                _stop_for_sqlite_corruption(directory, error)
+                raise
             try:
                 with GitCore.for_transaction(db) as capability:
                     # Confirmed target damage must publish its stop fence even
@@ -1720,10 +1744,16 @@ def admit_ref_unit_atomic(directory: Path, kind, payload, work):
                     # admission: all writes of this individual unit roll back.
                     db.rollback()
                     return None
-                with catalog_completion(directory):
-                    if (directory / "p1-recovery-stop.json").exists():
-                        raise CoreFailure("RECOVERY_STOP", "catalog", "catalog stopped")
-                    db.commit()
+                try:
+                    with catalog_completion(directory):
+                        if (directory / "p1-recovery-stop.json").exists():
+                            raise CoreFailure(
+                                "RECOVERY_STOP", "catalog", "catalog stopped"
+                            )
+                        db.commit()
+                except sqlite3.DatabaseError as error:
+                    _stop_for_sqlite_corruption(directory, error)
+                    raise
                 return result
             except _WorkCallbackFailure as failure:
                 if db.in_transaction:

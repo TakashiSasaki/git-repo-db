@@ -1032,6 +1032,9 @@ legitimate verification's protected read. Keep the caller's exception object
 separate from stored-data validation failures so a callback `ValueError` or an
 exception shaped like SQLite corruption cannot stop a healthy target. Keep the
 SQLite statement cache disabled where the authorizer depends on that capability.
+Classify a confirmed SQLite `CORRUPT`/`NOTADB` at the actual connection,
+transaction-open or commit operation, outside the callback exception boundary;
+do not classify generic callback or transient lock errors as stored corruption.
 Use a valid replay, denied reentrant body read, real damaged target and forged
 incoming proof as separate controls, for example:
 `scripts/local-run.sh pytest -q -n 2 tests/integration/p7/test_ref_typed_salvage.py`.
