@@ -727,8 +727,8 @@ class ProductionQueryService:
                 snapshot_token=snap.token.encode(),
             )
 
-    def _ref_notes_targets_in_snapshot(self, core, oid):
-        work = UnlimitedWorkBudget()
+    def _ref_notes_targets_in_snapshot(self, core, oid, work=None):
+        work = work if work is not None else UnlimitedWorkBudget()
         rows = core.sql(
             "SELECT DISTINCT c.observation_origin_uuidv4,c.ref_observation_uuidv7,m.interpretation_kind,m.interpretation_version,m.interpretation_scope "
             "FROM ref_observation_claims c JOIN notes_mappings m ON m.object_format=c.root_format AND m.root_oid=c.root_oid "
@@ -786,6 +786,7 @@ class ProductionQueryService:
         *,
         include_bytes: bool = False,
         note_captures: Sequence[Capture] = (),
+        ref_work=None,
     ) -> GitObjectView:
         exists = core.sql(
             "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
@@ -853,7 +854,7 @@ class ProductionQueryService:
             metadata_retained=metadata_retained,
             retained_bytes=retained_bytes,
             notes_targets=tuple(notes_views),
-            ref_notes_targets=self._ref_notes_targets_in_snapshot(core, oid),
+            ref_notes_targets=self._ref_notes_targets_in_snapshot(core, oid, ref_work),
         )
 
     def list_git_objects(
@@ -873,10 +874,14 @@ class ProductionQueryService:
                 (object_format, object_format),
             )
 
+            ref_work = UnlimitedWorkBudget()
+
             def views():
                 for row in rows:
                     oid = self._stored(OID, row[0], row[1])
-                    view = self._git_object_in_snapshot(snap.core, oid)
+                    view = self._git_object_in_snapshot(
+                        snap.core, oid, ref_work=ref_work
+                    )
                     if native_type is not None and view.native_type != native_type:
                         continue
                     yield view
@@ -1632,7 +1637,10 @@ class ProductionQueryService:
         *,
         include_text: bool = True,
         include_core_bytes: bool = False,
+        ref_work=None,
     ) -> PairedResourceView:
+        ref_work = ref_work if ref_work is not None else UnlimitedWorkBudget()
+
         def check_in_core(fmt: str, full_oid: str) -> bool:
             return bool(
                 core.sql(
@@ -1660,6 +1668,7 @@ class ProductionQueryService:
                     oid,
                     include_bytes=include_core_bytes,
                     note_captures=all_captures,
+                    ref_work=ref_work,
                 )
                 notes_targets = obj_view.notes_targets
             resolutions.append(
@@ -1693,6 +1702,8 @@ class ProductionQueryService:
             token_str = snap.token.encode()
             keys = snap.context.resources(kind=resource_kind)
 
+            ref_work = UnlimitedWorkBudget()
+
             def views():
                 for key in keys:
                     paired_view = self._paired_resource_in_snapshot(
@@ -1701,6 +1712,7 @@ class ProductionQueryService:
                         token_str,
                         key,
                         include_text=False,
+                        ref_work=ref_work,
                     )
                     if (
                         repository_uuidv4 is not None
@@ -1728,7 +1740,11 @@ class ProductionQueryService:
                 selected,
                 items=tuple(
                     self._paired_resource_in_snapshot(
-                        snap.core, snap.context, token_str, view.resource
+                        snap.core,
+                        snap.context,
+                        token_str,
+                        view.resource,
+                        ref_work=ref_work,
                     )
                     for view in selected.items
                 ),
