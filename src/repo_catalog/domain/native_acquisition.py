@@ -10,6 +10,7 @@ from repo_catalog.domain.acquisition import (
     GitMetadataInput,
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,
+    RefNotesInput,
 )
 from repo_catalog.domain.p1_core import (
     OID,
@@ -28,6 +29,7 @@ from repo_catalog.domain.p1_core import (
     uuid4_value,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.ref_observation import RefObservationKey
 
 
 def _typed(value, expected):
@@ -52,6 +54,58 @@ def _text_tuple(values):
         for value in values
     ):
         raise CoreFailure("REQUEST", "native", "bounded nonempty ref text required")
+
+
+def ref_notes_input_intent(value, repository):
+    """Lossless original metadata coordinates for bounded request replay."""
+    _typed(value, RefNotesInput)
+    subject = value.observation
+    _typed(subject.ref_observation_key, RefObservationKey)
+    if subject.repository_uuidv4 != repository:
+        raise CoreFailure("REPOSITORY_SCOPE", repository, "foreign ref observation")
+    claims = []
+    for claim in value.claims:
+        claim.__post_init__()
+        _typed(claim.provenance, Provenance)
+        oids = (
+            claim.direct_target_oid,
+            claim.resolved_target_oid,
+            claim.peeled_target_oid,
+            claim.root_oid,
+        )
+        for oid in oids:
+            if oid is not None:
+                _oid(oid)
+        claims.append(
+            [
+                list(claim.identity),
+                claim.presence_state,
+                claim.ref_form,
+                [None if oid is None else list(oid.key) for oid in oids],
+                None
+                if claim.symbolic_target_ref_name is None
+                else claim.symbolic_target_ref_name.hex(),
+                None
+                if claim.absence_evidence is None
+                else claim.absence_evidence.encoded,
+            ]
+        )
+    for item in (*value.mapping_claims, *value.mapping_groups):
+        item.__post_init__()
+        _typed(item.provenance, Provenance)
+    return {
+        "subject": [
+            *subject.ref_observation_key.key,
+            subject.repository_uuidv4,
+            subject.ref_name_bytes.hex(),
+            subject.source_attribution,
+            subject.visibility_scope,
+            subject.observed_at_us,
+        ],
+        "claims": claims,
+        "mapping_claims": [list(item.key) for item in value.mapping_claims],
+        "mapping_groups": [list(item.key) for item in value.mapping_groups],
+    }
 
 
 def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
@@ -148,6 +202,7 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
             notes.external_groups,
             notes.target_oids,
             notes.nominated_refs,
+            notes.ref_inputs,
         ):
             if type(values) is not tuple or len(values) > 100_000:
                 raise CoreFailure("REQUEST", "notes", "bounded tuple input required")
@@ -188,6 +243,9 @@ def native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
             "groups": [
                 [list(item.capture.key), list(item.key)]
                 for item in notes.external_groups
+            ],
+            "ref_inputs": [
+                ref_notes_input_intent(item, repo) for item in notes.ref_inputs
             ],
         }
     result = {

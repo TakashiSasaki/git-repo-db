@@ -8,6 +8,70 @@ remain authoritative. The fixed baseline for this transition is main
 `1b28a48b51a2da35beec20444458791b42d5f2a6`). This is an engineering contract,
 not a new owner decision, public Schema 21 change, migration or release.
 
+## Current remaining-work assessment and input boundary
+
+Rechecked against main `2ff4aab59dcdbada264d9a6a978c07b6ac4ad0d2` in the
+cloud `git-repo-db` project. The dated six-PR proposal is an assessment input,
+not an execution order. Neither six PRs nor a standalone D0 merge is required.
+
+| Proposed work | Current disposition |
+| --- | --- |
+| D0 contract | The adopted ADR and this contract already establish the trust and retirement rules. Concretize input/projection boundaries with the first implementation; no new owner choice or standalone design PR is needed. |
+| I1 acquisition | Still needed: the old explicit/external inputs cannot express rootless observations or multiple Claims. Add the typed original-report input below. Existing native/discovery enumeration, Claim-aware inventory verification and typed salvage are already implemented; do not recreate them. |
+| I2 Query/CLI | Still needed for generic Git-object `notes_targets`, paired resource projections and their CLI consumers. Reuse the existing `get_ref_observation`, `get_ref_enumeration`, `get_notes_mapping`, `list_ref_notes_inventories` and `read_ref_note_bytes` boundaries. |
+| I3 Search | Still needed: extraction and document identity use Capture/legacy claims, groups, roles and retained Notes. Preserve observation, result Claim and Mapping identities, alternatives and checked-body authority. |
+| I4 old public API | Retire after producer/Query/Search callers have moved. No compatibility promise requires keeping an unused API, but it is still used now. |
+| I5 physical/wire/recovery cut | Still needed after consumer migration: P1 DDL and Exchange/backup/salvage retain both families and collision guards. Do not delete these in the input PR. |
+
+The first input implementation adds `NotesAcquisitionSpec.ref_inputs`, a bounded
+tuple of `RefNotesInput`. Each contains the original `RefObservation` subject,
+all supplied `RefObservationClaim` results, and optional reported
+`NotesMappingClaim`/`NotesMappingGroup` units. A Mapping report references an
+exact supplied Claim. Subject-only inputs are permitted. The subject's repository
+must match the acquisition repository; its original issuer, source, visibility,
+lossless raw ref name and nullable original time remain independent of the
+current request/source. No Capture conversion, UUID allocation or sender proof
+promotion occurs. Enumeration input continues through the existing scanner and
+Exchange routes; this carrier does not fabricate an enumeration link.
+
+Request intent binds every subject/result/report coordinate and encodes raw ref
+and symbolic-target bytes as hex. Replaying that request preserves original
+identities and reported alternatives; changing any intent requires a separate
+explicit request. Admission still rejects subject/coordinate rebinding, while
+independently attributed contradictory results remain inspectable as conflict.
+The carrier is not a new atomic bundle owner: independently admissible units
+can survive a later failure, and each whole Group remains atomic.
+
+With an actual Notes source, requested inventory and target operations run for
+each rootful supplied Claim through the existing root-specific receiver checks.
+Reported Groups alone create neither Coverage proof nor body permission.
+Inventory proofs retain the existing after-commit boundary for paired admission,
+caller-owned transactions and callback failures. Original unauthenticated reports
+are not claims of remote authenticity/freshness even when their structure can
+be checked locally. Actual work, including replay and failure, uses the same
+cumulative request budget. Rootless Claims and source-unavailable requested work
+remain in `GitAcquisitionReport.deferred_ref_claims`, with partial/unknown status;
+no fake root, empty inventory or complete Coverage is invented.
+
+Projection consumers must use the existing Claim-aware APIs, exposing every
+result and reported Group independently from current receiver evidence. Generic
+Query and paired resources must stop deriving new-model results from Capture;
+Search must then consume those explicit distinctions. Original evidence, local
+proof and physical-copy read authority remain separate even for shared Mapping
+content. Unsupported grammar/Coverage stays unknown/deferred. Query precedes
+Search, then the old API/family cut; exact PR count follows coherent diffs.
+
+This additive input PR preserves legacy input and discovery production because
+actual downstream consumers still depend on it. Its explicit new-input route
+produces no legacy Capture/Notes fact. It does not activate public Schema 21,
+change the physical/wire format, migrate a catalog, or repeat PR #221/#223's
+completed callback repair. Recovery remains corruption stop, read-only
+preservation, typed salvage, fresh restore, revalidation/merge, validation and
+activation under ADR 0026. Existing Recovery and collision tests remain required
+at the eventual physical cut. No remaining owner-policy blocker was identified
+for this first input boundary; B03/exact grammar and later activation/release
+remain separately scoped.
+
 ## Ordered review boundaries
 
 | Boundary | Consumer at the transition baseline and required replacement | Scope of first candidate (#219) |

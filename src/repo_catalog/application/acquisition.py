@@ -67,6 +67,7 @@ from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metad
 from repo_catalog.domain.native_acquisition import (
     metadata_input_intent,
     native_request_intent,
+    ref_notes_input_intent,
 )
 from repo_catalog.domain.notes import NotesInventory
 from repo_catalog.domain.p1_context import (
@@ -119,6 +120,8 @@ class _PreparedCore:
             "admit_ref_enumeration",
             "admit_ref_observation",
             "admit_ref_observation_claim",
+            "admit_notes_mapping",
+            "admit_notes_mapping_claim",
             "admit_notes_mapping_evidence",
             "admit_notes_mapping_group",
             "admit_ref_note",
@@ -149,18 +152,33 @@ class _PreparedCore:
         return _capture_binding(self.core, pair)
 
     def ref_observation(self, key, work):
-        from repo_catalog.domain.ref_observation import RefObservationProjection
+        from repo_catalog.domain.ref_observation import (
+            RefObservationProjection,
+            ref_claim_conflict,
+        )
 
+        subject = None
+        claims = []
         for name, args, _ in reversed(self.operations):
             _charge(work, "metadata_units", 1)
+            if name == "admit_ref_observation" and args[0].ref_observation_key == key:
+                subject = args[0]
+            elif (
+                name == "admit_ref_observation_claim"
+                and args[0].ref_observation_key == key
+            ):
+                claims.append(args[0])
             if name == "admit_ref_enumeration":
                 links = args[1]
                 for link in links:
                     _charge(work, "metadata_units", 1)
                     if link.observation.ref_observation_key == key:
-                        return RefObservationProjection(
-                            link.observation, (link.claim,), False
-                        )
+                        subject = link.observation
+                        claims.append(link.claim)
+        if subject is not None:
+            return RefObservationProjection(
+                subject, tuple(claims), ref_claim_conflict(tuple(claims))
+            )
         return self.core.ref_observation(key, work)
 
     def __getattr__(self, name):
@@ -265,6 +283,28 @@ def _finish_ref_inventories(report, core, source, work, progress, source_attribu
         ref_inventory_projections=tuple(projections),
     )
     return core._complete_read(completed)
+
+
+def _defer_ref_work(report, spec, source):
+    """A rootless report or missing source cannot satisfy requested verification."""
+    if spec is None or not (spec.acquire_inventories or spec.target_oids):
+        return report
+    deferred = tuple(
+        claim
+        for unit in spec.ref_inputs
+        for claim in unit.claims
+        if claim.root_oid is None or source is None
+    )
+    if not deferred:
+        return report
+    return replace(
+        report,
+        deferred_ref_claims=deferred,
+        status="partial" if report.admitted_objects else "unknown",
+        failure_code=report.failure_code or "REF_NOTES_DEFERRED",
+        failure_detail=report.failure_detail
+        or "requested Notes work needs a concrete root and source",
+    )
 
 
 @contextmanager
@@ -538,6 +578,44 @@ class GitAcquisition:
         ref_notes_inventories: list[RefNotesInventory] = []
         extra_oids: list[OID] = []
 
+        active_ref_claims = []
+        for unit in spec.ref_inputs:
+            value = ref_notes_input_intent(unit, repository_uuidv4)
+            _charge(work, "input_bytes", len(encode(value)))
+            _charge(work, "metadata_units", 1)
+            core_cap.admit_ref_observation(unit.observation)
+            for claim in unit.claims:
+                _charge(work, "metadata_units", 1)
+                core_cap.admit_ref_observation_claim(claim)
+                active_ref_claims.append(claim)
+                extra_oids.extend(
+                    oid
+                    for oid in (
+                        claim.direct_target_oid,
+                        claim.resolved_target_oid,
+                        claim.peeled_target_oid,
+                        claim.root_oid,
+                    )
+                    if oid is not None
+                )
+            for mapping_claim in unit.mapping_claims:
+                core_cap.admit_notes_mapping(mapping_claim.mapping, work)
+                _charge(work, "metadata_units", 1)
+                core_cap.admit_notes_mapping_claim(mapping_claim)
+                extra_oids.extend(
+                    (
+                        mapping_claim.mapping.root_oid,
+                        mapping_claim.mapping.annotated_object_oid,
+                        mapping_claim.mapping.note_oid,
+                    )
+                )
+            for group in unit.mapping_groups:
+                core_cap.admit_notes_mapping_group(group, work)
+                extra_oids.append(group.ref_claim.root_oid)
+                fmt = group.ref_claim.root_oid.object_format
+                for target, note, _ in group.members:
+                    extra_oids.extend((OID(fmt, target), OID(fmt, note)))
+
         active_captures: list[Capture] = list(spec.explicit_captures)
         for cap in spec.explicit_captures:
             _charge(work, "metadata_units", 1)
@@ -569,6 +647,18 @@ class GitAcquisition:
                 source_attribution=source_attribution,
                 repository_uuidv4=repository_uuidv4,
             )
+            for claim in active_ref_claims:
+                if claim.root_oid is None:
+                    continue
+                if spec.acquire_inventories:
+                    ref_notes_inventories.append(notes_app.inventory_ref(claim))
+                for target in spec.target_oids:
+                    result = notes_app.acquire_ref_note(
+                        claim, target, retain_body=spec.retain_note_bodies
+                    )
+                    ref_note_acquisitions.append(result)
+                    if result.note is not None:
+                        extra_oids.append(result.note)
             if spec.discover_notes:
                 disc_obs_id = spec.discovery_observation_uuidv4
                 if disc_obs_id is None:
@@ -1161,7 +1251,7 @@ class GitAcquisition:
                 failure_detail=failure_detail,
             )
             return _finish_ref_inventories(
-                report,
+                _defer_ref_work(report, request.notes, notes_src),
                 core_cap,
                 notes_src,
                 active_work,
@@ -1404,7 +1494,7 @@ class GitAcquisition:
                 else "",
             )
             return _finish_ref_inventories(
-                report,
+                _defer_ref_work(report, unit.notes, notes_source),
                 core_cap,
                 notes_source,
                 active_work,

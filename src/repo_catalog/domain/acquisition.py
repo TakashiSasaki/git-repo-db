@@ -56,8 +56,12 @@ from repo_catalog.domain.production_context import (
     json_value,
 )
 from repo_catalog.domain.ref_observation import (
+    NotesMappingClaim,
+    NotesMappingGroup,
     RefEnumerationResult,
     RefNotesInventoryProjection,
+    RefObservation,
+    RefObservationClaim,
 )
 from repo_catalog.domain.time import (
     validate_observation_us,
@@ -76,6 +80,44 @@ class AcquisitionError(ValueError):
 
 
 @dataclass(frozen=True)
+class RefNotesInput:
+    """Original subject and reported results; carries no receiver authority."""
+
+    observation: RefObservation
+    claims: tuple[RefObservationClaim, ...]
+    mapping_claims: tuple[NotesMappingClaim, ...] = ()
+    mapping_groups: tuple[NotesMappingGroup, ...] = ()
+
+    def __post_init__(self) -> None:
+        from repo_catalog.domain.p1_core import CoreFailure
+
+        if type(self.observation) is not RefObservation:
+            raise CoreFailure("REQUEST", "ref-notes", "typed original subject required")
+        self.observation.__post_init__()
+        for values, expected in (
+            (self.claims, RefObservationClaim),
+            (self.mapping_claims, NotesMappingClaim),
+            (self.mapping_groups, NotesMappingGroup),
+        ):
+            if type(values) is not tuple or len(values) > 100_000:
+                raise CoreFailure("REQUEST", "ref-notes", "bounded tuple required")
+            for value in values:
+                if type(value) is not expected:
+                    raise CoreFailure("REQUEST", "ref-notes", "typed report required")
+        if any(
+            claim.ref_observation_key != self.observation.ref_observation_key
+            for claim in self.claims
+        ):
+            raise CoreFailure("REQUEST", "ref-notes", "claim subject mismatch")
+        claims = set(self.claims)
+        if any(
+            item.ref_claim not in claims
+            for item in (*self.mapping_claims, *self.mapping_groups)
+        ):
+            raise CoreFailure("REQUEST", "ref-notes", "exact result Claim required")
+
+
+@dataclass(frozen=True)
 class NotesAcquisitionSpec:
     """Options for delegating Git Notes operations to P4 NotesAcquisition."""
 
@@ -88,6 +130,7 @@ class NotesAcquisitionSpec:
     explicit_captures: tuple[Capture, ...] = ()
     external_claims: tuple[NotesClaim, ...] = ()
     external_groups: tuple[NotesGroup, ...] = ()
+    ref_inputs: tuple[RefNotesInput, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -192,6 +235,7 @@ class GitAcquisitionReport:
     failure_detail: str = ""
     ref_inventory_verifications: tuple[RefNotesInventoryVerification, ...] = ()
     ref_inventory_projections: tuple[RefNotesInventoryProjection | None, ...] = ()
+    deferred_ref_claims: tuple[RefObservationClaim, ...] = ()
 
 
 @dataclass(frozen=True)
