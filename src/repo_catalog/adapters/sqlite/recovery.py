@@ -98,6 +98,24 @@ from repo_catalog.domain.recovery import (
     StoreManifest,
 )
 
+
+class RefObservationBackupUnsupported(BackupValidationError):
+    """The I3 backup manifest does not yet certify ref-observation data."""
+
+
+_REF_OBSERVATION_TABLES = frozenset(
+    {
+        "ref_observations",
+        "ref_observation_claims",
+        "notes_mappings",
+        "notes_mapping_claims",
+        "notes_mapping_groups",
+        "notes_mapping_evidence",
+        "ref_retained_notes",
+    }
+)
+
+
 AT_FDCWD = -100
 RENAME_NOREPLACE = 1
 
@@ -882,6 +900,9 @@ class SQLiteRecoveryAdapter:
             # Deep Domain and Retained-Byte Validation outside writer lock
             try:
                 core_summary = self._validate_and_summarize_core(staged_core)
+            except RefObservationBackupUnsupported:
+                # Unsupported I1 integration is not evidence of corruption.
+                raise
             except (BackupValidationError, sqlite3.Error) as e:
                 self._diagnose_and_stop_if_source_corrupt(
                     catalog_dir, core_db_path, "core", e
@@ -1368,6 +1389,14 @@ class SQLiteRecoveryAdapter:
             validate_stored_checks(conn, "core", retained_bytes=True)
             validate_stored_admission_guards(conn, "core")
 
+            # The existing manifest's retained-body accounting does not include
+            # the I1 ref-observation family. Never certify an incomplete backup.
+            for table in _REF_OBSERVATION_TABLES:
+                if conn.execute(f'SELECT 1 FROM "{table}" LIMIT 1').fetchone():
+                    raise RefObservationBackupUnsupported(
+                        "RefObservation backup/restore requires the I3 manifest integration"
+                    )
+
             return RetainedByteSummary(
                 commit_count=commits,
                 tree_count=trees,
@@ -1700,6 +1729,33 @@ class SQLiteRecoveryAdapter:
                                 "provenance": None,
                                 "extraction_status": ExtractionStatus.PARTIAL.value,
                                 "error": f"Source row size {row_bytes} exceeds finite payload limit {max_payload_bytes}",
+                            }
+                            line = json.dumps(cand_record) + "\n"
+                            line_bytes = len(line.encode("utf-8"))
+                            if bytes_offset + written_bytes + line_bytes > max_bytes:
+                                stopped_due_to_limits = True
+                                break
+                            out_f.write(line)
+                            written_records += 1
+                            written_bytes += line_bytes
+                            partial += 1
+                            continue
+
+                        if store_name == "core" and table in _REF_OBSERVATION_TABLES:
+                            # Until I3 supplies typed recovery, explicitly report
+                            # the unsupported candidate and never stage its body
+                            # or structural proof as generic Git metadata.
+                            cand_record = {
+                                "candidate_id": f"{store_name}:{table}:{written_records}",
+                                "candidate_type": CandidateType.GIT_METADATA.value,
+                                "extraction_provenance": {
+                                    "store": store_name,
+                                    "table": table,
+                                },
+                                "payload": {},
+                                "provenance": None,
+                                "extraction_status": ExtractionStatus.PARTIAL.value,
+                                "error": "RefObservation salvage requires I3 typed recovery integration",
                             }
                             line = json.dumps(cand_record) + "\n"
                             line_bytes = len(line.encode("utf-8"))

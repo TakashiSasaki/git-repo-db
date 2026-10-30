@@ -113,6 +113,7 @@ def test_isolated_target_exclusion_does_not_hide_production_runtime_imports():
     "source",
     [
         "import repo_catalog.domain.p1_core as core",
+        "from repo_catalog.domain import ref_observation",
         "from repo_catalog.domain import p1_core",
         "from repo_catalog.adapters.sqlite.git_core import GitCore",
         "from repo_catalog.adapters.sqlite import production_context",

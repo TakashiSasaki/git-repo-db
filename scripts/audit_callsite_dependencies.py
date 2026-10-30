@@ -24,6 +24,7 @@ ISOLATED_P1_MODULES = frozenset(
         "adapters/sqlite/p1_context.py",
         "adapters/sqlite/p1_coordination.py",
         "domain/p1_core.py",
+        "domain/ref_observation.py",
         "domain/p1_context.py",
         "domain/p1_coverage.py",
         "domain/p1_coordination.py",

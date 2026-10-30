@@ -115,3 +115,23 @@ node/phase identity first, and do not infer that an absent sidecar proves equali
 The [I6-B correction evidence](../../../docs/implementation/evidence/adr0031-i6b-m01-m02-20261023/REPORT.md)
 records this distinction and its comparator; assertion statement entry remains
 separate from subexpression, other-thread and child-process coverage.
+
+## Audit SQLite expression indexes without losing their semantics
+
+When a schema disposition check fails while sorting index columns after an
+expression index is added, inspect `PRAGMA index_info` before changing the
+schema: an expression has no column name and SQLite returns `None`. Record a
+stable ordinal placeholder for that slot and retain the full index definition
+from `sqlite_schema.sql`, including the expression and any predicate. A
+placeholder alone does not describe the uniqueness rule. Do not weaken or drop
+the index to make the report sort. Verify both the regenerated audit and a
+synthetic assertion over the actual expression SQL through the verified local
+environment:
+
+```sh
+scripts/local-run.sh python scripts/audit_p1_schema.py --check
+scripts/local-run.sh pytest -q -n 2 tests/integration/p1/test_ref_observation_i1.py -k audit
+```
+
+This addresses expression-index introspection in the P1 schema audit; it does
+not certify a live catalog, a migration, or all SQLite schema features.

@@ -1160,11 +1160,17 @@ class GitObservation:
 
 @dataclass(frozen=True)
 class CoreCoverageScope:
-    owner_kind: Literal["repository", "capture", "object", "field"]
+    owner_kind: Literal["repository", "capture", "ref_observation", "object", "field"]
     coordinates: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        widths = {"repository": 2, "capture": 3, "object": 3, "field": 4}
+        widths = {
+            "repository": 2,
+            "capture": 3,
+            "ref_observation": 3,
+            "object": 3,
+            "field": 4,
+        }
         if (
             self.owner_kind not in widths
             or len(self.coordinates) != widths[self.owner_kind]
@@ -1178,6 +1184,10 @@ class CoreCoverageScope:
         elif self.owner_kind == "capture":
             for value in self.coordinates[:2]:
                 uuid4_value(value)
+        elif self.owner_kind == "ref_observation":
+            from repo_catalog.domain.ref_observation import RefObservationKey
+
+            RefObservationKey(*self.coordinates[:2])
         else:
             OID(*self.coordinates[:2])
 

@@ -40,6 +40,10 @@ _PERSISTENT_GUARDS = {
     "core": {
         "relation_targets",
         "notes_group_targets",
+        "notes_mapping_group_targets",
+        "ref_absence_subject",
+        "ref_notes_same_representation",
+        "old_notes_same_representation",
         "notes_inventory_guard",
         "metadata_same_representation",
         "intrinsic_claim_guard",
@@ -48,6 +52,7 @@ _PERSISTENT_GUARDS = {
         "notes_claim_format",
         "notes_group_format",
         "core_coverage_members",
+        "ref_coverage_proof_requires_typed_evidence",
     },
     "context": {
         "coverage_proof_owner",

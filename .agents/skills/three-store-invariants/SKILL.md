@@ -931,3 +931,34 @@ The [M01/M02 evidence](../../../docs/implementation/evidence/adr0031-i6b-m01-m02
 retains the failed frozen review probes and corrected observations. This procedure
 does not activate Provider/Exchange routes, retire Transfer fences or substitute
 for separate non-Author review.
+
+## Replay and bounded note-copy reads
+
+When a valid incoming note replay conflicts with a stored copy, validate the
+existing copy's native bytes, digest and exact claim/root/role evidence under
+the writer cut before treating the input as an incompatible replay. A constraint
+error alone does not prove corruption; explicitly diagnose the stored unit and
+persist the catalog stop only for a confirmed authoritative invariant failure.
+If the conflicting representation is another copy, bound and charge the
+diagnostic scan across every table actually compared, including transitional
+legacy copies, and preserve an ordinary refusal for a checked valid collision.
+Account for comparisons performed by SQL INSERT triggers too: reserve the
+bounded existing-copy byte cost before they run, retaining the reservation if
+an interruption makes actual comparison work uncertain.
+
+Select one eligible copy by an indexed semantic scope before loading body bytes.
+Measure all variable-width columns, enforce finite limits, and reserve cumulative
+input work before fetching each row, including dependent claim and subject rows.
+Bound caller metadata and its encoded form before serialization; copied identity
+coordinates do not substitute for comparing the complete immutable claim.
+Charge actual repeated proof and body verification;
+an exhausted budget must not be converted to a corruption stop. Include a
+same-length damaged body, missing role, valid replay, unrelated constraint
+failure, interrupted reservation and several large copies as separate controls.
+For SQLite's supported P1 version, `octet_length(column)` obtains a TEXT or
+BLOB byte length from storage metadata; `length(CAST(text AS BLOB))` may load
+the unbudgeted text first. See SQLite's [core functions](https://sqlite.org/lang_corefunc.html#octet_length).
+Exercise the synthetic regression with
+`scripts/local-run.sh pytest -q -n 2 tests/integration/p1/test_ref_observation_i1.py`.
+This is an opt-in Core boundary; it does not implement I2/I3 or establish release
+acceptance.
