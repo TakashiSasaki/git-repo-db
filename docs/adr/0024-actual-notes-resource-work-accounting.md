@@ -5,15 +5,15 @@ replaces: []
 refines:
   - 0023-configurable-finite-notes-resource-budgets.md
   - 0022-receiver-verified-notes-role-admission.md
-  - 0019-monotonic-notes-capture-fact-admission.md
-  - 0021-direct-semantic-notes-claim-group-keys.md
 ---
 
 # ADR 0024: Account for actual notes-processing work, including reprocessed deliveries
 
+**Current identity and evidence contract:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md) replaces ADRs 0018–0021 and 0027. Their historical UUIDv4 capture-pair and blanket same-key root-rejection wording below is not current authority. Original observation-scoped reports and groups remain distinct; exact replay, receiver verification, no-PKI attribution, finite budgets and corruption recovery remain binding.
+
 **Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
 
-**Subsequent accepted refinement:** [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative actual work for one explicit request across continuation/resume/retry. Resource settings, counters/defaults and progress mechanics are engineering work, not further owner blockers. [ADR 0027 / Option A](0027-unauthenticated-external-capture-origin-reports.md) accepts unauthenticated external-origin reports without PKI/signatures; ADR 0026 fixes recovery without quarantine/count. The current scope has provisionally 0 known owner blockers. Section 8 preserves the historical comparison with A now selected.
+**Subsequent accepted refinement:** [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative actual work for one explicit request across continuation/resume/retry. Resource settings, counters/defaults and progress mechanics are engineering work, not further owner blockers. [ADR 0027 / Option A](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0027-unauthenticated-external-capture-origin-reports.md) accepts unauthenticated external-origin reports without PKI/signatures; ADR 0026 fixes recovery without quarantine/count. The current scope has provisionally 0 known owner blockers. Section 8 preserves the historical comparison with A now selected.
 
 - **Decision ID:** B02-R03; **owner selected Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #64 / ADR 0023](https://github.com/TakashiSasaki/git-repo-db/pull/64), verified HEAD `6975fbda577323291b922ddc6a89369dcdab0bbb`, branch `codex/adr-0023-configurable-notes-resource-budgets`. Direct documentation-only successor; no implementation or merge.
@@ -53,7 +53,7 @@ No required Context registration, hidden live fetch, all-attempt Core verificati
 
 ## 4. Domain replay and work accounting have different owners
 
-Keep original Capture UUIDv4 pair, immutable source/ref/root and ADR 0021 semantic claim/group composites. Actual repeated work is **not** a new source observation, claim occurrence, group member or physical instance merely because another attempt happened.
+Keep the original RefObservationKey, immutable subject, distinct result claims and ADR 0036 semantic claim/group references. A replay or reprocessing alone does not create a new source observation; an actual fresh ref read receives a new key.
 
 Operational owns scoped work counters/progress/retries under ADR 0025's cumulative request rule; the implementing agent owns their concrete mechanics. Git Core retains actual eligible immutable domain/admission/physical facts; no mutable Core resource counter, per-replay success ledger, receiver-only accounting surrogate or lifetime Capture budget owner is selected. Losing/rebuilding Operational cannot invalidate or delete admitted Core evidence. The implementing agent must handle lost accounting truthfully under ADR 0025, never fabricate zero prior cost for the same resumed request; this is not another owner-option question.
 
@@ -76,7 +76,7 @@ At a limit, ADR 0023 still preserves independently admissible metadata and compl
 | Decision | Preserved/refined constraint |
 | --- | --- |
 | ADR 0014/0015 | No ordinary file-body archive or hidden staging; observable notes ref discovery is not role proof or complete inventory |
-| ADR 0016/0018 | Genuine immutable observations remain separate; retry retains actual two-UUIDv4 Capture identity |
+| ADR 0016/0036 | Genuine observations remain separate; replay retains the original UUIDv4-origin/UUIDv7-observation key |
 | ADR 0017 / KEY-P01 | Direct domain composite PK/FK, no extra authoritative accounting/claim surrogate |
 | ADR 0019–0021 | Compatible immutable additions, exact provenance-bound replay, competing alternatives and whole-group atomic identity stay distinct from processing attempts |
 | ADR 0022 / B02-R01 A | Receiver-local structural role proof plus exact body checks remain mandatory; reuse is not sender-verification laundering |

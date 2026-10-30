@@ -5,15 +5,15 @@ replaces: []
 refines:
   - 0022-receiver-verified-notes-role-admission.md
   - 0014-history-and-notes-catalog-without-file-archive.md
-  - 0019-monotonic-notes-capture-fact-admission.md
-  - 0021-direct-semantic-notes-claim-group-keys.md
 ---
 
 # ADR 0023: Configurable finite budgets for Git notes body admission and proof work
 
+**Current identity and evidence contract:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md) replaces ADRs 0018–0021 and 0027. Their historical UUIDv4 capture-pair and blanket same-key root-rejection wording below is not current authority. Original observation-scoped reports and groups remain distinct; exact replay, receiver verification, no-PKI attribution, finite budgets and corruption recovery remain binding.
+
 **Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
 
-**Subsequent accepted refinement:** [ADR 0024 / B02-R03 A](0024-actual-notes-resource-work-accounting.md) fixes actual-work accounting: reprocessing costs work despite domain replay, and safe reuse avoids fictitious body charges while real reference/proof work still counts. The accounting comparison below is historical; [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative request scope and removes resource implementation details from owner-blocker classification. Proof/completeness encoding remains engineering work; GCTX-M10 recovery is fixed by ADR 0026. [ADR 0027 / Option A](0027-unauthenticated-external-capture-origin-reports.md) accepts unauthenticated external-origin reports without PKI/signatures; the current scope has provisionally 0 known owner blockers.
+**Subsequent accepted refinement:** [ADR 0024 / B02-R03 A](0024-actual-notes-resource-work-accounting.md) fixes actual-work accounting: reprocessing costs work despite domain replay, and safe reuse avoids fictitious body charges while real reference/proof work still counts. The accounting comparison below is historical; [ADR 0025 / B02-R04 A](0025-cumulative-request-budgets-and-scoped-blockers.md) fixes cumulative request scope and removes resource implementation details from owner-blocker classification. Proof/completeness encoding remains engineering work; GCTX-M10 recovery is fixed by ADR 0026. [ADR 0027 / Option A](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0027-unauthenticated-external-capture-origin-reports.md) accepts unauthenticated external-origin reports without PKI/signatures; the current scope has provisionally 0 known owner blockers.
 
 - **Decision ID:** B02-R02; **owner selected Option A**, accepted 2026-10-15.
 - **Direct base:** [PR #63 / ADR 0022](https://github.com/TakashiSasaki/git-repo-db/pull/63), verified HEAD `8bf737152033902063eac7513840a210c06bbfbb`, branch `codex/adr-0022-verified-notes-role-admission`. Direct documentation-only successor; no implementation or merge.

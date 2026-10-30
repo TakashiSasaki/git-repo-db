@@ -7,11 +7,12 @@ refines:
   - 0005-common-oid-identity-with-attributed-metadata.md
   - 0006-field-claims-and-observation-scoped-relations.md
   - 0017-domain-keys-without-storage-surrogates.md
-  - 0027-unauthenticated-external-capture-origin-reports.md
   - 0028-classified-times-and-sha256-exchange.md
 ---
 
 # ADR 0030: Typed Repository Context relations and selective Exchange without Witness storage
+
+**Current identity and evidence contract:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md) replaces ADRs 0018–0021 and 0027. Their historical UUIDv4 capture-pair and blanket same-key root-rejection wording below is not current authority. Original observation-scoped reports and groups remain distinct; exact replay, receiver verification, no-PKI attribution, finite budgets and corruption recovery remain binding.
 
 ## Decision
 
@@ -179,6 +180,6 @@ with an explicit counterexample instead of silently resolved.
 - [Selective Exchange contract](../architecture/selective-exchange-contract.md)
 - [Source audit, experiment evidence and stacked implementation handoff](../implementation/context-exchange-design-handoff.md)
 - [ADR governance](policy.md), [ADR 0017](0017-domain-keys-without-storage-surrogates.md),
-  [ADR 0027](0027-unauthenticated-external-capture-origin-reports.md),
+  [ADR 0027](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0027-unauthenticated-external-capture-origin-reports.md),
   [ADR 0028](0028-classified-times-and-sha256-exchange.md)
 - [Accepted Access boundary and confirmed Scope decisions](0029-independent-access-store.md) (physical/adapter details remain separately proposed)
