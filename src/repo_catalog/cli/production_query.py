@@ -21,6 +21,7 @@ from repo_catalog.domain.production_query import (
     QueryError,
     SearchQuery,
     canonical_json,
+    ref_projection_json,
 )
 
 
@@ -82,6 +83,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_gobs.add_argument("--kind", default=None)
     p_gobs.add_argument("--ref-prefix", default=None)
     _add_page_args(p_gobs)
+
+    p_refobs = sub.add_parser(
+        "ref-observations", help="Page original ref observations and all result Claims"
+    )
+    _add_common_args(p_refobs)
+    _add_page_args(p_refobs)
 
     # notes
     p_notes = sub.add_parser("notes", help="List Notes captures with pagination")
@@ -187,6 +194,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "mode": mode,
                 "repository_uuidv4": token.repository_uuidv4,
                 "snapshot_token": token.encode(),
+            }
+        elif cmd == "ref-observations":
+            page = service.list_ref_observations(_page_from_args(args))
+            payload = {
+                "items": [ref_projection_json(item) for item in page.items],
+                "has_more": page.has_more,
+                "next_cursor": page.next_cursor,
+                "snapshot_token": page.snapshot_token,
             }
         elif cmd == "git-object":
             oid = OID(args.format, args.oid)

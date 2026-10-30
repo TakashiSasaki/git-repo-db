@@ -30,6 +30,7 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeVar
 
+from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     PairCoordinator,
@@ -69,6 +70,7 @@ from repo_catalog.domain.production_query import (
     PairedResourceView,
     ProviderView,
     QueryError,
+    RefNotesTargetView,
     SearchHit,
     SearchQuery,
     SearchResponse,
@@ -76,6 +78,7 @@ from repo_catalog.domain.production_query import (
     SourceView,
     filter_digest,
 )
+from repo_catalog.domain.ref_observation import RefObservationKey
 
 if TYPE_CHECKING:
     from repo_catalog.adapters.sqlite.production_context import Context
@@ -697,6 +700,69 @@ class ProductionQueryService:
             claims={k: tuple(v) for k, v in claims_by_field.items()},
         )
 
+    def list_ref_observations(self, page: PageRequest = PageRequest(), *, work=None):
+        """Page original subjects with every Claim, including rootless results."""
+        work = work if work is not None else UnlimitedWorkBudget()
+        with self.open_snapshot(required_store="core") as snap:
+            core = snap.core
+            assert core is not None
+            rows = core.sql(
+                "SELECT observation_origin_uuidv4,ref_observation_uuidv7 FROM ref_observations ORDER BY observation_origin_uuidv4,ref_observation_uuidv7 LIMIT 10001"
+            )
+            if len(rows) > 10000:
+                raise QueryError(
+                    "QUERY_BUDGET",
+                    "ref-observations",
+                    "finite observation scope exceeded",
+                )
+            return _paginate_items(
+                (
+                    core.ref_observation(self._stored(RefObservationKey, *row), work)
+                    for row in rows
+                ),
+                key_fn=lambda v: v.ref_observation.ref_observation_key.key,
+                page=page,
+                endpoint_kind="ref_observations",
+                filters={},
+                snapshot_token=snap.token.encode(),
+            )
+
+    def _ref_notes_targets_in_snapshot(self, core, oid):
+        work = UnlimitedWorkBudget()
+        rows = core.sql(
+            "SELECT DISTINCT c.observation_origin_uuidv4,c.ref_observation_uuidv7,m.interpretation_kind,m.interpretation_version,m.interpretation_scope "
+            "FROM ref_observation_claims c JOIN notes_mappings m ON m.object_format=c.root_format AND m.root_oid=c.root_oid "
+            "WHERE m.object_format=? AND m.annotated_object_oid=? ORDER BY 1,2,3,4,5 LIMIT 10001",
+            oid.key,
+        )
+        if len(rows) > 10000:
+            raise QueryError(
+                "QUERY_BUDGET", "ref-notes-targets", "finite association scope exceeded"
+            )
+        views = []
+        for row in rows:
+            observation = core.ref_observation(
+                self._stored(RefObservationKey, row[0], row[1]), work
+            )
+            for claim in observation.claims:
+                if (
+                    claim.root_oid is None
+                    or claim.root_oid.object_format != oid.object_format
+                ):
+                    continue
+                projection = core.notes_mapping_projection(claim, oid, *row[2:], work)
+                if (
+                    projection.claims
+                    or projection.evidence
+                    or any(
+                        target == oid.full_oid
+                        for group in projection.groups
+                        for target, _, _ in group.members
+                    )
+                ):
+                    views.append(RefNotesTargetView(observation, projection))
+        return tuple(views)
+
     def get_git_object(
         self,
         oid: OID,
@@ -787,6 +853,7 @@ class ProductionQueryService:
             metadata_retained=metadata_retained,
             retained_bytes=retained_bytes,
             notes_targets=tuple(notes_views),
+            ref_notes_targets=self._ref_notes_targets_in_snapshot(core, oid),
         )
 
     def list_git_objects(
@@ -1602,6 +1669,9 @@ class ProductionQueryService:
                     core_required=dep.required,
                     object_view=obj_view,
                     notes_targets=notes_targets,
+                    ref_notes_targets=obj_view.ref_notes_targets
+                    if obj_view is not None
+                    else (),
                 )
             )
 

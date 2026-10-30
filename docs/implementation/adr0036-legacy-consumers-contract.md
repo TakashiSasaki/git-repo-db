@@ -270,3 +270,31 @@ no-carrier approval flow is unchanged. No extra budget, sender authority or
 unbounded pre-intent serialization supplies a shortcut around the original
 request. Original FAIL evidence and independent re-review remain distinct from
 the author's regression results.
+
+## First Query projection unit (stacked on PR 226)
+
+Git-object results add `ref_notes_targets` alongside the transitional legacy
+`notes_targets`. Each entry contains the full original observation projection
+(all result Claims, including unknown/competing results) and an exact-Claim,
+explicit-interpretation Mapping projection read through the existing checked
+Core API. Shared root content alone is not an association: require an original
+Mapping Claim, relevant Group member or exact Claim's local evidence. Paired
+Core resolutions reuse the same object projection inside the paired snapshot.
+No global latest/root/note winner is selected.
+
+These new associations are metadata/evidence projections. They do not infer
+physical body availability or return note-body bytes. The existing
+`read_ref_note_bytes` remains the explicit checked-body API; `include_bytes`
+continues its implemented metadata/legacy-body behavior in this first unit.
+Search, legacy family/API retirement and a new generic byte-output interface
+remain separate work.
+
+`list_ref_observations` and the opt-in CLI `ref-observations` enumerate original
+subjects with every result Claim, including subject-only and rootless results.
+They reuse existing snapshot-fenced pagination and validate the UUIDv4/v7 cursor
+position independently of its checksum. Raw ref and symbolic-target bytes are
+encoded as `{bytes_hex: ...}` without UTF-8 decoding. A changed Core snapshot
+invalidates an old cursor. The existing `notes` command retains its explicitly
+legacy Capture meaning. A finite 10,000-subject/association scan bound refuses
+larger scope with QUERY_BUDGET rather than returning a falsely complete result;
+checked projections also retain their finite work/byte/proof limits.
