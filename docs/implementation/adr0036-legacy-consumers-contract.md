@@ -314,3 +314,33 @@ exceptions cross all corruption classifiers in that wrapper and are restored to
 the original exception object outside the application snapshot. Actual stored
 corruption retains the existing stop behavior; no classifier or stop condition
 is weakened.
+
+## First Search migration unit
+
+The common pinned-snapshot extraction used by Search rebuild and authority
+fallback adds new-model Notes documents alongside the transitional legacy
+Capture documents. A new document key includes an explicit ref-notes namespace,
+the observation origin/v7 pair, exact result-Claim provenance and the full typed
+Mapping value, including interpretation and nullable path. All alternatives
+are considered; no representative Claim/root/note is chosen. Mapping-only,
+Group-only and partial/historical reported Groups remain discoverable metadata.
+Their source provenance and reported state stay separate from current inventory
+Coverage and receiver-local role evidence.
+
+Only the existing exact-Claim `read_ref_note` may supply text, from a locally
+eligible checked physical copy. Another Claim sharing a root/Mapping lends no
+body permission. A corrupted selected copy stops the catalog; a missing eligible
+copy leaves metadata searchable. An old complete report does not override newer
+partial Coverage, while independently admitted path/body evidence retains its
+own meaning. Binary refs retain hex identity in summaries. Rootless observations
+with no Mapping do not acquire invented Mapping search documents.
+
+New-model extraction shares finite work across Claims and Maps in an invocation;
+a supplied work handle can also accumulate across invocations. Search and
+rebuild use `_QueryWorkBoundary` across all snapshot/classifier layers. Variable
+key/summary/text processing is reserved before processing. Checked Core readers,
+finite header/document/summary limits and existing Search candidate revalidation
+remain authoritative. Large scopes may honestly refuse with a resource limit;
+no truncation is presented as complete. Search remains disposable. Old API,
+physical family, schema/wire retirement and normal Schema 21 activation are not
+part of this unit.

@@ -39,6 +39,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
     catalog_completion,
     persist_catalog_stop,
 )
+from repo_catalog.application.ref_observations import encode_metered
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.p1_core import (
     OID,
@@ -77,8 +78,9 @@ from repo_catalog.domain.production_query import (
     SnapshotFenceToken,
     SourceView,
     filter_digest,
+    ref_projection_json,
 )
-from repo_catalog.domain.ref_observation import RefObservationKey
+from repo_catalog.domain.ref_observation import NotesMapping, RefObservationKey
 
 if TYPE_CHECKING:
     from repo_catalog.adapters.sqlite.production_context import Context
@@ -1779,8 +1781,235 @@ class ProductionQueryService:
     # Derivative Search Rebuild and Verification-Aware Querying
     # ------------------------------------------------------------------
 
+    def _extract_ref_notes_documents(self, core, work):
+        from repo_catalog.adapters.sqlite.production_search import BoundedDocuments
+
+        docs = BoundedDocuments()
+        summaries = {}
+        summary_bytes = 0
+        keys = core.sql(
+            "SELECT observation_origin_uuidv4,ref_observation_uuidv7 FROM ref_observations ORDER BY 1,2 LIMIT 10001"
+        )
+        if len(keys) > 10000:
+            raise QueryError(
+                "QUERY_BUDGET", "ref-notes-search", "finite observation scope"
+            )
+        for key in keys:
+            observed = core.ref_observation(self._stored(RefObservationKey, *key), work)
+            subject = observed.ref_observation
+            for claim in observed.claims:
+                if claim.root_oid is None:
+                    continue
+                inventory = core.ref_notes_inventory_projection(claim, work)
+                provenance = encode_metered(work, claim.provenance.key, 1024 * 1024)
+                claim_coordinates = (*claim.ref_observation_key.key, provenance)
+                coordinates = {}
+
+                def coordinate(values):
+                    encoded = encode_metered(work, values, 1024 * 1024)
+                    work.require("input_bytes", len(encoded))
+                    coordinates[encoded] = values
+                    work.charge("input_bytes", len(encoded))
+
+                for reported in inventory.groups:
+                    group = reported.group
+                    for target, _, _ in group.members:
+                        work.require("metadata_units", 1)
+                        work.charge("metadata_units", 1)
+                        coordinate(
+                            (
+                                claim.root_oid.object_format,
+                                target,
+                                group.interpretation_kind,
+                                group.interpretation_version,
+                                group.interpretation_scope,
+                            )
+                        )
+                for table in ("notes_mapping_claims", "notes_mapping_evidence"):
+                    where = " WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=?"
+                    columns = "object_format,annotated_object_oid,interpretation_kind,interpretation_version,interpretation_scope"
+                    select = (
+                        "SELECT "
+                        + columns
+                        + " FROM "
+                        + table
+                        + where
+                        + " ORDER BY 1,2,3,4,5 LIMIT 10001"
+                    )
+                    count, size = core.sql(
+                        "SELECT count(*),coalesce(sum(octet_length(object_format)+octet_length(annotated_object_oid)+octet_length(interpretation_kind)+octet_length(interpretation_version)+octet_length(interpretation_scope)),0) FROM ("
+                        + select
+                        + ")",
+                        claim_coordinates,
+                    )[0]
+                    if count > 10000 or size > 1024 * 1024:
+                        raise QueryError(
+                            "QUERY_BUDGET", "ref-notes-search", "finite header scope"
+                        )
+                    work.require("input_bytes", size)
+                    work.charge("input_bytes", size)
+                    work.require("metadata_units", count)
+                    work.charge("metadata_units", count)
+                    for row in core.sql(select, claim_coordinates):
+                        coordinate(tuple(row))
+                for fmt, target, kind, version, scope in coordinates.values():
+                    projection = core.notes_mapping_projection(
+                        claim,
+                        self._stored(OID, fmt, target),
+                        kind,
+                        version,
+                        scope,
+                        work,
+                    )
+                    mappings = {}
+                    sources = {}
+                    verified = set()
+
+                    def remember(mapping, source, checked=False):
+                        values = [
+                            *mapping.root_oid.key,
+                            mapping.interpretation_kind,
+                            mapping.interpretation_version,
+                            mapping.interpretation_scope,
+                            mapping.annotated_object_oid.full_oid,
+                            mapping.note_oid.full_oid,
+                            mapping.mapping_path,
+                        ]
+                        identity = encode_metered(work, values, 1024 * 1024)
+                        work.require("input_bytes", len(identity))
+                        mappings[identity] = mapping
+                        sources.setdefault(identity, []).append(source)
+                        if checked:
+                            verified.add(identity)
+                        work.charge("input_bytes", len(identity))
+
+                    for reported in projection.claims:
+                        remember(reported.mapping, ("claim", reported.provenance))
+                    for evidence in projection.evidence:
+                        remember(
+                            evidence.mapping, ("receiver", evidence.provenance), True
+                        )
+                    for group in projection.groups:
+                        for member_target, note, path in group.members:
+                            work.require("metadata_units", 1)
+                            work.charge("metadata_units", 1)
+                            if member_target == target:
+                                remember(
+                                    self._stored(
+                                        NotesMapping,
+                                        claim.root_oid,
+                                        kind,
+                                        version,
+                                        scope,
+                                        self._stored(OID, fmt, target),
+                                        self._stored(OID, fmt, note),
+                                        path,
+                                    ),
+                                    (
+                                        "group",
+                                        group.provenance,
+                                        group.group_scope,
+                                        group.status,
+                                    ),
+                                )
+                    for identity, mapping in mappings.items():
+                        retained = False
+                        raw = b""
+                        try:
+                            raw = core.read_ref_note(claim, mapping, work)
+                            retained = True
+                        except CoreFailure as error:
+                            if error.code != "NOTES_ROLE_UNAVAILABLE":
+                                raise
+
+                        def text(raw):
+                            work.require("input_bytes", 4 * len(raw))
+                            try:
+                                value = raw.decode("utf-8", "backslashreplace")
+                            except BaseException:
+                                work.abandon("input_bytes")
+                                raise
+                            work.charge("input_bytes", len(value.encode("utf-8")))
+                            return value
+
+                        body = text(raw)
+                        ref = text(subject.ref_name_bytes)
+                        doc_key = encode_metered(
+                            work,
+                            [
+                                "ref-notes",
+                                *claim.ref_observation_key.key,
+                                provenance,
+                                identity,
+                            ],
+                            1024 * 1024,
+                        )
+                        # Leave room for the JSON/checksum/base64 cursor envelope.
+                        # Keep the full semantic key; never replace it by a hash.
+                        if len(doc_key) > 16384:
+                            raise QueryError(
+                                "QUERY_BUDGET",
+                                "ref-notes-search",
+                                "finite cursor key limit",
+                            )
+                        copy_bytes = 2 * (
+                            len(subject.ref_name_bytes)
+                            + len(claim.symbolic_target_ref_name or b"")
+                        ) + len(identity)
+                        work.require("input_bytes", copy_bytes)
+                        observed_json = ref_projection_json(subject)
+                        claim_json = ref_projection_json(claim)
+                        mapping_json = ref_projection_json(mapping)
+                        role_verified = identity in verified
+                        work.charge("input_bytes", copy_bytes)
+                        source_work = 8 * len(sources[identity])
+                        work.require("metadata_units", source_work)
+                        source_json = ref_projection_json(sources[identity])
+                        work.charge("metadata_units", source_work)
+                        summary = {
+                            "kind": "ref_notes_mapping",
+                            "observation": observed_json,
+                            "claim": claim_json,
+                            "mapping": mapping_json,
+                            "sources": source_json,
+                            "ref_conflict": observed.conflict,
+                            "inventory_coverage": inventory.coverage.state,
+                            "role_verified": role_verified,
+                            "note_retained": retained,
+                            "note_text": body if retained else None,
+                        }
+                        encoded = encode_metered(work, summary, 1024 * 1024)
+                        summary_bytes += len(encoded)
+                        if summary_bytes > BoundedDocuments.max_total_bytes:
+                            raise QueryError(
+                                "QUERY_BUDGET",
+                                "ref-notes-search",
+                                "finite summary scope",
+                            )
+                        upper = (
+                            len(doc_key)
+                            + 4 * (len(ref) + len(body))
+                            + len(fmt)
+                            + len(target)
+                            + len(mapping.note_oid.full_oid)
+                            + 4
+                        )
+                        work.require("input_bytes", upper)
+                        try:
+                            searchable = f"{ref} {fmt} {target} {mapping.note_oid.full_oid} {body}"
+                            docs[doc_key] = searchable
+                        except BaseException:
+                            work.abandon("input_bytes")
+                            raise
+                        work.charge(
+                            "input_bytes",
+                            len(doc_key) + len(searchable.encode("utf-8")),
+                        )
+                        summaries[doc_key] = summary
+        return docs, summaries
+
     @_stored_view
-    def _extract_documents(self, snapshot, kind):
+    def _extract_documents(self, snapshot, kind, work=None):
         from repo_catalog.adapters.sqlite.production_search import (
             ProductionSearchAdapter,
         )
@@ -1788,14 +2017,42 @@ class ProductionQueryService:
         if kind == "git_metadata":
             return ProductionSearchAdapter.extract_git_metadata_documents(snapshot.core)
         if kind == "notes":
-            return ProductionSearchAdapter.extract_notes_documents(snapshot.core)
+            docs, summaries = ProductionSearchAdapter.extract_notes_documents(
+                snapshot.core
+            )
+            try:
+                new_docs, new_summaries = self._extract_ref_notes_documents(
+                    snapshot.core, work
+                )
+            except CoreFailure as error:
+                if error.code in ("BUDGET", "QUERY_BUDGET"):
+                    raise QueryError(
+                        "QUERY_BUDGET", "ref-notes-search", str(error)
+                    ) from error
+                raise
+            for key, text in new_docs.items():
+                docs[key] = text
+            summaries.update(new_summaries)
+            return docs, summaries
         return ProductionSearchAdapter.extract_context_documents(
             snapshot.context, evidence=self.mapping_evidence
         )
 
     def rebuild_search(
+        self, projection_kinds: Sequence[str] = SEARCH_PROJECTION_KINDS, *, work=None
+    ):
+        guarded = _QueryWorkBoundary(
+            work if work is not None else UnlimitedWorkBudget()
+        )
+        try:
+            return self._rebuild_search(projection_kinds, guarded)
+        except _QueryWorkError as error:
+            raise error.original from None
+
+    def _rebuild_search(
         self,
-        projection_kinds: Sequence[str] = SEARCH_PROJECTION_KINDS,
+        projection_kinds: Sequence[str],
+        work,
     ) -> dict[str, int]:
         """Rebuild requested Search projections from a single pinned snapshot."""
         for kind in projection_kinds:
@@ -1810,7 +2067,7 @@ class ProductionQueryService:
                     continue
                 if kind == "context_text" and snap.context is None:
                     continue
-                docs, _ = self._extract_documents(snap, kind)
+                docs, _ = self._extract_documents(snap, kind, work)
 
                 counts[kind] = self.search_adapter.replace_projection(
                     kind,
@@ -1821,7 +2078,16 @@ class ProductionQueryService:
                 )
             return counts
 
-    def search(self, query: SearchQuery) -> SearchResponse:
+    def search(self, query: SearchQuery, *, work=None) -> SearchResponse:
+        guarded = _QueryWorkBoundary(
+            work if work is not None else UnlimitedWorkBudget()
+        )
+        try:
+            return self._search(query, guarded)
+        except _QueryWorkError as error:
+            raise error.original from None
+
+    def _search(self, query: SearchQuery, work) -> SearchResponse:
         """Execute a verified search across the pinned snapshot with automatic fallback."""
         with self.open_snapshot() as snap:
             token_str = snap.token.encode()
@@ -1842,7 +2108,7 @@ class ProductionQueryService:
                     continue
 
                 authority_started = time.perf_counter_ns()
-                auth_docs, auth_summaries = self._extract_documents(snap, kind)
+                auth_docs, auth_summaries = self._extract_documents(snap, kind, work)
 
                 expected_matches = {
                     doc_key: text
