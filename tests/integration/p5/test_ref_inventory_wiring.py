@@ -440,7 +440,7 @@ def test_failed_receiver_rewalk_remains_reported_without_proof(
     assert not (core_path.parent / "p1-recovery-stop.json").exists()
 
 
-@pytest.mark.parametrize("kind", ["budget", "corrupt-shaped", "json"])
+@pytest.mark.parametrize("kind", ["budget", "corrupt-shaped", "json", "hostile-notes"])
 @pytest.mark.parametrize("paired", [False, True], ids=["core", "paired"])
 def test_verification_work_callback_exception_keeps_identity(
     acquisition, monkeypatch, paired, kind
@@ -457,7 +457,10 @@ def test_verification_work_callback_exception_keeps_identity(
             "AUTHORITATIVE_CORRUPTION", "callback", "synthetic caller exception"
         ),
         "json": json.JSONDecodeError("synthetic callback", "x", 0),
+        "hostile-notes": ValueError("synthetic callback with invalid notes"),
     }[kind]
+    if kind == "hostile-notes":
+        sentinel.__notes__ = "not-a-list"
 
     def inject(self, group):
         previous = self.work.require
@@ -476,7 +479,12 @@ def test_verification_work_callback_exception_keeps_identity(
     assert error.value is sentinel
     assert not app.core.sql("SELECT 1 FROM ref_coverage_proofs")
     if paired:
-        assert any("Core and Context committed" in note for note in sentinel.__notes__)
+        if kind == "hostile-notes":
+            assert sentinel.__notes__ == "not-a-list"
+        else:
+            assert any(
+                "Core and Context committed" in note for note in sentinel.__notes__
+            )
         assert app.core.sql("SELECT 1 FROM notes_mapping_groups")
     assert not (core_path.parent / "p1-recovery-stop.json").exists()
     before = budget_spent(acquisition, request)

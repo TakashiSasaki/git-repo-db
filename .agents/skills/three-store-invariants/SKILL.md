@@ -1070,8 +1070,12 @@ Operational pin survives. Run the independent check after durable paired
 admission with the same cumulative work and request progress; report a deferred
 check when a caller-owned transaction offers no post-commit hook. Test cuts on
 both sides of the Core commit, then replay, and preserve the original exception
-identity and committed outcome if a post-commit check fails. The focused checks
+identity; communicate the committed outcome when possible if a post-commit check
+fails. The focused checks
 are `scripts/local-run.sh python -m pytest -q -n 2 tests/integration/p5/test_ref_inventory_wiring.py`.
+Exception annotation is best effort: a caller can provide non-list `__notes__`,
+so `BaseException.add_note` may itself fail. Never let that replace the original
+callback exception; in that case the committed outcome cannot be added as a note.
 Also reject the direct inventory-verification API on an externally owned Core
 transaction: a real rollback reproduced a surviving Operational verification
 pin for a proof that never committed. An orchestration-only guard leaves that

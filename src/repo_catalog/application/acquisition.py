@@ -2581,11 +2581,16 @@ class PairedAcquisitionCoordinator:
                         unit.source_attribution,
                     )
                 except BaseException as error:
-                    BaseException.add_note(
-                        error,
-                        "Core and Context committed before independent Notes inventory "
-                        "verification; retry with the same request identity.",
-                    )
+                    try:
+                        BaseException.add_note(
+                            error,
+                            "Core and Context committed before independent Notes inventory "
+                            "verification; retry with the same request identity.",
+                        )
+                    except BaseException:
+                        # A caller may supply malformed or immutable exception notes.
+                        # Never replace its original exception during annotation.
+                        pass
                     raise
             return PairedAcquisitionResult(
                 admission=admission,

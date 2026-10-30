@@ -48,9 +48,10 @@ commits Core and Context, then runs the independent verification using the same
 work and progress handles. No proof pin is written before the Core commit. If a
 coordinator cut interrupts either commit, the verification has not run and a
 retry uses the retained facts and progress. An exception during post-commit
-verification propagates unchanged with the committed paired outcome noted; it
-does not roll back either store. Independently verified prefixes already admitted
-remain durable and are revalidated on retry. A caller-owned external Core
+verification propagates unchanged; the committed paired outcome is noted when
+the exception permits it. It does not roll back either store. Independently
+verified prefixes already admitted remain durable and are revalidated on retry.
+A caller-owned external Core
 transaction has no post-commit hook, so this candidate explicitly reports
 verification as deferred instead of pinning uncommitted evidence. Verification
 can be invoked after that transaction commits. The direct verification API also
