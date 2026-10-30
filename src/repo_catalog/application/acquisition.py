@@ -13,6 +13,7 @@ import json
 import os
 from collections.abc import Callable, Sequence
 from contextlib import ExitStack, closing, contextmanager
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterator
 from uuid import uuid4
@@ -48,6 +49,7 @@ from repo_catalog.application.notes import (
     NotesAcquisition,
     RefNoteAcquisition,
     RefNotesInventory,
+    RefNotesInventoryVerification,
 )
 from repo_catalog.application.ref_observations import EnumeratedRef, RefScan, pin_scan
 from repo_catalog.domain.acquisition import (
@@ -175,6 +177,94 @@ class _PreparedCore:
     def apply(self, core: GitCore):
         for name, args, kwargs in self.operations:
             getattr(core, name)(*args, **kwargs)
+
+
+def _finish_ref_inventories(report, core, source, work, progress, source_attribution):
+    """Verify reported groups only after their Core admission is durable."""
+    if isinstance(core, _PreparedCore):
+        return report
+    if not report.ref_notes_inventories:
+        return core._complete_read(report)
+    if source is None:
+        raise CoreFailure("NOTES_SCOPE", "inventory", "actual Notes source required")
+    external = getattr(core, "_external", False)
+    notes_app = None
+    if not external:
+        notes_app = NotesAcquisition(
+            core,
+            source,
+            work,
+            progress,
+            source_attribution=source_attribution,
+            repository_uuidv4=report.repository_uuidv4,
+        )
+    verifications = []
+    problem = None
+    for inventory in report.ref_notes_inventories:
+        _charge(work, "metadata_units", 1)
+        if inventory.failure_code is not None:
+            result = RefNotesInventoryVerification(
+                inventory.group,
+                None,
+                None,
+                False,
+                inventory.failure_code,
+                inventory.detail,
+            )
+        elif external:
+            result = RefNotesInventoryVerification(
+                inventory.group,
+                None,
+                None,
+                False,
+                "REF_INVENTORY_DEFERRED",
+                "verify after the caller-owned Core transaction commits",
+            )
+        else:
+            assert notes_app is not None
+            result = notes_app.verify_ref_inventory(inventory.group)
+        verifications.append(result)
+        if not result.verified and problem is None:
+            problem = (result.failure_code or "NOTES_INVENTORY", result.detail)
+    _charge(work, "metadata_units", len(verifications))
+    projections = [None] * len(verifications)
+    selected = []
+    for index, (inventory, result) in enumerate(
+        zip(report.ref_notes_inventories, verifications, strict=True)
+    ):
+        _charge(work, "metadata_units", 2)
+        if result.verified:
+            selected.append((index, inventory.group))
+    if selected:
+        # The checked adapter protects callbacks and pins one Core snapshot.
+        views = core.ref_notes_inventory_projections(
+            tuple(group for _, group in selected), work
+        )
+        for (index, _), (projection, current) in zip(selected, views, strict=True):
+            _charge(work, "metadata_units", 1)
+            projections[index] = projection
+            if problem is None and (
+                projection.coverage.state != "complete" or not current
+            ):
+                problem = (
+                    "REF_INVENTORY_CONFLICT"
+                    if projection.coverage.state == "conflict"
+                    else "REF_INVENTORY_NOT_CURRENT",
+                    "latest Coverage does not establish this whole inventory",
+                )
+    status = report.status
+    if problem is not None and status in ("complete", "known_empty"):
+        status = "partial" if report.admitted_objects else "unknown"
+    _charge(work, "metadata_units", 2 * len(verifications))
+    completed = replace(
+        report,
+        status=status,
+        failure_code=report.failure_code or (problem[0] if problem else None),
+        failure_detail=report.failure_detail or (problem[1] if problem else ""),
+        ref_inventory_verifications=tuple(verifications),
+        ref_inventory_projections=tuple(projections),
+    )
+    return core._complete_read(completed)
 
 
 @contextmanager
@@ -951,6 +1041,7 @@ class GitAcquisition:
             note_acquisitions: tuple[NoteAcquisition, ...] = ()
             ref_note_acquisitions: tuple[RefNoteAcquisition, ...] = ()
             ref_notes_inventories: tuple[RefNotesInventory, ...] = ()
+            notes_src = None
             if request.notes is not None:
                 notes_src = GitNotesSource(source)
                 (
@@ -1048,7 +1139,7 @@ class GitAcquisition:
                     cov_claim, tuple(admitted_order), cov_prov
                 )
 
-            return GitAcquisitionReport(
+            report = GitAcquisitionReport(
                 repository_uuidv4=request.repository_uuidv4,
                 capture_origin_uuidv4=request.capture_origin_uuidv4,
                 capture_uuidv4=request.capture_uuidv4,
@@ -1068,6 +1159,14 @@ class GitAcquisition:
                 coverage_claims=(cov_claim,),
                 failure_code=failure_code,
                 failure_detail=failure_detail,
+            )
+            return _finish_ref_inventories(
+                report,
+                core_cap,
+                notes_src,
+                active_work,
+                active_progress,
+                request.source_attribution,
             )
 
     def acquire_metadata_only(
@@ -1280,7 +1379,7 @@ class GitAcquisition:
             if note_failure or discovery_failure:
                 status = "partial" if admitted_order else "unknown"
 
-            return GitAcquisitionReport(
+            report = GitAcquisitionReport(
                 repository_uuidv4=unit.repository_uuidv4,
                 capture_origin_uuidv4=unit.capture_origin_uuidv4,
                 capture_uuidv4=unit.capture_uuidv4,
@@ -1303,6 +1402,14 @@ class GitAcquisition:
                 failure_detail=(note_failure or discovery_failure).detail
                 if note_failure or discovery_failure
                 else "",
+            )
+            return _finish_ref_inventories(
+                report,
+                core_cap,
+                notes_source,
+                active_work,
+                active_progress,
+                unit.source_attribution,
             )
 
 
@@ -2458,6 +2565,33 @@ class PairedAcquisitionCoordinator:
                 authorization=auth,
                 admission=adm,
             )
+            if prepared is not None and git_report_holder[0] is not None:
+                actual_notes_source = (
+                    GitNotesSource(git_source)
+                    if git_source is not None and unit.notes is not None
+                    else notes_source
+                )
+                try:
+                    git_report_holder[0] = _finish_ref_inventories(
+                        git_report_holder[0],
+                        actual,
+                        actual_notes_source,
+                        budget,
+                        progress,
+                        unit.source_attribution,
+                    )
+                except BaseException as error:
+                    try:
+                        BaseException.add_note(
+                            error,
+                            "Core and Context committed before independent Notes inventory "
+                            "verification; retry with the same request identity.",
+                        )
+                    except BaseException:
+                        # A caller may supply malformed or immutable exception notes.
+                        # Never replace its original exception during annotation.
+                        pass
+                    raise
             return PairedAcquisitionResult(
                 admission=admission,
                 git_report=git_report_holder[0],

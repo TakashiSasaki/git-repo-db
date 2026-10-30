@@ -1378,7 +1378,9 @@ def test_bounded_json_provenance_size_matches_canonical_encoding(core, value):
     attribution = received(value)
     work = Budget()
     c._meter_provenance_encoding(work, attribution, 1_000_000)
-    assert work.counts["input_bytes"] == len(attribution.encoded)
+    assert work.counts["input_bytes"] == len(attribution.encoded) + sum(
+        len(part) for part in attribution.key
+    )
 
 
 @pytest.mark.parametrize("method", ["lookup", "enumeration"])
@@ -1395,7 +1397,16 @@ def test_bounded_absence_size_matches_canonical_encoding(core, method):
     )
     work = Budget()
     c._meter_absence_encoding(work, evidence, 1_000_000)
-    assert work.counts["input_bytes"] == len(evidence.encoded)
+    scanned = (
+        evidence.source_attribution,
+        evidence.visibility_scope,
+        evidence.method,
+        evidence.completion_coordinate,
+        evidence.enumeration_state or "",
+    )
+    assert work.counts["input_bytes"] == len(evidence.encoded) + sum(
+        len(part) for part in scanned
+    )
 
     def refuse(_):
         raise CoreFailure("BUDGET", "absence", "small budget")

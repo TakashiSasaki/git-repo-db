@@ -1039,6 +1039,70 @@ Use a valid replay, denied reentrant body read, real damaged target and forged
 incoming proof as separate controls, for example:
 `scripts/local-run.sh pytest -q -n 2 tests/integration/p7/test_ref_typed_salvage.py`.
 
+For Claim-aware inventory queries, protecting the inner typed reader alone is
+insufficient: if it unwraps a caller's `JSONDecodeError` before returning through
+`ProductionQueryService.open_snapshot`, the outer stored-data classifier can
+stop a healthy catalog. Carry callback-origin exceptions opaquely across both
+boundaries and restore the same exception object only after the snapshot exits.
+At writer callbacks, withdraw admission and checked-byte capabilities and deny
+Core reentry; an exception shaped like SQLite corruption is still caller input.
+Audit the complete producer path, including reported-Group admission before
+receiver proof admission. Guarding only the proof writer leaves the Group's
+metadata and per-member budget callbacks inside a writer transaction. A callback
+can then insert unrelated facts through the same connection, or its SQLite-shaped
+failure can falsely stop the catalog. Test both `require` and `charge`, before
+and during the writer cut, with independent and transaction-bound capabilities.
+Check denied INSERT, transaction control, API reentry and protected proof reads;
+then interrupt after the first inserted object and require rollback, identical
+exception, a usable healthy catalog and successful retry. Keep a genuinely
+damaged stored-subject case as a positive stop control. Run
+`scripts/local-run.sh pytest -q -n 2 tests/integration/p4/test_ref_group_callbacks.py`.
+This tests application callback isolation on the supplied Core capability;
+it does not sandbox arbitrary Python or revoke separately held connections.
+Test those controls alongside real damaged stored metadata and proof. Inventory
+verification pins must also bind their original Group and actual request identity:
+a pin copied from another request must refuse continuation, while a fresh read
+after a lost pin creates a distinct verification. Exercise these boundaries with
+`scripts/local-run.sh python -m pytest -q -n 2 tests/integration/p4/test_ref_inventory_transition.py`.
+Reserve each character walk before computing JSON-escaped lengths for provenance,
+mapping paths and absence evidence; charging the eventual encoding after the
+walk is too late when a small cumulative budget is already exhausted. Include a
+long-string counterexample and verify that ordinary budget refusal does not stop
+the catalog.
+An inventory walk deliberately converts source `CoreFailure` into an incomplete
+report. If a work callback itself raises that type during a receiver rewalk,
+carry it opaquely across that classifier and restore the original exception;
+otherwise a caller's budget refusal or corruption-shaped callback is silently
+misreported as a source failure. Test source loss separately from callback
+failures and from confirmed corruption already stored in Core.
+
+For paired automatic inventory checks, a prepared Core write is not committed
+evidence. Do not save a verification pin while the coordinator still owns the
+outer Core transaction: a cut before commit can roll that proof back while the
+Operational pin survives. Run the independent check after durable paired
+admission with the same cumulative work and request progress; report a deferred
+check when a caller-owned transaction offers no post-commit hook. Test cuts on
+both sides of the Core commit, then replay, and preserve the original exception
+identity; communicate the committed outcome when possible if a post-commit check
+fails. The focused checks
+are `scripts/local-run.sh python -m pytest -q -n 2 tests/integration/p5/test_ref_inventory_wiring.py`.
+Exception annotation is best effort: a caller can provide non-list `__notes__`,
+so `BaseException.add_note` may itself fail. Never let that replace the original
+callback exception; in that case the committed outcome cannot be added as a note.
+Also reject the direct inventory-verification API on an externally owned Core
+transaction: a real rollback reproduced a surviving Operational verification
+pin for a proof that never committed. An orchestration-only guard leaves that
+direct path open; after the outer commit, use a normal independent Core handle.
+Derive the request's current Coverage from a single protected Core snapshot after
+proof admission; retain a replayed historical verification separately. Test a
+newer partial claim, a competing result, and a write between two projected
+Groups. Work callbacks during the aggregate comparison must not reenter Core or
+gain checked-byte access, even though the individual proof readers are guarded.
+Fence final acquisition-report delivery as well: a concurrent catalog stop after
+the batch snapshot completes must still prevent an ordinary successful result.
+These checks do not replace the preserved salvage, Exchange, Query and recovery
+regressions, and do not establish release acceptance.
+
 Recovery extraction must copy the stopped files without opening the original
 with SQLite, and reserve reads before unbuffered I/O; a buffered short read can
 otherwise prefetch beyond its reservation. Test source bytes across a killed
