@@ -23,10 +23,11 @@ KEYS = {"wheel", "sdist_wheel", "requirements", "sdist", "sdist_contract"}
 
 def package_build_environment():
     """Use one sanitized environment for the ordinary packaging fixtures."""
+    # Inherit an explicit cache setting; otherwise let uv use the same default
+    # as dependency setup rather than selecting a machine-specific empty cache.
     env = {
         **os.environ,
         "UV_PYTHON": sys.executable,
-        "UV_CACHE_DIR": os.environ.get("UV_CACHE_DIR", "/workspace/.cache/uv"),
     }
     for name in (
         "PYTHONPATH",

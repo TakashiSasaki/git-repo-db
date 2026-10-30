@@ -80,10 +80,12 @@ qualification. Frozen historical reports and execution input hashes stay intact.
 
 For assembled acceptance, collect `tests/` with `-o addopts=` before applying
 ordinary/live/benchmark markers. A green focused cohort does not cover omitted
-nodes. Install both locked dev and docs groups: the ordinary docs-build tests
-import PyYAML from the docs group. Prepare the locked wheelhouse before offline
-packaging tests, and verify its manifest/lock and wheel digests. Dependency
-preparation is distinct from executing Provider acquisition.
+nodes. Use the verified product environment for product checks and the separate
+`documentation/.venv` with its own lock for documentation checks, as described in
+`documentation/README.md`; do not add rendering dependencies to the product
+environment. Prepare the locked wheelhouse before offline packaging tests, and
+verify its manifest/lock and wheel digests. Dependency preparation is distinct
+from executing Provider acquisition.
 
 Use `scripts/verify_i5_offline.py --output NEW_EMPTY_DIR --execute` with the
 environment's selected Python and its actual SQLite for disjoint focused/additional/benchmark
@@ -115,6 +117,39 @@ See the [I5 merge preparation](../../../docs/implementation/adr0030-i5-merge-pla
 and its independently retained execution receipts.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
+
+### Choose and prepare the next run before executing it
+
+At an ordinary development checkpoint, inspect all workflows triggered by the
+changed paths, not only `tests.yml`. Compare each workflow's selected work with
+`docs/change-aware-ci.md` and the common planner. A separate fixed broad cohort
+can defeat development selection. Report that mismatch as workflow work; do not
+silently disable a job, skip unresolved checks or treat an old pass as coverage.
+
+Record the purpose, fixed or dirty inputs, selected cohort and expected evidence
+for the next run. Use a focused reproduction while editing, then a justified
+regression selection on the frozen candidate. Do not repeat a completed cohort
+solely to restate a result or after an evidence-only edit with unchanged inputs.
+Independent reviewer execution remains separate correctness evidence; preserve it.
+
+Before including installed-distribution tests in a long run, prepare the locked
+wheelhouse using `scripts/local-run.sh python scripts/prepare_wheelhouse.py` and
+check that the intended build path uses its current lock manifest and wheel
+hashes. If using uv's cache instead, keep explicit cache settings consistent with
+the setup command; obtain the effective default with
+`scripts/local-run.sh uv cache dir`, never assume a machine-specific path.
+Dependency setup is not test execution and does not change the selected SQLite.
+
+For a newly created external probe module or complex fixture, check collection
+and a representative executable node in the intended checkout before expanding
+to its parameterized cohort. Apply this when import/fixture setup is new, not as
+an extra gate for every unchanged test. After a setup failure, preserve its receipt
+and rerun the affected cohort after correcting setup; broaden only for remaining
+correctness concerns or changed inputs. Do not rerun successful unrelated cohorts.
+
+Report elapsed run/job time separately from summed worker time. Rank the slowest
+steps and identify the final dependency that delayed completion; parallel job
+durations must not be added to claim end-to-end waiting time.
 
 ### Local verified environment
 
@@ -168,8 +203,8 @@ existence and passing counts are separate evidence.
 
 1. Run focused tests locally while editing. Validate both lint **and format** for source/test changes:
    ```bash
-   uv run --no-sync ruff check src tests scripts
-   uv run --no-sync ruff format --check src tests scripts
+   scripts/local-run.sh ruff check src tests scripts
+   scripts/local-run.sh ruff format --check src tests scripts
    ```
    Passing `ruff check` alone does not imply format compliance. Before committing
    newly generated/untracked artifacts, stage the intended files and run
@@ -186,10 +221,10 @@ existence and passing counts are separate evidence.
 1. Release validation is an explicit, user-invoked operation requiring complete independent testing in both environments (local AND hosted).
 2. Local requirement: execute the complete applicable ordinary pytest suite and packaging checks locally on a clean tree, generating a verified receipt:
    ```bash
-   python scripts/ci_execute.py receipt --output-dir artifacts/ci-profile
+   scripts/local-run.sh python scripts/ci_execute.py receipt --output-dir artifacts/ci-profile
    ```
 3. Hosted requirement: execute the complete hosted suite (invoked via workflow dispatch with `mode: release`), isolated wheel/sdist packaging tests, schema/integrity checks, and exact test-node reconciliation.
-4. Read the actual workflow job logs and `validation-manifest.json`. Require `full_acceptance=true`, `acceptance_status=complete_release_passed` (or `hosted_release_passed` reconciled via `python scripts/ci_execute.py reconcile-release`), zero unexpected failures/skips, exactly-once selected/executed node reconciliation, and exact input binding.
+4. Read the actual workflow job logs and `validation-manifest.json`. Require `full_acceptance=true`, `acceptance_status=complete_release_passed` (or `hosted_release_passed` reconciled via `scripts/local-run.sh python scripts/ci_execute.py reconcile-release`), zero unexpected failures/skips, exactly-once selected/executed node reconciliation, and exact input binding.
 5. An explicit release validation does not authorize merge, release, publication, or deployment without separate explicit owner authorization.
 
 ## Frequent failure modes
@@ -219,7 +254,7 @@ scope, use the existing conftest registration once through direct pytest:
 
 ```bash
 focused_artifact_dir=$(mktemp -d)
-uv run --no-sync pytest tests/integration/architecture_spikes -q \
+scripts/local-run.sh pytest tests/integration/architecture_spikes -q -n 2 \
   -o junit_family=xunit1 \
   --junitxml "$focused_artifact_dir/junit.xml" \
   --journal "$focused_artifact_dir/journal.jsonl"
@@ -284,9 +319,9 @@ does not authorize a new workflow, release validation, deployment or policy bypa
 In parallel worktrees, use a separate editable environment for each tested tree:
 
 ```sh
-uv sync --locked --group dev
-uv run --no-sync python -c 'import repo_catalog; print(repo_catalog.__file__)'
-uv run --no-sync pytest <focused-targets> -q
+./scripts/setup-local-python.sh
+scripts/local-run.sh python -c 'import repo_catalog; print(repo_catalog.__file__)'
+scripts/local-run.sh pytest <focused-targets> -q -n 2
 ```
 
 P2/P3 review reproduced a misleading failure when a reviewer launched pytest with
@@ -342,7 +377,7 @@ stored rows, translated endpoints or Event coordinates. Keep the original
 clock/provenance/time and full endpoint declaration. Verify with:
 
 ```sh
-python -m pytest tests/integration/i6a/test_originals_revalidation.py -q
+scripts/local-run.sh pytest tests/integration/i6a/test_originals_revalidation.py -q -n 2
 ```
 
 ORIGINALS-M1 demonstrated constructor/replace refusal alongside actual
@@ -361,7 +396,7 @@ or both is an explicit provenance failure, not evidence of equality. Equal
 missing dictionary values do not prove complete evidence.
 
 ```sh
-python -m pytest tests/unit/test_i6a_regression_bindings.py -q
+scripts/local-run.sh pytest tests/unit/test_i6a_regression_bindings.py -q -n 2
 ```
 
 I6A-IR-L01 reproduced consistent=true with null source bindings on the actual
@@ -369,11 +404,13 @@ published compressed evidence. Verify the repaired parser on unchanged archives
 and separately copied compressed mismatch/missing controls. Never rewrite old
 ZIP/JSON evidence to make a new parser pass.
 
-Set UV_CACHE_DIR to a writable external directory in the parent execution
-driver before every uv subprocess, including uv pip install into artifact venvs.
-Setting it only on uv sync leaves later offline installs using a read-only
-home cache. Preserve that setup failure and use a new output directory for the
-corrected execution; compare source and artifact hashes across the retry.
+If the effective uv cache is read-only, select a writable external directory in
+the parent execution driver and inherit that setting in every uv subprocess,
+including artifact installs. Prepare the locked wheels or prime the chosen cache
+before offline work; changing only the build's cache can select an empty one.
+When the native default is writable, preserve it. Preserve the setup failure and
+use a new output directory for corrected execution; compare source and artifact
+hashes across the retry.
 
 ## Size acceptance storage and inspect fetch scope
 
@@ -454,7 +491,7 @@ coordinates while differing in their Provider target. Assert that both survive
 Search rebuild and result projection. Preserve current/historical qualifiers and
 recompute qualification from authority on every search read. I4's counterexamples
 in `tests/integration/i4/test_query_search_backup.py` exercise this boundary;
-run `pytest -q tests/integration/i4 tests/integration/p6` on the supported runtime.
+run `scripts/local-run.sh pytest -q -n 2 tests/integration/i4 tests/integration/p6`.
 These are projection rules, not permission to issue Mapping evidence, rewrite
 original keys or infer execution approval from a Mapping.
 
@@ -573,10 +610,10 @@ the actual backend output and review bounded keys/values and budgets first.
 Reproduce the positive build and bounded negative controls with:
 
 ```sh
-uv run --no-sync python scripts/check_sdist_contract.py --build \
+scripts/local-run.sh python scripts/check_sdist_contract.py --build \
   --output artifacts/sdist-contract.json
-uv run --no-sync pytest tests/packaging/test_sdist_contract.py \
-  tests/packaging/test_sdist_hardening.py -q
+scripts/local-run.sh pytest tests/packaging/test_sdist_contract.py \
+  tests/packaging/test_sdist_hardening.py -q -n 2
 ```
 
 Keep runtime and distribution input fingerprints distinct. README prose is
@@ -636,7 +673,7 @@ distinct input trees, corrupt/missing evidence, mid-build mutation and xdist
 workers. Focused commands (through the verified project environment):
 
 ```sh
-scripts/local-run.sh pytest -q tests/packaging/test_p1_distribution.py \
+scripts/local-run.sh pytest -q -n 2 tests/packaging/test_p1_distribution.py \
   tests/packaging/test_sdist_hardening.py tests/packaging/test_distribution.py \
   tests/unit/test_build_input_identity.py tests/unit/test_test_efficiency.py
 scripts/local-run.sh pytest -q -n 2 tests/unit/test_build_input_identity.py

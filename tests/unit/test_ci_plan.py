@@ -1,4 +1,5 @@
 import json
+import re
 
 import pytest
 
@@ -18,6 +19,71 @@ def followup(history, path, text="changed\n", event="push", mode="development"):
     write(root, path, text)
     current = context(root, head, commit(root), event=event, mode=mode)
     return ci_plan.make_plan(current, root=root)
+
+
+def access_workflow_steps():
+    workflow = (ci_plan.ROOT / ".github/workflows/access-registry.yml").read_text()
+    # Inspect named steps without adding documentation's YAML dependency to
+    # the product environment. Workflow syntax is validated separately.
+    return {
+        chunk.splitlines()[0]: chunk for chunk in workflow.split("      - name: ")[1:]
+    }
+
+
+@pytest.mark.parametrize("mode", ["development", "release"])
+def test_access_runtime_and_packaging_follow_common_validation_mode(history, mode):
+    plan = followup(history, "src/repo_catalog/adapters/sqlite/git_core.py", mode=mode)
+    steps = access_workflow_steps()
+    cohorts = {
+        "tests": (
+            "Execute broad regression suite and record receipts",
+            "Reconcile regression manifest against baseline evidence",
+            "Reconcile Access acceptance ledger and exact test nodes",
+        ),
+        "packaging": (
+            "Installed I2 I3 I4 I5 on both distribution artifacts offline",
+            "Verify wheel and sdist-derived wheel outside checkout",
+        ),
+    }
+    for lane, names in cohorts.items():
+        assert (plan["lanes"][lane]["disposition"] == "selected") is (mode == "release")
+        for name in names:
+            condition = re.search(r"^        if: (.+)$", steps[name], re.M)[1]
+            assert condition == (
+                "${{ !cancelled() && steps.plan.outputs." + lane + " == 'true' }}"
+            )
+    assert (
+        "if: steps.plan.outputs.tests == 'true'"
+        in steps["Verify scoped Access acceptance suite"]
+    )
+    assert plan["lanes"]["static"]["disposition"] == "selected"
+    assert plan["lanes"]["smoke"]["disposition"] == "selected"
+    if mode == "development":
+        assert plan["unexecuted_files"] == plan["acceptance_files"]
+
+
+def test_access_workflow_plans_before_preparation_and_retains_deferred_evidence():
+    workflow = (ci_plan.ROOT / ".github/workflows/access-registry.yml").read_text()
+    steps = access_workflow_steps()
+    planning = steps["Plan checks with the common validation policy"]
+    assert "id: plan" in planning
+    assert (
+        "run: python scripts/ci_plan.py --output artifacts/access-registry/ci-plan"
+        in planning
+    )
+    assert workflow.index("id: plan") < workflow.index("uv sync --locked")
+    assert "fetch-depth: 0" in workflow
+    assert "  workflow_dispatch:\n" in workflow
+    assert "        default: development" in workflow
+    assert "CI_VALIDATION_MODE: ${{ github.event.inputs.mode || '' }}" in workflow
+    for name, flag in (
+        ("Install locked development dependencies", "dependencies"),
+        ("Prepare locked wheels before offline installed acceptance", "wheelhouse"),
+        ("Verify runtime environment preflight", "smoke"),
+    ):
+        assert f"if: steps.plan.outputs.{flag} == 'true'" in steps[name]
+    assert "if: always()" in steps["Save focused verification evidence"]
+    assert "artifacts/access-registry/" in steps["Save focused verification evidence"]
 
 
 @pytest.mark.parametrize(

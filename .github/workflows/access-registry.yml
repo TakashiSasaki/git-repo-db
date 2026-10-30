@@ -63,6 +63,16 @@ on:
       - 'pyproject.toml'
       - 'uv.lock'
 
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Validation mode (development or release)
+        type: choice
+        options:
+          - development
+          - release
+        default: development
+
 permissions:
   contents: read
 
@@ -72,23 +82,35 @@ jobs:
     timeout-minutes: 45
     env:
       UV_PYTHON_DOWNLOADS: never
+      CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CI_VALIDATION_MODE: ${{ github.event.inputs.mode || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: ./.github/actions/product-python
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
         with:
           version: '0.12.19'
+      - name: Plan checks with the common validation policy
+        id: plan
+        run: python scripts/ci_plan.py --output artifacts/access-registry/ci-plan
+      - name: Validate changed reports and prose
+        run: python scripts/ci_execute.py reports --plan artifacts/access-registry/ci-plan/plan.json
       - name: Install locked development dependencies
+        if: steps.plan.outputs.dependencies == 'true'
         run: |
           uv sync --locked --group dev --python "$CI_PRODUCT_PYTHON"
           uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/dependencies.json --reference artifacts/runtime/selected.json
       - name: Prepare locked wheels before offline installed acceptance
+        if: steps.plan.outputs.wheelhouse == 'true'
         run: uv run --no-sync python scripts/prepare_wheelhouse.py
       - name: Verify runtime environment preflight
+        if: steps.plan.outputs.smoke == 'true'
         run: uv run --no-sync python scripts/preflight_access.py --output artifacts/access-registry/preflight.json
       - name: Verify scoped Access acceptance suite
+        if: steps.plan.outputs.tests == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -110,7 +132,7 @@ jobs:
             > artifacts/access-registry/tests.log 2>&1
           tail -n 10 artifacts/access-registry/tests.log
       - name: Execute broad regression suite and record receipts
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.plan.outputs.tests == 'true' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -139,7 +161,7 @@ jobs:
             exit "$pytest_exit"
           fi
       - name: Reconcile regression manifest against baseline evidence
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.plan.outputs.tests == 'true' }}
         run: |
           pytest_exit=$(cat artifacts/access-registry/regressions/pytest_exit_code.txt)
           uv run --no-sync python scripts/compare_access_regressions.py \
@@ -150,16 +172,16 @@ jobs:
             --output artifacts/access-registry/failure-comparison.json \
             --strict
       - name: Installed I2 I3 I4 I5 on both distribution artifacts offline
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.plan.outputs.packaging == 'true' }}
         run: uv run --no-sync python scripts/verify_i5_distribution.py --output artifacts/access-registry/i5-distribution
       - name: Inventory offline and unexecuted coverage
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (steps.plan.outputs.tests == 'true' || steps.plan.outputs.packaging == 'true') }}
         run: uv run --no-sync python scripts/verify_i5_offline.py --output artifacts/access-registry/offline-inventory
       - name: Verify wheel and sdist-derived wheel outside checkout
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.plan.outputs.packaging == 'true' }}
         run: uv run --no-sync python scripts/verify_access_distribution.py
       - name: Check isolated module ownership and baseline evidence
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.plan.outputs.smoke == 'true' }}
         run: |
           uv run --no-sync python scripts/audit_callsite_dependencies.py --check
           uv run --no-sync python scripts/build_p1_schema.py --check
@@ -167,14 +189,14 @@ jobs:
           uv run --no-sync python scripts/audit_implementation_boundary.py --check
           uv run --no-sync python scripts/audit_context_registration.py
       - name: Reconcile Access acceptance ledger and exact test nodes
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.plan.outputs.tests == 'true' }}
         run: |
           uv run --no-sync python scripts/audit_access_acceptance.py \
             --junit artifacts/access-registry/tests.xml \
             --collection artifacts/access-registry/collected.txt \
             --output artifacts/access-registry/acceptance.json
       - name: Check formatting of the exact committed files
-        if: always()
+        if: ${{ !cancelled() && steps.plan.outputs.static == 'true' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -208,7 +230,7 @@ jobs:
           Path("artifacts/access-registry/source-revision.json").write_text(json.dumps(result, indent=2) + "\n")
           PYMETA
       - name: Audit final dependency runtime identity
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.plan.outputs.dependencies == 'true' }}
         run: uv run --no-sync python scripts/ci_python_runtime.py probe artifacts/runtime/final.json --reference artifacts/runtime/selected.json
       - name: Emit indexed verification receipts to job log
         if: always()
