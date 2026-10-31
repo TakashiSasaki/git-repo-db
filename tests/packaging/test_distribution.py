@@ -97,12 +97,18 @@ def test_wheel_sdist_cli(distributions, tmp_path, variant):
         [
             venv / "bin/python",
             "-c",
-            "import repo_catalog; print(repo_catalog.__file__)",
+            "import json, repo_catalog; from repo_catalog import _version; "
+            "print(json.dumps([_version.__file__, *repo_catalog.__path__]))",
         ],
         cwd=outside,
         env=env,
     ).strip()
-    assert origin.startswith(str(venv)) and not origin.startswith(str(ROOT))
+    origins = [Path(item).resolve() for item in json.loads(origin)]
+    assert len(origins) >= 2
+    assert all(
+        item.is_relative_to(venv.resolve()) and not item.is_relative_to(ROOT)
+        for item in origins
+    ), origins
     installed = json.loads(
         checked(
             [

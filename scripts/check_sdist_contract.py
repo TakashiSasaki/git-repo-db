@@ -68,6 +68,35 @@ def safe_name(name, directory=False):
     return value
 
 
+def distribution_workspace(root):
+    """Identify the selected product and its declared synchronized workspace."""
+    root = Path(root).resolve()
+    for candidate in (root, *root.parents):
+        metadata = candidate / "pyproject.toml"
+        if not metadata.is_file():
+            continue
+        config = tomllib.loads(metadata.read_text())
+        workspace = config.get("tool", {}).get("uv", {}).get("workspace")
+        if workspace is None:
+            continue
+        projects = [candidate]
+        for member in workspace.get("members", []):
+            if not isinstance(member, str) or any(c in member for c in "*?[]"):
+                raise ValueError("Explicit distribution workspace members required")
+            member_path = candidate / member
+            project = member_path.resolve()
+            if (
+                member_path.is_symlink()
+                or not project.is_relative_to(candidate)
+                or not project.is_dir()
+            ):
+                raise ValueError("Invalid distribution workspace member")
+            projects.append(project)
+        if root in projects:
+            return candidate, tuple(projects)
+    return root, (root,)
+
+
 def source_inventory(root):
     root = Path(root).resolve()
     package = root / "src/repo_catalog"
@@ -365,35 +394,79 @@ def main():
     parser.add_argument("--source-root", type=Path, default=Path.cwd())
     parser.add_argument("--sdist", type=Path)
     parser.add_argument("--build", action="store_true")
+    parser.add_argument("--all-distributions", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--wheel", type=Path)
     parser.add_argument("--sdist-wheel", type=Path)
     args = parser.parse_args()
     if args.build == bool(args.sdist) or bool(args.wheel) != bool(args.sdist_wheel):
         parser.error("choose --build or --sdist; supply both wheel paths together")
+    if args.all_distributions and (not args.build or args.wheel):
+        parser.error("--all-distributions requires --build without wheel arguments")
+    completed = {}
+    active_build = None
     try:
         if args.build:
             import tempfile
 
+            roots = (
+                distribution_workspace(args.source_root)[1]
+                if args.all_distributions
+                else (args.source_root,)
+            )
             with tempfile.TemporaryDirectory(prefix="sdist-contract-") as temp:
-                subprocess.run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "hatchling",
-                        "build",
-                        "-t",
-                        "sdist",
-                        "-d",
-                        temp,
-                    ],
-                    cwd=args.source_root,
-                    check=True,
-                )
-                archives = list(Path(temp).glob("*.tar.gz"))
-                if len(archives) != 1:
-                    raise ValueError("expected exactly one built sdist")
-                result = check_sdist(archives[0], args.source_root)
+                for index, root in enumerate(roots):
+                    output = Path(temp) / str(index)
+                    name = tomllib.loads((root / "pyproject.toml").read_text())[
+                        "project"
+                    ]["name"]
+                    slug = re.sub(r"[^A-Za-z0-9_.-]", "_", name)
+                    args.output.parent.mkdir(parents=True, exist_ok=True)
+                    # A fresh retained log also preserves an earlier failed run
+                    # when the caller intentionally reuses its receipt path.
+                    with tempfile.NamedTemporaryFile(
+                        mode="wb",
+                        prefix=f"{args.output.stem}-{index}-{slug}-",
+                        suffix="-build.log",
+                        dir=args.output.parent,
+                        delete=False,
+                    ) as stream:
+                        log = Path(stream.name)
+                        active_build = {
+                            "owner": name,
+                            "returncode": None,
+                            "log": str(log),
+                        }
+                        # Retain binary bytes without expanding terminal output.
+                        process = subprocess.run(
+                            [
+                                sys.executable,
+                                "-m",
+                                "hatchling",
+                                "build",
+                                "-t",
+                                "sdist",
+                                "-d",
+                                str(output),
+                            ],
+                            cwd=root,
+                            stdout=stream,
+                            stderr=subprocess.STDOUT,
+                        )
+                    active_build["returncode"] = process.returncode
+                    if process.returncode != 0:
+                        raise subprocess.CalledProcessError(
+                            process.returncode, process.args
+                        )
+                    archives = list(output.glob("*.tar.gz"))
+                    if len(archives) != 1:
+                        raise ValueError("expected exactly one built sdist")
+                    report = check_sdist(archives[0], root)
+                    report["build"] = active_build
+                    completed[name] = report
+                result = completed[next(iter(completed))]
+                if args.all_distributions:
+                    result = {"status": "passed", "distributions": completed}
         else:
             result = check_sdist(args.sdist, args.source_root)
         if args.wheel:
@@ -408,7 +481,13 @@ def main():
                 {
                     k: v
                     for k, v in result.items()
-                    if k not in ("members", "source_files", "wheel_equivalence")
+                    if k
+                    not in (
+                        "members",
+                        "source_files",
+                        "wheel_equivalence",
+                        "distributions",
+                    )
                 }
             )
         )
@@ -419,8 +498,21 @@ def main():
         zipfile.BadZipFile,
         subprocess.CalledProcessError,
     ) as error:
-        save(args.output, {"status": "failed", "error": str(error)})
-        print(str(error), file=sys.stderr)
+        failure = {
+            "status": "failed",
+            "error": str(error),
+            "completed_distributions": completed,
+        }
+        if active_build and active_build["returncode"] != 0:
+            failure["build_failure"] = active_build
+            terminal = (
+                f"{active_build['owner']}: backend failed "
+                f"(exit={active_build['returncode']}); log: {active_build['log']}"
+            )
+        else:
+            terminal = str(error)
+        save(args.output, failure)
+        print(terminal, file=sys.stderr)
         return 1
     return 0
 

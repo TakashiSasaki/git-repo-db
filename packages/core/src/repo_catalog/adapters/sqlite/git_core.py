@@ -359,7 +359,7 @@ class GitCore(Core):
         callers never construct partially initialized capabilities or alter the
         coordinator authorizer. The original snapshot remains the lifetime owner.
         """
-        from repo_catalog.adapters.sqlite.p1_coordination import ReadSnapshot
+        from repo_catalog.adapters.sqlite.core_coordination import ReadSnapshot
 
         if not isinstance(read_snapshot, ReadSnapshot):
             raise CoreFailure("SNAPSHOT_REQUIRED", "core")
@@ -384,9 +384,9 @@ class GitCore(Core):
         finally:
             result._active = False
             # The coordinator owns connection teardown and its read guard.
-            from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
+            from repo_catalog.adapters.sqlite.core_coordination import CoreCoordinator
 
-            PairCoordinator(owner_directory)._guard_read(result._db)
+            CoreCoordinator(owner_directory)._guard_read(result._db)
 
     def _available(self):
         super()._available()

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import platform
@@ -689,8 +688,15 @@ def probe(output, reference=None):
         ):
             if result[field] != original[field]:
                 raise RuntimeError(f"Runtime changed within this invocation: {field}")
-    if importlib.util.find_spec("repo_catalog") is None:
-        sys.path.insert(0, str(ROOT / "src"))
+    # Namespace distributions share a checkout but have disjoint source roots.
+    # Probe the actual checkout factories before editable dependencies exist.
+    for source in (
+        ROOT / "src",
+        ROOT / "packages/core/src",
+        ROOT / "packages/contracts/src",
+    ):
+        if source.is_dir() and str(source) not in sys.path:
+            sys.path.insert(0, str(source))
     result["repository"] = repository_identity()
     result["distribution"] = distribution_identity(selected)
     with tempfile.TemporaryDirectory() as temporary:

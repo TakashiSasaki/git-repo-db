@@ -726,3 +726,43 @@ for valid availability. Keep zero availability as pressure, reject malformed or
 nonfinite values per record, and retain CPU/affinity/cgroup caps. Missing fields,
 malformed earlier records and low-memory cases belong in the focused regression
 cohort; a high-level memory mock alone cannot establish parsing correctness.
+
+## Verify every owner after a namespace distribution split
+
+When a former regular package becomes a PEP 420 namespace, checking a version
+module's origin no longer confines its descendants. Check every namespace search
+root against the exact active checkout roots (or installed environment), then
+check the concrete version origin separately. Pair a valid multi-owner namespace
+with a foreign-root negative control; a correct version string cannot substitute
+for origin validation. See `tests/unit/test_preflight_namespace.py` and the
+installed harness's strict namespace/product-file union checks.
+
+For a recursive multi-distribution build cache, bind each owner's source and
+metadata **and each owner's backend/configuration discovery inputs**. A dependency's
+`hatch.toml`, `hatch_build.py` or `uv.toml` can change its artifact even when the
+selected project's controls are unchanged. Use the existing
+`test_selected_workspace_distribution_and_sibling_inputs_are_cache_identity`
+regression in `tests/unit/test_build_input_identity.py`; retain dependency artifact
+hashes and reject tampering instead of treating dependency paths as identities.
+
+Finish wheelhouse preparation and helper edits before the controlled installed
+run. A mid-build input change must retain its failed receipt and rerun the failed
+scope with frozen inputs. Pre-commit profiles may record the base Git tree;
+actual sdist inventories can bind artifact sources to a later candidate, but do
+not relabel those profiles as fresh candidate-SHA executions. Use the committed
+candidate for final unresolved source-binding checks.
+
+When configuring Ruff for the extra source roots, preserve the original `.` and
+`src` roots as well. Otherwise first-party scripts/tests are reclassified and
+unrelated import-order changes obscure the implementation diff. None of these
+procedures requires all feature combinations or release qualification.
+
+Include every product source root in lexical ownership audits and subprocess test
+fixtures too. Compare namespace-relative module identities and reject duplicate
+owners; preserve explicit normal-runtime versus opt-in classification rather than
+inferring activation from the distribution directory. Keep any target hash/owner
+inventory compact instead of duplicating its full function index. The focused
+`tests/unit/test_callsite_source_owners.py` controls cover moved roots, unknown
+modules and duplicate ownership; documentation fixtures exercise fresh-process
+imports across the same roots. Update current machine input labels when a scanner's
+scope changes, without rewriting historical schema facts or frozen evidence.

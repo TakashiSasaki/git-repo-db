@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def checkout(tmp_path):
     root = tmp_path / "producer"
     root.mkdir()
-    for directory in ["src", "scripts"]:
+    for directory in ["src", "packages", "scripts"]:
         shutil.copytree(
             ROOT / directory,
             root / directory,
@@ -76,7 +76,7 @@ def test_control_side_effect_after_preflight_is_rechecked_before_publication(che
     audit = root / "scripts/audit_publication_free.py"
     audit.write_text(
         audit.read_text()
-        + "\n(ROOT/'src/repo_catalog/__init__.py').write_text('# mutated during control import\\n')\n"
+        + "\n(ROOT/'packages/contracts/src/repo_catalog/_version.py').write_text('# mutated during control import\\n')\n"
     )
     git("add", ".")
     git("commit", "-qm", "synthetic mutating control")

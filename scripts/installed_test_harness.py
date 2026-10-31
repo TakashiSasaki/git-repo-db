@@ -7,6 +7,7 @@ The caller supplies a fresh outside directory and separately installs its wheel.
 import hashlib
 import json
 import shutil
+import zipfile
 from pathlib import Path
 
 from scripts import verify_i5_offline as evidence
@@ -32,17 +33,24 @@ def verify_imports(phase, session):
     harness_root = Path(__file__).parent
     assert session.config.inipath == harness_root / "pytest.ini"
     assert session.config.rootpath == harness_root
-    root = Path(repo_catalog.__file__).resolve().parent
-    assert root.is_relative_to(Path(sys.prefix).resolve()), root
+    roots = sorted({Path(path).resolve() for path in repo_catalog.__path__})
+    assert roots and all(root.is_relative_to(Path(sys.prefix).resolve())
+                         for root in roots), roots
     expected = json.loads((Path(__file__).parent / "artifact-files.json").read_text())
-    actual = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
-              for p in root.rglob("*") if p.is_file() and p.suffix in (".py", ".sql", ".json")}
+    actual = {}
+    for root in roots:
+        for path in root.rglob("*"):
+            if path.is_file() and path.suffix in (".py", ".sql", ".json"):
+                name = str(path.relative_to(root))
+                assert name not in actual, ("overlapping product namespace file", name)
+                actual[name] = hashlib.sha256(path.read_bytes()).hexdigest()
     assert actual == expected, "installed product files differ from the wheel"
     modules = {name: str(Path(module.__file__).resolve())
                for name, module in sys.modules.items()
                if (name == "repo_catalog" or name.startswith("repo_catalog."))
                and getattr(module, "__file__", None)}
-    assert all(Path(path).is_relative_to(root) for path in modules.values()), modules
+    assert all(any(Path(path).is_relative_to(root) for root in roots)
+               for path in modules.values()), modules
     support = {name: str(Path(module.__file__).resolve())
                for name, module in sys.modules.items()
                if (name == "tests" or name.startswith("tests.support"))
@@ -51,7 +59,7 @@ def verify_imports(phase, session):
                for path in support.values()), support
     receipt = Path(os.environ["REPO_CATALOG_IMPORT_RECEIPT"])
     records = json.loads(receipt.read_text()) if receipt.exists() else []
-    records.append({"phase": phase, "prefix": sys.prefix, "origin": str(root),
+    records.append({"phase": phase, "prefix": sys.prefix, "namespace_roots": [str(root) for root in roots],
                     "product_modules": modules, "installed_files": actual,
                     "test_support_modules": support,
                     "pytest_config": str(session.config.inipath),
@@ -66,6 +74,29 @@ def pytest_sessionstart(session):
 def pytest_sessionfinish(session, exitstatus):
     verify_imports("sessionfinish", session)
 '''
+
+
+def product_files(wheels):
+    """Bind every product namespace member to exactly one prepared artifact."""
+    expected = {}
+    for wheel in wheels:
+        with zipfile.ZipFile(wheel) as package:
+            assert not any(
+                name.startswith(("tests/", "scripts/")) for name in package.namelist()
+            )
+            for name in package.namelist():
+                if name.startswith("repo_catalog/") and Path(name).suffix in (
+                    ".py",
+                    ".sql",
+                    ".json",
+                ):
+                    relative = name.removeprefix("repo_catalog/")
+                    assert relative not in expected, (
+                        "overlapping artifact owner",
+                        relative,
+                    )
+                    expected[relative] = hashlib.sha256(package.read(name)).hexdigest()
+    return expected
 
 
 def stage_support(source, outside):

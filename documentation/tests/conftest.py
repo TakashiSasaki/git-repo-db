@@ -1,13 +1,32 @@
 """Tests run in the docs environment against an explicit selected checkout."""
 
 import json
+import os
 import sys
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT), str(ROOT / "src"), str(ROOT / "documentation")]
+PRODUCT_SOURCE_ROOTS = (
+    ROOT / "src",
+    ROOT / "packages/core/src",
+    ROOT / "packages/contracts/src",
+)
+sys.path[:0] = [
+    str(ROOT),
+    *(str(path) for path in PRODUCT_SOURCE_ROOTS),
+    str(ROOT / "documentation"),
+]
+
+
+@pytest.fixture
+def product_source_env():
+    """Fresh processes load all owners from this selected source checkout."""
+    return dict(
+        os.environ,
+        PYTHONPATH=os.pathsep.join(str(path) for path in PRODUCT_SOURCE_ROOTS),
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)

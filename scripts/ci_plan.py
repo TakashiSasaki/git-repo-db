@@ -381,7 +381,7 @@ def make_plan(context, root=ROOT, runtime_meta=None):
             scope_reasons.append("Shared/executable input: " + path)
             code_or_config_changed = True
             if (
-                path.startswith("src/")
+                path.startswith(("src/", "packages/"))
                 or "schema" in path
                 or path == "scripts/ci_dependencies.json"
             ):

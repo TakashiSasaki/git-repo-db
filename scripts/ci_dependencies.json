@@ -10,6 +10,7 @@
   ],
   "shared_inputs": [
     "src/**",
+    "packages/**",
     "tests/conftest.py",
     "tests/support/**",
     "tests/**/conftest.py",
@@ -56,6 +57,7 @@
   ],
   "sdist_inputs": [
     "src/**",
+    "packages/**",
     "pyproject.toml",
     "README.md",
     ".gitignore",

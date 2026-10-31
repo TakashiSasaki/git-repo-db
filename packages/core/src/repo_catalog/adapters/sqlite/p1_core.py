@@ -198,7 +198,7 @@ class Core:
         from repo_catalog.adapters.sqlite.p1_schema import connect
 
         self._directory = Path(path).parent
-        from repo_catalog.adapters.sqlite.p1_coordination import (
+        from repo_catalog.adapters.sqlite.core_coordination import (
             catalog_gate,
             persist_catalog_stop,
         )
@@ -211,7 +211,7 @@ class Core:
             try:
                 self._db = connect(path, "core")
                 if read_limits is not None:
-                    from repo_catalog.adapters.sqlite.p1_coordination import (
+                    from repo_catalog.adapters.sqlite.core_coordination import (
                         apply_snapshot_read_limits,
                     )
 
@@ -312,7 +312,7 @@ class Core:
         self._available()
         if self._directory is None:
             return result
-        from repo_catalog.adapters.sqlite.p1_coordination import catalog_completion
+        from repo_catalog.adapters.sqlite.core_coordination import catalog_completion
         from repo_catalog.domain.p1_coordination import CoordinationError
 
         try:
@@ -354,7 +354,7 @@ class Core:
         self._available()
         if self._admitting:
             raise CoreFailure("TRANSACTION", "core", "nested admission is unsupported")
-        from repo_catalog.adapters.sqlite.p1_coordination import catalog_gate
+        from repo_catalog.adapters.sqlite.core_coordination import catalog_gate
 
         gate = (
             nullcontext()
@@ -373,7 +373,7 @@ class Core:
                     if self._external:
                         self._db.execute("RELEASE p1_core_unit")
                     else:
-                        from repo_catalog.adapters.sqlite.p1_coordination import (
+                        from repo_catalog.adapters.sqlite.core_coordination import (
                             catalog_completion,
                         )
 
@@ -411,7 +411,7 @@ class Core:
         if self._db.in_transaction:
             yield
             return
-        from repo_catalog.adapters.sqlite.p1_coordination import catalog_gate
+        from repo_catalog.adapters.sqlite.core_coordination import catalog_gate
 
         with catalog_gate(self._directory, exclusive=False):
             self._available()
@@ -3508,7 +3508,7 @@ class Core:
             "authoritative integrity failure; stop catalog and restore fresh",
         )
         if self._directory is not None:
-            from repo_catalog.adapters.sqlite.p1_coordination import (
+            from repo_catalog.adapters.sqlite.core_coordination import (
                 persist_catalog_stop,
             )
 

@@ -144,12 +144,29 @@ def verify_environment(root=ROOT, *, deep=False):
     ):
         raise EnvironmentRefused("The installed Python files differ from the receipt")
     check_venv(root / ".venv", base)
+    if set(receipt["inputs"]) != set(locked_input_names(root)):
+        raise EnvironmentRefused(
+            "Workspace metadata inventory changed after synchronization"
+        )
     for name, recorded in receipt["inputs"].items():
         if digest(root / name) != recorded:
             raise EnvironmentRefused(
                 f"{name} changed after the environment was synchronized"
             )
     return receipt
+
+
+def locked_input_names(root):
+    """Dependency synchronization binds every workspace project's metadata."""
+    root = Path(root)
+    return (
+        "uv.lock",
+        "pyproject.toml",
+        *(
+            path.relative_to(root).as_posix()
+            for path in sorted((root / "packages").glob("*/pyproject.toml"))
+        ),
+    )
 
 
 def build_environment(root, receipt, base=None):

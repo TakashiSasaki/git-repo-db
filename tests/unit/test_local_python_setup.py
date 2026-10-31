@@ -188,6 +188,18 @@ class BootstrapCase(unittest.TestCase):
 
 
 class SuccessfulBootstrapTests(BootstrapCase):
+    def test_workspace_metadata_is_bound_and_drift_requires_resynchronization(self):
+        metadata = self.root / "packages/core/pyproject.toml"
+        metadata.parent.mkdir(parents=True)
+        metadata.write_text('[project]\nname = "repo-catalog-core"\n')
+        self.assertEqual(self.bootstrap(), 0)
+        self.assertIn("packages/core/pyproject.toml", self.receipt()["inputs"])
+        metadata.write_text('[project]\nname = "modified-core"\n')
+        with self.assertRaisesRegex(
+            local_env.EnvironmentRefused, "core/pyproject.toml changed"
+        ):
+            local_env.verify_environment(self.root)
+
     def test_success_creates_verified_environment_and_passed_receipt(self):
         self.assertEqual(self.bootstrap(), 0)
         receipt = self.receipt()
@@ -417,6 +429,12 @@ class LauncherVerificationTests(LauncherCase):
     def test_changed_lock_inputs_require_resynchronization(self):
         (self.root / "uv.lock").write_text("changed\n")
         self.refused("uv.lock changed")
+
+    def test_new_workspace_project_requires_resynchronization(self):
+        metadata = self.root / "packages/contracts/pyproject.toml"
+        metadata.parent.mkdir(parents=True)
+        metadata.write_text('[project]\nname = "repo-catalog-contracts"\n')
+        self.refused("Workspace metadata inventory changed")
 
     def test_tampered_installation_is_refused_by_the_deep_check(self):
         (self.project.directory / "python/bin").chmod(0o755)

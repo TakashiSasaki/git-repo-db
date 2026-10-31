@@ -1,6 +1,5 @@
 """Check the live runtime facts to which the documentation entrypoints point."""
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -73,16 +72,15 @@ def test_runtime_entrypoints_and_disposable_initialization(tmp_path):
         ("repo_catalog.cli.access_acquisition", True),
     ],
 )
-def test_cli_import_boundary_in_fresh_process(module, expected):
+def test_cli_import_boundary_in_fresh_process(module, expected, product_source_env):
     source = (
         "import importlib, sys; importlib.import_module(sys.argv[1]); "
         "print('repo_catalog.adapters.sqlite.access_schema' in sys.modules)"
     )
-    env = dict(os.environ, PYTHONPATH=str(ROOT / "src"))
     result = subprocess.run(
         [sys.executable, "-c", source, module],
         cwd=ROOT,
-        env=env,
+        env=product_source_env,
         check=True,
         text=True,
         capture_output=True,

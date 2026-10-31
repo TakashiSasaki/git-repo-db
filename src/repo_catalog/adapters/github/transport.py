@@ -7,7 +7,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from repo_catalog import __version__
+from repo_catalog._version import __version__
 from repo_catalog.adapters.recording import (
     DisabledRecorder,
     RecordingError,

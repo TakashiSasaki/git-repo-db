@@ -79,7 +79,7 @@ def check_interpreter() -> dict[str, str]:
     return verified_deps
 
 
-def check_console_script() -> dict[str, str]:
+def check_console_script() -> dict[str, object]:
     venv_bin = Path(sys.executable).parent
     current_path = os.environ.get("PATH", "")
     if str(venv_bin) not in current_path.split(os.pathsep):
@@ -120,10 +120,23 @@ def check_console_script() -> dict[str, str]:
 
     # 2. Verify imported repo_catalog module originates from the active workspace
     import repo_catalog
+    from repo_catalog import _version
 
-    rc_file = Path(repo_catalog.__file__).resolve()
-    expected_src = (ROOT / "src" / "repo_catalog").resolve()
-    if not (rc_file == expected_src / "__init__.py" or rc_file.is_relative_to(ROOT)):
+    expected_roots = {
+        (ROOT / directory / "repo_catalog").resolve()
+        for directory in ("src", "packages/core/src", "packages/contracts/src")
+    }
+    namespace_roots = {Path(path).resolve() for path in repo_catalog.__path__}
+    if namespace_roots != expected_roots:
+        raise SystemExit(
+            "Preflight failed: 'repo_catalog' namespace roots differ from the "
+            f"active repository source roots: {sorted(map(str, namespace_roots))}"
+        )
+    rc_file = Path(_version.__file__).resolve()
+    expected_version = (
+        ROOT / "packages/contracts/src/repo_catalog/_version.py"
+    ).resolve()
+    if rc_file != expected_version:
         raise SystemExit(
             f"Preflight failed: 'repo_catalog' module ({rc_file}) does not "
             f"originate from active repository source tree ({ROOT})"
@@ -139,10 +152,10 @@ def check_console_script() -> dict[str, str]:
             timeout=10,
         )
         version_output = proc.stdout.strip() or proc.stderr.strip()
-        if repo_catalog.__version__ not in version_output:
+        if _version.__version__ not in version_output:
             raise SystemExit(
                 f"Preflight failed: 'repo-catalog --version' output ({version_output}) "
-                f"does not match package version {repo_catalog.__version__}"
+                f"does not match package version {_version.__version__}"
             )
     except Exception as exc:
         raise SystemExit(
@@ -153,7 +166,8 @@ def check_console_script() -> dict[str, str]:
         "repo_catalog_script": str(cmd_path),
         "shebang_interpreter": str(sys.executable),
         "module_origin": str(rc_file),
-        "version": repo_catalog.__version__,
+        "namespace_roots": sorted(map(str, namespace_roots)),
+        "version": _version.__version__,
     }
 
 
