@@ -38,10 +38,10 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
 from repo_catalog.adapters.sqlite.p1_schema import (
     SchemaError,
     expected_schema,
-    oid,
     register_functions,
     schema_rows,
     uuid4,
+    valid_object_oid,
 )
 from repo_catalog.adapters.sqlite.p1_schema import _resource as _p1_resource
 from repo_catalog.adapters.sqlite.p1_schema import (
@@ -87,7 +87,7 @@ from repo_catalog.domain.p1_core import (
     CoreFailure,
     NativeObject,
     account_verification,
-    native_oid,
+    native_object_oid,
 )
 from repo_catalog.domain.recovery import (
     ActivationError,
@@ -610,7 +610,7 @@ def _check_candidate_shape(record: dict, budget: RecoveryBudget) -> None:
             raise ValueError(f"{key} must be an object when present")
     string_fields = (
         "object_format",
-        "full_oid",
+        "object_oid",
         "native_type",
         "physical_copy_uuidv4",
         "repository_uuidv4",
@@ -1177,7 +1177,7 @@ class SQLiteRecoveryAdapter:
             overall_sha256 = overall_hasher.hexdigest()
 
             manifest = BackupManifest(
-                manifest_version=2,
+                manifest_version=3,
                 backup_id=backup_id,
                 created_at_us=created_at_us,
                 repository_uuidv4=repo_uuid,
@@ -1476,12 +1476,12 @@ class SQLiteRecoveryAdapter:
 
             # 1. Inspect retained_metadata: commits, trees, tags
             cursor = conn.execute(
-                "SELECT object_format, full_oid, physical_copy_uuidv4, native_type, body, size, digest_sha256 FROM retained_metadata"
+                "SELECT object_format, object_oid, physical_copy_uuidv4, native_type, body, size, digest_sha256 FROM retained_metadata"
             )
             while row := cursor.fetchone():
                 (
                     obj_fmt,
-                    full_oid,
+                    object_oid,
                     copy_uuid,
                     ntype,
                     body,
@@ -1490,25 +1490,25 @@ class SQLiteRecoveryAdapter:
                 ) = row
                 if not uuid4(str(copy_uuid)):
                     raise BackupValidationError(
-                        f"Invalid physical copy UUIDv4 in retained_metadata for {full_oid}"
+                        f"Invalid physical copy UUIDv4 in retained_metadata for {object_oid}"
                     )
-                if not oid(obj_fmt, full_oid):
+                if not valid_object_oid(obj_fmt, object_oid):
                     raise BackupValidationError(
-                        f"Invalid native OID format in retained_metadata: {full_oid}"
+                        f"Invalid native OID format in retained_metadata: {object_oid}"
                     )
                 if len(body) != size:
                     raise BackupValidationError(
-                        f"Size mismatch in retained_metadata for {full_oid}: expected {size}, got {len(body)}"
+                        f"Size mismatch in retained_metadata for {object_oid}: expected {size}, got {len(body)}"
                     )
                 actual_digest = hashlib.sha256(body).hexdigest()
                 if actual_digest != digest_sha:
                     raise BackupValidationError(
-                        f"SHA-256 digest mismatch in retained_metadata for {full_oid}: expected {digest_sha}, got {actual_digest}"
+                        f"SHA-256 digest mismatch in retained_metadata for {object_oid}: expected {digest_sha}, got {actual_digest}"
                     )
-                expected_oid = native_oid(obj_fmt, ntype, body)
-                if expected_oid != full_oid:
+                expected_object_oid = native_object_oid(obj_fmt, ntype, body)
+                if expected_object_oid != object_oid:
                     raise BackupValidationError(
-                        f"Native OID calculation mismatch in retained_metadata for {full_oid}: expected {expected_oid}"
+                        f"Native OID calculation mismatch in retained_metadata for {object_oid}: expected {expected_object_oid}"
                     )
                 if ntype not in ("commit", "tree", "tag"):
                     raise BackupValidationError(
@@ -1519,7 +1519,7 @@ class SQLiteRecoveryAdapter:
                     parse_metadata(obj_fmt, ntype, body)
                 except Exception as e:
                     raise BackupValidationError(
-                        f"Native git {ntype} grammar validation failed for {full_oid}: {e}"
+                        f"Native git {ntype} grammar validation failed for {object_oid}: {e}"
                     ) from e
 
                 total_bytes += len(body)
@@ -2222,7 +2222,7 @@ class SQLiteRecoveryAdapter:
 
                         if store_name == "core" and table == "retained_metadata":
                             c_type = CandidateType.RETAINED_BODY
-                            c_id = f"{row_dict.get('object_format')}:{row_dict.get('full_oid')}:{row_dict.get('physical_copy_uuidv4')}"
+                            c_id = f"{row_dict.get('object_format')}:{row_dict.get('object_oid')}:{row_dict.get('physical_copy_uuidv4')}"
                             raw_body = row_dict.get("body")
                             body_len = (
                                 row_dict.get("size")
@@ -2240,7 +2240,7 @@ class SQLiteRecoveryAdapter:
                                     "extraction_provenance": extraction_prov,
                                     "payload": {
                                         "object_format": row_dict.get("object_format"),
-                                        "full_oid": row_dict.get("full_oid"),
+                                        "object_oid": row_dict.get("object_oid"),
                                         "size": row_dict.get("size"),
                                     },
                                     "extraction_status": ExtractionStatus.PARTIAL.value,
@@ -2260,7 +2260,7 @@ class SQLiteRecoveryAdapter:
 
                             payload = {
                                 "object_format": row_dict.get("object_format"),
-                                "full_oid": row_dict.get("full_oid"),
+                                "object_oid": row_dict.get("object_oid"),
                                 "physical_copy_uuidv4": row_dict.get(
                                     "physical_copy_uuidv4"
                                 ),
@@ -2279,7 +2279,7 @@ class SQLiteRecoveryAdapter:
                                     NativeObject(
                                         OID(
                                             row_dict["object_format"],
-                                            row_dict["full_oid"],
+                                            row_dict["object_oid"],
                                         ),
                                         row_dict["native_type"],
                                         raw_body,
@@ -2482,7 +2482,7 @@ class SQLiteRecoveryAdapter:
 
             if (
                 type(manifest_data.get("manifest_version")) is not int
-                or manifest_data.get("manifest_version") != 2
+                or manifest_data.get("manifest_version") != 3
             ):
                 raise RestoreValidationError(
                     f"Unsupported manifest version: {manifest_data.get('manifest_version')}"
@@ -2743,7 +2743,7 @@ class SQLiteRecoveryAdapter:
                 conn.execute("BEGIN")
                 work.require("metadata_units", 1)
                 size_row = conn.execute(
-                    "SELECT length(body) FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                    "SELECT length(body) FROM retained_metadata WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
                     key,
                 ).fetchone()
                 work.charge("metadata_units", 1)
@@ -2751,7 +2751,7 @@ class SQLiteRecoveryAdapter:
                     for dependency in ("intrinsic_claims", "intrinsic_groups"):
                         if bounded_domain_exists(
                             conn,
-                            f"SELECT 1 FROM {dependency} WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=? LIMIT 1",
+                            f"SELECT 1 FROM {dependency} WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=? LIMIT 1",
                             key,
                             work,
                             "required_retained_metadata",
@@ -2778,7 +2778,7 @@ class SQLiteRecoveryAdapter:
                     )
                 work.require("input_bytes", sum(size_row))
                 row = conn.execute(
-                    "SELECT CASE WHEN length(native_type)<=6 THEN native_type END,body,size,CASE WHEN length(digest_sha256)=64 THEN digest_sha256 END FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+                    "SELECT CASE WHEN length(native_type)<=6 THEN native_type END,body,size,CASE WHEN length(digest_sha256)=64 THEN digest_sha256 END FROM retained_metadata WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
                     key,
                 ).fetchone()
                 native_type, body, size, digest = row
@@ -3291,7 +3291,7 @@ class SQLiteRecoveryAdapter:
                         CandidateType.RETAINED_BODY.value,
                         "retained_metadata",
                     ):
-                        if not payload.get("full_oid") or not payload.get(
+                        if not payload.get("object_oid") or not payload.get(
                             "native_type"
                         ):
                             rejected += 1
@@ -3363,7 +3363,7 @@ class SQLiteRecoveryAdapter:
 
                         obj_fmt = payload.get("object_format", "sha1")
                         ntype = payload["native_type"]
-                        full_oid = payload["full_oid"]
+                        object_oid = payload["object_oid"]
                         copy_uuid = payload.get("physical_copy_uuidv4")
 
                         # A replay must pass the same native and immutable-row
@@ -3379,13 +3379,13 @@ class SQLiteRecoveryAdapter:
                             )
                             continue
                         exists = core.sql(
-                            "SELECT 1 FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                            (obj_fmt, full_oid, copy_uuid),
+                            "SELECT 1 FROM retained_metadata WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+                            (obj_fmt, object_oid, copy_uuid),
                         )
 
                         try:
                             native = NativeObject(
-                                oid=OID(obj_fmt, full_oid),
+                                object_oid=OID(obj_fmt, object_oid),
                                 native_type=ntype,
                                 body=body_bytes,
                                 declared_size=payload.get("size", len(body_bytes)),
@@ -3394,7 +3394,7 @@ class SQLiteRecoveryAdapter:
                             exists = self._verify_existing_retained_copy(
                                 fresh_destination_dir,
                                 "retained_metadata",
-                                (obj_fmt, full_oid, copy_uuid),
+                                (obj_fmt, object_oid, copy_uuid),
                                 b,
                                 work_budget,
                             )
@@ -3556,12 +3556,13 @@ class SQLiteRecoveryAdapter:
                                     else:
                                         admitted += 1
                                 elif (
-                                    prov_tbl == "git_objects" and "full_oid" in payload
+                                    prov_tbl == "git_objects"
+                                    and "object_oid" in payload
                                 ):
                                     obj_f = payload.get("object_format", "sha1")
-                                    f_oid = payload["full_oid"]
+                                    f_oid = payload["object_oid"]
                                     exists = core.sql(
-                                        "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                                        "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                                         (obj_f, f_oid),
                                     )
                                     core.admit_object(OID(obj_f, f_oid))

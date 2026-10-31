@@ -33,7 +33,7 @@ from repo_catalog.domain.p1_core import (
     RelationMember,
     RepositoryClaim,
     ScalarClaim,
-    native_oid,
+    native_object_oid,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.production_context import (
@@ -122,9 +122,9 @@ def init_catalog(
 
 
 def make_native(fmt: str, kind: str, body: bytes) -> NativeObject:
-    oid_hex = native_oid(fmt, kind, body)
+    oid_hex = native_object_oid(fmt, kind, body)
     return NativeObject(
-        oid=OID(fmt, oid_hex),
+        object_oid=OID(fmt, oid_hex),
         native_type=kind,
         body=body,
         declared_size=len(body),
@@ -146,14 +146,14 @@ def make_tree(fmt: str, entries: list[tuple[bytes, bytes, str]]) -> NativeObject
 
 def make_commit(
     fmt: str,
-    tree_oid: str,
+    tree_object_oid: str,
     parents: list[str],
     *,
     author: str = "Alice <alice@example.com> 1700000000 +0000",
     committer: str = "Alice <alice@example.com> 1700000000 +0000",
     message: str = "Initial commit message\n",
 ) -> NativeObject:
-    lines = [f"tree {tree_oid}"]
+    lines = [f"tree {tree_object_oid}"]
     for parent in parents:
         lines.append(f"parent {parent}")
     lines.append(f"author {author}")
@@ -164,7 +164,7 @@ def make_commit(
 
 def make_tag(
     fmt: str,
-    target_oid: str,
+    target_object_oid: str,
     target_type: str = "commit",
     tag_name: str = "v1.0.0",
     *,
@@ -172,7 +172,7 @@ def make_tag(
     message: str = "Release v1.0.0 tag annotation\n",
 ) -> NativeObject:
     lines = [
-        f"object {target_oid}",
+        f"object {target_object_oid}",
         f"type {target_type}",
         f"tag {tag_name}",
         f"tagger {tagger}",
@@ -222,19 +222,19 @@ def populate_rich_catalog(
 
     tree_obj = make_tree(
         fmt,
-        [(b"100644", b"README.md", missing_blob_oid.full_oid)],
+        [(b"100644", b"README.md", missing_blob_oid.object_oid)],
     )
     commit_obj = make_commit(
         fmt,
-        tree_obj.oid.full_oid,
-        [missing_parent_oid.full_oid],
+        tree_obj.object_oid.object_oid,
+        [missing_parent_oid.object_oid],
         author="Alice Author <alice@example.com> 1700000000 +0000",
         committer="Bob Committer <bob@example.com> 1700000005 +0000",
         message="feat: add p6 production query support\n",
     )
     tag_obj = make_tag(
         fmt,
-        commit_obj.oid.full_oid,
+        commit_obj.object_oid.object_oid,
         "commit",
         "v1.0.0-p6",
         tagger="Carol Tagger <carol@example.com> 1700000100 +0000",
@@ -248,8 +248,8 @@ def populate_rich_catalog(
         [
             (
                 b"100644",
-                commit_obj.oid.full_oid.encode("ascii"),
-                note_blob.oid.full_oid,
+                commit_obj.object_oid.object_oid.encode("ascii"),
+                note_blob.object_oid.object_oid,
             )
         ],
     )
@@ -270,7 +270,7 @@ def populate_rich_catalog(
         # Competing reported scalar claim on commit_obj ("message")
         core.admit_claim(
             ScalarClaim(
-                commit_obj.oid,
+                commit_obj.object_oid,
                 "message",
                 "conflicting reported commit message\n",
                 prov_alt,
@@ -295,7 +295,7 @@ def populate_rich_catalog(
                 "commit_parents",
                 "reported-parents",
                 "partial",
-                (RelationMember(0, commit_obj.oid),),
+                (RelationMember(0, commit_obj.object_oid),),
                 prov_reported,
             )
         )
@@ -311,7 +311,7 @@ def populate_rich_catalog(
                 {
                     "ref": "refs/heads/main",
                     "observed_at_us": 1700000200000000,
-                    "target": list(commit_obj.oid.key),
+                    "target": list(commit_obj.object_oid.key),
                     "target_type": "commit",
                     "ref_kind": "head",
                 },
@@ -328,8 +328,8 @@ def populate_rich_catalog(
                 {
                     "ref": "refs/tags/v1.0.0-p6",
                     "observed_at_us": 1700000200000000,
-                    "target": list(tag_obj.oid.key),
-                    "peeled": list(commit_obj.oid.key),
+                    "target": list(tag_obj.object_oid.key),
+                    "peeled": list(commit_obj.object_oid.key),
                     "target_type": "tag",
                     "ref_kind": "tag",
                 },
@@ -358,17 +358,17 @@ def populate_rich_catalog(
             )
         )
         claim = RefObservationClaim(
-            key, prov_reported, "present", root_oid=notes_tree.oid
+            key, prov_reported, "present", root_object_oid=notes_tree.object_oid
         )
         core.admit_ref_observation_claim(claim)
         mapping = NotesMapping(
-            notes_tree.oid,
+            notes_tree.object_oid,
             "git-notes",
             "1",
             "native-notes-tree",
-            commit_obj.oid,
-            note_blob.oid,
-            commit_obj.oid.full_oid,
+            commit_obj.object_oid,
+            note_blob.object_oid,
+            commit_obj.object_oid.object_oid,
         )
         evidence = NotesMappingEvidence(
             claim,
@@ -390,13 +390,13 @@ def populate_rich_catalog(
             NotesMappingClaim(
                 claim,
                 NotesMapping(
-                    notes_tree.oid,
+                    notes_tree.object_oid,
                     "git-notes",
                     "1",
                     "native-notes-tree",
-                    commit_obj.oid,
+                    commit_obj.object_oid,
                     alt_note_oid,
-                    commit_obj.oid.full_oid,
+                    commit_obj.object_oid.object_oid,
                 ),
                 prov_alt,
             )
@@ -411,9 +411,9 @@ def populate_rich_catalog(
                 "partial",
                 (
                     (
-                        commit_obj.oid.full_oid,
-                        note_blob.oid.full_oid,
-                        commit_obj.oid.full_oid,
+                        commit_obj.object_oid.object_oid,
+                        note_blob.object_oid.object_oid,
+                        commit_obj.object_oid.object_oid,
                     ),
                 ),
                 prov_reported,
@@ -429,7 +429,7 @@ def populate_rich_catalog(
         )
         core.admit_coverage(cov_claim)
         core.admit_coverage_proof(
-            cov_claim, (commit_obj.oid, tag_obj.oid), prov_reported
+            cov_claim, (commit_obj.object_oid, tag_obj.object_oid), prov_reported
         )
 
     pr_key = ResourceKey.from_native(SERVICE, "pull_request", "42")
@@ -534,15 +534,15 @@ def populate_rich_catalog(
         )
 
         # Core references on PR 42:
-        # 1) "head" -> commit_obj.oid (present in Core when core_present=True)
-        head_ref = CoreReference(pr_key, "head", commit_obj.oid, ctx_prov_1)
+        # 1) "head" -> commit_obj.object_oid (present in Core when core_present=True)
+        head_ref = CoreReference(pr_key, "head", commit_obj.object_oid, ctx_prov_1)
         if core_present:
             context.link_core(
                 pr_key,
                 "head",
-                *commit_obj.oid.key,
+                *commit_obj.object_oid.key,
                 ctx_prov_1,
-                lambda f, o: (f, o) == commit_obj.oid.key,
+                lambda f, o: (f, o) == commit_obj.object_oid.key,
             )
         else:
             context.report_core_reference(
@@ -745,7 +745,7 @@ def populate_rich_catalog(
             sources={SOURCE},
             source_repository_pairs={(SOURCE, REPOSITORY)},
             provider_registrations={SERVICE},
-            object_oids={commit_obj.oid, OID(fmt, "f" * width)},
+            object_oids={commit_obj.object_oid, OID(fmt, "f" * width)},
             mapping_claims={
                 MappingClaimKey.for_repository(
                     provider_key,

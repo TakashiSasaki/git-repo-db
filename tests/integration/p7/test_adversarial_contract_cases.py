@@ -67,7 +67,7 @@ def test_case_01_real_commit_survives_backup_and_restore(
     )
     register_functions(conn)
     rows = conn.execute(
-        "SELECT object_format, full_oid, native_type, body, size, digest_sha256 FROM retained_metadata WHERE native_type='commit'"
+        "SELECT object_format, object_oid, native_type, body, size, digest_sha256 FROM retained_metadata WHERE native_type='commit'"
     ).fetchall()
     conn.close()
 
@@ -95,13 +95,13 @@ def test_case_02_retained_byte_modified_without_digest_update_detected(
     conn.execute("PRAGMA ignore_check_constraints = ON;")
     conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
     row = conn.execute(
-        "SELECT full_oid, body FROM retained_metadata WHERE native_type='commit'"
+        "SELECT object_oid, body FROM retained_metadata WHERE native_type='commit'"
     ).fetchone()
-    full_oid, body = row
+    object_oid, body = row
     tampered_body = b"X" + body[1:]
     conn.execute(
-        "UPDATE retained_metadata SET body=? WHERE full_oid=?",
-        (tampered_body, full_oid),
+        "UPDATE retained_metadata SET body=? WHERE object_oid=?",
+        (tampered_body, object_oid),
     )
     conn.execute(
         "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
@@ -200,7 +200,7 @@ def test_case_04_verified_notes_body_survives_recovery(
     )
     register_functions(conn)
     rows = conn.execute(
-        "SELECT object_format, full_oid, body, size, digest_sha256 FROM ref_retained_notes"
+        "SELECT object_format, object_oid, body, size, digest_sha256 FROM ref_retained_notes"
     ).fetchall()
     role_count = conn.execute("SELECT count(*) FROM notes_mapping_evidence").fetchone()[
         0
@@ -261,23 +261,25 @@ def test_case_07_valid_salvage_causes_observable_new_rows(
     init_commits = conn.execute(
         "SELECT count(*) FROM retained_metadata WHERE native_type='commit'"
     ).fetchone()[0]
-    tree_oid = conn.execute(
-        "SELECT full_oid FROM retained_metadata WHERE native_type='tree'"
+    tree_object_oid = conn.execute(
+        "SELECT object_oid FROM retained_metadata WHERE native_type='tree'"
     ).fetchone()[0]
     conn.close()
 
     # Create a valid new commit to salvage
-    new_commit = make_commit("sha1", tree_oid, [], message="Second salvaged commit\n")
+    new_commit = make_commit(
+        "sha1", tree_object_oid, [], message="Second salvaged commit\n"
+    )
     salvage_file = tmp_path / "valid_salvage.jsonl"
     cand = {
-        "candidate_id": f"sha1:{new_commit.oid.full_oid}:{uuid4()}",
+        "candidate_id": f"sha1:{new_commit.object_oid.object_oid}:{uuid4()}",
         "candidate_type": CandidateType.RETAINED_BODY.value,
         "capture_origin_uuidv4": None,
         "capture_uuidv4": None,
         "provenance": {"store": "core", "table": "retained_metadata"},
         "payload": {
             "object_format": "sha1",
-            "full_oid": new_commit.oid.full_oid,
+            "object_oid": new_commit.object_oid.object_oid,
             "physical_copy_uuidv4": str(uuid4()),
             "native_type": "commit",
             "size": len(new_commit.body),
@@ -302,14 +304,14 @@ def test_case_07_valid_salvage_causes_observable_new_rows(
         "SELECT count(*) FROM retained_metadata WHERE native_type='commit'"
     ).fetchone()[0]
     new_row = conn.execute(
-        "SELECT full_oid, body FROM retained_metadata WHERE full_oid=?",
-        (new_commit.oid.full_oid,),
+        "SELECT object_oid, body FROM retained_metadata WHERE object_oid=?",
+        (new_commit.object_oid.object_oid,),
     ).fetchone()
     conn.close()
 
     assert post_commits == init_commits + 1
     assert new_row is not None
-    assert new_row[0] == new_commit.oid.full_oid
+    assert new_row[0] == new_commit.object_oid.object_oid
     assert b"Second salvaged commit" in new_row[1]
 
 
@@ -639,7 +641,7 @@ def test_case_17_sha1_and_sha256_git_formats(tmp_path):
 
     tree_256 = make_tree("sha256", [(b"100644", b"file.txt", "a" * 64)])
     commit_256 = make_commit(
-        "sha256", tree_256.oid.full_oid, [], message="SHA-256 commit\n"
+        "sha256", tree_256.object_oid.object_oid, [], message="SHA-256 commit\n"
     )
 
     core.admit_metadata(tree_256, str(uuid4()), budget)
@@ -763,15 +765,15 @@ def test_case_20_wrong_native_oid_rejected(synthetic_catalog, tmp_path, repo_uui
     conn.execute("PRAGMA ignore_check_constraints = ON;")
     conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
     row = conn.execute(
-        "SELECT full_oid, body FROM retained_metadata WHERE native_type='commit'"
+        "SELECT object_oid, body FROM retained_metadata WHERE native_type='commit'"
     ).fetchone()
-    full_oid, body = row
+    object_oid, body = row
     tampered_body = b"X" + body[1:]
     tampered_digest = hashlib.sha256(tampered_body).hexdigest()
     # Update body and digest so digest check passes, but native OID check fails
     conn.execute(
-        "UPDATE retained_metadata SET body=?, digest_sha256=? WHERE full_oid=?",
-        (tampered_body, tampered_digest, full_oid),
+        "UPDATE retained_metadata SET body=?, digest_sha256=? WHERE object_oid=?",
+        (tampered_body, tampered_digest, object_oid),
     )
     conn.execute(
         "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
@@ -935,13 +937,13 @@ def test_case_24_confirmed_source_corruption_stops_catalog_and_raises(
     conn.execute("PRAGMA ignore_check_constraints = ON;")
     conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
     row = conn.execute(
-        "SELECT full_oid, body FROM retained_metadata WHERE native_type='commit'"
+        "SELECT object_oid, body FROM retained_metadata WHERE native_type='commit'"
     ).fetchone()
-    full_oid, body = row
+    object_oid, body = row
     tampered_body = b"X" + body[1:]
     conn.execute(
-        "UPDATE retained_metadata SET body=? WHERE full_oid=?",
-        (tampered_body, full_oid),
+        "UPDATE retained_metadata SET body=? WHERE object_oid=?",
+        (tampered_body, object_oid),
     )
     conn.execute(
         "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
@@ -978,12 +980,12 @@ def test_case_25_staging_copy_defect_raises_validation_error_without_stopping_so
                 "DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;"
             )
             row = conn.execute(
-                "SELECT full_oid, body FROM retained_metadata WHERE native_type='commit'"
+                "SELECT object_oid, body FROM retained_metadata WHERE native_type='commit'"
             ).fetchone()
-            full_oid, body = row
+            object_oid, body = row
             conn.execute(
-                "UPDATE retained_metadata SET body=? WHERE full_oid=?",
-                (b"X" + body[1:], full_oid),
+                "UPDATE retained_metadata SET body=? WHERE object_oid=?",
+                (b"X" + body[1:], object_oid),
             )
             conn.execute(
                 "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
@@ -1044,12 +1046,12 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
         f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
-    tree_oid = conn.execute(
-        "SELECT full_oid FROM retained_metadata WHERE native_type='tree'"
+    tree_object_oid = conn.execute(
+        "SELECT object_oid FROM retained_metadata WHERE native_type='tree'"
     ).fetchone()[0]
     conn.close()
 
-    commit1 = make_commit("sha1", tree_oid, [], message="Commit 1\n")
+    commit1 = make_commit("sha1", tree_object_oid, [], message="Commit 1\n")
     cand1 = {
         "candidate_id": f"commit-1-{uuid4()}",
         "candidate_type": CandidateType.RETAINED_BODY.value,
@@ -1058,7 +1060,7 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
         "extraction_provenance": {"store": "core", "table": "retained_metadata"},
         "payload": {
             "object_format": "sha1",
-            "full_oid": commit1.oid.full_oid,
+            "object_oid": commit1.object_oid.object_oid,
             "physical_copy_uuidv4": str(uuid4()),
             "native_type": "commit",
             "size": len(commit1.body),
@@ -1087,7 +1089,7 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
     assert state_data1["cumulative_usage"]["input_bytes"] >= len(commit1.body)
 
     # Second commit under the same request_id exhausts budget
-    commit2 = make_commit("sha1", tree_oid, [], message="Commit 2\n")
+    commit2 = make_commit("sha1", tree_object_oid, [], message="Commit 2\n")
     cand2 = {
         "candidate_id": f"commit-2-{uuid4()}",
         "candidate_type": CandidateType.RETAINED_BODY.value,
@@ -1096,7 +1098,7 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
         "extraction_provenance": {"store": "core", "table": "retained_metadata"},
         "payload": {
             "object_format": "sha1",
-            "full_oid": commit2.oid.full_oid,
+            "object_oid": commit2.object_oid.object_oid,
             "physical_copy_uuidv4": str(uuid4()),
             "native_type": "commit",
             "size": len(commit2.body),

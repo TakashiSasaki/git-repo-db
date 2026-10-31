@@ -1,9 +1,9 @@
 {
-  "format": "repo-catalog/p1-isolated-2",
+  "format": "repo-catalog/p1-isolated-3",
   "stores": {
     "context": {
-      "ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
-      "sqlite_schema_sha256": "dab60aff6d844f17b1cbec988346bd86083567bb69c18dcd78bec3fd48863804",
+      "ddl_sha256": "4465f77fa11d18526632e38bd516d2e2a3dbb564b90e5117dff66747f9bd4681",
+      "sqlite_schema_sha256": "1e272e0d9cf0b5688c02bc3e072368fbc162be11e4520f9159581f6019f34905",
       "tables": [
         "collection_terminals",
         "collections",
@@ -27,8 +27,8 @@
       ]
     },
     "core": {
-      "ddl_sha256": "753f97a2126f18311d6029483dffb9846fd2442db9908eba5a1c1aff98e4f8fc",
-      "sqlite_schema_sha256": "73e0c663331158558eb6b572a72a9008f8f7b053aa091b5410a397aa9b15ea34",
+      "ddl_sha256": "d7b4802144952b3b7a17cde06003427c46a69c94c56a809a8745b0933572268f",
+      "sqlite_schema_sha256": "500cfa8ed3ea768b8347ba4fe264e2b81af28fa47eaf4d1cb582cba3edb84f6c",
       "tables": [
         "core_coverage_proofs",
         "coverage_claims",

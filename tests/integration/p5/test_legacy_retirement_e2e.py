@@ -31,7 +31,9 @@ def test_new_only_acquisition_query_cli_search_replay(
     if paired:
         enable_context(acquisition)
     request = request_for(acquisition, metadata=metadata)
-    request = replace(request, notes=replace(request.notes, target_oids=(target,)))
+    request = replace(
+        request, notes=replace(request.notes, target_object_oids=(target,))
+    )
     report = run_request(acquisition, request, metadata=metadata, paired=paired)
     assert report.status == "complete"
     assert report.ref_note_acquisitions[0].body_retained
@@ -52,13 +54,14 @@ def test_new_only_acquisition_query_cli_search_replay(
         )
     assert app.core.sql("SELECT 1 FROM ref_retained_notes")
     assert not app.core.sql(
-        "SELECT 1 FROM retained_metadata WHERE full_oid=?", (target.full_oid,)
+        "SELECT 1 FROM retained_metadata WHERE object_oid=?", (target.object_oid,)
     )
     service = ProductionQueryService(path.parent)
     view = service.get_git_object(target)
     assert not hasattr(view, "notes_targets")
     assert any(
-        entry.mapping.canonical_note_oid == note for entry in view.ref_notes_targets
+        entry.mapping.canonical_note_object_oid == note
+        for entry in view.ref_notes_targets
     )
     assert (
         main(["ref-observations", "--catalog", str(path.parent), "--limit", "1"]) == 0

@@ -28,7 +28,7 @@ from repo_catalog.domain.ref_observation import RefObservationKey
 
 def _export_ref_notes(core, section, claim, work, scope):
     """Export reported groups and locally checked claim-specific proofs."""
-    if claim.root_oid is None:
+    if claim.root_object_oid is None:
         return set()
     identity = claim.identity
     maximum, max_bytes = max(1, scope.max_units), max(1, scope.max_bytes)
@@ -40,7 +40,7 @@ def _export_ref_notes(core, section, claim, work, scope):
     }
     group_columns = (
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
@@ -61,29 +61,29 @@ def _export_ref_notes(core, section, claim, work, scope):
         }
         group = core._stored(claim.identity, mapping_group_from_wire, wire, claim)
         for target, note, _ in group.members:
-            for oid in (target, note):
+            for object_oid in (target, note):
                 work.require("metadata_units", 1)
                 work.charge("metadata_units", 1)
                 if not core.sql(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    (claim.root_oid.object_format, oid),
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    (claim.root_object_oid.object_format, object_oid),
                 ):
                     core._integrity_stop(
-                        (claim.identity, "missing-mapping-group-object", oid)
+                        (claim.identity, "missing-mapping-group-object", object_oid)
                     )
                 from repo_catalog.domain.p1_core import OID
 
-                oids.add(OID(claim.root_oid.object_format, oid))
+                oids.add(OID(claim.root_object_oid.object_format, object_oid))
         section["notes_mapping_groups"].append(wire)
 
     mapping_columns = (
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
         "provenance",
     )
@@ -102,16 +102,16 @@ def _export_ref_notes(core, section, claim, work, scope):
         core._assert_stored_mapping(mapping_claim.mapping, claim.identity)
         oids.update(
             (
-                mapping_claim.mapping.root_oid,
+                mapping_claim.mapping.root_object_oid,
                 mapping_claim.mapping.annotated_object_oid,
-                mapping_claim.mapping.note_oid,
+                mapping_claim.mapping.note_object_oid,
             )
         )
         section["notes_mapping_claims"].append(mapping_claim_to_wire(mapping_claim))
 
     evidence_columns = (
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
@@ -123,7 +123,7 @@ def _export_ref_notes(core, section, claim, work, scope):
         row = dict(zip(evidence_columns, values, strict=True))
         from repo_catalog.domain.p1_core import OID
 
-        if (row["object_format"], row["root_oid"]) != claim.root_oid.key:
+        if (row["object_format"], row["root_object_oid"]) != claim.root_object_oid.key:
             core._integrity_stop((claim.identity, "wrong-evidence-root"))
         target = core._stored(
             claim.identity, OID, row["object_format"], row["annotated_object_oid"]
@@ -141,9 +141,9 @@ def _export_ref_notes(core, section, claim, work, scope):
         for record in projection.evidence:
             oids.update(
                 (
-                    record.mapping.root_oid,
+                    record.mapping.root_object_oid,
                     record.mapping.annotated_object_oid,
-                    record.mapping.note_oid,
+                    record.mapping.note_object_oid,
                 )
             )
             section["notes_mapping_evidence"].append(
@@ -151,14 +151,18 @@ def _export_ref_notes(core, section, claim, work, scope):
             )
 
     if scope.include_retained_bytes:
-        for fmt, full_oid, copy in core.ref_exchange_rows(
+        for fmt, object_oid, copy in core.ref_exchange_rows(
             "copies", identity, work, maximum=maximum, max_bytes=max_bytes
         ):
             from repo_catalog.domain.p1_core import OID
 
-            oid = core._stored(claim.identity, OID, fmt, full_oid)
+            object_oid = core._stored(claim.identity, OID, fmt, object_oid)
             stored_claim, record, native = core.read_ref_note_copy(
-                oid, copy, work, max_metadata_bytes=max_bytes, max_proof_bytes=max_bytes
+                object_oid,
+                copy,
+                work,
+                max_metadata_bytes=max_bytes,
+                max_proof_bytes=max_bytes,
             )
             if stored_claim != claim:
                 core._integrity_stop((claim.identity, "wrong-physical-copy-claim"))
@@ -179,9 +183,9 @@ def _export_ref_notes(core, section, claim, work, scope):
             section["ref_retained_notes"].append(wire)
             oids.update(
                 (
-                    record.mapping.root_oid,
+                    record.mapping.root_object_oid,
                     record.mapping.annotated_object_oid,
-                    record.mapping.note_oid,
+                    record.mapping.note_object_oid,
                 )
             )
     return oids
@@ -281,11 +285,11 @@ def export_ref_units(core, section, scope, work, omissions):
                     )
                 )
         elif scope.object_oids is not None:
-            for oid in scope.object_oids:
+            for object_oid in scope.object_oids:
                 pairs = _pairs(
                     core,
                     "root_claims",
-                    oid.key,
+                    object_oid.key,
                     work,
                     maximum,
                 )
@@ -430,14 +434,14 @@ def export_ref_units(core, section, scope, work, omissions):
             for claim in projection.claims:
                 section["ref_observation_claims"].append(claim_to_wire(claim))
                 oids.update(
-                    oid
-                    for oid in (
-                        claim.direct_target_oid,
-                        claim.resolved_target_oid,
-                        claim.peeled_target_oid,
-                        claim.root_oid,
+                    object_oid
+                    for object_oid in (
+                        claim.direct_target_object_oid,
+                        claim.resolved_target_object_oid,
+                        claim.peeled_target_object_oid,
+                        claim.root_object_oid,
                     )
-                    if oid is not None
+                    if object_oid is not None
                 )
                 oids.update(_export_ref_notes(core, section, claim, work, scope))
         for identity in sorted(events):
@@ -588,12 +592,12 @@ def import_ref_notes(core, section, claims, work, receiver_instance):
                     *claim.ref_observation_key.key,
                     list(claim.provenance.key),
                     "mapping",
-                    *mapping.root_oid.key,
+                    *mapping.root_object_oid.key,
                     mapping.interpretation_kind,
                     mapping.interpretation_version,
                     mapping.interpretation_scope,
                     *mapping.annotated_object_oid.key,
-                    *mapping.note_oid.key,
+                    *mapping.note_object_oid.key,
                     mapping.mapping_path,
                 ],
             ),
@@ -723,7 +727,7 @@ def import_ref_coverage(core, section, claims, work, receiver_instance):
                         *group.ref_claim.ref_observation_key.key,
                         list(group.ref_claim.provenance.key),
                         "group",
-                        *group.ref_claim.root_oid.key,
+                        *group.ref_claim.root_object_oid.key,
                         group.interpretation_kind,
                         group.interpretation_version,
                         group.interpretation_scope,

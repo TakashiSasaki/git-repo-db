@@ -233,8 +233,14 @@ def test_context_invalid_or_large_text_does_not_block_later_unit(
     [
         {"extraction_provenance": 17},
         {"provenance": []},
-        {"payload": {"full_oid": [], "native_type": "tree"}},
-        {"payload": {"full_oid": "0" * 40, "object_format": {}, "native_type": "tree"}},
+        {"payload": {"object_oid": [], "native_type": "tree"}},
+        {
+            "payload": {
+                "object_oid": "0" * 40,
+                "object_format": {},
+                "native_type": "tree",
+            }
+        },
         {"payload": {"size": True}},
     ],
 )

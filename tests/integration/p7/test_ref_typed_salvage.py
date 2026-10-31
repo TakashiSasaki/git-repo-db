@@ -623,7 +623,7 @@ def test_empty_event_and_rootless_claims_survive_without_context(acquisition, tm
         link.claim
         for event in result.enumerations
         for link in event.links
-        if link.claim.root_oid is None
+        if link.claim.root_object_oid is None
     ]
     assert {claim.presence_state for claim in rootless} == {"present", "absent"}
     source = sqlite3.connect(f"file:{core_path}?mode=ro", uri=True)
@@ -648,7 +648,7 @@ def test_empty_event_and_rootless_claims_survive_without_context(acquisition, tm
         for claim in rootless:
             stored = receiver.ref_observation(claim.ref_observation_key, work)
             assert claim in stored.claims
-            assert claim.root_oid is None
+            assert claim.root_object_oid is None
         assert not (destination / "context.sqlite3").exists()
     finally:
         receiver.close()
@@ -716,7 +716,7 @@ def test_existing_whole_event_rejects_reordered_membership(acquisition, tmp_path
     app, path, _, repository, origin, core_path, _ = acquisition
     capture, _, _ = p4_fixtures.fixture_note(acquisition)
     p4_fixtures.git(
-        path, "update-ref", "refs/notes/nested/second", capture.root.full_oid
+        path, "update-ref", "refs/notes/nested/second", capture.root.object_oid
     )
     events = discover(app, repository, origin, str(uuid4())).enumerations
     event = next(value for value in events if len(value.links) == 2)
@@ -1063,12 +1063,12 @@ def test_lossless_ref_and_competing_claims_survive_shuffled_replay(
         observation.ref_observation_key,
         provenance,
         "present",
-        root_oid=OID(fmt, "a" * (40 if fmt == "sha1" else 64)),
+        root_object_oid=OID(fmt, "a" * (40 if fmt == "sha1" else 64)),
     )
     b = replace(
         a,
         provenance=replace(provenance, coordinate="other"),
-        root_oid=OID(fmt, "b" * (40 if fmt == "sha1" else 64)),
+        root_object_oid=OID(fmt, "b" * (40 if fmt == "sha1" else 64)),
     )
     app.core.admit_ref_observation_claim(a)
     app.core.admit_ref_observation_claim(b)
@@ -1326,7 +1326,9 @@ def test_pending_note_cannot_rebind_existing_claim_to_another_root(
     destination = tmp_path / "other-root"
     destination.mkdir()
     initialize(destination / "core.sqlite3", "core", repository, str(uuid4()))
-    other = replace(claim, root_oid=OID(fmt, "f" * (40 if fmt == "sha1" else 64)))
+    other = replace(
+        claim, root_object_oid=OID(fmt, "f" * (40 if fmt == "sha1" else 64))
+    )
     core = GitCore(destination / "core.sqlite3")
     try:
         core.admit_repository(repository)
@@ -1380,7 +1382,7 @@ def test_missing_claim_never_stages_an_unproven_note(acquisition, damage):
             db.execute("UPDATE ref_retained_notes SET proof_bundle='[]'")
         else:
             db.execute(
-                "UPDATE ref_retained_notes SET root_oid=?",
+                "UPDATE ref_retained_notes SET root_object_oid=?",
                 ("f" * (40 if fmt == "sha1" else 64),),
             )
         db.execute("PRAGMA ignore_check_constraints=OFF")
@@ -1475,8 +1477,8 @@ def test_invalid_candidate_rolls_back_and_actual_target_damage_stops(
     elif forgery == "proof":
         forged["unit"]["proof_bundle_json"] = "[]"
     else:
-        fmt, value = forged["claim"]["root_oid"]
-        forged["claim"]["root_oid"] = [fmt, "f" * len(value)]
+        fmt, value = forged["claim"]["root_object_oid"]
+        forged["claim"]["root_object_oid"] = [fmt, "f" * len(value)]
     destination = tmp_path / "atomic-receiver"
     destination.mkdir()
     initialize(destination / "core.sqlite3", "core", repository, str(uuid4()))
@@ -1693,7 +1695,7 @@ def test_whole_inventory_rejects_changed_group_membership(
         observation.ref_observation_key,
         p1_fixtures.provenance("claim"),
         "present",
-        root_oid=root.oid,
+        root_object_oid=root.object_oid,
     )
     group = NotesMappingGroup(
         claim,
@@ -1703,7 +1705,7 @@ def test_whole_inventory_rejects_changed_group_membership(
         "all-notes-mappings",
         "complete",
         tuple(
-            (target, note.full_oid, target)
+            (target, note.object_oid, target)
             for target, note in zip(targets, notes, strict=True)
         ),
         p1_fixtures.provenance("whole"),

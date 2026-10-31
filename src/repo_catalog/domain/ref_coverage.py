@@ -115,7 +115,7 @@ def serialize_structures(structures, work, *, max_structures, max_bytes):
         _charge(work, "proof_steps")
         if (
             not isinstance(native, NativeObject)
-            or not isinstance(native.oid, OID)
+            or not isinstance(native.object_oid, OID)
             or type(native.native_type) is not str
             or len(native.native_type) > 6
             or native.native_type not in ("commit", "tree")
@@ -138,7 +138,7 @@ def serialize_structures(structures, work, *, max_structures, max_bytes):
         result = encode(
             [
                 [
-                    *native.oid.key,
+                    *native.object_oid.key,
                     native.native_type,
                     native.body.hex(),
                     native.declared_size,
@@ -225,13 +225,17 @@ def verify_ref_notes_inventory(proof, work, *, max_structures, max_bytes):
     )
     index = 0
 
-    def read(oid):
+    def read(object_oid):
         nonlocal index
         if index == len(proof.structures):
-            raise CoreFailure("OBJECT_UNAVAILABLE", oid, "structural frontier remains")
+            raise CoreFailure(
+                "OBJECT_UNAVAILABLE", object_oid, "structural frontier remains"
+            )
         native = proof.structures[index]
-        if native.oid != oid:
-            raise CoreFailure("REF_COVERAGE_PROOF", oid, "out-of-order structure")
+        if native.object_oid != object_oid:
+            raise CoreFailure(
+                "REF_COVERAGE_PROOF", object_oid, "out-of-order structure"
+            )
         _charge(work, "input_bytes", len(native.body))
         index += 1
         return native

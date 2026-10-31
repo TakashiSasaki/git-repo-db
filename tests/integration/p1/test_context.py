@@ -181,7 +181,7 @@ def test_portable_core_reference_validated_and_no_sender_promotion(context):
         store.link_core(KEY, "head", "sha1", "a" * 40, sender, lambda *_: False)
     store.link_core(KEY, "head", "sha1", "a" * 40, sender, lambda *_: True)
     assert db.execute(
-        "SELECT object_format,full_oid,provenance_json FROM core_references"
+        "SELECT object_format,object_oid,provenance_json FROM core_references"
     ).fetchone() == ("sha1", "a" * 40, sender)
     assert "receiver_verified" not in sender
 

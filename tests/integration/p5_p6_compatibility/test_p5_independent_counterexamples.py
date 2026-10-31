@@ -82,7 +82,7 @@ def test_native_external_io_outside_write_transaction(tmp_path, monkeypatch):
         str(uuid4()),
         "synthetic",
         1,
-        select_oids=(oids["commit1"],),
+        select_object_oids=(oids["commit1"],),
         include_refs=False,
     )
     PairedAcquisitionCoordinator(cat).admit_paired(
@@ -101,7 +101,7 @@ def test_selected_object_never_repository_complete(tmp_path):
         str(uuid4()),
         "synthetic",
         1,
-        select_oids=(oids["commit1"],),
+        select_object_oids=(oids["commit1"],),
         include_refs=False,
     )
     r = GitAcquisition(cat / "core.sqlite3", operational=cat).acquire_from_native(
@@ -125,7 +125,7 @@ def test_retry_preserves_physical_copy(tmp_path):
         str(uuid4()),
         "synthetic",
         1,
-        select_oids=(oids["commit1"],),
+        select_object_oids=(oids["commit1"],),
         include_refs=False,
         retain_bytes=True,
     )
@@ -169,7 +169,7 @@ def test_exchange_retains_partial_admission_outcome(tmp_path, monkeypatch):
     cat = tmp_path / "cat"
     repo, inst = init_catalog_stores(cat)
     core = empty_core_section()
-    core["git_objects"].append({"object_format": "sha1", "full_oid": "a" * 40})
+    core["git_objects"].append({"object_format": "sha1", "object_oid": "a" * 40})
     p = ExchangePackage(
         str(uuid4()),
         1,

@@ -30,12 +30,12 @@ def test_nominal_metadata_cannot_bypass_single_unit_ceiling(
     with sqlite3.connect(synthetic_catalog / "core.sqlite3") as conn:
         if table == "git_objects":
             oid = (
-                conn.execute("SELECT full_oid FROM git_objects LIMIT 1").fetchone()[0]
+                conn.execute("SELECT object_oid FROM git_objects LIMIT 1").fetchone()[0]
                 if replay
                 else "9" * 40
             )
-            first = {"object_format": "sha1", "full_oid": oid}
-            second = {"object_format": "sha1", "full_oid": "2" * 40}
+            first = {"object_format": "sha1", "object_oid": oid}
+            second = {"object_format": "sha1", "object_oid": "2" * 40}
         elif table == "repositories":
             first = {"repository_uuidv4": repo_uuid if replay else str(uuid4())}
             second = {"repository_uuidv4": str(uuid4())}
@@ -114,7 +114,7 @@ def test_digest_rejection_still_meters_decoded_input(
                 "candidate_type": "retained_body",
                 "payload": {
                     "object_format": "sha1",
-                    "full_oid": "1" * 40,
+                    "object_oid": "1" * 40,
                     "native_type": "commit",
                     "size": len(body),
                     "physical_copy_uuidv4": str(uuid4()),
@@ -144,7 +144,7 @@ def test_rejected_nominal_candidate_still_consumes_metadata_work(
         {
             "candidate_type": "git_metadata",
             "extraction_provenance": {"table": "git_objects"},
-            "payload": {"object_format": "sha1", "full_oid": oid},
+            "payload": {"object_format": "sha1", "object_oid": oid},
         }
         for oid in ("bad", "a" * 40)
     ]

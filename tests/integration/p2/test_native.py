@@ -48,7 +48,7 @@ def write(path, fmt, kind, body, *, literal=False):
         )
         .strip()
         .decode()
-        == expected.oid.full_oid
+        == expected.object_oid.object_oid
     )
     return expected
 
@@ -56,9 +56,9 @@ def write(path, fmt, kind, body, *, literal=False):
 def commit_body(tree, parents=(), *, extra=b"", message=b"message\n"):
     return (
         b"tree "
-        + tree.full_oid.encode()
+        + tree.object_oid.encode()
         + b"\n"
-        + b"".join(b"parent " + p.full_oid.encode() + b"\n" for p in parents)
+        + b"".join(b"parent " + p.object_oid.encode() + b"\n" for p in parents)
         + b"author A\xff <a@invalid> 1 +0930\ncommitter C <c@invalid> 2 -0800\n"
         + extra
         + b"\n"
@@ -67,7 +67,7 @@ def commit_body(tree, parents=(), *, extra=b"", message=b"message\n"):
 
 
 def entry(mode, name, target):
-    return mode + b" " + name + b"\0" + bytes.fromhex(target.full_oid)
+    return mode + b" " + name + b"\0" + bytes.fromhex(target.object_oid)
 
 
 def test_real_git_signed_extension_encoding_and_exact_binary_metadata(core, repository):
@@ -81,31 +81,38 @@ def test_real_git_signed_extension_encoding_and_exact_binary_metadata(core, repo
         path,
         fmt,
         "commit",
-        commit_body(tree.oid, parents, extra=extras, message=b"\xffmessage\r\n"),
+        commit_body(tree.object_oid, parents, extra=extras, message=b"\xffmessage\r\n"),
     )
     source = GitNativeSource(path)
-    assert source.metadata(commit.oid) == commit
-    c.admit_claim(ScalarClaim(commit.oid, "author", "wrong report", provenance()))
+    assert source.metadata(commit.object_oid) == commit
+    c.admit_claim(
+        ScalarClaim(commit.object_oid, "author", "wrong report", provenance())
+    )
     physical = str(uuid4())
-    c.admit_metadata(source.metadata(commit.oid), physical, Budget())
+    c.admit_metadata(source.metadata(commit.object_oid), physical, Budget())
     c.admit_metadata(commit, physical, Budget())
-    assert c.read_metadata(commit.oid) == commit.body
-    assert c.scalar(commit.oid, "author").canonical == [
+    assert c.read_metadata(commit.object_oid) == commit.body
+    assert c.scalar(commit.object_oid, "author").canonical == [
         "known",
         "A\udcff <a@invalid> 1 +0930",
     ]
-    assert c.scalar(commit.oid, "author").reported_conflict
-    assert c.scalar(commit.oid, "author_time_us").canonical == ["known", 1_000_000]
+    assert c.scalar(commit.object_oid, "author").reported_conflict
+    assert c.scalar(commit.object_oid, "author_time_us").canonical == [
+        "known",
+        1_000_000,
+    ]
     assert (
-        c.scalar(commit.oid, "message").canonical[1].encode("utf-8", "surrogateescape")
+        c.scalar(commit.object_oid, "message")
+        .canonical[1]
+        .encode("utf-8", "surrogateescape")
         == b"\xffmessage\r\n"
     )
     assert (
-        bytes.fromhex(c.scalar(commit.oid, "header_data").canonical[1])
+        bytes.fromhex(c.scalar(commit.object_oid, "header_data").canonical[1])
         == commit.body.partition(b"\n\n")[0]
     )
-    assert c.scalar(commit.oid, "encoding").canonical == ["known", "ISO-8859-1"]
-    assert c.relations(commit.oid, "commit_parents").canonical == [
+    assert c.scalar(commit.object_oid, "encoding").canonical == ["known", "ISO-8859-1"]
+    assert c.relations(commit.object_oid, "commit_parents").canonical == [
         "complete",
         [[0, *parents[0].key], [1, *parents[1].key]],
     ]
@@ -123,12 +130,14 @@ def test_real_git_binary_tree_names_and_modes_missing_children(core, repository,
     target = oid("a", fmt)
     body = entry(mode, b"a\n\xff\t", target)
     tree = write(path, fmt, "tree", body)
-    c.admit_metadata(GitNativeSource(path).metadata(tree.oid), str(uuid4()), Budget())
-    assert c.relations(tree.oid, "tree_entries").canonical == [
+    c.admit_metadata(
+        GitNativeSource(path).metadata(tree.object_oid), str(uuid4()), Budget()
+    )
+    assert c.relations(tree.object_oid, "tree_entries").canonical == [
         "complete",
         [[[mode.decode(), b"a\n\xff\t".hex()], *target.key]],
     ]
-    assert c.read_metadata(tree.oid) == body
+    assert c.read_metadata(tree.object_oid) == body
     assert c.scalar(target, "size").canonical is None
 
 
@@ -141,7 +150,7 @@ def test_tree_native_basename_order_differs_from_plain_filename_order(repository
         + entry(b"100644", b"a0", target)
     )
     tree = write(path, fmt, "tree", body)
-    assert GitNativeSource(path).metadata(tree.oid) == tree
+    assert GitNativeSource(path).metadata(tree.object_oid) == tree
     assert list(parse_tree(fmt, body)) == [b"a.c", b"a", b"a0"]
 
 
@@ -154,18 +163,20 @@ def test_real_git_annotated_tag_to_any_type_without_target_body(
     path, fmt = repository
     target = oid("a", fmt)
     body = (
-        f"object {target.full_oid}\ntype {target_kind}\ntag release-v1\n".encode()
+        f"object {target.object_oid}\ntype {target_kind}\ntag release-v1\n".encode()
         + (b"tagger A <a@invalid> 3 +0000\n" if tagger else b"")
         + b"\nannotation\n-----BEGIN PGP SIGNATURE-----\nopaque signature\n"
     )
     tag = write(path, fmt, "tag", body, literal=not tagger)
-    c.admit_metadata(GitNativeSource(path).metadata(tag.oid), str(uuid4()), Budget())
-    assert c.scalar(tag.oid, "tag_name").canonical == ["known", "release-v1"]
-    assert c.relations(tag.oid, "tag_target").canonical == [
+    c.admit_metadata(
+        GitNativeSource(path).metadata(tag.object_oid), str(uuid4()), Budget()
+    )
+    assert c.scalar(tag.object_oid, "tag_name").canonical == ["known", "release-v1"]
+    assert c.relations(tag.object_oid, "tag_target").canonical == [
         "complete",
         [[0, *target.key]],
     ]
-    assert c.read_metadata(tag.oid) == body
+    assert c.read_metadata(tag.object_oid) == body
     assert c.scalar(target, "size").canonical is None
 
 
@@ -223,7 +234,7 @@ def test_exact_native_integrity_failure_not_corruption_stop(core, change):
     c, path, _ = core
     incoming = native("tree", b"")
     bad = {
-        "oid": {"oid": oid()},
+        "oid": {"object_oid": oid()},
         "digest": {"digest_sha256": "0" * 64},
         "size": {"declared_size": 1},
         "type": {"native_type": "tag"},
@@ -264,11 +275,11 @@ def test_no_context_no_derivatives_reopen_preserves_native_authority(core):
     c.admit_metadata(incoming, str(uuid4()), Budget())
     other = GitCore(path)
     try:
-        assert other.relations(incoming.oid, "tree_entries").canonical == [
+        assert other.relations(incoming.object_oid, "tree_entries").canonical == [
             "known_empty",
             [],
         ]
-        assert other.read_metadata(incoming.oid) == b""
+        assert other.read_metadata(incoming.object_oid) == b""
         assert not any(
             (path.parent / (name + ".sqlite3")).exists()
             for name in ("context", "operational", "search")
@@ -288,9 +299,12 @@ def test_corruption_metadata_history_independent_until_byte_read_stops_catalog(c
     db.execute("PRAGMA ignore_check_constraints=ON")
     db.execute("UPDATE retained_metadata SET body=x'01'")
     db.close()
-    assert c.relations(incoming.oid, "tree_entries").canonical == ["known_empty", []]
+    assert c.relations(incoming.object_oid, "tree_entries").canonical == [
+        "known_empty",
+        [],
+    ]
     with pytest.raises(CoreFailure) as error:
-        c.read_metadata(incoming.oid)
+        c.read_metadata(incoming.object_oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
     with pytest.raises(CoreFailure) as stopped:
@@ -319,7 +333,7 @@ def test_ordinary_blob_excluded_before_source_body_read(core, repository):
     path, fmt = repository
     blob = write(path, fmt, "blob", b"ordinary file")
     with pytest.raises(CoreFailure) as error:
-        GitNativeSource(path).metadata(blob.oid)
+        GitNativeSource(path).metadata(blob.object_oid)
     assert error.value.code == "RETENTION_PURPOSE"
     with pytest.raises(CoreFailure):
         c.admit_metadata(blob, str(uuid4()), Budget())
@@ -331,13 +345,13 @@ def test_source_size_limit_and_environment_cannot_redirect(
 ):
     path, fmt = repository
     tree = write(path, fmt, "tree", b"")
-    commit = write(path, fmt, "commit", commit_body(tree.oid))
+    commit = write(path, fmt, "commit", commit_body(tree.object_oid))
     monkeypatch.setenv("GIT_DIR", str(tmp_path / "unavailable"))
     source = GitNativeSource(path, metadata_bytes=1)
     with pytest.raises(CoreFailure) as error:
-        source.metadata(commit.oid)
+        source.metadata(commit.object_oid)
     assert error.value.code == "BUDGET"
-    assert source.metadata(tree.oid) == tree
+    assert source.metadata(tree.object_oid) == tree
 
 
 def test_real_ref_root_observations_retain_force_push_and_replay(core, repository):
@@ -348,9 +362,9 @@ def test_real_ref_root_observations_retain_force_push_and_replay(core, repositor
     source = GitNativeSource(path)
     origin = str(uuid4())
     for number, incoming in enumerate((first, second)):
-        git(path, "update-ref", "refs/heads/main", incoming.oid.full_oid)
+        git(path, "update-ref", "refs/heads/main", incoming.object_oid.object_oid)
         refs = source.refs()
-        assert refs == ((b"refs/heads/main", incoming.oid, "commit", None),)
+        assert refs == ((b"refs/heads/main", incoming.object_oid, "commit", None),)
         capture = str(uuid4())
         observation = GitObservation(
             origin,
@@ -361,7 +375,7 @@ def test_real_ref_root_observations_retain_force_push_and_replay(core, repositor
             {
                 "ref": "refs/heads/main",
                 "observed_at_us": number + 1,
-                "target": incoming.oid.key,
+                "target": incoming.object_oid.key,
             },
             provenance(str(number)),
         )
@@ -455,9 +469,12 @@ def test_loss_of_admitted_metadata_copy_is_corruption_not_optional_nonacquisitio
     db.execute("DROP TRIGGER p1_immutable_retained_metadata_delete")
     db.execute("DELETE FROM retained_metadata")
     db.close()
-    assert c.relations(incoming.oid, "tree_entries").canonical == ["known_empty", []]
+    assert c.relations(incoming.object_oid, "tree_entries").canonical == [
+        "known_empty",
+        [],
+    ]
     with pytest.raises(CoreFailure) as error:
-        c.read_metadata(incoming.oid)
+        c.read_metadata(incoming.object_oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
@@ -473,7 +490,7 @@ def test_stop_published_during_last_read_prevents_ordinary_completion(core, oper
         "scalar": "FROM scalar_claims c",
         "relations": "FROM relation_groups g",
         "bytes": "SELECT * FROM retained_metadata",
-        "sql": "SELECT full_oid FROM git_objects",
+        "sql": "SELECT object_oid FROM git_objects",
     }
     fired = []
 
@@ -485,13 +502,13 @@ def test_stop_published_during_last_read_prevents_ordinary_completion(core, oper
     c._db.set_trace_callback(trace)
     with pytest.raises(CoreFailure) as error:
         if operation == "scalar":
-            c.scalar(incoming.oid, "size")
+            c.scalar(incoming.object_oid, "size")
         elif operation == "relations":
-            c.relations(incoming.oid, "tree_entries")
+            c.relations(incoming.object_oid, "tree_entries")
         elif operation == "bytes":
-            c.read_metadata(incoming.oid)
+            c.read_metadata(incoming.object_oid)
         else:
-            c.sql("SELECT full_oid FROM git_objects")
+            c.sql("SELECT object_oid FROM git_objects")
     assert fired
     assert error.value.code == "RECOVERY_STOP"
     assert not c._db.in_transaction
@@ -648,11 +665,11 @@ def test_raw_coordinator_callback_rejects_hash_matching_malformed_native_metadat
     incoming.validate()  # Intentionally passes digest/OID to reach grammar CHECK.
 
     def admit(tx):
-        tx.execute("INSERT INTO git_objects VALUES(?,?)", incoming.oid.key)
+        tx.execute("INSERT INTO git_objects VALUES(?,?)", incoming.object_oid.key)
         tx.execute(
             "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
             (
-                *incoming.oid.key,
+                *incoming.object_oid.key,
                 str(uuid4()),
                 kind,
                 incoming.body,
@@ -678,13 +695,13 @@ def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_synt
 ):
     c, path, _ = core
     incoming = native(kind, b"invalid native syntax")
-    c.admit_object(incoming.oid)
+    c.admit_object(incoming.object_oid)
     db = connect(path, "core")
     db.execute("PRAGMA ignore_check_constraints=ON")
     db.execute(
         "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
         (
-            *incoming.oid.key,
+            *incoming.object_oid.key,
             str(uuid4()),
             kind,
             incoming.body,
@@ -694,7 +711,7 @@ def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_synt
     )
     db.close()
     with pytest.raises(CoreFailure) as error:
-        c.read_metadata(incoming.oid)
+        c.read_metadata(incoming.object_oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
@@ -737,7 +754,7 @@ def test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries(
         c._db = FailingRead()
         try:
             with pytest.raises(CoreFailure) as raised:
-                c.sql("SELECT full_oid FROM git_objects")
+                c.sql("SELECT object_oid FROM git_objects")
             assert raised.value.code == "AUTHORITATIVE_CORRUPTION"
         finally:
             c._db = original
@@ -797,7 +814,7 @@ def test_native_author_committer_tagger_signed_times_preserve_bytes(
     encoded = str(seconds).encode("ascii")
     body = (
         b"tree "
-        + tree.oid.full_oid.encode()
+        + tree.object_oid.object_oid.encode()
         + b"\nauthor A <a@invalid> "
         + encoded
         + b" +0000\ncommitter C <c@invalid> "
@@ -806,19 +823,19 @@ def test_native_author_committer_tagger_signed_times_preserve_bytes(
     )
     commit = write(path, fmt, "commit", body, literal=True)
     store.admit_metadata(commit, str(uuid4()), Budget())
-    assert store.read_metadata(commit.oid) == body
+    assert store.read_metadata(commit.object_oid) == body
     for field in ("author_time_us", "committer_time_us"):
-        assert store.scalar(commit.oid, field).canonical == [
+        assert store.scalar(commit.object_oid, field).canonical == [
             "known",
             seconds * 1_000_000,
         ]
     tag_body = (
         b"object "
-        + commit.oid.full_oid.encode()
+        + commit.object_oid.object_oid.encode()
         + b"\ntype commit\ntag signed-time\ntagger T <t@invalid> "
         + encoded
         + b" +0000\n\nnative tag\n"
     )
     tag = write(path, fmt, "tag", tag_body, literal=True)
     store.admit_metadata(tag, str(uuid4()), Budget())
-    assert store.read_metadata(tag.oid) == tag_body
+    assert store.read_metadata(tag.object_oid) == tag_body

@@ -19,7 +19,7 @@ def tree(entries, fmt="sha1"):
             + b" "
             + name.encode()
             + b"\0"
-            + bytes.fromhex(target.full_oid)
+            + bytes.fromhex(target.object_oid)
             for mode, name, target in sorted(entries, key=lambda v: v[1])
         ),
         fmt,
@@ -28,14 +28,14 @@ def tree(entries, fmt="sha1"):
 
 def mapping(repository, body=b"note", fmt="sha1", ref="refs/notes/review"):
     note, target = native("blob", body, fmt), oid("a", fmt)
-    root = tree([("100644", target.full_oid, note.oid)], fmt)
+    root = tree([("100644", target.object_oid, note.object_oid)], fmt)
     from types import SimpleNamespace
 
     fixture = SimpleNamespace(
-        capture=SimpleNamespace(root=root.oid),
+        capture=SimpleNamespace(root=root.object_oid),
         target=target,
-        note=note.oid,
-        path=target.full_oid,
+        note=note.object_oid,
+        path=target.object_oid,
         structures=(root,),
     )
     return fixture, note
@@ -61,7 +61,7 @@ def test_new_role_exact_binary_body_and_git_hash(core, fmt, body):
         RefObservation(key, repository, b"refs/notes/review", "source", "visible")
     )
     claim = RefObservationClaim(
-        key, provenance("read"), "present", root_oid=fixture.capture.root
+        key, provenance("read"), "present", root_object_oid=fixture.capture.root
     )
     c.admit_ref_observation_claim(claim)
     content = NotesMapping(
@@ -70,7 +70,7 @@ def test_new_role_exact_binary_body_and_git_hash(core, fmt, body):
         "1",
         "tree",
         fixture.target,
-        note.oid,
+        note.object_oid,
         fixture.path,
     )
     evidence = NotesMappingEvidence(
@@ -87,4 +87,4 @@ def test_new_role_exact_binary_body_and_git_hash(core, fmt, body):
         ["git", "hash-object", "--stdin"], input=body, capture_output=True, check=True
     )
     if fmt == "sha1":
-        assert result.stdout.strip().decode() == note.oid.full_oid
+        assert result.stdout.strip().decode() == note.object_oid.object_oid

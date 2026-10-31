@@ -199,3 +199,22 @@ Pair callback identity/no-stop tests with genuine stored-corruption stop tests.
 When discovering Notes associations, test Group-only reports: a whole Group can
 be valid without any standalone Mapping row. Discover bounded headers and let
 the checked exact-Claim reader validate members before attributing a target.
+
+## Rename semantic keys through generated selectors and strict wire shapes
+
+When renaming a persisted domain field, audit Python attributes/keyword calls,
+SQL PK/FK/generated expressions, canonical JSON and dynamic selectors together.
+A literal search misses expressions such as `prefix + "_target_oid"` and
+`hasattr(value, "oid")`. Keep external Provider field names and pinned historical
+schemas distinct from current internal fields; do not add an alias to hide a
+missed caller. Inspect those dynamic expressions and fixture permission inputs
+before interpreting an admission denial as a product authorization defect.
+
+Strict Exchange row envelopes compare sorted field-name tuples. A rename can
+change lexical order: update the actual row-shape declaration, preserving the
+separate semantic identity tuple order. Exercise current typed SHA-1/SHA-256
+roundtrips and rejection of old names/versions with recomputed checksums, then
+exercise typed salvage and exact-Claim body isolation. The OID naming contract
+and `tests/unit/test_ref_physical_format.py` record this verified case. Use the
+existing schema fingerprint generator and physical audit for actual DDL changes;
+never rewrite historical evidence or loosen exact-field validation to get green.

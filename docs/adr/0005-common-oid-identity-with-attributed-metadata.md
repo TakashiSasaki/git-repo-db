@@ -14,9 +14,10 @@
 Within a Git Core catalog, each **nominal full Git OID** has one common logical identity keyed by the tuple:
 
 ```text
-(object_format, oid)
+(object_format, object_oid)
 ```
 
+- Owner naming clarification (2026-10-31): the common full Git OID component is `object_oid`; role-qualified components use `<role>_object_oid` (for example `root_object_oid`). This changes spelling only, not identity, encoding, attribution or verification. The opt-in implementation and its authoritative contracts change together; no old-name alias or conversion layer is required.
 - `object_format` discriminates Git SHA-1 from Git SHA-256; the full binary OID is 20 or 32 bytes accordingly. A shortened/ambiguous OID is not silently promoted to a nominal full identity.
 - The nominal identity is **repository-independent**. Multiple repositories or acquisitions can refer to the same key without creating duplicate nominal identities. Repository membership, retrieval and ref observations remain distinct, attributed facts; sharing the key does not assert acquisition from either repository.
 - A nominal identity means **the catalog has a subject for assertions about the claimed OID**. It does **not** itself prove a real Git object exists, that bytes are available, that the object is a specific type or size, or that a purported parent/tree relationship is canonical.
@@ -24,7 +25,7 @@ Within a Git Core catalog, each **nominal full Git OID** has one common logical 
 - Attributes and relationships must preserve attribution to their actual source/observation and their epistemic status. Independent reports and byte-derived facts can coexist against the same nominal identity. A later report or verified byte representation must not UPDATE, DELETE or REPLACE earlier admitted reports.
 - A reference to an OID without retained bytes may use the common nominal identity, but the presence of that identity never satisfies a requirement for verified object bytes, verified intrinsic structure, source membership or complete graph closure.
 
-This establishes **logical identity** and **domain separation**, not a mandatory physical table name. Using the existing `git_objects` name as a nominal registry, introducing a separate registry and concrete foreign-key layouts are *not decided here*. [ADR 0017 / KEY-P01](0017-domain-keys-without-storage-surrogates.md) subsequently prohibits database-only surrogate keys and requires the full typed `(object_format,oid)` domain identity to be the authoritative key.
+This establishes **logical identity** and **domain separation**, not a mandatory physical table name. Using the existing `git_objects` name as a nominal registry, introducing a separate registry and concrete foreign-key layouts are *not decided here*. [ADR 0017 / KEY-P01](0017-domain-keys-without-storage-surrogates.md) subsequently prohibits database-only surrogate keys and requires the full typed `(object_format,object_oid)` domain identity to be the authoritative key.
 
 ## 2. Metadata and optional verification
 

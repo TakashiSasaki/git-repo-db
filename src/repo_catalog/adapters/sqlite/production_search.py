@@ -254,11 +254,11 @@ class ProductionSearchAdapter:
 
         # 1. Inspect git_objects and their scalar/relation claims
         obj_rows = core.sql(
-            "SELECT object_format,full_oid FROM git_objects ORDER BY object_format,full_oid"
+            "SELECT object_format,object_oid FROM git_objects ORDER BY object_format,object_oid"
         )
         for row in obj_rows:
-            oid = OID(row[0], row[1])
-            type_proj = core.scalar(oid, "type")
+            object_oid = OID(row[0], row[1])
+            type_proj = core.scalar(object_oid, "type")
             known_types = {
                 alt["value"][1]
                 for alt in type_proj.alternatives
@@ -290,7 +290,7 @@ class ProductionSearchAdapter:
                 "tagger",
                 "decoded_name",
             ):
-                proj = core.scalar(oid, field)
+                proj = core.scalar(object_oid, field)
                 for alt in proj.alternatives:
                     val = alt["value"]
                     if (
@@ -304,8 +304,8 @@ class ProductionSearchAdapter:
                         doc_key = canonical_json(
                             [
                                 "scalar",
-                                oid.object_format,
-                                oid.full_oid,
+                                object_oid.object_format,
+                                object_oid.object_oid,
                                 field,
                                 prov_json,
                             ]
@@ -314,19 +314,19 @@ class ProductionSearchAdapter:
                         summaries[doc_key] = {
                             "checked": alt["checked"],
                             "field": field,
-                            "full_oid": oid.full_oid,
+                            "object_oid": object_oid.object_oid,
                             "kind": "scalar",
                             "native_type": canonical_type,
-                            "object_format": oid.object_format,
+                            "object_format": object_oid.object_format,
                             "provenance": alt["provenance"],
                         }
 
             # Tree entry names (decoded from hex)
-            tree_proj = core.relations(oid, "tree_entries")
+            tree_proj = core.relations(object_oid, "tree_entries")
             for alt in tree_proj.alternatives:
                 prov_json = canonical_json(alt["provenance"])
                 for member in alt["membership"]:
-                    coord, target_fmt, target_oid = member
+                    coord, target_fmt, target_object_oid = member
                     mode, name_hex = coord[0], coord[1]
                     decoded_name = bytes.fromhex(name_hex).decode(
                         "utf-8", "backslashreplace"
@@ -334,10 +334,10 @@ class ProductionSearchAdapter:
                     doc_key = canonical_json(
                         [
                             "tree_entry",
-                            oid.object_format,
-                            oid.full_oid,
+                            object_oid.object_format,
+                            object_oid.object_oid,
                             name_hex,
-                            target_oid,
+                            target_object_oid,
                             prov_json,
                         ]
                     )
@@ -346,10 +346,10 @@ class ProductionSearchAdapter:
                         "checked": alt["checked"],
                         "entry_mode": mode,
                         "entry_name": decoded_name,
-                        "full_oid": oid.full_oid,
+                        "object_oid": object_oid.object_oid,
                         "kind": "tree_entry",
-                        "object_format": oid.object_format,
-                        "target_oid": [target_fmt, target_oid],
+                        "object_format": object_oid.object_format,
+                        "target_object_oid": [target_fmt, target_object_oid],
                     }
 
         # 2. Ref observations

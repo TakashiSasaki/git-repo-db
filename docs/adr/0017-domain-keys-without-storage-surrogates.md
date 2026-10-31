@@ -39,7 +39,7 @@ Examples of prohibited final-target patterns when the actual domain key is known
 
 | Subject | Domain identity for PK/FK |
 | --- | --- |
-| Git nominal object | `(object_format, full_oid)` |
+| Git nominal object | `(object_format, object_oid)` |
 | Notes namespace/ref | Permanent `repository_uuidv4` with full exact ref name and real source scope where necessary |
 | Notes ref capture | **Now fixed by [ADR 0018 / B01-R03](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0018-notes-capture-uuidv4-composite-identity.md)**: direct `(capture_origin_uuidv4, capture_uuidv4)` composite PK/FK; compatible same-capture fact admission fixed by [ADR 0019 / B01-R04](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0019-monotonic-notes-capture-fact-admission.md); B01-R05 competing member report preservation fixed by ADR 0020; B01-R06 direct semantic keys fixed by ADR 0021 |
 | PR document | Existing accepted `(change_request_id, kind, provider_change_request_document_id)` |
@@ -72,7 +72,7 @@ If the owner's intended prohibition also literally forbids **all newly generated
 | --- | --- |
 | ADR 0014 and B01-R01 / ADR 0015 | History/tree/tag/notes catalog, no ordinary file blob archival; auto-discover observable `refs/notes/*` and explicitly nominated notes refs |
 | B01-R02 / ADR 0016 | Preserve immutable, separate genuine captures and idempotent replay of the *same* capture. [ADR 0018 / B01-R03](https://github.com/TakashiSasaki/git-repo-db/blob/ab0786cfa29e7be129c7b17517a469ec1cf8b215/docs/adr/0018-notes-capture-uuidv4-composite-identity.md) now fixes D-1: direct origin UUIDv4 plus capture UUIDv4 as PK/FK with no receiver-local surrogate; B01-R04 monotonic compatible-fact admission fixed by ADR 0019; ADR 0020 / B01-R05 now preserves attributed competing member reports; direct claim/group keys fixed by ADR 0021 / B01-R06 A |
-| GCTX-M01/M02 | Metadata-only Core without Context/bytes and common Git full `(object_format,oid)`, not local `git_object_id` |
+| GCTX-M01/M02 | Metadata-only Core without Context/bytes and common Git full `(object_format,object_oid)`, not local `git_object_id` |
 | GCTX-M03/M04 | Preserve independently attributed typed field claims, observation-scoped ordered relation groups, unknown/partial/known-empty, and truthful verification-aware reads |
 | GCTX-M05–M07 | Exact local byte/representation verification, immutable admission proof and byte-dependent physical checks remain for permitted retained bodies |
 | GCTX-M08/M09 | Distinct immutable physical instances with evidence-derived eligible-set selection. A real per-copy domain identity is required; its format is still open, with no extra storage-only surrogate |
@@ -99,7 +99,7 @@ No compatibility shim or temporary promise to keep old surrogate columns is nece
 
 ## 5. Future counterexamples (NOT executed)
 
-1. Nominal Git object keys are direct `(object_format,oid)` composites, not integer PKs with unique OID side constraints.
+1. Nominal Git object keys are direct `(object_format,object_oid)` composites, not integer PKs with unique OID side constraints.
 2. Child notes mappings and FK references can use the same origin/capture composite without receiver-only `notes_capture_row_id`.
 3. Two independent notes captures at identical root remain separate; replay of the *same* capture is idempotent.
 4. Reusing the same capture key for contradictory ref/root/source data cannot overwrite immutable Core truth.

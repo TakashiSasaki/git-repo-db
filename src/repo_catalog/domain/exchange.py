@@ -1,4 +1,4 @@
-"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0036-exchange-v7`).
+"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0036-exchange-v8`).
 
 Enforces strict separation between:
 - Transport envelope identity (`package_id`, `exported_at_us`, `sender_catalog_instance_uuidv4`)
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from repo_catalog.domain.p1_context import ResourceKey
     from repo_catalog.domain.ref_observation import RefObservationKey
 
-FORMAT = "git-repo-db/adr0036-exchange-v7"
+FORMAT = "git-repo-db/adr0036-exchange-v8"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 MAX_DEPTH = 32
 MAX_ELEMENTS = 200_000
@@ -541,8 +541,10 @@ class ExchangeSelectionScope:
                 None
                 if self.object_oids is None
                 else [
-                    list(oid.key) if isinstance(oid, OID) else ["sha1", str(oid)]
-                    for oid in sorted(
+                    list(object_oid.key)
+                    if isinstance(object_oid, OID)
+                    else ["sha1", str(object_oid)]
+                    for object_oid in sorted(
                         set(self.object_oids),
                         key=lambda o: (
                             list(o.key) if isinstance(o, OID) else ["sha1", str(o)]
@@ -697,7 +699,7 @@ def empty_context_section() -> dict[str, list[dict[str, Any]]]:
 
 @dataclass(frozen=True)
 class ExchangePackage:
-    """Portable typed Exchange package (`git-repo-db/adr0036-exchange-v7`)."""
+    """Portable typed Exchange package (`git-repo-db/adr0036-exchange-v8`)."""
 
     package_id: str
     exported_at_us: int | None
@@ -822,13 +824,13 @@ def validate_package_envelope(package: ExchangePackage) -> None:
         for meta in package.core["retained_metadata"]:
             native_type = meta.get("native_type")
             if native_type == "blob":
-                oid = OID(
+                object_oid = OID(
                     str(meta.get("object_format", "sha1")),
-                    str(meta.get("full_oid", "0" * 40)),
+                    str(meta.get("object_oid", "0" * 40)),
                 )
                 raise CoreFailure(
                     "RETENTION_PURPOSE",
-                    oid,
+                    object_oid,
                     "ordinary file blob bodies are excluded from retained_metadata",
                 )
             if native_type not in ("commit", "tree", "tag"):

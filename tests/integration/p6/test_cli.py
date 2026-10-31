@@ -39,7 +39,7 @@ def test_cli_all_subcommands_pagination_and_error_handling(
     token_str = status_data["snapshot_token"]
 
     # 2. git-object
-    commit_oid = fixtures["commit_obj"].oid.full_oid
+    commit_object_oid = fixtures["commit_obj"].object_oid.object_oid
     code, gobj_data = _run_cli(
         [
             "git-object",
@@ -47,14 +47,14 @@ def test_cli_all_subcommands_pagination_and_error_handling(
             cat_str,
             "--format",
             "sha1",
-            "--oid",
-            commit_oid,
+            "--object-oid",
+            commit_object_oid,
             "--include-bytes",
         ],
         capsys,
     )
     assert code == 0
-    assert gobj_data["full_oid"] == commit_oid
+    assert gobj_data["object_oid"] == commit_object_oid
     assert gobj_data["metadata_retained"] is True
     assert gobj_data["retained_bytes"]["verified"] is True
 

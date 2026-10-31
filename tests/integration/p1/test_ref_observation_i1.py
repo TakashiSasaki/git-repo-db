@@ -63,20 +63,20 @@ def test_observation_identity_claim_replay_conflicts_and_absence(core):
     c.admit_ref_observation_claim(unknown)
     root_a, root_b = OID("sha1", "a" * 40), OID("sha1", "b" * 40)
     first = RefObservationClaim(
-        one.ref_observation_key, provenance("r2"), "present", root_oid=root_a
+        one.ref_observation_key, provenance("r2"), "present", root_object_oid=root_a
     )
     second = RefObservationClaim(
-        one.ref_observation_key, provenance("r3"), "present", root_oid=root_b
+        one.ref_observation_key, provenance("r3"), "present", root_object_oid=root_b
     )
     c.admit_ref_observation_claim(first)
     c.admit_ref_observation_claim(first)
     c.admit_ref_observation_claim(second)
     with pytest.raises(CoreFailure, match="cannot be rebound"):
-        c.admit_ref_observation_claim(replace(first, root_oid=root_b))
+        c.admit_ref_observation_claim(replace(first, root_object_oid=root_b))
     same_coordinate = replace(
         first,
         provenance=replace(first.provenance, decoder="different"),
-        root_oid=root_b,
+        root_object_oid=root_b,
     )
     with pytest.raises(CoreFailure, match="inconsistent"):
         c.admit_ref_observation_claim(same_coordinate)
@@ -125,7 +125,7 @@ def test_unknown_to_known_is_not_conflict_and_coverage_time_preserved(core):
         obs.ref_observation_key,
         provenance("b"),
         "present",
-        root_oid=OID("sha1", "a" * 40),
+        root_object_oid=OID("sha1", "a" * 40),
     )
     c.admit_ref_observation_claim(a)
     c.admit_ref_observation_claim(b)
@@ -171,7 +171,7 @@ def test_ref_projection_charges_repeated_reads_to_real_request(core, tmp_path):
             obs.ref_observation_key,
             provenance("proof-root"),
             "present",
-            root_oid=proof.capture.root,
+            root_object_oid=proof.capture.root,
         )
         c.admit_ref_observation_claim(rooted)
         mapping = NotesMapping(
@@ -191,7 +191,7 @@ def test_ref_projection_charges_repeated_reads_to_real_request(core, tmp_path):
         result = c.notes_mapping_projection(
             rooted, proof.target, "git-notes", "1", "tree", budget, max_units=4
         )
-        assert result.canonical_note_oid == proof.note
+        assert result.canonical_note_object_oid == proof.note
         after = ledger.usage(request)
         assert after["input_bytes"] > before["input_bytes"]
         assert after["proof_steps"] > before["proof_steps"]
@@ -272,7 +272,7 @@ def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
             obs.ref_observation_key,
             provenance(f"ref-{index}"),
             "present",
-            root_oid=proof.capture.root,
+            root_object_oid=proof.capture.root,
         )
         c.admit_ref_observation_claim(claim)
         claims.append(claim)
@@ -307,7 +307,10 @@ def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
         c.read_ref_note(claims[1], content, Budget())
     root_b = OID("sha1", "b" * 40)
     other = RefObservationClaim(
-        first.ref_observation_key, provenance("other-root"), "present", root_oid=root_b
+        first.ref_observation_key,
+        provenance("other-root"),
+        "present",
+        root_object_oid=root_b,
     )
     c.admit_ref_observation_claim(other)
     with pytest.raises(CoreFailure, match="claimed root"):
@@ -317,7 +320,7 @@ def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
             replace(
                 ev1,
                 ref_claim=replace(
-                    claims[0], ref_form="direct", direct_target_oid=root_b
+                    claims[0], ref_form="direct", direct_target_object_oid=root_b
                 ),
             ),
             Budget(),
@@ -343,7 +346,7 @@ def test_groups_atomic_replay_and_no_partial_group_union(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     group = NotesMappingGroup(
@@ -353,7 +356,7 @@ def test_groups_atomic_replay_and_no_partial_group_union(core):
         "full-tree",
         "partial-scope",
         "partial",
-        ((proof.target.full_oid, proof.note.full_oid, None),),
+        ((proof.target.object_oid, proof.note.object_oid, None),),
         provenance("group"),
     )
     c.admit_notes_mapping_group(group)
@@ -389,7 +392,7 @@ def test_unproven_bodies_and_unrelated_claims_cannot_gain_authority(core):
         obs.ref_observation_key,
         provenance("root"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     unknown_claim = RefObservationClaim(
         obs.ref_observation_key, provenance("unknown"), "present"
@@ -432,7 +435,7 @@ def test_note_transaction_rolls_back_all_new_units_on_failure(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     content = NotesMapping(
@@ -458,7 +461,9 @@ def test_note_transaction_rolls_back_all_new_units_on_failure(core):
     assert not c.sql("SELECT * FROM ref_retained_notes")
     c.admit_ref_note(evidence, note, str(uuid4()), Budget())
     assert c.read_ref_note(claim, content, Budget()) == note.body
-    altered = replace(claim, ref_form="direct", direct_target_oid=proof.capture.root)
+    altered = replace(
+        claim, ref_form="direct", direct_target_object_oid=proof.capture.root
+    )
     with pytest.raises(CoreFailure, match="cannot be rebound"):
         c.read_ref_note(altered, content, Budget())
 
@@ -515,7 +520,7 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -527,7 +532,9 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
         proof.note,
         proof.path,
     )
-    competing = replace(mapping, note_oid=OID("sha1", "b" * 40), mapping_path=None)
+    competing = replace(
+        mapping, note_object_oid=OID("sha1", "b" * 40), mapping_path=None
+    )
     c.admit_notes_mapping_claim(NotesMappingClaim(claim, mapping, provenance("first")))
     c.admit_notes_mapping_claim(
         NotesMappingClaim(claim, competing, provenance("second"))
@@ -539,7 +546,7 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
         "tree",
         "partial",
         "partial",
-        ((proof.target.full_oid, proof.note.full_oid, None),),
+        ((proof.target.object_oid, proof.note.object_oid, None),),
         provenance("group"),
     )
     c.admit_notes_mapping_group(group)
@@ -557,7 +564,7 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
     assert len(result.groups) == 1 and result.groups[0].status == "partial"
     assert len(result.evidence) == 2
     assert {item.provenance.coordinate for item in result.evidence} == {"e1", "e2"}
-    assert result.canonical_note_oid == proof.note
+    assert result.canonical_note_object_oid == proof.note
     assert result.reported_conflict
     for limits in ({"max_units": 1}, {"max_bytes": 1}):
         budget = Budget()
@@ -574,7 +581,7 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
     assert (
         c.notes_mapping_projection(
             claim, proof.target, "git-notes", "2", "tree", Budget()
-        ).canonical_note_oid
+        ).canonical_note_object_oid
         is None
     )
 
@@ -614,7 +621,7 @@ def test_structural_evidence_corruption_stops_catalog(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -717,7 +724,7 @@ def test_typed_salvage_stages_only_a_checked_claim_bound_note_body(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     content = NotesMapping(
@@ -759,7 +766,9 @@ def test_typed_salvage_stages_only_a_checked_claim_bound_note_body(core):
     assert all(row["extraction_status"] == "clean" for row in new_rows)
     body = next(row for row in new_rows if row["candidate_type"] == "ref_note")
     assert body["payload"]["unit"]["body_hex"] == note.body.hex()
-    assert body["payload"]["claim"]["root_oid"] == list(claim.root_oid.key)
+    assert body["payload"]["claim"]["root_object_oid"] == list(
+        claim.root_object_oid.key
+    )
     assert body["payload"]["unit"]["proof_bundle_json"]
     assert "private-note-body" not in output.getvalue()
 
@@ -773,7 +782,7 @@ def test_structural_proof_cannot_claim_unchecked_decoder_or_full_inventory(core)
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -819,7 +828,7 @@ def test_replay_does_not_repair_missing_nominal_root(core):
     c.admit_ref_observation(obs)
     root = OID("sha1", "a" * 40)
     claim = RefObservationClaim(
-        obs.ref_observation_key, provenance("ref"), "present", root_oid=root
+        obs.ref_observation_key, provenance("ref"), "present", root_object_oid=root
     )
     c.admit_ref_observation_claim(claim)
     db = connect(path, "core")
@@ -830,7 +839,7 @@ def test_replay_does_not_repair_missing_nominal_root(core):
         db.execute("PRAGMA foreign_keys=OFF")
         db.execute("DROP TRIGGER p1_immutable_git_objects_delete")
         db.execute(
-            "DELETE FROM git_objects WHERE object_format=? AND full_oid=?", root.key
+            "DELETE FROM git_objects WHERE object_format=? AND object_oid=?", root.key
         )
         db.execute(trigger)
         db.execute("PRAGMA foreign_keys=ON")
@@ -841,7 +850,7 @@ def test_replay_does_not_repair_missing_nominal_root(core):
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     with sqlite3.connect(path) as raw:
         assert not raw.execute(
-            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?", root.key
+            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?", root.key
         ).fetchone()
     assert (path.parent / "p1-recovery-stop.json").exists()
 
@@ -880,7 +889,7 @@ def test_missing_role_evidence_stops_body_read(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -938,7 +947,7 @@ def test_replaying_corrupted_stored_copy_stops_catalog(core, corruption, same_co
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1025,7 +1034,7 @@ def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1106,7 +1115,7 @@ def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1160,7 +1169,7 @@ def test_ref_note_read_fetches_only_one_copy_and_charges_actual_work(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1209,7 +1218,7 @@ def test_ref_note_read_limits_reserve_before_body_and_do_not_stop_catalog(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1296,7 +1305,7 @@ def test_note_read_charges_repeated_dependencies_and_exact_finite_budget(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1390,7 +1399,7 @@ def test_bounded_proof_size_matches_canonical_bundle(core, count):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     mapping = NotesMapping(
         proof.capture.root,
@@ -1416,7 +1425,7 @@ def test_proof_meter_rejects_long_invalid_type_before_character_walk(core, monke
         subject(repository).ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     mapping = NotesMapping(
         proof.capture.root,
@@ -1452,7 +1461,7 @@ def test_budget_exhaustion_inside_stored_decoder_is_not_corruption(core):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1509,7 +1518,7 @@ def test_exact_copy_replay_rejects_changed_immutable_claim_fields(core, field):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1528,13 +1537,16 @@ def test_exact_copy_replay_rejects_changed_immutable_claim_fields(core, field):
     c.admit_ref_note(evidence, note, copy, Budget())
     c.admit_ref_note(evidence, note, copy, Budget())
     change = {
-        "direct": {"ref_form": "direct", "direct_target_oid": OID("sha1", "b" * 40)},
+        "direct": {
+            "ref_form": "direct",
+            "direct_target_object_oid": OID("sha1", "b" * 40),
+        },
         "symbolic": {
             "ref_form": "symbolic",
             "symbolic_target_ref_name": b"refs/heads/other",
         },
-        "resolved": {"resolved_target_oid": OID("sha1", "b" * 40)},
-        "peeled": {"peeled_target_oid": OID("sha1", "b" * 40)},
+        "resolved": {"resolved_target_object_oid": OID("sha1", "b" * 40)},
+        "peeled": {"peeled_target_object_oid": OID("sha1", "b" * 40)},
     }[field]
     altered = replace(evidence, ref_claim=replace(claim, **change))
     with pytest.raises(CoreFailure) as error:
@@ -1564,7 +1576,7 @@ def test_note_read_reserves_all_fetched_metadata_before_loading(core, large_fiel
         symbolic_target_ref_name=(b"refs/heads/" + b"x" * 65_536)
         if large_field == "symbolic"
         else None,
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1627,7 +1639,7 @@ def test_related_ref_operations_bound_subject_dependencies(core, operation):
         obs.ref_observation_key,
         provenance("ref"),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
     )
     c.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
@@ -1705,7 +1717,7 @@ def test_related_ref_operations_bound_large_incoming_metadata(
             else "ref"
         ),
         "present",
-        root_oid=proof.capture.root,
+        root_object_oid=proof.capture.root,
         ref_form="symbolic" if large_field == "symbolic" else None,
         symbolic_target_ref_name=(b"refs/heads/" + b"x" * 65_536)
         if large_field == "symbolic"

@@ -62,7 +62,7 @@ def test_core_first_context_second_and_failure_retry_convergence(
         capture_uuidv4=str(uuid4()),
         source_attribution="paired-test-git",
         observed_at_us=1_700_000_100_000_000,
-        select_oids=(oids["commit1"], oids["commit2"], oids["tree"]),
+        select_object_oids=(oids["commit1"], oids["commit2"], oids["tree"]),
         retain_bytes=True,
     )
 
@@ -72,8 +72,8 @@ def test_core_first_context_second_and_failure_retry_convergence(
         "title": "PR linking commit2",
         "state": "open",
         "body": "PR description",
-        "head": {"sha": oids["commit2"].full_oid, "ref": "feat/1"},
-        "base": {"sha": oids["commit1"].full_oid, "ref": "main"},
+        "head": {"sha": oids["commit2"].object_oid, "ref": "feat/1"},
+        "base": {"sha": oids["commit1"].object_oid, "ref": "main"},
     }
     provider_batch = ProviderIntakeBatch(
         service_instance_uuidv4=service_uuid,
@@ -112,8 +112,8 @@ def test_core_first_context_second_and_failure_retry_convergence(
         assert (
             len(
                 core.sql(
-                    "SELECT 1 FROM git_objects WHERE full_oid=?",
-                    (oids["commit1"].full_oid,),
+                    "SELECT 1 FROM git_objects WHERE object_oid=?",
+                    (oids["commit1"].object_oid,),
                 )
             )
             == 1
@@ -121,8 +121,8 @@ def test_core_first_context_second_and_failure_retry_convergence(
         assert (
             len(
                 core.sql(
-                    "SELECT 1 FROM git_objects WHERE full_oid=?",
-                    (oids["commit2"].full_oid,),
+                    "SELECT 1 FROM git_objects WHERE object_oid=?",
+                    (oids["commit2"].object_oid,),
                 )
             )
             == 1
@@ -156,7 +156,7 @@ def test_core_first_context_second_and_failure_retry_convergence(
             pr_key,
             validate=lambda fmt, oid: bool(
                 core.sql(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (fmt, oid),
                 )
             ),
@@ -186,8 +186,8 @@ def test_late_core_dependency_reconciliation(tmp_path: Path) -> None:
         "number": 2,
         "title": "PR with pending core commit",
         "state": "open",
-        "head": {"sha": oids["commit2"].full_oid, "ref": "feat/2"},
-        "base": {"sha": oids["commit1"].full_oid, "ref": "main"},
+        "head": {"sha": oids["commit2"].object_oid, "ref": "feat/2"},
+        "base": {"sha": oids["commit1"].object_oid, "ref": "main"},
     }
     batch = ProviderIntakeBatch(
         service_instance_uuidv4=service_uuid,
@@ -224,7 +224,7 @@ def test_late_core_dependency_reconciliation(tmp_path: Path) -> None:
         capture_uuidv4=str(uuid4()),
         source_attribution="late-core-test-git",
         observed_at_us=1_700_000_200_000_000,
-        select_oids=(oids["commit1"], oids["commit2"], oids["tree"]),
+        select_object_oids=(oids["commit1"], oids["commit2"], oids["tree"]),
         retain_bytes=True,
     )
     git_acq.acquire_from_native(git_source, git_req, new_request=True)
@@ -333,7 +333,7 @@ def test_paired_preparation_carries_claim_specific_notes_to_core(tmp_path):
         notes=NotesAcquisitionSpec(
             discover_notes=True,
             acquire_inventories=True,
-            target_oids=(oids["commit2"],),
+            target_object_oids=(oids["commit2"],),
             retain_note_bodies=True,
         ),
     )

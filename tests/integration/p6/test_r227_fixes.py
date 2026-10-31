@@ -46,8 +46,8 @@ def test_r227_01_group_only_object_and_wrong_claim_target(acquisition, paired):
     assert entries[0].mapping.ref_claim == value.claims[0]
     assert entries[0].mapping.groups == value.mapping_groups
     assert not entries[0].mapping.claims and not entries[0].mapping.evidence
-    assert entries[0].mapping.canonical_note_oid is None
-    wrong = OID(target.object_format, "b" * len(target.full_oid))
+    assert entries[0].mapping.canonical_note_object_oid is None
+    wrong = OID(target.object_format, "b" * len(target.object_oid))
     app.core.admit_object(wrong)
     assert not service.get_git_object(wrong).ref_notes_targets
     assert not app.core.sql("SELECT 1 FROM notes_mappings")
@@ -63,9 +63,9 @@ def test_r227_01_group_only_paired_resource(tmp_path, fmt):
     )
     provenance = Provenance("external", "read", "claim", "test", "1")
     claim = RefObservationClaim(
-        key, provenance, "present", root_oid=data["notes_tree"].oid
+        key, provenance, "present", root_object_oid=data["notes_tree"].object_oid
     )
-    target, note = data["commit_obj"].oid, data["note_blob"].oid
+    target, note = data["commit_obj"].object_oid, data["note_blob"].object_oid
     group = NotesMappingGroup(
         claim,
         "git-notes",
@@ -73,7 +73,7 @@ def test_r227_01_group_only_paired_resource(tmp_path, fmt):
         "tree",
         "all",
         "complete",
-        ((target.full_oid, note.full_oid, target.full_oid),),
+        ((target.object_oid, note.object_oid, target.object_oid),),
         provenance,
     )
     with closing(GitCore(catalog / "core.sqlite3")) as core:
@@ -84,7 +84,7 @@ def test_r227_01_group_only_paired_resource(tmp_path, fmt):
     head = next(
         r
         for r in view.core_resolutions
-        if r.object_view and r.object_view.oid == target
+        if r.object_view and r.object_view.object_oid == target
     )
     assert any(group in entry.mapping.groups for entry in head.ref_notes_targets)
 

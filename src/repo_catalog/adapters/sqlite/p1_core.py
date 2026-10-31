@@ -109,35 +109,35 @@ _BOUNDED_STORED_ROWS = {
             "presence_state",
             "ref_form",
             "direct_format",
-            "direct_target_oid",
+            "direct_target_object_oid",
             "symbolic_target_ref_name",
             "resolved_format",
-            "resolved_target_oid",
+            "resolved_target_object_oid",
             "peeled_format",
-            "peeled_target_oid",
+            "peeled_target_object_oid",
             "root_format",
-            "root_oid",
+            "root_object_oid",
             "absence_evidence",
         ),
         False,
     ),
     "ref_retained_notes": (
-        "object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
+        "object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
         (
             "object_format",
-            "full_oid",
+            "object_oid",
             "physical_copy_uuidv4",
             "digest_sha256",
             "observation_origin_uuidv4",
             "ref_observation_uuidv7",
             "ref_claim_provenance",
             "role_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
             "annotated_object_oid",
-            "note_oid",
+            "note_object_oid",
             "mapping_path_json",
             "verification_scope",
             "role_provenance",
@@ -485,8 +485,8 @@ class Core:
                     "inconsistent immutable evidence coordinate",
                 )
 
-    def _object(self, oid: OID) -> None:
-        self._insert("git_objects", oid.key)
+    def _object(self, object_oid: OID) -> None:
+        self._insert("git_objects", object_oid.key)
 
     def _meter_input_metadata(
         self,
@@ -656,7 +656,7 @@ class Core:
         for structure in evidence.structures:
             self._charge(work, "proof_steps", 1)
             if (
-                not isinstance(structure.oid, OID)
+                not isinstance(structure.object_oid, OID)
                 or not isinstance(structure.native_type, str)
                 or len(structure.native_type) > 6
                 or structure.native_type not in ("commit", "tree", "tag", "blob")
@@ -667,7 +667,7 @@ class Core:
                 )
             size += (
                 4
-                + self._json_string_bytes(structure.oid.full_oid)
+                + self._json_string_bytes(structure.object_oid.object_oid)
                 + self._json_string_bytes(structure.native_type)
                 + 2
                 + 2 * len(structure.body)
@@ -685,14 +685,14 @@ class Core:
             claim.ref_form,
             claim.symbolic_target_ref_name,
         ]
-        for oid in (
-            claim.direct_target_oid,
-            claim.resolved_target_oid,
-            claim.peeled_target_oid,
-            claim.root_oid,
+        for object_oid in (
+            claim.direct_target_object_oid,
+            claim.resolved_target_object_oid,
+            claim.peeled_target_object_oid,
+            claim.root_object_oid,
         ):
-            if oid is not None:
-                values.extend(oid.key)
+            if object_oid is not None:
+                values.extend(object_oid.key)
         if claim.absence_evidence is not None:
             absence = claim.absence_evidence
             values.extend(
@@ -711,12 +711,12 @@ class Core:
     @staticmethod
     def _mapping_input_values(mapping: NotesMapping) -> tuple:
         return (
-            *mapping.root_oid.key,
+            *mapping.root_object_oid.key,
             mapping.interpretation_kind,
             mapping.interpretation_version,
             mapping.interpretation_scope,
-            mapping.annotated_object_oid.full_oid,
-            mapping.note_oid.full_oid,
+            mapping.annotated_object_oid.object_oid,
+            mapping.note_object_oid.object_oid,
             mapping.mapping_path,
         )
 
@@ -735,9 +735,9 @@ class Core:
         with self._transaction():
             self._insert("git_observations", observation.key)
 
-    def admit_object(self, oid: OID) -> None:
+    def admit_object(self, object_oid: OID) -> None:
         with self._transaction():
-            self._object(oid)
+            self._object(object_oid)
 
     @staticmethod
     def _reported(provenance: Provenance) -> None:
@@ -796,14 +796,14 @@ class Core:
                 claim.identity,
             ).fetchone():
                 self._require_ref_claim(claim)
-            for oid in (
-                claim.direct_target_oid,
-                claim.resolved_target_oid,
-                claim.peeled_target_oid,
-                claim.root_oid,
+            for object_oid in (
+                claim.direct_target_object_oid,
+                claim.resolved_target_object_oid,
+                claim.peeled_target_object_oid,
+                claim.root_object_oid,
             ):
-                if oid is not None:
-                    self._object(oid)
+                if object_oid is not None:
+                    self._object(object_oid)
             self._insert("ref_observation_claims", claim.key)
 
     def admit_ref_enumeration(
@@ -985,14 +985,14 @@ class Core:
                     claim.identity,
                 ).fetchone():
                     self._require_ref_claim(claim, work=work)
-                for oid in (
-                    claim.direct_target_oid,
-                    claim.resolved_target_oid,
-                    claim.peeled_target_oid,
-                    claim.root_oid,
+                for object_oid in (
+                    claim.direct_target_object_oid,
+                    claim.resolved_target_object_oid,
+                    claim.peeled_target_object_oid,
+                    claim.root_object_oid,
                 ):
-                    if oid is not None:
-                        self._object(oid)
+                    if object_oid is not None:
+                        self._object(object_oid)
                 self._meter_provenance_encoding(
                     work, claim.provenance, event.byte_limit
                 )
@@ -1325,22 +1325,24 @@ class Core:
             max_metadata_bytes=max_metadata_bytes,
             metadata_limit_code=metadata_limit_code,
         )
-        for oid in (
-            claim.direct_target_oid,
-            claim.resolved_target_oid,
-            claim.peeled_target_oid,
-            claim.root_oid,
+        for object_oid in (
+            claim.direct_target_object_oid,
+            claim.resolved_target_object_oid,
+            claim.peeled_target_object_oid,
+            claim.root_object_oid,
         ):
-            if work is not None and oid is not None:
+            if work is not None and object_oid is not None:
                 self._charge(work, "metadata_units", 1)
             if (
-                oid is not None
+                object_oid is not None
                 and not self._db.execute(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    oid.key,
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    object_oid.key,
                 ).fetchone()
             ):
-                self._integrity_stop((claim.identity, "missing-claim-object", oid.key))
+                self._integrity_stop(
+                    (claim.identity, "missing-claim-object", object_oid.key)
+                )
 
     def _decode_ref_claim(
         self,
@@ -1350,7 +1352,7 @@ class Core:
         max_metadata_bytes: int = 64 * 1024 * 1024,
         metadata_limit_code: str = "BUDGET",
     ) -> RefObservationClaim:
-        def oid(fmt, value):
+        def object_oid(fmt, value):
             if (fmt is None) != (value is None):
                 raise ValueError("partial typed OID")
             return None if fmt is None else OID(fmt, value)
@@ -1362,11 +1364,11 @@ class Core:
             Provenance(*json.loads(row["provenance"])),
             row["presence_state"],
             row["ref_form"],
-            oid(row["direct_format"], row["direct_target_oid"]),
+            object_oid(row["direct_format"], row["direct_target_object_oid"]),
             row["symbolic_target_ref_name"],
-            oid(row["resolved_format"], row["resolved_target_oid"]),
-            oid(row["peeled_format"], row["peeled_target_oid"]),
-            oid(row["root_format"], row["root_oid"]),
+            object_oid(row["resolved_format"], row["resolved_target_object_oid"]),
+            object_oid(row["peeled_format"], row["peeled_target_object_oid"]),
+            object_oid(row["root_format"], row["root_object_oid"]),
             None
             if row["absence_evidence"] is None
             else RefAbsenceEvidence.decode(
@@ -1529,19 +1531,25 @@ class Core:
 
     def _notes_mapping(self, mapping: NotesMapping) -> None:
         existing = self._db.execute(
-            "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=?",
+            "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_object_oid=? AND mapping_path_json=?",
             mapping.key,
         ).fetchone()
-        for oid in (mapping.root_oid, mapping.annotated_object_oid, mapping.note_oid):
+        for object_oid in (
+            mapping.root_object_oid,
+            mapping.annotated_object_oid,
+            mapping.note_object_oid,
+        ):
             if (
                 existing
                 and not self._db.execute(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    oid.key,
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    object_oid.key,
                 ).fetchone()
             ):
-                self._integrity_stop((mapping.key, "missing-mapping-object", oid.key))
-            self._object(oid)
+                self._integrity_stop(
+                    (mapping.key, "missing-mapping-object", object_oid.key)
+                )
+            self._object(object_oid)
         self._insert("notes_mappings", mapping.key)
 
     def admit_notes_mapping(self, mapping: NotesMapping, work: WorkBudget) -> None:
@@ -1603,25 +1611,31 @@ class Core:
             if work is not None:
                 self._charge(work, "metadata_units", 1)
             existing = self._db.execute(
-                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
+                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
                 group.key,
             ).fetchone()
             for target, note, _path in group.members:
                 for value in (target, note):
                     if work is not None:
                         self._charge(work, "metadata_units", 1)
-                    oid = OID(group.ref_claim.root_oid.object_format, value)
+                    object_oid = OID(
+                        group.ref_claim.root_object_oid.object_format, value
+                    )
                     if (
                         existing
                         and not self._db.execute(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                            oid.key,
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                            object_oid.key,
                         ).fetchone()
                     ):
                         self._integrity_stop(
-                            (group.ref_claim.identity, "missing-group-object", oid.key)
+                            (
+                                group.ref_claim.identity,
+                                "missing-group-object",
+                                object_oid.key,
+                            )
                         )
-                    self._object(oid)
+                    self._object(object_oid)
             self._insert("notes_mapping_groups", group.key)
 
     def _decode_mapping(
@@ -1642,28 +1656,32 @@ class Core:
         if encode(path) != row["mapping_path_json"]:
             raise ValueError("noncanonical mapping path")
         return NotesMapping(
-            OID(row["object_format"], row["root_oid"]),
+            OID(row["object_format"], row["root_object_oid"]),
             row["interpretation_kind"],
             row["interpretation_version"],
             row["interpretation_scope"],
             OID(row["object_format"], row["annotated_object_oid"]),
-            OID(row["object_format"], row["note_oid"]),
+            OID(row["object_format"], row["note_object_oid"]),
             path,
         )
 
     def _assert_stored_mapping(self, mapping: NotesMapping, scope: object) -> None:
         row = self.sql(
-            "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=?",
+            "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_object_oid=? AND mapping_path_json=?",
             mapping.key,
         )
         if not row:
             self._integrity_stop((scope, "missing-notes-mapping"))
-        for oid in (mapping.root_oid, mapping.annotated_object_oid, mapping.note_oid):
+        for object_oid in (
+            mapping.root_object_oid,
+            mapping.annotated_object_oid,
+            mapping.note_object_oid,
+        ):
             if not self.sql(
-                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                oid.key,
+                "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                object_oid.key,
             ):
-                self._integrity_stop((scope, "missing-mapping-object", oid.key))
+                self._integrity_stop((scope, "missing-mapping-object", object_oid.key))
 
     def _ref_note_one(self, statement: str, parameters: tuple):
         """Execute a fixed one-row internal query in the current snapshot/cut."""
@@ -1769,7 +1787,7 @@ class Core:
 
     def _fetch_ref_note_copy(
         self,
-        oid: OID,
+        object_oid: OID,
         copy: str,
         work: WorkBudget,
         max_proof_bytes: int,
@@ -1777,7 +1795,7 @@ class Core:
     ):
         return self._bounded_stored_row(
             "ref_retained_notes",
-            (*oid.key, copy),
+            (*object_oid.key, copy),
             work,
             max_metadata_bytes,
             max_proof_bytes,
@@ -1804,7 +1822,7 @@ class Core:
         self, row, work: WorkBudget, max_metadata_bytes: int, max_proof_bytes: int
     ):
         """Validate stored claim, root, mapping, role and body, not caller data."""
-        scope = (row["object_format"], row["full_oid"], row["physical_copy_uuidv4"])
+        scope = (row["object_format"], row["object_oid"], row["physical_copy_uuidv4"])
         self._stored(scope, uuid4_value, row["physical_copy_uuidv4"])
         identity = (
             row["observation_origin_uuidv4"],
@@ -1840,8 +1858,8 @@ class Core:
         )
         if (
             row["role_format"] != row["object_format"]
-            or row["full_oid"] != row["note_oid"]
-            or claim.root_oid != mapping.root_oid
+            or row["object_oid"] != row["note_object_oid"]
+            or claim.root_object_oid != mapping.root_object_oid
         ):
             self._integrity_stop((scope, "note-claim-root"))
         self._meter_mapping_path_encoding(
@@ -1850,17 +1868,21 @@ class Core:
         mapping_key = mapping.key
         self._charge(work, "metadata_units", 1)
         if not self._ref_note_one(
-            "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=?",
+            "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_object_oid=? AND mapping_path_json=?",
             mapping_key,
         ):
             self._integrity_stop((scope, "missing-notes-mapping"))
-        for oid in (mapping.root_oid, mapping.annotated_object_oid, mapping.note_oid):
+        for object_oid in (
+            mapping.root_object_oid,
+            mapping.annotated_object_oid,
+            mapping.note_object_oid,
+        ):
             self._charge(work, "metadata_units", 1)
             if not self._ref_note_one(
-                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                oid.key,
+                "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                object_oid.key,
             ):
-                self._integrity_stop((scope, "missing-mapping-object", oid.key))
+                self._integrity_stop((scope, "missing-mapping-object", object_oid.key))
         evidence_values = (
             *identity,
             *mapping_key,
@@ -1881,7 +1903,7 @@ class Core:
         self._meter_input_metadata(work, (row["proof_bundle"],), max_proof_bytes)
         self._charge(work, "metadata_units", 1)
         if not self._ref_note_one(
-            "SELECT 1 FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=? AND verification_scope=? AND provenance=? AND proof_bundle=?",
+            "SELECT 1 FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_object_oid=? AND mapping_path_json=? AND verification_scope=? AND provenance=? AND proof_bundle=?",
             evidence_values,
         ):
             self._integrity_stop((scope, "missing-notes-role-evidence"))
@@ -1903,13 +1925,13 @@ class Core:
             with account_verification(work):
                 try:
                     valid = valid_note_role(
-                        *mapping.root_oid.key,
-                        mapping.annotated_object_oid.full_oid,
-                        mapping.note_oid.full_oid,
+                        *mapping.root_object_oid.key,
+                        mapping.annotated_object_oid.object_oid,
+                        mapping.note_object_oid.object_oid,
                         mapping.mapping_path,
                         role.proof_bundle,
                     ) and valid_native(
-                        *mapping.note_oid.key,
+                        *mapping.note_object_oid.key,
                         "blob",
                         row["body"],
                         row["size"],
@@ -1945,25 +1967,29 @@ class Core:
             previous = ""
             while True:
                 tail = (
-                    f"FROM {table} WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4>? "
+                    f"FROM {table} WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4>? "
                     "ORDER BY physical_copy_uuidv4 LIMIT 1"
                 )
                 copy = self._bounded_copy_key(
-                    tail, (*native.oid.key, previous), work, native.oid
+                    tail, (*native.object_oid.key, previous), work, native.object_oid
                 )
                 if copy is None:
                     break
                 if inspected == max_existing_copies:
-                    raise CoreFailure("BUDGET", native.oid, "note conflict copy limit")
+                    raise CoreFailure(
+                        "BUDGET", native.object_oid, "note conflict copy limit"
+                    )
                 row = self._bounded_stored_row(
                     table,
-                    (*native.oid.key, copy),
+                    (*native.object_oid.key, copy),
                     work,
                     max_metadata_bytes,
                     max_proof_bytes,
                 )
                 if row is None:
-                    self._integrity_stop((native.oid, copy, "missing-conflict-copy"))
+                    self._integrity_stop(
+                        (native.object_oid, copy, "missing-conflict-copy")
+                    )
                 self._validate_stored_ref_note(
                     row, work, max_metadata_bytes, max_proof_bytes
                 )
@@ -1983,8 +2009,8 @@ class Core:
         work.require("metadata_units", max_copies + 1)
         try:
             rows = self._db.execute(
-                "SELECT octet_length(body),size FROM ref_retained_notes WHERE object_format=? AND full_oid=? LIMIT ?",
-                (*native.oid.key, max_copies + 1),
+                "SELECT octet_length(body),size FROM ref_retained_notes WHERE object_format=? AND object_oid=? LIMIT ?",
+                (*native.object_oid.key, max_copies + 1),
             ).fetchall()
         except BaseException as error:
             abandon = getattr(work, "abandon", None)
@@ -1993,7 +2019,7 @@ class Core:
             else:
                 work.charge("metadata_units", max_copies + 1)
             if _sqlite_authority_failure(error):
-                self._integrity_stop((native.oid, "note-comparison-scan"))
+                self._integrity_stop((native.object_oid, "note-comparison-scan"))
             raise
         work.charge("metadata_units", len(rows))
         for length, declared in rows:
@@ -2002,12 +2028,14 @@ class Core:
                 or type(declared) is not int
                 or length != declared
             ):
-                self._integrity_stop((native.oid, "stored-note-size"))
+                self._integrity_stop((native.object_oid, "stored-note-size"))
         if len(rows) > max_copies:
-            raise CoreFailure("BUDGET", native.oid, "note comparison copy limit")
+            raise CoreFailure("BUDGET", native.object_oid, "note comparison copy limit")
         total = sum(row[0] for row in rows)
         if total >= 2**63:
-            raise CoreFailure("BUDGET", native.oid, "note comparison bytes limit")
+            raise CoreFailure(
+                "BUDGET", native.object_oid, "note comparison bytes limit"
+            )
         return total
 
     @_completed_read
@@ -2031,9 +2059,10 @@ class Core:
         """
         if (
             not isinstance(ref_claim, RefObservationClaim)
-            or ref_claim.root_oid is None
+            or ref_claim.root_object_oid is None
             or not isinstance(annotated_object_oid, OID)
-            or annotated_object_oid.object_format != ref_claim.root_oid.object_format
+            or annotated_object_oid.object_format
+            != ref_claim.root_object_oid.object_format
             or not all(
                 isinstance(x, str) and x
                 for x in (
@@ -2070,7 +2099,7 @@ class Core:
         )
         coordinates = (
             *ref_claim.identity,
-            *ref_claim.root_oid.key,
+            *ref_claim.root_object_oid.key,
             interpretation_kind,
             interpretation_version,
             interpretation_scope,
@@ -2090,7 +2119,7 @@ class Core:
             input_bytes = 0
             where = (
                 "observation_origin_uuidv4=? AND ref_observation_uuidv7=? "
-                "AND ref_claim_provenance=? AND object_format=? AND root_oid=? "
+                "AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? "
                 "AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=?"
             )
             families = (
@@ -2116,7 +2145,7 @@ class Core:
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -2128,7 +2157,7 @@ class Core:
                 for table, extra, target_scoped in families:
                     columns = (*common, *extra)
                     if target_scoped:
-                        columns += ("annotated_object_oid", "note_oid")
+                        columns += ("annotated_object_oid", "note_object_oid")
                     size_expr = "+".join(
                         f"coalesce(octet_length({column}),0)" for column in columns
                     )
@@ -2137,7 +2166,7 @@ class Core:
                     )
                     values = (
                         *coordinates,
-                        *((annotated_object_oid.full_oid,) if target_scoped else ()),
+                        *((annotated_object_oid.object_oid,) if target_scoped else ()),
                         max_units - units + 1,
                     )
                     sizes = self.sql(
@@ -2167,8 +2196,8 @@ class Core:
             # charged; the preflight above materializes integer lengths only.
             self._charge(work, "input_bytes", input_bytes)
             reported_rows = self.sql(
-                "SELECT * FROM notes_mapping_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
-                (*coordinates, annotated_object_oid.full_oid),
+                "SELECT * FROM notes_mapping_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
+                (*coordinates, annotated_object_oid.object_oid),
             )
             reports = []
             for row in reported_rows:
@@ -2193,7 +2222,7 @@ class Core:
                 self._assert_stored_mapping(report.mapping, ref_claim.identity)
                 reports.append(report)
             group_rows = self.sql(
-                "SELECT * FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? ORDER BY group_scope,provenance",
+                "SELECT * FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? ORDER BY group_scope,provenance",
                 coordinates,
             )
             groups = []
@@ -2218,18 +2247,18 @@ class Core:
                 group = self._stored(ref_claim.identity, decode_group, row)
                 for target, note, _path in group.members:
                     self._charge(work, "metadata_units", 1)
-                    for oid in (target, note):
+                    for object_oid in (target, note):
                         if not self.sql(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                            (ref_claim.root_oid.object_format, oid),
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                            (ref_claim.root_object_oid.object_format, object_oid),
                         ):
                             self._integrity_stop(
-                                (ref_claim.identity, "missing-group-object", oid)
+                                (ref_claim.identity, "missing-group-object", object_oid)
                             )
                 groups.append(group)
             evidence_rows = self.sql(
-                "SELECT * FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
-                (*coordinates, annotated_object_oid.full_oid),
+                "SELECT * FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
+                (*coordinates, annotated_object_oid.object_oid),
             )
             evidence = []
             for row in evidence_rows:
@@ -2263,9 +2292,9 @@ class Core:
                     with account_verification(work):
                         self._charge(work, "input_bytes", len(record.proof_bundle))
                         if not valid_note_role(
-                            *record.mapping.root_oid.key,
-                            annotated_object_oid.full_oid,
-                            record.mapping.note_oid.full_oid,
+                            *record.mapping.root_object_oid.key,
+                            annotated_object_oid.object_oid,
+                            record.mapping.note_object_oid.object_oid,
                             record.mapping.mapping_path,
                             record.proof_bundle,
                         ):
@@ -2281,13 +2310,13 @@ class Core:
                         )
                     raise
                 evidence.append(record)
-            positives = {claim.mapping.note_oid for claim in reports}
+            positives = {claim.mapping.note_object_oid for claim in reports}
             absent = False
             for group in groups:
                 matching = [
                     member
                     for member in group.members
-                    if member[0] == annotated_object_oid.full_oid
+                    if member[0] == annotated_object_oid.object_oid
                 ]
                 positives.update(
                     OID(annotated_object_oid.object_format, member[1])
@@ -2297,13 +2326,13 @@ class Core:
                     group.group_scope
                     in (
                         "all-notes-mappings",
-                        encode(["target", annotated_object_oid.full_oid]),
+                        encode(["target", annotated_object_oid.object_oid]),
                     )
                     and group.status in ("complete", "known_empty")
                     and not matching
                 ):
                     absent = True
-            checked = {record.mapping.note_oid for record in evidence}
+            checked = {record.mapping.note_object_oid for record in evidence}
             return NotesMappingProjection(
                 ref_claim,
                 annotated_object_oid,
@@ -2414,10 +2443,13 @@ class Core:
                 "BUDGET", "note_bytes", "positive finite note limit required"
             )
         if len(native.body) > work.limits.note_bytes:
-            raise CoreFailure("BUDGET", native.oid, "individual note size limit")
-        if native.oid != evidence.mapping.note_oid or native.native_type != "blob":
+            raise CoreFailure("BUDGET", native.object_oid, "individual note size limit")
+        if (
+            native.object_oid != evidence.mapping.note_object_oid
+            or native.native_type != "blob"
+        ):
             raise CoreFailure(
-                "NOTES_BODY", native.oid, "exact mapped note blob required"
+                "NOTES_BODY", native.object_oid, "exact mapped note blob required"
             )
         if (
             type(max_proof_bytes) is not int
@@ -2428,7 +2460,9 @@ class Core:
             or not 0 < max_existing_copies < 2**63 - 1
         ):
             raise CoreFailure(
-                "BUDGET", native.oid, "positive finite proof and copy limits required"
+                "BUDGET",
+                native.object_oid,
+                "positive finite proof and copy limits required",
             )
         self._meter_input_metadata(
             work,
@@ -2462,7 +2496,7 @@ class Core:
                 # This is inside the writer cut, before any replay insertion can
                 # trip a representation trigger or conceal damaged authority.
                 existing = self._fetch_ref_note_copy(
-                    native.oid,
+                    native.object_oid,
                     physical_copy_uuidv4,
                     work,
                     max_proof_bytes,
@@ -2479,7 +2513,7 @@ class Core:
                 )
                 self._meter_proof_bundle(work, evidence, max_proof_bytes)
                 values = (
-                    *native.oid.key,
+                    *native.object_oid.key,
                     physical_copy_uuidv4,
                     native.body,
                     native.declared_size,
@@ -2493,7 +2527,7 @@ class Core:
                     if tuple(existing) != values:
                         raise CoreFailure(
                             "INCOMPATIBLE_REPLAY",
-                            native.oid,
+                            native.object_oid,
                             "inconsistent immutable note copy",
                         )
                     if before_commit is not None:
@@ -2551,7 +2585,7 @@ class Core:
         if (
             not isinstance(claim, RefObservationClaim)
             or not isinstance(mapping, NotesMapping)
-            or claim.root_oid != mapping.root_oid
+            or claim.root_object_oid != mapping.root_object_oid
         ):
             raise CoreFailure(
                 "NOTES_ROLE", claim, "exact claimed root and mapping required"
@@ -2585,7 +2619,7 @@ class Core:
             identity = claim.identity
             mapping_key = mapping.key
             copy = self._bounded_copy_key(
-                "FROM ref_retained_notes INDEXED BY ref_retained_notes_role_lookup WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND role_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=? ORDER BY physical_copy_uuidv4 LIMIT 1",
+                "FROM ref_retained_notes INDEXED BY ref_retained_notes_role_lookup WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND role_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_object_oid=? AND mapping_path_json=? ORDER BY physical_copy_uuidv4 LIMIT 1",
                 (*identity, *mapping_key),
                 work,
                 identity,
@@ -2597,7 +2631,7 @@ class Core:
                     "no claim-specific receiver-proven note body",
                 )
             row = self._fetch_ref_note_copy(
-                mapping.note_oid, copy, work, max_proof_bytes, max_metadata_bytes
+                mapping.note_object_oid, copy, work, max_proof_bytes, max_metadata_bytes
             )
             if row is None:
                 self._integrity_stop((claim.identity, "missing-selected-note"))
@@ -2614,11 +2648,11 @@ class Core:
         work.charge(unit, amount)
 
     def _metadata(self, native: NativeObject, copy: str) -> None:
-        self._object(native.oid)
+        self._object(native.object_oid)
         self._insert(
             "retained_metadata",
             (
-                *native.oid.key,
+                *native.object_oid.key,
                 copy,
                 native.native_type,
                 native.body,
@@ -2629,13 +2663,13 @@ class Core:
         for field, value in (("type", native.native_type), ("size", len(native.body))):
             provenance = Provenance(
                 "receiver-intrinsic",
-                encode(native.oid.key),
+                encode(native.object_oid.key),
                 f"native-{field}",
                 "p1-native",
                 "1",
                 "receiver_intrinsic",
             )
-            claim = ScalarClaim(native.oid, field, value, provenance)
+            claim = ScalarClaim(native.object_oid, field, value, provenance)
             self._claim(claim)
             self._insert("intrinsic_claims", (*claim.key, copy))
         relations = {
@@ -2645,18 +2679,21 @@ class Core:
         }[native.native_type]
         for relation in relations:
             members = intrinsic_members(
-                native.oid.object_format, native.native_type, native.body, relation
+                native.object_oid.object_format,
+                native.native_type,
+                native.body,
+                relation,
             )
             provenance = Provenance(
                 "receiver-intrinsic",
-                encode(native.oid.key),
+                encode(native.object_oid.key),
                 relation,
                 "p1-native",
                 "1",
                 "receiver_intrinsic",
             )
             group = RelationGroup(
-                native.oid,
+                native.object_oid,
                 relation,
                 "native-entire-relation",
                 "complete" if members else "known_empty",
@@ -2679,7 +2716,7 @@ class Core:
         if native.native_type not in ("commit", "tree", "tag"):
             raise CoreFailure(
                 "RETENTION_PURPOSE",
-                native.oid,
+                native.object_oid,
                 "ordinary-file blob bodies are excluded",
             )
         with account_verification(work):
@@ -2691,10 +2728,10 @@ class Core:
 
     @_completed_read
     @_decoded_read
-    def scalar(self, oid: OID, field: ScalarField) -> Projection:
+    def scalar(self, object_oid: OID, field: ScalarField) -> Projection:
         rows = self.sql(
-            "SELECT c.*, EXISTS(SELECT 1 FROM intrinsic_claims i WHERE i.object_format=c.object_format AND i.full_oid=c.full_oid AND i.field=c.field AND i.value=c.value AND i.provenance=c.provenance) checked FROM scalar_claims c WHERE object_format=? AND full_oid=? AND field=?",
-            (*oid.key, field),
+            "SELECT c.*, EXISTS(SELECT 1 FROM intrinsic_claims i WHERE i.object_format=c.object_format AND i.object_oid=c.object_oid AND i.field=c.field AND i.value=c.value AND i.provenance=c.provenance) checked FROM scalar_claims c WHERE object_format=? AND object_oid=? AND field=?",
+            (*object_oid.key, field),
         )
 
         def decode_claim(row):
@@ -2702,14 +2739,14 @@ class Core:
             original = None if value == ["unknown"] else value[1]
             if claim_value(field, original) != row["value"]:
                 raise ValueError("invalid stored scalar claim")
-            provenance = self._provenance_value((oid, field), row["provenance"])
+            provenance = self._provenance_value((object_oid, field), row["provenance"])
             if row["checked"] and provenance.qualification != "receiver_intrinsic":
                 raise ValueError("reported assertion has invalid intrinsic link")
             return value
 
         alternatives = tuple(
             {
-                "value": self._stored((oid, field), decode_claim, r),
+                "value": self._stored((object_oid, field), decode_claim, r),
                 "provenance": json.loads(r["provenance"]),
                 "checked": bool(r["checked"]),
             }
@@ -2727,19 +2764,24 @@ class Core:
     @_completed_read
     @_decoded_read
     def relations(
-        self, oid: OID, relation: str, scope: str | None = None
+        self, object_oid: OID, relation: str, scope: str | None = None
     ) -> Projection:
         rows = self.sql(
-            "SELECT g.*, EXISTS(SELECT 1 FROM intrinsic_groups i WHERE i.object_format=g.object_format AND i.full_oid=g.full_oid AND i.relation=g.relation AND i.scope=g.scope AND i.status=g.status AND i.membership=g.membership AND i.provenance=g.provenance) checked FROM relation_groups g WHERE object_format=? AND full_oid=? AND relation=?",
-            (*oid.key, relation),
+            "SELECT g.*, EXISTS(SELECT 1 FROM intrinsic_groups i WHERE i.object_format=g.object_format AND i.object_oid=g.object_oid AND i.relation=g.relation AND i.scope=g.scope AND i.status=g.status AND i.membership=g.membership AND i.provenance=g.provenance) checked FROM relation_groups g WHERE object_format=? AND object_oid=? AND relation=?",
+            (*object_oid.key, relation),
         )
 
         def decode_group(row):
             if not row["scope"] or not valid_group(
-                oid.object_format, row["relation"], row["status"], row["membership"]
+                object_oid.object_format,
+                row["relation"],
+                row["status"],
+                row["membership"],
             ):
                 raise ValueError("invalid stored relation group")
-            provenance = self._provenance_value((oid, relation), row["provenance"])
+            provenance = self._provenance_value(
+                (object_oid, relation), row["provenance"]
+            )
             if row["checked"] and provenance.qualification != "receiver_intrinsic":
                 raise ValueError("reported group has invalid intrinsic link")
             return json.loads(row["membership"])
@@ -2747,7 +2789,7 @@ class Core:
         alternatives = tuple(
             {
                 "status": r["status"],
-                "membership": self._stored((oid, relation), decode_group, r),
+                "membership": self._stored((object_oid, relation), decode_group, r),
                 "scope": r["scope"],
                 "provenance": json.loads(r["provenance"]),
                 "checked": bool(r["checked"]),
@@ -2828,14 +2870,14 @@ class Core:
             observation_origin_uuidv4=None,
             ref_observation_uuidv7=None,
             object_format=None,
-            full_oid=None,
+            object_oid=None,
             field=None,
         )
         names = {
             "repository": ("repository_uuidv4",),
             "ref_observation": ("observation_origin_uuidv4", "ref_observation_uuidv7"),
-            "object": ("object_format", "full_oid"),
-            "field": ("object_format", "full_oid", "field"),
+            "object": ("object_format", "object_oid"),
+            "field": ("object_format", "object_oid", "field"),
         }
         values.update(zip(names[scope.owner_kind], scope.coordinates[:-1], strict=True))
         with self._transaction():
@@ -2917,7 +2959,7 @@ class Core:
         self._meter_provenance_encoding(work, group.provenance, max_bytes)
         return (
             *group.ref_claim.identity,
-            *group.ref_claim.root_oid.key,
+            *group.ref_claim.root_object_oid.key,
             group.interpretation_kind,
             group.interpretation_version,
             group.interpretation_scope,
@@ -2962,7 +3004,7 @@ class Core:
             "ref_observation_uuidv7",
             "ref_claim_provenance",
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
@@ -3086,7 +3128,7 @@ class Core:
             self._charge(work, "metadata_units", 1)
             self._charge(work, "input_bytes", len(group_key[-2]))
             if not self._ref_note_one(
-                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
+                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
                 group_key,
             ):
                 self._integrity_stop((scope, "missing-ref-coverage-group"))
@@ -3094,8 +3136,8 @@ class Core:
                 for value in (target, note):
                     self._charge(work, "metadata_units", 1)
                     if not self._ref_note_one(
-                        "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                        (group.ref_claim.root_oid.object_format, value),
+                        "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                        (group.ref_claim.root_object_oid.object_format, value),
                     ):
                         self._integrity_stop((scope, "missing-ref-coverage-member"))
             provenance = self._provenance_value(
@@ -3226,7 +3268,7 @@ class Core:
             self._charge(work, "metadata_units", 1)
             self._charge(work, "input_bytes", len(group_key[-2]))
             if not self._db.execute(
-                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
+                "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
                 group_key,
             ).fetchone():
                 raise CoreFailure(
@@ -3426,7 +3468,7 @@ class Core:
                             ),
                         )
                         alternatives = {
-                            (value.group.ref_claim.root_oid, value.group.members)
+                            (value.group.ref_claim.root_object_oid, value.group.members)
                             for value in verified
                         }
                         if observed.conflict or len(alternatives) > 1:
@@ -3477,28 +3519,34 @@ class Core:
 
     @_completed_read
     @_decoded_read
-    def read_metadata(self, oid: OID) -> bytes:
+    def read_metadata(self, object_oid: OID) -> bytes:
         rows = self.sql(
-            "SELECT * FROM retained_metadata WHERE object_format=? AND full_oid=? ORDER BY physical_copy_uuidv4",
-            oid.key,
+            "SELECT * FROM retained_metadata WHERE object_format=? AND object_oid=? ORDER BY physical_copy_uuidv4",
+            object_oid.key,
         )
         if not rows:
             raise CoreFailure(
                 "BYTES_UNAVAILABLE",
-                oid,
+                object_oid,
                 "metadata-only identity has no retained representation",
             )
         row = rows[0]
         if not valid_native(
-            *oid.key, row["native_type"], row["body"], row["size"], row["digest_sha256"]
+            *object_oid.key,
+            row["native_type"],
+            row["body"],
+            row["size"],
+            row["digest_sha256"],
         ):
-            self._integrity_stop((oid, row["physical_copy_uuidv4"]))
+            self._integrity_stop((object_oid, row["physical_copy_uuidv4"]))
         from repo_catalog.domain.git_native import parse_metadata
 
         try:
-            parse_metadata(oid.object_format, row["native_type"], row["body"])
+            parse_metadata(object_oid.object_format, row["native_type"], row["body"])
         except (ValueError, TypeError):
-            self._integrity_stop((oid, row["physical_copy_uuidv4"], "native-syntax"))
+            self._integrity_stop(
+                (object_oid, row["physical_copy_uuidv4"], "native-syntax")
+            )
         return row["body"]
 
 
@@ -3514,11 +3562,11 @@ def validate_embedded_references(db) -> None:
         valid_group,
     )
 
-    def nominal(fmt, oid):
+    def nominal(fmt, object_oid):
         return (
             db.execute(
-                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                (fmt, oid),
+                "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                (fmt, object_oid),
             ).fetchone()
             is not None
         )

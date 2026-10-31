@@ -107,12 +107,12 @@ def test_missing_physical_identity_is_only_observation(
 def test_empty_metadata_body_is_admissible(synthetic_catalog, tmp_path):
     import hashlib
 
-    from repo_catalog.domain.p1_core import native_oid
+    from repo_catalog.domain.p1_core import native_object_oid
 
     candidate = _candidate(synthetic_catalog, "retained_metadata")
     candidate["payload"].update(
         native_type="tree",
-        full_oid=native_oid("sha1", "tree", b""),
+        object_oid=native_object_oid("sha1", "tree", b""),
         body_base64="",
         size=0,
         digest_sha256=hashlib.sha256(b"").hexdigest(),
@@ -148,7 +148,7 @@ def test_context_resources_are_explicit_observations_not_false_replays(
         "payload": {
             "repository_uuidv4": str(uuid4()),
             "object_format": "sha1",
-            "full_oid": "f" * 40,
+            "object_oid": "f" * 40,
         },
     }
     before = _authority(synthetic_catalog)

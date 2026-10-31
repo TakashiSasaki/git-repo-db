@@ -40,7 +40,7 @@ _REF_EXCHANGE_ROWS = {
         "notes_mapping_groups",
         (
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
@@ -49,7 +49,7 @@ _REF_EXCHANGE_ROWS = {
             "membership",
             "provenance",
         ),
-        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,provenance",
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,provenance",
         3,
         False,
         False,
@@ -58,16 +58,16 @@ _REF_EXCHANGE_ROWS = {
         "notes_mapping_claims",
         (
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
             "annotated_object_oid",
-            "note_oid",
+            "note_object_oid",
             "mapping_path_json",
             "provenance",
         ),
-        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,provenance",
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,provenance",
         3,
         False,
         False,
@@ -76,21 +76,21 @@ _REF_EXCHANGE_ROWS = {
         "notes_mapping_evidence",
         (
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
             "annotated_object_oid",
         ),
-        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid",
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid",
         3,
         True,
         False,
     ),
     "copies": (
         "ref_retained_notes",
-        ("object_format", "full_oid", "physical_copy_uuidv4"),
-        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,full_oid,physical_copy_uuidv4",
+        ("object_format", "object_oid", "physical_copy_uuidv4"),
+        "WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? ORDER BY object_format,object_oid,physical_copy_uuidv4",
         3,
         False,
         False,
@@ -114,7 +114,7 @@ _REF_EXCHANGE_ROWS = {
     "root_claims": (
         "ref_observation_claims",
         ("observation_origin_uuidv4", "ref_observation_uuidv7"),
-        "WHERE root_format=? AND root_oid=? ORDER BY observation_origin_uuidv4,ref_observation_uuidv7",
+        "WHERE root_format=? AND root_object_oid=? ORDER BY observation_origin_uuidv4,ref_observation_uuidv7",
         2,
         True,
         True,
@@ -143,10 +143,10 @@ _EXCHANGE_METADATA_ROWS = {
         0,
     ),
     "retained_metadata": (
-        "SELECT object_format,full_oid,physical_copy_uuidv4,native_type,size,digest_sha256 FROM retained_metadata ORDER BY object_format,full_oid,physical_copy_uuidv4",
+        "SELECT object_format,object_oid,physical_copy_uuidv4,native_type,size,digest_sha256 FROM retained_metadata ORDER BY object_format,object_oid,physical_copy_uuidv4",
         (
             "object_format",
-            "full_oid",
+            "object_oid",
             "physical_copy_uuidv4",
             "native_type",
             "size",
@@ -155,15 +155,15 @@ _EXCHANGE_METADATA_ROWS = {
         0,
     ),
     "scalar_claims": (
-        "SELECT c.object_format,c.full_oid,c.field,c.value,c.provenance,EXISTS(SELECT 1 FROM intrinsic_claims i WHERE i.object_format=c.object_format AND i.full_oid=c.full_oid AND i.field=c.field AND i.value=c.value AND i.provenance=c.provenance) AS checked FROM scalar_claims c ORDER BY c.object_format,c.full_oid,c.field,c.value,c.provenance",
-        ("object_format", "full_oid", "field", "value", "provenance", "checked"),
+        "SELECT c.object_format,c.object_oid,c.field,c.value,c.provenance,EXISTS(SELECT 1 FROM intrinsic_claims i WHERE i.object_format=c.object_format AND i.object_oid=c.object_oid AND i.field=c.field AND i.value=c.value AND i.provenance=c.provenance) AS checked FROM scalar_claims c ORDER BY c.object_format,c.object_oid,c.field,c.value,c.provenance",
+        ("object_format", "object_oid", "field", "value", "provenance", "checked"),
         0,
     ),
     "relation_groups": (
-        "SELECT g.object_format,g.full_oid,g.relation,g.scope,g.status,g.membership,g.provenance,EXISTS(SELECT 1 FROM intrinsic_groups i WHERE i.object_format=g.object_format AND i.full_oid=g.full_oid AND i.relation=g.relation AND i.scope=g.scope AND i.status=g.status AND i.membership=g.membership AND i.provenance=g.provenance) AS checked FROM relation_groups g ORDER BY g.object_format,g.full_oid,g.relation,g.scope,g.status,g.membership,g.provenance",
+        "SELECT g.object_format,g.object_oid,g.relation,g.scope,g.status,g.membership,g.provenance,EXISTS(SELECT 1 FROM intrinsic_groups i WHERE i.object_format=g.object_format AND i.object_oid=g.object_oid AND i.relation=g.relation AND i.scope=g.scope AND i.status=g.status AND i.membership=g.membership AND i.provenance=g.provenance) AS checked FROM relation_groups g ORDER BY g.object_format,g.object_oid,g.relation,g.scope,g.status,g.membership,g.provenance",
         (
             "object_format",
-            "full_oid",
+            "object_oid",
             "relation",
             "scope",
             "status",
@@ -174,7 +174,7 @@ _EXCHANGE_METADATA_ROWS = {
         0,
     ),
     "relation_membership": (
-        "SELECT relation,scope,status,membership,provenance FROM relation_groups WHERE object_format=? AND full_oid=? ORDER BY relation,scope,status,membership,provenance",
+        "SELECT relation,scope,status,membership,provenance FROM relation_groups WHERE object_format=? AND object_oid=? ORDER BY relation,scope,status,membership,provenance",
         ("relation", "scope", "status", "membership", "provenance"),
         2,
     ),
@@ -192,13 +192,13 @@ _EXCHANGE_METADATA_ROWS = {
         0,
     ),
     "coverage_scopes": (
-        "SELECT owner_kind,owner_coordinates_json,repository_uuidv4,object_format,full_oid,field,coverage_kind,observation_origin_uuidv4,ref_observation_uuidv7 FROM coverage_scopes ORDER BY owner_kind,owner_coordinates_json",
+        "SELECT owner_kind,owner_coordinates_json,repository_uuidv4,object_format,object_oid,field,coverage_kind,observation_origin_uuidv4,ref_observation_uuidv7 FROM coverage_scopes ORDER BY owner_kind,owner_coordinates_json",
         (
             "owner_kind",
             "owner_coordinates_json",
             "repository_uuidv4",
             "object_format",
-            "full_oid",
+            "object_oid",
             "field",
             "coverage_kind",
             "observation_origin_uuidv4",
@@ -230,8 +230,8 @@ _EXCHANGE_METADATA_ROWS = {
         0,
     ),
     "git_objects": (
-        "SELECT object_format,full_oid FROM git_objects ORDER BY object_format,full_oid",
-        ("object_format", "full_oid"),
+        "SELECT object_format,object_oid FROM git_objects ORDER BY object_format,object_oid",
+        ("object_format", "object_oid"),
         0,
     ),
 }
@@ -660,7 +660,7 @@ class GitCore(Core):
                     maximum=max_groups,
                     max_bytes=max_bytes,
                 )
-                if claim.root_oid is not None
+                if claim.root_object_oid is not None
                 else ()
             )
             groups = []
@@ -677,7 +677,7 @@ class GitCore(Core):
                     provenance,
                 ) = row
                 if (
-                    (fmt, root) != claim.root_oid.key
+                    (fmt, root) != claim.root_object_oid.key
                     or type(raw) is not str
                     or type(provenance) is not str
                 ):
@@ -769,15 +769,19 @@ class GitCore(Core):
                     guarded.charge("metadata_units", metadata_work)
                     guarded.charge("input_bytes", parse_bytes)
                 for target, note, _ in group.members:
-                    for oid in (target, note):
+                    for object_oid in (target, note):
                         guarded.require("metadata_units", 1)
                         guarded.charge("metadata_units", 1)
                         if not self.sql(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                            (fmt, oid),
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                            (fmt, object_oid),
                         ):
                             self._integrity_stop(
-                                (claim.identity, "missing-stored-group-object", oid)
+                                (
+                                    claim.identity,
+                                    "missing-stored-group-object",
+                                    object_oid,
+                                )
                             )
                 groups.append(group)
 
@@ -975,7 +979,7 @@ class GitCore(Core):
     @_decoded_read
     def read_ref_note_copy(
         self,
-        oid: OID,
+        object_oid: OID,
         physical_copy_uuidv4: str,
         work,
         *,
@@ -988,8 +992,8 @@ class GitCore(Core):
         immutable Claim or mapping. All variable-width input is reserved before
         fetching; role and body verification are charged to the same budget.
         """
-        if not isinstance(oid, OID):
-            raise CoreFailure("IDENTITY", oid, "typed note OID required")
+        if not isinstance(object_oid, OID):
+            raise CoreFailure("IDENTITY", object_oid, "typed note OID required")
         uuid4_value(physical_copy_uuidv4)
         self._available()
         work = _CheckedReadBudget(self, work)
@@ -998,11 +1002,17 @@ class GitCore(Core):
         try:
             with self._snapshot():
                 row = self._fetch_ref_note_copy(
-                    oid, physical_copy_uuidv4, work, max_proof_bytes, max_metadata_bytes
+                    object_oid,
+                    physical_copy_uuidv4,
+                    work,
+                    max_proof_bytes,
+                    max_metadata_bytes,
                 )
                 if row is None:
                     raise CoreFailure(
-                        "NOTES_ROLE_UNAVAILABLE", oid, "physical note copy not found"
+                        "NOTES_ROLE_UNAVAILABLE",
+                        object_oid,
+                        "physical note copy not found",
                     )
                 claim, mapping, body = self._validate_stored_ref_note(
                     row, work, max_metadata_bytes, max_proof_bytes
@@ -1021,7 +1031,7 @@ class GitCore(Core):
                     row["proof_bundle"],
                 )
                 native = NativeObject(
-                    oid, "blob", body, row["size"], row["digest_sha256"]
+                    object_oid, "blob", body, row["size"], row["digest_sha256"]
                 )
                 return claim, evidence, native
         finally:
@@ -1039,11 +1049,11 @@ class GitCore(Core):
     def _metadata(self, native: NativeObject, copy: str) -> None:
         try:
             parsed = parse_metadata(
-                native.oid.object_format, native.native_type, native.body
+                native.object_oid.object_format, native.native_type, native.body
             )
         except CoreFailure as error:
             if error.code == "NATIVE_SYNTAX":
-                raise CoreFailure(error.code, native.oid, str(error)) from error
+                raise CoreFailure(error.code, native.object_oid, str(error)) from error
             raise
         # The inherited entire unit installs the physical copy, type/size and
         # whole checked relation groups in this same Core transaction.
@@ -1053,26 +1063,33 @@ class GitCore(Core):
                 continue
             provenance = Provenance(
                 "receiver-intrinsic",
-                encode(native.oid.key),
+                encode(native.object_oid.key),
                 "native-" + field,
                 DECODER,
                 DECODER_VERSION,
                 "receiver_intrinsic",
             )
-            claim = ScalarClaim(native.oid, field, value, provenance)
+            claim = ScalarClaim(native.object_oid, field, value, provenance)
             self._claim(claim)
             self._insert("intrinsic_claims", (*claim.key, copy))
 
     @_completed_read
     def read_metadata_copy(
-        self, oid: OID, physical_copy_uuidv4: str, work, *, max_bytes=64 * 1024 * 1024
+        self,
+        object_oid: OID,
+        physical_copy_uuidv4: str,
+        work,
+        *,
+        max_bytes=64 * 1024 * 1024,
     ):
         """Verify one retained structural metadata copy before exporting it."""
-        if not isinstance(oid, OID):
-            raise CoreFailure("IDENTITY", oid, "typed metadata OID required")
+        if not isinstance(object_oid, OID):
+            raise CoreFailure("IDENTITY", object_oid, "typed metadata OID required")
         uuid4_value(physical_copy_uuidv4)
         if type(max_bytes) is not int or not 0 < max_bytes < 2**63:
-            raise CoreFailure("BUDGET", oid, "finite metadata copy limit required")
+            raise CoreFailure(
+                "BUDGET", object_oid, "finite metadata copy limit required"
+            )
         work = _CheckedReadBudget(self, work)
         prior = getattr(self, "_checked_byte_read", False)
         self._checked_byte_read = True
@@ -1081,8 +1098,8 @@ class GitCore(Core):
                 work.require("metadata_units", 1)
                 try:
                     sizes = self._ref_note_one(
-                        "SELECT octet_length(native_type),octet_length(body),size,octet_length(digest_sha256) FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                        (*oid.key, physical_copy_uuidv4),
+                        "SELECT octet_length(native_type),octet_length(body),size,octet_length(digest_sha256) FROM retained_metadata WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+                        (*object_oid.key, physical_copy_uuidv4),
                     )
                 except BaseException:
                     abandon = getattr(work, "abandon", None)
@@ -1094,7 +1111,9 @@ class GitCore(Core):
                 work.charge("metadata_units", int(sizes is not None))
                 if sizes is None:
                     raise CoreFailure(
-                        "BYTES_UNAVAILABLE", oid, "physical metadata copy not found"
+                        "BYTES_UNAVAILABLE",
+                        object_oid,
+                        "physical metadata copy not found",
                     )
                 if (
                     any(type(value) is not int or value < 0 for value in sizes)
@@ -1103,16 +1122,22 @@ class GitCore(Core):
                     or sizes[3] != 64
                 ):
                     self._integrity_stop(
-                        (oid, physical_copy_uuidv4, "invalid stored metadata size")
+                        (
+                            object_oid,
+                            physical_copy_uuidv4,
+                            "invalid stored metadata size",
+                        )
                     )
                 total = sizes[0] + sizes[1] + sizes[3]
                 if total > max_bytes:
-                    raise CoreFailure("BUDGET", oid, "finite metadata copy limit")
+                    raise CoreFailure(
+                        "BUDGET", object_oid, "finite metadata copy limit"
+                    )
                 work.require("input_bytes", total)
                 try:
                     row = self._ref_note_one(
-                        "SELECT * FROM retained_metadata WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                        (*oid.key, physical_copy_uuidv4),
+                        "SELECT * FROM retained_metadata WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+                        (*object_oid.key, physical_copy_uuidv4),
                     )
                 except BaseException:
                     abandon = getattr(work, "abandon", None)
@@ -1124,15 +1149,15 @@ class GitCore(Core):
                 work.charge("input_bytes", total if row is not None else 0)
                 if row is None:
                     self._integrity_stop(
-                        (oid, physical_copy_uuidv4, "metadata copy disappeared")
+                        (object_oid, physical_copy_uuidv4, "metadata copy disappeared")
                     )
                 self._charge(work, "metadata_units", 1)
                 missing = self._ref_note_one(
-                    "SELECT 1 FROM intrinsic_claims i LEFT JOIN retained_metadata r ON r.object_format=i.object_format AND r.full_oid=i.full_oid AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 WHERE i.object_format=? AND i.full_oid=? AND r.physical_copy_uuidv4 IS NULL UNION ALL SELECT 1 FROM intrinsic_groups i LEFT JOIN retained_metadata r ON r.object_format=i.object_format AND r.full_oid=i.full_oid AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 WHERE i.object_format=? AND i.full_oid=? AND r.physical_copy_uuidv4 IS NULL LIMIT 1",
-                    (*oid.key, *oid.key),
+                    "SELECT 1 FROM intrinsic_claims i LEFT JOIN retained_metadata r ON r.object_format=i.object_format AND r.object_oid=i.object_oid AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 WHERE i.object_format=? AND i.object_oid=? AND r.physical_copy_uuidv4 IS NULL UNION ALL SELECT 1 FROM intrinsic_groups i LEFT JOIN retained_metadata r ON r.object_format=i.object_format AND r.object_oid=i.object_oid AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 WHERE i.object_format=? AND i.object_oid=? AND r.physical_copy_uuidv4 IS NULL LIMIT 1",
+                    (*object_oid.key, *object_oid.key),
                 )
                 if missing:
-                    self._integrity_stop((oid, "lost-retained-metadata-copy"))
+                    self._integrity_stop((object_oid, "lost-retained-metadata-copy"))
                 invalid_copy = _InvalidStoredMetadataCopy()
                 try:
                     with account_verification(work):
@@ -1142,7 +1167,7 @@ class GitCore(Core):
                                 "tree",
                                 "tag",
                             ) or not valid_native(
-                                *oid.key,
+                                *object_oid.key,
                                 row["native_type"],
                                 row["body"],
                                 row["size"],
@@ -1150,7 +1175,9 @@ class GitCore(Core):
                             ):
                                 raise invalid_copy
                             parse_metadata(
-                                oid.object_format, row["native_type"], row["body"]
+                                object_oid.object_format,
+                                row["native_type"],
+                                row["body"],
                             )
                         except CoreFailure as error:
                             if error.code not in ("STORED_METADATA", "NATIVE_SYNTAX"):
@@ -1170,30 +1197,30 @@ class GitCore(Core):
                     if error is not invalid_copy:
                         raise
                     self._integrity_stop(
-                        (oid, physical_copy_uuidv4, "invalid structural copy")
+                        (object_oid, physical_copy_uuidv4, "invalid structural copy")
                     )
                 return row
         finally:
             self._checked_byte_read = prior
 
     @_completed_read
-    def read_metadata(self, oid: OID) -> bytes:
+    def read_metadata(self, object_oid: OID) -> bytes:
         self._checked_byte_read = True
         try:
             with self._snapshot():
                 missing = self.sql(
                     "SELECT 1 FROM intrinsic_claims i LEFT JOIN retained_metadata r "
-                    "ON r.object_format=i.object_format AND r.full_oid=i.full_oid "
+                    "ON r.object_format=i.object_format AND r.object_oid=i.object_oid "
                     "AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 "
-                    "WHERE i.object_format=? AND i.full_oid=? AND r.physical_copy_uuidv4 IS NULL "
+                    "WHERE i.object_format=? AND i.object_oid=? AND r.physical_copy_uuidv4 IS NULL "
                     "UNION ALL SELECT 1 FROM intrinsic_groups i LEFT JOIN retained_metadata r "
-                    "ON r.object_format=i.object_format AND r.full_oid=i.full_oid "
+                    "ON r.object_format=i.object_format AND r.object_oid=i.object_oid "
                     "AND r.physical_copy_uuidv4=i.physical_copy_uuidv4 "
-                    "WHERE i.object_format=? AND i.full_oid=? AND r.physical_copy_uuidv4 IS NULL",
-                    (*oid.key, *oid.key),
+                    "WHERE i.object_format=? AND i.object_oid=? AND r.physical_copy_uuidv4 IS NULL",
+                    (*object_oid.key, *object_oid.key),
                 )
                 if missing:
-                    self._integrity_stop((oid, "lost-retained-metadata-copy"))
-                return super().read_metadata(oid)
+                    self._integrity_stop((object_oid, "lost-retained-metadata-copy"))
+                return super().read_metadata(object_oid)
         finally:
             self._checked_byte_read = False

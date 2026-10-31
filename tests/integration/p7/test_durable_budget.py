@@ -16,7 +16,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
-from repo_catalog.domain.p1_core import native_oid
+from repo_catalog.domain.p1_core import native_object_oid
 from repo_catalog.domain.recovery import RecoveryBudget, RecoveryError
 
 REPO = "11111111-1111-4111-8111-111111111111"
@@ -99,7 +99,7 @@ def _candidate(tmp_path, message="one"):
         "extraction_status": "clean",
         "payload": {
             "object_format": "sha1",
-            "full_oid": native_oid("sha1", "commit", body),
+            "object_oid": native_object_oid("sha1", "commit", body),
             "native_type": "commit",
             "size": len(body),
             "physical_copy_uuidv4": str(uuid.uuid4()),

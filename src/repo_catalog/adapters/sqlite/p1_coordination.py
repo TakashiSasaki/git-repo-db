@@ -204,14 +204,14 @@ def _identity(db: sqlite3.Connection, role: str) -> tuple[str, str]:
 
 
 def validate_dependencies(core: sqlite3.Connection, context: sqlite3.Connection):
-    for object_format, full_oid in context.execute(
-        "SELECT DISTINCT object_format,full_oid FROM core_references"
+    for object_format, object_oid in context.execute(
+        "SELECT DISTINCT object_format,object_oid FROM core_references"
     ):
         if not core.execute(
-            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-            (object_format, full_oid),
+            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+            (object_format, object_oid),
         ).fetchone():
-            raise CoordinationError("MISSING_CORE_REFERENCE", "context", full_oid)
+            raise CoordinationError("MISSING_CORE_REFERENCE", "context", object_oid)
 
 
 def validate_pair(
@@ -1551,7 +1551,7 @@ class SearchProjection:
         documents = {
             _json(tuple(row)): row[1]
             for row in pair.core.execute(
-                "SELECT object_format,full_oid FROM git_objects"
+                "SELECT object_format,object_oid FROM git_objects"
             )
         }
         self._replace("git_metadata", pair.token, documents)

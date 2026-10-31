@@ -1426,13 +1426,13 @@ class ContextStore(AdmissionTransactions):
         resource: ResourceKey,
         role: str,
         object_format: str,
-        full_oid: str,
+        object_oid: str,
         provenance_json: str,
         validate: Callable[[str, str], bool],
     ) -> None:
-        if not validate(object_format, full_oid):
+        if not validate(object_format, object_oid):
             raise ValueError("Required portable Core identity is absent")
         self.db.execute(
             "INSERT INTO core_references VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
-            (*resource.coordinates(), role, object_format, full_oid, provenance_json),
+            (*resource.coordinates(), role, object_format, object_oid, provenance_json),
         )

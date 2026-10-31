@@ -319,15 +319,15 @@ def pin_scan(
                 else "symbolic"
                 if symbolic
                 else "direct",
-                direct_target_oid=target
+                direct_target_object_oid=target
                 if form_known and target is not None and symbolic is None
                 else None,
                 symbolic_target_ref_name=symbolic if form_known else None,
-                resolved_target_oid=target
+                resolved_target_object_oid=target
                 if form_known and symbolic is not None
                 else None,
-                peeled_target_oid=peeled,
-                root_oid=target,
+                peeled_target_object_oid=peeled,
+                root_object_oid=target,
             )
             derivation = "item"
         links.append(RefEnumerationLink(event, obs, claim, derivation, position))

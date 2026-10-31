@@ -72,12 +72,14 @@ def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path
     core = GitCore(synthetic_catalog / "core.sqlite3")
     target = OID(
         "sha1",
-        core.sql("SELECT full_oid FROM retained_metadata WHERE native_type='commit'")[
+        core.sql("SELECT object_oid FROM retained_metadata WHERE native_type='commit'")[
             0
         ][0],
     )
     note = make_native("sha1", "blob", b"\xff\x00\xfe")
-    tree = make_tree("sha1", [(b"100644", target.full_oid.encode(), note.oid.full_oid)])
+    tree = make_tree(
+        "sha1", [(b"100644", target.object_oid.encode(), note.object_oid.object_oid)]
+    )
     from tests.support.ref_notes import admit_fixture_note
 
     admit_fixture_note(

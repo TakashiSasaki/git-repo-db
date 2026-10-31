@@ -33,7 +33,7 @@ def write_git_object(
 
 
 def tree_entry(mode: bytes, name: bytes, target: OID) -> bytes:
-    return mode + b" " + name + b"\0" + bytes.fromhex(target.full_oid)
+    return mode + b" " + name + b"\0" + bytes.fromhex(target.object_oid)
 
 
 def build_sample_git_repo(
@@ -48,7 +48,7 @@ def build_sample_git_repo(
         path, fmt, "tree", tree_entry(b"100644", b"README.md", blob)
     )
     commit1_body = (
-        f"tree {tree.full_oid}\n"
+        f"tree {tree.object_oid}\n"
         "author Alice <alice@example.com> 1700000000 +0000\n"
         "committer Alice <alice@example.com> 1700000000 +0000\n\n"
         "Initial commit\n"
@@ -56,8 +56,8 @@ def build_sample_git_repo(
     commit1 = write_git_object(path, fmt, "commit", commit1_body)
 
     commit2_body = (
-        f"tree {tree.full_oid}\n"
-        f"parent {commit1.full_oid}\n"
+        f"tree {tree.object_oid}\n"
+        f"parent {commit1.object_oid}\n"
         "author Bob <bob@example.com> 1700000100 +0000\n"
         "committer Bob <bob@example.com> 1700000100 +0000\n\n"
         "Second commit\n"
@@ -65,7 +65,7 @@ def build_sample_git_repo(
     commit2 = write_git_object(path, fmt, "commit", commit2_body)
 
     tag_body = (
-        f"object {commit2.full_oid}\n"
+        f"object {commit2.object_oid}\n"
         "type commit\n"
         "tag v1.0.0\n"
         "tagger Alice <alice@example.com> 1700000200 +0000\n\n"
@@ -78,19 +78,19 @@ def build_sample_git_repo(
         path,
         fmt,
         "tree",
-        tree_entry(b"100644", commit2.full_oid.encode("ascii"), note_blob),
+        tree_entry(b"100644", commit2.object_oid.encode("ascii"), note_blob),
     )
     notes_commit_body = (
-        f"tree {notes_tree.full_oid}\n"
+        f"tree {notes_tree.object_oid}\n"
         "author CI <ci@example.com> 1700000300 +0000\n"
         "committer CI <ci@example.com> 1700000300 +0000\n\n"
         "Notes commit\n"
     ).encode("utf-8")
     notes_commit = write_git_object(path, fmt, "commit", notes_commit_body)
 
-    git(path, "update-ref", "refs/heads/main", commit2.full_oid)
-    git(path, "update-ref", "refs/tags/v1.0.0", tag.full_oid)
-    git(path, "update-ref", "refs/notes/commits", notes_commit.full_oid)
+    git(path, "update-ref", "refs/heads/main", commit2.object_oid)
+    git(path, "update-ref", "refs/tags/v1.0.0", tag.object_oid)
+    git(path, "update-ref", "refs/notes/commits", notes_commit.object_oid)
 
     return {
         "blob": blob,

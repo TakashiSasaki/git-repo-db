@@ -356,7 +356,7 @@ def test_foreign_metadata_repository_is_rejected_before_any_admission(
         subject = RefObservation(key, foreign, b"refs/notes/x", "source", "visible")
         prov = unit.repository_claims[0].provenance
         root = unit.nominal_objects[0]
-        ref_claim = RefObservationClaim(key, prov, "present", root_oid=root)
+        ref_claim = RefObservationClaim(key, prov, "present", root_object_oid=root)
         value = RefNotesInput(subject, (ref_claim,))
         if kind == "notes_claim":
             value = replace(
@@ -365,7 +365,7 @@ def test_foreign_metadata_repository_is_rejected_before_any_admission(
                     NotesMappingClaim(
                         ref_claim,
                         NotesMapping(
-                            root, "git-notes", "1", "tree", root, root, root.full_oid
+                            root, "git-notes", "1", "tree", root, root, root.object_oid
                         ),
                         prov,
                     ),
@@ -508,7 +508,7 @@ def test_external_metadata_live_notes_keeps_source_capture_and_budget(
         notes=NotesAcquisitionSpec(
             discover_notes=True,
             acquire_inventories=True,
-            target_oids=(objects["commit2"],),
+            target_object_oids=(objects["commit2"],),
         ),
     )
     service = GitAcquisition(cat, operational=cat)

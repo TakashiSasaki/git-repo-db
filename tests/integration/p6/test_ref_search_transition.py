@@ -47,7 +47,7 @@ def test_group_only_reports_keys_body_and_fallback(acquisition, paired):
         enable_context(acquisition)
     run_request(acquisition, with_input(acquisition, value), paired=paired)
     service = ProductionQueryService(path.parent)
-    query = SearchQuery(query_text=target.full_oid, projection_kinds=("notes",))
+    query = SearchQuery(query_text=target.object_oid, projection_kinds=("notes",))
     report_only = service.search(query)
     assert report_only.total_count == 2
     assert len({hit.document_key for hit in report_only.hits}) == 2
@@ -64,7 +64,7 @@ def test_group_only_reports_keys_body_and_fallback(acquisition, paired):
     )
     run_request(
         acquisition,
-        with_input(acquisition, first, target_oids=(target,)),
+        with_input(acquisition, first, target_object_oids=(target,)),
         paired=paired,
     )
     work = UnlimitedWorkBudget()
@@ -143,7 +143,9 @@ def test_bad_eligible_copy_stops_before_search_output(acquisition):
     first = replace(
         value, claims=(value.claims[0],), mapping_groups=(value.mapping_groups[0],)
     )
-    run_request(acquisition, with_input(acquisition, first, target_oids=(target,)))
+    run_request(
+        acquisition, with_input(acquisition, first, target_object_oids=(target,))
+    )
     _mutate(path, "ref_retained_notes", "body=zeroblob(length(body))")
     with pytest.raises(CoreFailure) as error:
         ProductionQueryService(path.parent).search(
@@ -161,7 +163,9 @@ def test_later_partial_coverage_does_not_reuse_old_complete(acquisition):
     )
     result = run_request(
         acquisition,
-        with_input(acquisition, first, target_oids=(target,), acquire_inventories=True),
+        with_input(
+            acquisition, first, target_object_oids=(target,), acquire_inventories=True
+        ),
     )
     original = result.ref_inventory_verifications[0].coverage_claim
     from repo_catalog.domain.p1_coverage import CoverageClaim
@@ -202,7 +206,7 @@ def test_finite_document_limit_does_not_diagnose_corruption(acquisition, path_si
 
     with pytest.raises(QueryError) as failure:
         ProductionQueryService(path.parent).search(
-            SearchQuery(query_text=target.full_oid, projection_kinds=("notes",))
+            SearchQuery(query_text=target.object_oid, projection_kinds=("notes",))
         )
     assert failure.value.code == "QUERY_BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()

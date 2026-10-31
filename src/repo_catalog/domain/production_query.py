@@ -543,7 +543,7 @@ class RefNotesTargetView:
 class GitObjectView:
     """Authoritative Git Core object view with scalar/relation projections and byte status."""
 
-    oid: OID
+    object_oid: OID
     scalars: dict[str, Projection]
     relations: dict[str, Projection]
     metadata_retained: bool
@@ -560,11 +560,11 @@ class GitObjectView:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "full_oid": self.oid.full_oid,
+            "object_oid": self.object_oid.object_oid,
             "metadata_retained": self.metadata_retained,
             "native_type": self.native_type,
             "ref_notes_targets": [n.to_dict() for n in self.ref_notes_targets],
-            "object_format": self.oid.object_format,
+            "object_format": self.object_oid.object_format,
             "relations": {
                 rel: {
                     "alternatives": list(proj.alternatives),
@@ -769,7 +769,7 @@ class ContextResourceView:
             "core_dependencies": [
                 {
                     "available": dep.available,
-                    "oid": list(dep.reference.oid.key),
+                    "object_oid": list(dep.reference.object_oid.key),
                     "provenance": json.loads(dep.reference.provenance_json),
                     "required": dep.required,
                     "role": dep.reference.role,
@@ -844,7 +844,7 @@ class PairedCoreResolution:
             "object_view": (
                 self.object_view.to_dict() if self.object_view is not None else None
             ),
-            "oid": list(self.reference.oid.key),
+            "object_oid": list(self.reference.object_oid.key),
             "provenance": json.loads(self.reference.provenance_json),
             "role": self.reference.role,
         }

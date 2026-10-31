@@ -61,7 +61,7 @@ if sys.argv[4] == "absent":
 """,
         catalog,
         REPOSITORY,
-        fixture["commit_obj"].oid.full_oid,
+        fixture["commit_obj"].object_oid.object_oid,
         "present" if coexisting else "absent",
     )
     assert result.stderr == ""

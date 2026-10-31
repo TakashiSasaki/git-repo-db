@@ -32,7 +32,7 @@ def proof_fixture(core, *, fmt="sha1", empty=False, source="source"):
         observation.ref_observation_key,
         provenance("ref-result"),
         "present",
-        root_oid=structure.oid,
+        root_object_oid=structure.object_oid,
     )
     c.admit_ref_observation(observation)
     c.admit_ref_observation_claim(result)
@@ -45,7 +45,7 @@ def proof_fixture(core, *, fmt="sha1", empty=False, source="source"):
         "known_empty" if empty else "complete",
         ()
         if empty
-        else ((original.target.full_oid, original.note.full_oid, original.path),),
+        else ((original.target.object_oid, original.note.object_oid, original.path),),
         provenance("inventory-report"),
     )
     c.admit_notes_mapping_group(group, Budget())
@@ -133,12 +133,12 @@ def test_inventory_must_match_whole_checked_group_not_sender_status(core):
 def test_commit_and_fanout_inventory_requires_complete_ordered_closure(core, fmt):
     c, _, repository = core
     old, _note = mapping(repository, fmt=fmt)
-    target = old.target.full_oid
+    target = old.target.object_oid
     inner = tree([("100644", target[2:], old.note)], fmt)
-    root_tree = tree([("40000", target[:2], inner.oid)], fmt)
+    root_tree = tree([("40000", target[:2], inner.object_oid)], fmt)
     commit = native(
         "commit",
-        f"tree {root_tree.oid.full_oid}\nauthor A <a@invalid> 0 +0000\ncommitter C <c@invalid> 0 +0000\n\nnotes\n".encode(),
+        f"tree {root_tree.object_oid.object_oid}\nauthor A <a@invalid> 0 +0000\ncommitter C <c@invalid> 0 +0000\n\nnotes\n".encode(),
         fmt,
     )
     observation = subject(repository)
@@ -146,7 +146,7 @@ def test_commit_and_fanout_inventory_requires_complete_ordered_closure(core, fmt
         observation.ref_observation_key,
         provenance("commit-ref"),
         "present",
-        root_oid=commit.oid,
+        root_object_oid=commit.object_oid,
     )
     c.admit_ref_observation(observation)
     c.admit_ref_observation_claim(claim)
@@ -157,7 +157,7 @@ def test_commit_and_fanout_inventory_requires_complete_ordered_closure(core, fmt
         "native-notes-tree",
         "all-notes-mappings",
         "complete",
-        ((target, old.note.full_oid, target[:2] + "/" + target[2:]),),
+        ((target, old.note.object_oid, target[:2] + "/" + target[2:]),),
         provenance("fanout-report"),
     )
     c.admit_notes_mapping_group(group, Budget())
@@ -234,10 +234,10 @@ def test_conflicting_ref_result_is_not_hidden_by_one_complete_inventory(core):
     c, _, _ = core
     proof = proof_fixture(core, empty=True)
     c.admit_ref_coverage_proof(proof, Budget())
-    other_root = tree([("100644", "a" * 40, proof.group.ref_claim.root_oid)])
+    other_root = tree([("100644", "a" * 40, proof.group.ref_claim.root_object_oid)])
     other = replace(
         proof.group.ref_claim,
-        root_oid=other_root.oid,
+        root_object_oid=other_root.object_oid,
         provenance=provenance("other-ref-result"),
     )
     c.admit_ref_observation_claim(other)

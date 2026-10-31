@@ -731,7 +731,7 @@ class ProductionQueryService:
         except _QueryWorkError as error:
             raise error.original from None
 
-    def _ref_notes_targets_in_snapshot(self, core, oid, work=None):
+    def _ref_notes_targets_in_snapshot(self, core, object_oid, work=None):
         work = work if work is not None else UnlimitedWorkBudget()
         # Group-only reports do not create standalone Mapping rows. Discover
         # bounded headers first, then let the checked exact-Claim reader validate
@@ -739,13 +739,13 @@ class ProductionQueryService:
         candidates = (
             "WITH candidates AS ("
             "SELECT c.observation_origin_uuidv4,c.ref_observation_uuidv7,m.interpretation_kind,m.interpretation_version,m.interpretation_scope "
-            "FROM ref_observation_claims c JOIN notes_mappings m ON m.object_format=c.root_format AND m.root_oid=c.root_oid "
+            "FROM ref_observation_claims c JOIN notes_mappings m ON m.object_format=c.root_format AND m.root_object_oid=c.root_object_oid "
             "WHERE m.object_format=? AND m.annotated_object_oid=? "
             "UNION SELECT observation_origin_uuidv4,ref_observation_uuidv7,interpretation_kind,interpretation_version,interpretation_scope "
             "FROM notes_mapping_groups WHERE object_format=? "
             "ORDER BY 1,2,3,4,5 LIMIT 10001) "
         )
-        parameters = (*oid.key, oid.object_format)
+        parameters = (*object_oid.key, object_oid.object_format)
         count, size = core.sql(
             candidates
             + "SELECT count(*),coalesce(sum(octet_length(observation_origin_uuidv4)+octet_length(ref_observation_uuidv7)+octet_length(interpretation_kind)+octet_length(interpretation_version)+octet_length(interpretation_scope)),0) FROM candidates",
@@ -769,16 +769,18 @@ class ProductionQueryService:
             )
             for claim in observation.claims:
                 if (
-                    claim.root_oid is None
-                    or claim.root_oid.object_format != oid.object_format
+                    claim.root_object_oid is None
+                    or claim.root_object_oid.object_format != object_oid.object_format
                 ):
                     continue
-                projection = core.notes_mapping_projection(claim, oid, *row[2:], work)
+                projection = core.notes_mapping_projection(
+                    claim, object_oid, *row[2:], work
+                )
                 if (
                     projection.claims
                     or projection.evidence
                     or any(
-                        target == oid.full_oid
+                        target == object_oid.object_oid
                         for group in projection.groups
                         for target, _, _ in group.members
                     )
@@ -788,7 +790,7 @@ class ProductionQueryService:
 
     def get_git_object(
         self,
-        oid: OID,
+        object_oid: OID,
         *,
         include_bytes: bool = False,
     ) -> GitObjectView:
@@ -796,63 +798,67 @@ class ProductionQueryService:
             assert snap.core is not None
             return self._git_object_in_snapshot(
                 snap.core,
-                oid,
+                object_oid,
                 include_bytes=include_bytes,
             )
 
     def _git_object_in_snapshot(
         self,
         core: GitCore,
-        oid: OID,
+        object_oid: OID,
         *,
         include_bytes: bool = False,
         ref_work=None,
     ) -> GitObjectView:
         exists = core.sql(
-            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-            oid.key,
+            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+            object_oid.key,
         )
         if not exists:
-            raise QueryError("OBJECT_NOT_FOUND", oid, f"Git object {oid} not in Core")
+            raise QueryError(
+                "OBJECT_NOT_FOUND", object_oid, f"Git object {object_oid} not in Core"
+            )
 
         field_rows = core.sql(
-            "SELECT DISTINCT field FROM scalar_claims WHERE object_format=? AND full_oid=? ORDER BY field",
-            oid.key,
+            "SELECT DISTINCT field FROM scalar_claims WHERE object_format=? AND object_oid=? ORDER BY field",
+            object_oid.key,
         )
         present_fields = {row[0] for row in field_rows} | {"type", "size"}
         scalars = {
-            field: core.scalar(oid, field)
+            field: core.scalar(object_oid, field)
             for field in ALL_SCALAR_FIELDS
             if field in present_fields
         }
 
         rel_rows = core.sql(
-            "SELECT DISTINCT relation FROM relation_groups WHERE object_format=? AND full_oid=? ORDER BY relation",
-            oid.key,
+            "SELECT DISTINCT relation FROM relation_groups WHERE object_format=? AND object_oid=? ORDER BY relation",
+            object_oid.key,
         )
         present_rels = {row[0] for row in rel_rows}
         relations = {
-            rel: core.relations(oid, rel)
+            rel: core.relations(object_oid, rel)
             for rel in ALL_RELATIONS
             if rel in present_rels
         }
 
         retained_row = core.sql(
-            "SELECT size,digest_sha256 FROM retained_metadata WHERE object_format=? AND full_oid=? ORDER BY physical_copy_uuidv4 LIMIT 1",
-            oid.key,
+            "SELECT size,digest_sha256 FROM retained_metadata WHERE object_format=? AND object_oid=? ORDER BY physical_copy_uuidv4 LIMIT 1",
+            object_oid.key,
         )
         metadata_retained = bool(retained_row)
         retained_bytes: ByteReadResult | None = None
         if include_bytes:
-            retained_bytes = self._read_metadata_bytes_in_snapshot(core, oid)
+            retained_bytes = self._read_metadata_bytes_in_snapshot(core, object_oid)
 
         return GitObjectView(
-            oid=oid,
+            object_oid=object_oid,
             scalars=scalars,
             relations=relations,
             metadata_retained=metadata_retained,
             retained_bytes=retained_bytes,
-            ref_notes_targets=self._ref_notes_targets_in_snapshot(core, oid, ref_work),
+            ref_notes_targets=self._ref_notes_targets_in_snapshot(
+                core, object_oid, ref_work
+            ),
         )
 
     def list_git_objects(
@@ -866,9 +872,9 @@ class ProductionQueryService:
             assert snap.core is not None
             token_str = snap.token.encode()
             rows = snap.core.sql(
-                "SELECT object_format,full_oid FROM git_objects "
+                "SELECT object_format,object_oid FROM git_objects "
                 "WHERE (? IS NULL OR object_format=?) "
-                "ORDER BY object_format,full_oid",
+                "ORDER BY object_format,object_oid",
                 (object_format, object_format),
             )
 
@@ -876,9 +882,9 @@ class ProductionQueryService:
 
             def views():
                 for row in rows:
-                    oid = self._stored(OID, row[0], row[1])
+                    object_oid = self._stored(OID, row[0], row[1])
                     view = self._git_object_in_snapshot(
-                        snap.core, oid, ref_work=ref_work
+                        snap.core, object_oid, ref_work=ref_work
                     )
                     if native_type is not None and view.native_type != native_type:
                         continue
@@ -886,7 +892,7 @@ class ProductionQueryService:
 
             return _paginate_items(
                 views(),
-                key_fn=lambda v: v.oid.key,
+                key_fn=lambda v: v.object_oid.key,
                 page=page,
                 endpoint_kind="git_objects",
                 filters={
@@ -957,16 +963,16 @@ class ProductionQueryService:
             )
         )
 
-    def read_metadata_bytes(self, oid: OID) -> ByteReadResult:
+    def read_metadata_bytes(self, object_oid: OID) -> ByteReadResult:
         with self.open_snapshot(required_store="core") as snap:
             assert snap.core is not None
-            return self._read_metadata_bytes_in_snapshot(snap.core, oid)
+            return self._read_metadata_bytes_in_snapshot(snap.core, object_oid)
 
     def _read_metadata_bytes_in_snapshot(
-        self, core: GitCore, oid: OID
+        self, core: GitCore, object_oid: OID
     ) -> ByteReadResult:
         try:
-            body = core.read_metadata(oid)
+            body = core.read_metadata(object_oid)
         except CoreFailure as error:
             if error.code == "BYTES_UNAVAILABLE":
                 return ByteReadResult(available=False, verified=False)
@@ -1094,7 +1100,7 @@ class ProductionQueryService:
                 def _check_core(fmt: str, oid_hex: str) -> bool:
                     return bool(
                         core_ref.sql(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                             (fmt, oid_hex),
                         )
                     )
@@ -1277,7 +1283,7 @@ class ProductionQueryService:
                 def _check_core_list(fmt: str, oid_hex: str) -> bool:
                     return bool(
                         core_ref.sql(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                             (fmt, oid_hex),
                         )
                     )
@@ -1407,11 +1413,11 @@ class ProductionQueryService:
     ) -> PairedResourceView:
         ref_work = ref_work if ref_work is not None else UnlimitedWorkBudget()
 
-        def check_in_core(fmt: str, full_oid: str) -> bool:
+        def check_in_core(fmt: str, object_oid: str) -> bool:
             return bool(
                 core.sql(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    (fmt, full_oid),
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    (fmt, object_oid),
                 )
             )
 
@@ -1424,12 +1430,12 @@ class ProductionQueryService:
 
         resolutions: list[PairedCoreResolution] = []
         for dep in ctx_view.core_dependencies:
-            oid = dep.reference.oid
+            object_oid = dep.reference.object_oid
             obj_view: GitObjectView | None = None
             if dep.available:
                 obj_view = self._git_object_in_snapshot(
                     core,
-                    oid,
+                    object_oid,
                     include_bytes=include_core_bytes,
                     ref_work=ref_work,
                 )
@@ -1532,7 +1538,7 @@ class ProductionQueryService:
             observed = core.ref_observation(self._stored(RefObservationKey, *key), work)
             subject = observed.ref_observation
             for claim in observed.claims:
-                if claim.root_oid is None:
+                if claim.root_object_oid is None:
                     continue
                 inventory = core.ref_notes_inventory_projection(claim, work)
                 provenance = encode_metered(work, claim.provenance.key, 1024 * 1024)
@@ -1552,7 +1558,7 @@ class ProductionQueryService:
                         work.charge("metadata_units", 1)
                         coordinate(
                             (
-                                claim.root_oid.object_format,
+                                claim.root_object_oid.object_format,
                                 target,
                                 group.interpretation_kind,
                                 group.interpretation_version,
@@ -1601,12 +1607,12 @@ class ProductionQueryService:
 
                     def remember(mapping, source, checked=False):
                         values = [
-                            *mapping.root_oid.key,
+                            *mapping.root_object_oid.key,
                             mapping.interpretation_kind,
                             mapping.interpretation_version,
                             mapping.interpretation_scope,
-                            mapping.annotated_object_oid.full_oid,
-                            mapping.note_oid.full_oid,
+                            mapping.annotated_object_oid.object_oid,
+                            mapping.note_object_oid.object_oid,
                             mapping.mapping_path,
                         ]
                         identity = encode_metered(work, values, 1024 * 1024)
@@ -1631,7 +1637,7 @@ class ProductionQueryService:
                                 remember(
                                     self._stored(
                                         NotesMapping,
-                                        claim.root_oid,
+                                        claim.root_object_oid,
                                         kind,
                                         version,
                                         scope,
@@ -1725,12 +1731,12 @@ class ProductionQueryService:
                             + 4 * (len(ref) + len(body))
                             + len(fmt)
                             + len(target)
-                            + len(mapping.note_oid.full_oid)
+                            + len(mapping.note_object_oid.object_oid)
                             + 4
                         )
                         work.require("input_bytes", upper)
                         try:
-                            searchable = f"{ref} {fmt} {target} {mapping.note_oid.full_oid} {body}"
+                            searchable = f"{ref} {fmt} {target} {mapping.note_object_oid.object_oid} {body}"
                             docs[doc_key] = searchable
                         except BaseException:
                             work.abandon("input_bytes")

@@ -220,7 +220,9 @@ def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
     )
     data = pkg.to_dict()
     candidate = "a" * 40
-    data["core"]["git_objects"].append({"object_format": "sha1", "full_oid": candidate})
+    data["core"]["git_objects"].append(
+        {"object_format": "sha1", "object_oid": candidate}
+    )
     field = (
         "attributes_json" if section == "source_repositories" else "configuration_json"
     )
@@ -238,7 +240,9 @@ def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
         )
     assert "SECRET-CANARY" not in str(error.value)
     with closing(GitCore(directory / "core.sqlite3")) as core:
-        assert not core.sql("SELECT 1 FROM git_objects WHERE full_oid=?", (candidate,))
+        assert not core.sql(
+            "SELECT 1 FROM git_objects WHERE object_oid=?", (candidate,)
+        )
     assert not (directory / "p1-recovery-stop.json").exists()
     assert not (directory / "access.sqlite3").exists()
 

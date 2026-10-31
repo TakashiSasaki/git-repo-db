@@ -1,5 +1,9 @@
 # ADR 0036 Notes consumer transition contract
 
+Current opt-in OID spelling and fresh-format versions follow the
+[OID naming contract](object-oid-naming-contract.md). Pinned baseline examples
+below retain their historical spelling and do not provide compatibility APIs.
+
 This contract scopes the opt-in transition after the merged typed-salvage
 implementation. [ADR 0036](../adr/0036-ref-observations-and-shared-notes-mappings.md)
 and [ADR 0026](../adr/0026-stop-salvage-restore-merge-after-corruption.md)

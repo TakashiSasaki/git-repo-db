@@ -242,7 +242,8 @@ class NotesAcquisition:
                     candidate = {
                         "binding": binding,
                         "refs": [
-                            [name.hex(), *oid.key] for name, oid in inventory.refs
+                            [name.hex(), *object_oid.key]
+                            for name, object_oid in inventory.refs
                         ],
                         "status": inventory.status,
                         "terminal": inventory.terminal,
@@ -251,7 +252,10 @@ class NotesAcquisition:
                         "scans": [
                             [
                                 scan.state,
-                                [[name.hex(), *oid.key] for name, oid in scan.refs],
+                                [
+                                    [name.hex(), *object_oid.key]
+                                    for name, object_oid in scan.refs
+                                ],
                             ]
                             for scan in scans
                         ],
@@ -303,11 +307,14 @@ class NotesAcquisition:
             "snapshot",
             ("local-notes-refs", source_attribution, tuple(binding[3])),
             {
-                "roots": [list(oid.key) for _, oid in refs],
+                "roots": [list(object_oid.key) for _, object_oid in refs],
                 "predecessor": None,
                 "observed_at_us": observed_at_us,
                 "source": source_attribution,
-                "refs": [{"ref": name, "target": list(oid.key)} for name, oid in refs],
+                "refs": [
+                    {"ref": name, "target": list(object_oid.key)}
+                    for name, object_oid in refs
+                ],
                 "enumeration_state": saved["status"],
                 "terminal_observation": saved["terminal"],
             },
@@ -329,9 +336,9 @@ class NotesAcquisition:
                 return RefScan(
                     tuple(
                         EnumeratedRef(
-                            bytes.fromhex(name), OID(fmt, oid), form_known=False
+                            bytes.fromhex(name), OID(fmt, object_oid), form_known=False
                         )
-                        for name, fmt, oid in refs
+                        for name, fmt, object_oid in refs
                     ),
                     state,
                     "git-for-each-ref:exit-0" if state == "complete" else None,
@@ -417,7 +424,7 @@ class NotesAcquisition:
     def inventory_ref(self, claim: RefObservationClaim) -> RefNotesInventory:
         """Pin and report one whole root-scoped inventory for this exact Claim."""
         repository = self._ready()
-        if not isinstance(claim, RefObservationClaim) or claim.root_oid is None:
+        if not isinstance(claim, RefObservationClaim) or claim.root_object_oid is None:
             raise CoreFailure("NOTES_ROLE", claim, "exact present-root claim required")
         projection = self.core.ref_observation(claim.ref_observation_key, self.work)
         if (
@@ -440,7 +447,7 @@ class NotesAcquisition:
             if saved is None:
                 status, members, _, failure = ref_mapping_inventory(
                     claim,
-                    lambda oid: self.source.metadata(oid, self.work),
+                    lambda object_oid: self.source.metadata(object_oid, self.work),
                     self.work,
                 )
                 self.work.require("metadata_units", len(members))
@@ -604,7 +611,7 @@ class NotesAcquisition:
             *request_identity,
             *claim.ref_observation_key.key,
             encode_metered(self.work, claim.provenance.key),
-            *claim.root_oid.key,
+            *claim.root_object_oid.key,
             group.interpretation_kind,
             group.interpretation_version,
             group.interpretation_scope,
@@ -665,7 +672,7 @@ class NotesAcquisition:
             try:
                 status, members, structures, failure = ref_mapping_inventory(
                     claim,
-                    lambda oid: self.source.metadata(oid, guarded_work),
+                    lambda object_oid: self.source.metadata(object_oid, guarded_work),
                     guarded_work,
                 )
             except _VerificationWorkFailure as error:
@@ -729,7 +736,7 @@ class NotesAcquisition:
     ) -> RefNoteAcquisition:
         """Build receiver evidence and retain only under this exact result Claim."""
         repository = self._ready()
-        if not isinstance(claim, RefObservationClaim) or claim.root_oid is None:
+        if not isinstance(claim, RefObservationClaim) or claim.root_object_oid is None:
             raise CoreFailure("NOTES_ROLE", claim, "exact present-root claim required")
         subject = self.core.ref_observation(claim.ref_observation_key, self.work)
         if (
@@ -766,7 +773,7 @@ class NotesAcquisition:
             evidence = mapping_evidence(
                 claim,
                 target,
-                lambda oid: self.source.metadata(oid, self.work),
+                lambda object_oid: self.source.metadata(object_oid, self.work),
                 self.work,
                 receiver(verification_id),
             )
@@ -789,7 +796,7 @@ class NotesAcquisition:
             return RefNoteAcquisition(
                 claim, target, None, None, False, False, error.code, str(error)
             )
-        note = evidence.mapping.note_oid
+        note = evidence.mapping.note_object_oid
         if not retain_body:
             return RefNoteAcquisition(claim, target, note, None, True, False)
         try:

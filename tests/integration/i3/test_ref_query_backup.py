@@ -76,9 +76,9 @@ def test_each_ref_note_copy_is_checked_individually(acquisition):
             note, copy, app.work
         )
         restored_claims.add(stored_claim)
-        assert evidence.mapping.root_oid == stored_claim.root_oid
+        assert evidence.mapping.root_object_oid == stored_claim.root_object_oid
         assert evidence.provenance.qualification == "receiver_intrinsic"
-        assert native.oid == note and native.native_type == "blob"
+        assert native.object_oid == note and native.native_type == "blob"
         assert native.body == b"\0\xffbinary\r\n"
     assert restored_claims == set(claims)
     with pytest.raises(CoreFailure) as missing:
@@ -193,7 +193,7 @@ def test_query_preserves_scoped_claims_evidence_and_modes(acquisition):
     competing = replace(
         first,
         provenance=replace(first.provenance, coordinate="other-report"),
-        root_oid=OID(fmt, "b" * (40 if fmt == "sha1" else 64)),
+        root_object_oid=OID(fmt, "b" * (40 if fmt == "sha1" else 64)),
     )
     app.core.admit_ref_observation_claim(competing)
 
@@ -203,7 +203,7 @@ def test_query_preserves_scoped_claims_evidence_and_modes(acquisition):
         projection = service.get_ref_observation(first.ref_observation_key, app.work)
         assert projection.conflict and set(projection.claims) == {first, competing}
         missing = service.get_ref_observation(absent.ref_observation_key, app.work)
-        assert missing.claims == (absent,) and absent.root_oid is None
+        assert missing.claims == (absent,) and absent.root_object_oid is None
         assert (
             service.get_ref_enumeration(*absent_event.event.identity, app.work)
             == absent_event
@@ -554,8 +554,8 @@ def test_backup_stops_on_invalid_utf8_mapping_key(acquisition):
     try:
         db.execute(
             "INSERT INTO notes_mappings "
-            "SELECT object_format,root_oid,interpretation_kind,interpretation_version,"
-            "CAST(X'80' AS TEXT),annotated_object_oid,note_oid,mapping_path_json "
+            "SELECT object_format,root_object_oid,interpretation_kind,interpretation_version,"
+            "CAST(X'80' AS TEXT),annotated_object_oid,note_object_oid,mapping_path_json "
             "FROM notes_mappings LIMIT 1"
         )
         db.commit()

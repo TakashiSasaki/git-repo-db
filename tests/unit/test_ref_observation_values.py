@@ -51,7 +51,7 @@ def test_unknown_target_and_scoped_absence_are_distinct_results():
             key,
             report("three"),
             "absent",
-            root_oid=OID("sha1", "a" * 40),
+            root_object_oid=OID("sha1", "a" * 40),
             absence_evidence=evidence,
         )
     with pytest.raises(CoreFailure):

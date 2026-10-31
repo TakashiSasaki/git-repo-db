@@ -1,4 +1,4 @@
-"""Exact v7 row envelopes. No legacy row aliases or opaque extra fields."""
+"""Exact v8 row envelopes. No legacy row aliases or opaque extra fields."""
 
 import json
 
@@ -21,8 +21,8 @@ ROW_KEYS = {
         ),
         "core_references": (
             (
-                "full_oid",
                 "object_format",
+                "object_oid",
                 "provenance_json",
                 "provider_resource_id",
                 "resource_kind",
@@ -187,7 +187,7 @@ ROW_KEYS = {
             ),
         ),
         "coverage_scopes": (("owner_coordinates_json", "owner_kind"),),
-        "git_objects": (("full_oid", "object_format"),),
+        "git_objects": (("object_format", "object_oid"),),
         "git_observations": (
             (
                 "capture_origin_uuidv4",
@@ -202,9 +202,9 @@ ROW_KEYS = {
         "relation_groups": (
             (
                 "authority",
-                "full_oid",
                 "membership_json",
                 "object_format",
+                "object_oid",
                 "provenance_json",
                 "relation",
                 "scope",
@@ -219,9 +219,9 @@ ROW_KEYS = {
             (
                 "body_hex",
                 "digest_sha256",
-                "full_oid",
                 "native_type",
                 "object_format",
+                "object_oid",
                 "physical_copy_uuidv4",
                 "size",
             ),
@@ -230,8 +230,8 @@ ROW_KEYS = {
             (
                 "authority",
                 "field",
-                "full_oid",
                 "object_format",
+                "object_oid",
                 "provenance_json",
                 "value_json",
             ),
@@ -255,11 +255,11 @@ for _section, _fields in {
         "provenance_json",
         "presence_state",
         "ref_form",
-        "direct_target_oid",
+        "direct_target_object_oid",
         "symbolic_target_hex",
-        "resolved_target_oid",
-        "peeled_target_oid",
-        "root_oid",
+        "resolved_target_object_oid",
+        "peeled_target_object_oid",
+        "root_object_oid",
         "absence_evidence_json",
     ),
     "ref_enumeration_observations": (
@@ -290,12 +290,12 @@ for _section, _fields in {
         "ref_observation_uuidv7",
         "ref_claim_provenance_json",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
         "provenance_json",
     ),
@@ -304,7 +304,7 @@ for _section, _fields in {
         "ref_observation_uuidv7",
         "ref_claim_provenance_json",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
@@ -318,12 +318,12 @@ for _section, _fields in {
         "ref_observation_uuidv7",
         "ref_claim_provenance_json",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
         "verification_scope",
         "evidence_provenance_json",
@@ -334,12 +334,12 @@ for _section, _fields in {
         "ref_observation_uuidv7",
         "ref_claim_provenance_json",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
         "verification_scope",
         "evidence_provenance_json",
@@ -381,7 +381,7 @@ def validate_rows(core, context):
             for row in rows:
                 if tuple(sorted(row)) not in ROW_KEYS[store][section]:
                     raise ExchangeError(
-                        "MALFORMED_ROW", [store, section], "exact v6 keys required"
+                        "MALFORMED_ROW", [store, section], "exact v8 keys required"
                     )
                 if store == "context" and section == "resources":
                     if core is not None and row.get("resource_kind") in (
@@ -611,7 +611,11 @@ IDENTITY_KEYS = {
             "ref_observation_uuidv7",
             "claim_provenance_json",
         ),
-        "ref_retained_notes": ("object_format", "note_oid", "physical_copy_uuidv4"),
+        "ref_retained_notes": (
+            "object_format",
+            "note_object_oid",
+            "physical_copy_uuidv4",
+        ),
         "git_observations": (
             "capture_origin_uuidv4",
             "capture_uuidv4",
@@ -623,20 +627,20 @@ IDENTITY_KEYS = {
         "repository_claims": ("repository_uuidv4", "field", "provenance_json"),
         "scalar_claims": (
             "object_format",
-            "full_oid",
+            "object_oid",
             "field",
             "provenance_json",
             "authority",
         ),
         "relation_groups": (
             "object_format",
-            "full_oid",
+            "object_oid",
             "relation",
             "scope",
             "provenance_json",
             "authority",
         ),
-        "retained_metadata": ("object_format", "full_oid", "physical_copy_uuidv4"),
+        "retained_metadata": ("object_format", "object_oid", "physical_copy_uuidv4"),
     },
     "context": {
         "providers": ("service_instance_uuidv4",),

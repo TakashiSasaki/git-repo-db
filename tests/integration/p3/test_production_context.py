@@ -655,20 +655,20 @@ def test_source_collection_cross_service_rejected_even_empty(context):
 
 
 @pytest.mark.parametrize(
-    "object_format,full_oid", [("sha1", "a" * 40), ("sha256", "b" * 64)]
+    "object_format,object_oid", [("sha1", "a" * 40), ("sha256", "b" * 64)]
 )
 def test_unavailable_portable_core_reference_durable_and_honest(
-    context, object_format, full_oid
+    context, object_format, object_oid
 ):
     _, store, _ = context
-    reference = CoreReference(KEY, "head", OID(object_format, full_oid), PROVENANCE)
+    reference = CoreReference(KEY, "head", OID(object_format, object_oid), PROVENANCE)
     store.report_core_reference(
         reference, clock=FieldClock("provider.updated_at", 1), observed_at_us=10
     )
     assert store.core_dependencies(KEY)[0].available is False
     assert store.core_dependencies(KEY)[0].reference == reference
     assert store.core_dependencies(
-        KEY, lambda fmt, oid: (fmt, oid) == (object_format, full_oid)
+        KEY, lambda fmt, oid: (fmt, oid) == (object_format, object_oid)
     )[0].available
 
 

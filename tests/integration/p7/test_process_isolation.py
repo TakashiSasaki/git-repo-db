@@ -73,7 +73,9 @@ def _evidence_hashes(directory):
 def committed_p1_wal(synthetic_catalog):
     """Keep real typed Core + Context commits exclusively in uncheckpointed WAL."""
     tree = make_tree("sha1", [(b"100644", b"wal-file", "a" * 40)])
-    commit = make_commit("sha1", tree.oid.full_oid, [], message="Committed in WAL\n")
+    commit = make_commit(
+        "sha1", tree.object_oid.object_oid, [], message="Committed in WAL\n"
+    )
     text = "P1 Context text committed in genuine WAL frames"
     core_db = connect(synthetic_catalog / "core.sqlite3", "core")
     context_db = connect(synthetic_catalog / "context.sqlite3", "context")
@@ -90,8 +92,8 @@ def committed_p1_wal(synthetic_catalog):
         for role, query, args in (
             (
                 "core",
-                "SELECT count(*) FROM retained_metadata WHERE full_oid=?",
-                (commit.oid.full_oid,),
+                "SELECT count(*) FROM retained_metadata WHERE object_oid=?",
+                (commit.object_oid.object_oid,),
             ),
             ("context", "SELECT count(*) FROM text_bodies WHERE sha256=?", (digest,)),
         ):
@@ -141,7 +143,7 @@ def test_actual_p1_wal_candidates_and_process_writer_cut(
     commits = [
         r
         for r in records
-        if r["payload"].get("full_oid") == commit.oid.full_oid
+        if r["payload"].get("object_oid") == commit.object_oid.object_oid
         and "body_base64" in r["payload"]
     ]
     assert len(commits) == 1
@@ -225,7 +227,7 @@ def test_sigkill_during_forensic_copy_preserves_source_and_retry(
     assert not receipt.partial
     assert _evidence_hashes(directory) == before
     assert any(
-        json.loads(line)["payload"].get("full_oid") == commit.oid.full_oid
+        json.loads(line)["payload"].get("object_oid") == commit.object_oid.object_oid
         for line in output.read_text().splitlines()
     )
 

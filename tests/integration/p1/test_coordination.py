@@ -280,7 +280,7 @@ def test_authority_availability_after_store_loss(tmp_path, role):
     admit_fixture(coordinator, core_unit, context_unit)
     (directory / f"{role}.sqlite3").unlink()
     with coordinator.core_snapshot() as core:
-        assert core.execute("SELECT full_oid FROM git_objects").fetchone()[0] == OID
+        assert core.execute("SELECT object_oid FROM git_objects").fetchone()[0] == OID
         with pytest.raises(sqlite3.DatabaseError, match="authorized"):
             core.execute("INSERT INTO git_objects VALUES('sha1',?)", ("b" * 40,))
     if role == "context":
@@ -753,7 +753,7 @@ def test_existing_embedded_reference_is_revalidated_before_certification(
         db.execute("PRAGMA foreign_keys=OFF")
         db.execute("BEGIN IMMEDIATE")
         db.execute("DROP TRIGGER p1_immutable_git_objects_delete")
-        db.execute("DELETE FROM git_objects WHERE full_oid=?", ("b" * 40,))
+        db.execute("DELETE FROM git_objects WHERE object_oid=?", ("b" * 40,))
         db.execute(trigger)
         db.commit()
         assert [tuple(row) for row in db.execute("PRAGMA integrity_check")] == [("ok",)]

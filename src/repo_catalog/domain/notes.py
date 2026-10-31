@@ -40,7 +40,7 @@ def account_proof_bundle(
             raise CoreFailure("NOTES_ROLE", "proof", "structural type required")
         size += (
             4
-            + len(structure.oid.full_oid)
+            + len(structure.object_oid.object_oid)
             + 2
             + len(structure.native_type)
             + 2
@@ -52,20 +52,22 @@ def account_proof_bundle(
     _charge(work, "input_bytes", size)
 
 
-def _structure(oid: OID, read: MetadataReader, work: WorkBudget):
+def _structure(object_oid: OID, read: MetadataReader, work: WorkBudget):
     # Charge the attempted operation before calling a potentially failing source.
     # Input bytes are separately metered by the actual source reader.
     _charge(work, "proof_steps")
     _charge(work, "metadata_units")
-    native = read(oid)
-    if not isinstance(native, NativeObject) or native.oid != oid:
+    native = read(object_oid)
+    if not isinstance(native, NativeObject) or native.object_oid != object_oid:
         raise CoreFailure(
-            "NATIVE_INTEGRITY", oid, "structural reader returned wrong OID"
+            "NATIVE_INTEGRITY", object_oid, "structural reader returned wrong OID"
         )
     if native.native_type not in ("commit", "tree"):
-        raise CoreFailure("NOTES_ROLE", oid, "Notes root/path must be commit or tree")
+        raise CoreFailure(
+            "NOTES_ROLE", object_oid, "Notes root/path must be commit or tree"
+        )
     native.validate()
-    parsed = parse_metadata(oid.object_format, native.native_type, native.body)
+    parsed = parse_metadata(object_oid.object_format, native.native_type, native.body)
     return native, parsed
 
 
@@ -88,7 +90,7 @@ def _mapping_path(
     if target.object_format != root.object_format:
         raise CoreFailure("NOTES_ROLE", (owner, target), "target format mismatch")
     structures, path = [], []
-    current, suffix = root, target.full_oid
+    current, suffix = root, target.object_oid
     with account_verification(work):
         while True:
             native, parsed = _structure(current, read_metadata, work)
@@ -145,13 +147,22 @@ def mapping_evidence(
         RefObservationClaim,
     )
 
-    if not isinstance(ref_claim, RefObservationClaim) or ref_claim.root_oid is None:
+    if (
+        not isinstance(ref_claim, RefObservationClaim)
+        or ref_claim.root_object_oid is None
+    ):
         raise CoreFailure("NOTES_ROLE", ref_claim, "claim with exact root required")
     note, path, structures = _mapping_path(
-        ref_claim.root_oid, ref_claim.identity, target, read_metadata, work
+        ref_claim.root_object_oid, ref_claim.identity, target, read_metadata, work
     )
     mapping = NotesMapping(
-        ref_claim.root_oid, "git-notes", "1", "native-notes-tree", target, note, path
+        ref_claim.root_object_oid,
+        "git-notes",
+        "1",
+        "native-notes-tree",
+        target,
+        note,
+        path,
     )
     evidence = NotesMappingEvidence(
         ref_claim, mapping, "single-path", provenance, structures
@@ -176,21 +187,23 @@ def _mapping_inventory(
     members: list[tuple[str, str, str]] = []
     targets: set[str] = set()
     fmt = root.object_format
-    width = len(root.full_oid)
+    width = len(root.object_oid)
 
-    def read(oid):
-        native, parsed = _structure(oid, read_metadata, work)
+    def read(object_oid):
+        native, parsed = _structure(object_oid, read_metadata, work)
         structures.append(native)
         return native, parsed
 
-    def walk(oid, prefix, path, chain, is_root=False):
-        native, parsed = read(oid)
+    def walk(object_oid, prefix, path, chain, is_root=False):
+        native, parsed = read(object_oid)
         chain = (*chain, native)
         if is_root and native.native_type == "commit":
             walk(OID(fmt, parsed.relations["commit_tree"][0][2]), prefix, path, chain)
             return
         if native.native_type != "tree":
-            raise CoreFailure("NOTES_INVENTORY", oid, "fanout child must be a tree")
+            raise CoreFailure(
+                "NOTES_INVENTORY", object_oid, "fanout child must be a tree"
+            )
         entries = _entries(parsed, work)
         for raw_name, (mode, linked) in entries.items():
             _charge(work, "metadata_units")
@@ -220,7 +233,7 @@ def _mapping_inventory(
                 account_proof_bundle(chain, work)
                 bundle = encode(
                     [
-                        [item.oid.full_oid, item.native_type, item.body.hex()]
+                        [item.object_oid.object_oid, item.native_type, item.body.hex()]
                         for item in chain
                     ]
                 )
@@ -254,6 +267,8 @@ def _mapping_inventory(
 def ref_mapping_inventory(claim, read_metadata: MetadataReader, work: WorkBudget):
     from repo_catalog.domain.ref_observation import RefObservationClaim
 
-    if not isinstance(claim, RefObservationClaim) or claim.root_oid is None:
+    if not isinstance(claim, RefObservationClaim) or claim.root_object_oid is None:
         raise CoreFailure("NOTES_ROLE", claim, "exact present-root claim required")
-    return _mapping_inventory(claim.root_oid, claim.identity, read_metadata, work)
+    return _mapping_inventory(
+        claim.root_object_oid, claim.identity, read_metadata, work
+    )

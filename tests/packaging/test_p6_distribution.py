@@ -62,7 +62,7 @@ from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.context_admission import DependencySet
 from fixture_authority import fixture_service, fixture_context
 from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey, canonical
-from repo_catalog.domain.p1_core import OID, NativeObject, native_oid
+from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
 from repo_catalog.domain.production_query import PageRequest, SearchQuery
 
 assert "site-packages" in str(Path(__import__("repo_catalog.application.production_query", fromlist=["x"]).__file__))
@@ -91,7 +91,7 @@ class Budget:
 
 fmt = "FORMAT"
 tree_body = b""
-tree_oid_hex = native_oid(fmt, "tree", tree_body)
+tree_oid_hex = native_object_oid(fmt, "tree", tree_body)
 tree_native = NativeObject(OID(fmt, tree_oid_hex), "tree", tree_body, 0, hashlib.sha256(tree_body).hexdigest())
 
 commit_raw = (
@@ -100,7 +100,7 @@ commit_raw = (
     f"committer Alice <alice@example.com> 1700000000 +0000\n\n"
     f"installed p6 commit needle\n"
 ).encode("utf-8")
-commit_oid_hex = native_oid(fmt, "commit", commit_raw)
+commit_oid_hex = native_object_oid(fmt, "commit", commit_raw)
 commit_native = NativeObject(OID(fmt, commit_oid_hex), "commit", commit_raw, len(commit_raw), hashlib.sha256(commit_raw).hexdigest())
 
 pr_key = ResourceKey.from_native(service, "pull_request", "1")

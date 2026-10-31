@@ -127,7 +127,7 @@ class ProductionQueryPort(Protocol):
 
     def get_git_object(
         self,
-        oid: OID,
+        object_oid: OID,
         *,
         include_bytes: bool = False,
     ) -> GitObjectView: ...
@@ -148,7 +148,7 @@ class ProductionQueryPort(Protocol):
         ref_prefix: str | None = None,
     ) -> PageResult[GitObservationView]: ...
 
-    def read_metadata_bytes(self, oid: OID) -> ByteReadResult: ...
+    def read_metadata_bytes(self, object_oid: OID) -> ByteReadResult: ...
 
     def get_core_coverage(
         self,
