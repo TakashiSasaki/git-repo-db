@@ -1,6 +1,13 @@
 # P7 Production Consistent Backup, Corruption Stop, Read-Only Salvage, and Fresh Restore Technical Design
 
-Status: Engineering specification, reconciled during crash hardening; execution results remain separately revision-bound, under accepted ADR 0026 and supporting decisions ADR 0001, ADR 0003, ADR 0014–0025, ADR 0027, and ADR 0028.
+Current target: [ADR 0038](../adr/0038-scoped-recovery-and-optional-initialization.md) replaces ADR 0026;
+[ADR 0037](../adr/0037-operation-scoped-module-independence.md) and the
+[operation contract](../architecture/module-independence-contract.md) require Git-only
+activation without Operational/Search code or DB initialization. Paired scope is
+unchanged. The implementation checkpoints described below still initialize both
+stores; this acceptance does not implement the new Git-only guarantee.
+
+Status: Engineering specification, reconciled during crash hardening; execution results remain separately revision-bound, under the historical ADR 0026 baseline and supporting decisions ADR 0001, ADR 0003, ADR 0014–0025, ADR 0027, and ADR 0028.
 Owner architectural blockers: Zero.
 Scope: Implements production backup, corruption stop, read-only forensic preservation, untrusted typed salvage, verified fresh restore, and safe activation for `git-repo-db`.
 
@@ -8,7 +15,7 @@ Scope: Implements production backup, corruption stop, read-only forensic preserv
 
 ## 1. Architectural Foundation and ADR 0026 Mandate
 
-Under accepted ADR 0026, the recovery architecture establishes a strict operational lifecycle:
+Under the accepted successor ADR 0038, the retained recovery architecture establishes a strict operational lifecycle:
 $$\text{Ordinary Operation} \longrightarrow \text{Authoritative Corruption Detected} \longrightarrow \text{Persistent Catalog Recovery Mode (Stop)}$$
 
 Key Architectural Invariants:
@@ -28,7 +35,7 @@ The backup subsystem supports exactly two explicit scopes:
 - `git_only`: Captures the authoritative Git Core store (`core.sqlite3`), permanent repository identity (`repository_uuidv4`), catalog instance identity, schema fingerprints, and retained metadata/notes byte representations. Context is omitted and explicitly declared absent.
 - `paired`: Captures a mutually consistent snapshot of both authoritative stores: Git Core (`core.sqlite3`) and Context (`context.sqlite3`). The shared protected writer cut and matching repository/instance identities establish the paired artifact; no separate pairing-evidence file is implemented.
 
-Reconstructible stores (`operational.sqlite3`, `search.sqlite3`) are never included in normal backups. Activation initializes empty compiled derivative stores. A separate P6 rebuild is required to populate Search projections; initialization alone is not a rebuild.
+Reconstructible stores (`operational.sqlite3`, `search.sqlite3`) are never included in normal backups. The documented implementation initializes empty compiled derivative stores on activation; Git-only target behavior must instead follow ADR 0038. A separate P6 rebuild is required to populate Search projections; initialization alone is not a rebuild.
 
 ### 2.2 Consistent Core+Context Snapshot Protocol
 
@@ -210,7 +217,7 @@ When authoritative corruption is detected:
 ### 2.14 Operational and Search Reconstruction After Restoration
 
 - Operational store (`operational.sqlite3`) and Search store (`search.sqlite3`) are never restored from backup or salvage.
-- Activation initializes both stores cleanly from compiled DDL. Search remains `initialized_empty`; actual projection population requires the separate P6 rebuild. This receipt does not assert that full Search reconstruction occurred.
+- The documented implementation initializes both stores cleanly from compiled DDL (not the new Git-only target). Search remains `initialized_empty`; actual projection population requires the separate P6 rebuild. This receipt does not assert that full Search reconstruction occurred.
 
 ### 2.15 Precise Resource, Interruption, and Fault Reporting
 

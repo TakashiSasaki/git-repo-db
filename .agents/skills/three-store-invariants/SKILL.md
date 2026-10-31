@@ -5,7 +5,7 @@ description: Diagnose the implemented Schema 21 Three-Store baseline under ADR 0
 
 # Three-Store Boundary Architectural Invariants (ADR 0002)
 
-**Applicability:** The concrete tables, methods and recipes below describe the **implemented Core Schema 21 / Operational 1 / Search 1 baseline**. For target work, read the [ADR index](../../../docs/adr/README.md) and [transition plan](../../../docs/architecture/git-core-context-transition-plan.md). [ADR 0029](../../../docs/adr/0029-independent-access-store.md) is the accepted five-store successor to historical ADR 0003; it preserves independently durable Context and INSERT-only Git Core while separating Access; [ADR 0014](../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md) excludes ordinary file-body archival. [ADR 0026](../../../docs/adr/0026-stop-salvage-restore-merge-after-corruption.md) replaces quarantine/count/release and same-DB continuation with immediate catalog recovery. [ADR 0036](../../../docs/adr/0036-ref-observations-and-shared-notes-mappings.md) fixes unauthenticated external-origin reports without application PKI/signatures. Preserve unaffected safety principles; do not copy superseded baseline mechanisms into the target or infer new execution permission from this skill.
+**Applicability:** The concrete tables, methods and recipes below describe the **implemented Core Schema 21 / Operational 1 / Search 1 baseline**. For target work, read the [ADR index](../../../docs/adr/README.md) and [transition plan](../../../docs/architecture/git-core-context-transition-plan.md). [ADR 0029](../../../docs/adr/0029-independent-access-store.md) is the accepted five-store successor to historical ADR 0003; it preserves independently durable Context and INSERT-only Git Core while separating Access; [ADR 0014](../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md) excludes ordinary file-body archival. [ADR 0038](../../../docs/adr/0038-scoped-recovery-and-optional-initialization.md) replaces quarantine/count/release and same-DB continuation with immediate catalog recovery. [ADR 0036](../../../docs/adr/0036-ref-observations-and-shared-notes-mappings.md) fixes unauthenticated external-origin reports without application PKI/signatures. Preserve unaffected safety principles; do not copy superseded baseline mechanisms into the target or infer new execution permission from this skill.
 
 The **implemented baseline** physically separates three SQLite stores; the following inventory does not assign target authority:
 - **Core Store (`catalog.sqlite3`)**: Authoritative domain facts, entities, immutable observations, coverage claims, code listings, Git DAG and intrinsic structures, and Exchange staging.
@@ -131,7 +131,7 @@ invalidate either sound durable store; Context must not be treated as another
 disposable secondary. Git-only checks/backups may omit Context with honest scope;
 full Context-inclusive validation/backup requires a consistent Core/Context pair.
 The baseline overall-check verdict below must not hide target Context corruption,
-which triggers ADR 0026's catalog recovery stop. See section 6 for executable
+which triggers ADR 0038's catalog recovery stop. See section 6 for executable
 paired-store fence and pre-certification validation checks.
 
 ### Baseline rule and recipe
@@ -158,7 +158,7 @@ paired-store fence and pre-certification validation checks.
    - Backup backs up Core DB (`catalog.sqlite3`) and records `quarantined_payload_count` in the manifest.
    - Restore validates `quarantined_payload_count` against the verified copy before diagnosis, rejects mismatches or malformed counts, restores Core DB only, and initializes fresh instance identities. Search DB is created only upon explicit `index rebuild`.
 
-   **Current target:** Retire the active-quarantine counter and pre-diagnosis comparison under ADR 0026. Preserve actual database, manifest, identity, retained-byte/domain and pairing validation. A Core-only backup is Git-only; full Context scope requires a consistent Core+Context pair. Authoritative corruption stops ordinary catalog use, preserves the source read-only and requires fresh verified restore plus validated salvage merge. No zero counter, sibling copy or diagnosis INSERT clears that stop.
+   **Current target:** Retire the active-quarantine counter and pre-diagnosis comparison under ADR 0038. Preserve actual database, manifest, identity, retained-byte/domain and pairing validation. A Core-only backup is Git-only; full Context scope requires a consistent Core+Context pair. Authoritative corruption stops ordinary catalog use, preserves the source read-only and requires fresh verified restore plus validated salvage merge. No zero counter, sibling copy or diagnosis INSERT clears that stop.
 
 ---
 

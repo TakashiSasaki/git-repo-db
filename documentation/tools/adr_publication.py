@@ -31,7 +31,6 @@ PUBLIC_ADRS = (
     "docs/adr/0023-configurable-finite-notes-resource-budgets.md",
     "docs/adr/0024-actual-notes-resource-work-accounting.md",
     "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md",
-    "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md",
     "docs/adr/0028-classified-times-and-sha256-exchange.md",
     "docs/adr/0029-independent-access-store.md",
     "docs/adr/0030-context-repository-relations-and-selective-exchange.md",
@@ -43,6 +42,8 @@ PUBLIC_ADRS = (
     "docs/adr/0034-repository-test-and-ci-efficiency.md",
     "docs/adr/0035-independent-documentation-workspace.md",
     "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+    "docs/adr/0037-operation-scoped-module-independence.md",
+    "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
 )
 SUPPORT = ("docs/adr/policy.md",)
 

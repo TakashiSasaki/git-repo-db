@@ -3,7 +3,9 @@
 The repository-root AGENTS.md remains applicable. For this directory, read the
 current `decision-register.md` and `documentation-status-audit.md`, then
 `no-independent-publication-adr.md` and `../adr/0002-three-store-boundary-architecture.md`
-for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read the [current ADR index](../adr/README.md) and [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md). [ADR 0029](../adr/0029-independent-access-store.md) replaces retired ADR 0003 and carries forward its Core/Context guarantees within five store responsibilities; [ADR 0030](../adr/0030-context-repository-relations-and-selective-exchange.md) adds typed Repository relations and selective Exchange without mapping Witness storage. ADRs 0004–0028 remain binding in their scoped meanings: ADR 0026 fixes recovery without quarantine/count/release, and ADR 0027 fixes unauthenticated external-origin reports without application PKI/signatures. Unaffected Q/PF guarantees remain; target decisions do not certify their implementation.
+for their accepted decisions before consulting older proposals or prototypes. **For the later accepted target**, read the [current ADR index](../adr/README.md) and [Git Core / Context transition plan](../architecture/git-core-context-transition-plan.md). [ADR 0029](../adr/0029-independent-access-store.md) replaces retired ADR 0003 and carries forward its Core/Context guarantees within five store responsibilities; [ADR 0030](../adr/0030-context-repository-relations-and-selective-exchange.md) adds typed Repository relations and selective Exchange without mapping Witness storage. Surviving ADRs 0004–0028 remain binding in their scoped meanings: ADR 0038 fixes recovery without quarantine/count/release, and ADR 0036 carries retired 0027’s unauthenticated external-origin reports without application PKI/signatures. Unaffected Q/PF guarantees remain; target decisions do not certify their implementation. ADR 0037 supplies the
+operation-scoped installation contract; ADR 0038 changes Git-only optional-store
+initialization without changing paired recovery.
 
 The owner accepted Q01-B, Q02-B, Q03-B, **NO_INDEPENDENT_PUBLICATION**, and binding
 **PF-P01–PF-P17**. Publication removal and Three-Store implementation are already
@@ -38,7 +40,7 @@ history, infer deletion from incomplete scans, or rank domain values by parser
 version or receipt order. Preserve required scope/member/terminal/child evidence.
 Current evidence layout does not imply unlimited retention or deletion permission.
 Preserve actual retained-byte/domain, database/manifest/identity and required
-Core+Context pairing validation. ADR 0026 retires the old CAS-41 active-quarantine
+Core+Context pairing validation. ADR 0038 retires the old CAS-41 active-quarantine
 count/order for the new target and requires immediate recovery on authoritative
 corruption; do not reintroduce that baseline mechanism through its old ID.
 Mutable Core revision updates likewise require the append-only-safe/fenced target

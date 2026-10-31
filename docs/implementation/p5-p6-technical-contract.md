@@ -45,7 +45,7 @@ unproven Notes bodies have no durable staging/pending exception. Missing Git
 references can remain valid Context reports without fabricated Core objects.
 
 Detected authoritative corruption persistently stops ordinary operations for the
-catalog under ADR 0026. A usable sibling representation, Operational recreation,
+catalog under ADR 0038. A usable sibling representation, Operational recreation,
 or Search fallback cannot clear that stop. Search faults alone are derivative
 faults and do not diagnose authoritative corruption.
 

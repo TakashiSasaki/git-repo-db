@@ -70,7 +70,7 @@ MAC; validate its content independently, including a maliciously recomputed chec
   permanent repository identity. Git Core stays INSERT-only; Context stays an
   independent authority; Operational/Search stay reconstructible derivatives.
 - Do not resume ordinary operations after authoritative corruption using another
-  copy inside the same suspect catalog. ADR 0026's persistent stop remains binding.
+  copy inside the same suspect catalog. ADR 0038's persistent stop remains binding.
 - Do not activate P8, migrate real catalogs, modify actual backups, merge into main,
   release/tag, enable auto-merge or intentionally publish Pages under this task.
 

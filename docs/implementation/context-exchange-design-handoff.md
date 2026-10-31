@@ -215,7 +215,7 @@ replay guard. Neither problem is solved by inventing a UUID.
 | ADR 0004/0005/0006 | Metadata-only operation, common typed OID identity, attributed scalar/group boundaries retained |
 | ADR 0017 | Direct semantic keys/FKs; no database-only aliases, new operation UUIDs or hash-only claim keys |
 | ADR 0023/0024/0025 | Finite work, actual processing cost and cumulative original-request accounting retained |
-| ADR 0026 | Persistent corruption stop, untrusted salvage and fresh validated recovery retained |
+| ADR 0038 | Persistent corruption stop, untrusted salvage and fresh validated recovery retained |
 | ADR 0027 | Unauthenticated attributed origins allowed; issuer text/UUID/digest is not authentication; no new PKI requirement |
 | ADR 0028 | Classified original epoch microseconds and SHA-256 envelope retained |
 | ADR 0029 and Access stack | Whole-record acceptance/retirement completed on 2026-10-19; confirmed independent Access semantics retained, and physical/runtime approval rules not changed |

@@ -83,7 +83,7 @@ every manually written explanation has been checked against that revision.
 
 Implementation is not release acceptance. The opt-in P1 and Access surfaces do not
 activate P8 or establish that the five-responsibility target is complete. Accepted
-corruption recovery ([ADR 0026](../docs/adr/0026-stop-salvage-restore-merge-after-corruption.md))
+corruption recovery ([ADR 0038](../docs/adr/0038-scoped-recovery-and-optional-initialization.md))
 and file-content retention ([ADR 0014](../docs/adr/0014-history-and-notes-catalog-without-file-archive.md))
 are target decisions; avoid presenting the historical quarantine lifecycle or
 ordinary file-body archive as the new target. The [decision index](../docs/adr/README.md)
