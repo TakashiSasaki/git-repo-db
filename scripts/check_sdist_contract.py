@@ -421,14 +421,23 @@ def main():
                         "project"
                     ]["name"]
                     slug = re.sub(r"[^A-Za-z0-9_.-]", "_", name)
-                    log = args.output.with_name(
-                        f"{args.output.stem}-{index}-{slug}-build.log"
-                    )
-                    log.parent.mkdir(parents=True, exist_ok=True)
-                    active_build = {"owner": name, "returncode": None, "log": str(log)}
-                    # Stream complete binary diagnostics directly to retained disk,
-                    # including non-UTF-8 output, without expanding terminal output.
-                    with log.open("wb") as stream:
+                    args.output.parent.mkdir(parents=True, exist_ok=True)
+                    # A fresh retained log also preserves an earlier failed run
+                    # when the caller intentionally reuses its receipt path.
+                    with tempfile.NamedTemporaryFile(
+                        mode="wb",
+                        prefix=f"{args.output.stem}-{index}-{slug}-",
+                        suffix="-build.log",
+                        dir=args.output.parent,
+                        delete=False,
+                    ) as stream:
+                        log = Path(stream.name)
+                        active_build = {
+                            "owner": name,
+                            "returncode": None,
+                            "log": str(log),
+                        }
+                        # Retain binary bytes without expanding terminal output.
                         process = subprocess.run(
                             [
                                 sys.executable,
