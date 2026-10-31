@@ -26,14 +26,14 @@ def test_reported_notes_visible_without_capture(acquisition, paired, capsys):
     value, target, _ = original_input(acquisition)
     unknown = replace(
         value.claims[0],
-        root_oid=None,
+        root_object_oid=None,
         provenance=replace(value.claims[0].provenance, coordinate="unknown"),
     )
     from repo_catalog.domain.p1_core import OID
 
     alternative = replace(
         value.claims[0],
-        root_oid=OID(target.object_format, "b" * len(target.full_oid)),
+        root_object_oid=OID(target.object_format, "b" * len(target.object_oid)),
         provenance=replace(value.claims[0].provenance, coordinate="competing-root"),
     )
     value = replace(value, claims=(*value.claims, unknown, alternative))

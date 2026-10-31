@@ -144,7 +144,7 @@ def test_group_callback_failure_rolls_back_without_false_corruption(
                 if (
                     core._db.in_transaction
                     and core._db.execute(
-                        "SELECT 1 FROM git_objects WHERE full_oid=?", (target,)
+                        "SELECT 1 FROM git_objects WHERE object_oid=?", (target,)
                     ).fetchone()
                 ):
                     triggered.append(True)
@@ -164,7 +164,7 @@ def test_group_callback_failure_rolls_back_without_false_corruption(
             core.admit_notes_mapping_group(group, Failing())
         assert caught.value is failure and triggered == [True]
         core.ensure_available()
-        assert not core.sql("SELECT 1 FROM git_objects WHERE full_oid=?", (target,))
+        assert not core.sql("SELECT 1 FROM git_objects WHERE object_oid=?", (target,))
         assert core.sql("SELECT count(*) FROM notes_mapping_groups")[0][0] == 1
         assert core._db.in_transaction is external
         core.admit_notes_mapping_group(group, app.work)

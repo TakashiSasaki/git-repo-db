@@ -331,9 +331,9 @@ def test_export_fixed_core_metadata_corruption_stops_catalog(
 def test_export_verifies_each_retained_metadata_copy(acquisition, tmp_path):
     app, path, fmt, _, _, core_path, _ = acquisition
     capture, _, _ = p4_fixtures.fixture_note(acquisition)
-    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.full_oid)
+    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.object_oid)
     native = p1_fixtures.native("tree", body, fmt)
-    assert native.oid == capture.root
+    assert native.object_oid == capture.root
     first, second = sorted((str(uuid4()), str(uuid4())))
     app.core.admit_metadata(native, first, app.work)
     app.core.admit_metadata(native, second, app.work)
@@ -348,7 +348,8 @@ def test_export_verifies_each_retained_metadata_copy(acquisition, tmp_path):
             super().require(unit, amount)
 
     assert (
-        app.core.read_metadata_copy(native.oid, first, ReentryBudget())["body"] == body
+        app.core.read_metadata_copy(native.object_oid, first, ReentryBudget())["body"]
+        == body
     )
     assert rejected
     service = ExchangeService(tmp_path, operational=tmp_path)
@@ -365,8 +366,8 @@ def test_export_verifies_each_retained_metadata_copy(acquisition, tmp_path):
         db.execute("DROP TRIGGER p1_immutable_retained_metadata_update")
         db.execute("PRAGMA ignore_check_constraints=ON")
         db.execute(
-            "UPDATE retained_metadata SET body=zeroblob(size) WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-            (*native.oid.key, second),
+            "UPDATE retained_metadata SET body=zeroblob(size) WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+            (*native.object_oid.key, second),
         )
         db.execute("PRAGMA ignore_check_constraints=OFF")
         db.execute(trigger)
@@ -409,12 +410,15 @@ def test_metadata_copy_callback_failure_does_not_stop_catalog(
 ):
     app, path, fmt, _, _, core_path, _ = acquisition
     capture, _, _ = p4_fixtures.fixture_note(acquisition)
-    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.full_oid)
+    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.object_oid)
     assert body
     native = p1_fixtures.native("tree", body, fmt)
     copy_id = str(uuid4())
     app.core.admit_metadata(native, copy_id, app.work)
-    assert app.core.read_metadata_copy(native.oid, copy_id, Budget())["body"] == body
+    assert (
+        app.core.read_metadata_copy(native.object_oid, copy_id, Budget())["body"]
+        == body
+    )
 
     class FailingBudget(Budget):
         def maybe_fail(self, current_method, unit):
@@ -438,23 +442,29 @@ def test_metadata_copy_callback_failure_does_not_stop_catalog(
             super().charge(unit, amount)
 
     with pytest.raises(type(failure)) as caught:
-        app.core.read_metadata_copy(native.oid, copy_id, FailingBudget())
+        app.core.read_metadata_copy(native.object_oid, copy_id, FailingBudget())
     assert caught.value is failure
     assert not (core_path.parent / "p1-recovery-stop.json").exists()
     app.core.ensure_available()
-    assert app.core.read_metadata_copy(native.oid, copy_id, Budget())["body"] == body
+    assert (
+        app.core.read_metadata_copy(native.object_oid, copy_id, Budget())["body"]
+        == body
+    )
 
 
 @pytest.mark.parametrize("damage", ["type", "body", "digest", "oid"])
 def test_metadata_copy_rejects_corrupt_stored_values(acquisition, damage):
     app, path, fmt, _, _, core_path, _ = acquisition
     capture, _, _ = p4_fixtures.fixture_note(acquisition)
-    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.full_oid)
+    body = p4_fixtures.git(path, "cat-file", "tree", capture.root.object_oid)
     assert body
     native = p1_fixtures.native("tree", body, fmt)
     copy_id = str(uuid4())
     app.core.admit_metadata(native, copy_id, app.work)
-    assert app.core.read_metadata_copy(native.oid, copy_id, Budget())["body"] == body
+    assert (
+        app.core.read_metadata_copy(native.object_oid, copy_id, Budget())["body"]
+        == body
+    )
 
     changed_body = bytes((body[0] ^ 1,)) + body[1:]
     replacements = {
@@ -473,14 +483,18 @@ def test_metadata_copy_rejects_corrupt_stored_values(acquisition, damage):
         db.execute("PRAGMA ignore_check_constraints=ON")
         db.execute(
             f"UPDATE retained_metadata SET {column}=? "
-            "WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-            (value, *native.oid.key, copy_id),
+            "WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+            (value, *native.object_oid.key, copy_id),
         )
         if damage == "oid":
             db.execute(
                 "UPDATE retained_metadata SET digest_sha256=? "
-                "WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                (hashlib.sha256(changed_body).hexdigest(), *native.oid.key, copy_id),
+                "WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+                (
+                    hashlib.sha256(changed_body).hexdigest(),
+                    *native.object_oid.key,
+                    copy_id,
+                ),
             )
         db.execute("PRAGMA ignore_check_constraints=OFF")
         db.execute(trigger)
@@ -489,7 +503,7 @@ def test_metadata_copy_rejects_corrupt_stored_values(acquisition, damage):
         db.close()
 
     with pytest.raises(CoreFailure) as corruption:
-        app.core.read_metadata_copy(native.oid, copy_id, Budget())
+        app.core.read_metadata_copy(native.object_oid, copy_id, Budget())
     assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (core_path.parent / "p1-recovery-stop.json").exists()
     with pytest.raises(CoreFailure) as stopped:
@@ -503,14 +517,14 @@ def test_metadata_copy_rejects_invalid_native_grammar(acquisition):
     # must diagnose this injected invalid tree rather than a hash mismatch.
     native = p1_fixtures.native("tree", b"not a tree entry", fmt)
     copy_id = str(uuid4())
-    app.core.admit_object(native.oid)
+    app.core.admit_object(native.object_oid)
     db = connect(core_path, "core")
     try:
         db.execute("PRAGMA ignore_check_constraints=ON")
         db.execute(
             "INSERT INTO retained_metadata VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
-                *native.oid.key,
+                *native.object_oid.key,
                 copy_id,
                 native.native_type,
                 native.body,
@@ -524,7 +538,7 @@ def test_metadata_copy_rejects_invalid_native_grammar(acquisition):
         db.close()
 
     with pytest.raises(CoreFailure) as corruption:
-        app.core.read_metadata_copy(native.oid, copy_id, Budget())
+        app.core.read_metadata_copy(native.object_oid, copy_id, Budget())
     assert corruption.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (core_path.parent / "p1-recovery-stop.json").exists()
     with pytest.raises(CoreFailure) as stopped:
@@ -746,7 +760,7 @@ def test_claim_scoped_note_proof_body_repeat_and_reverse(acquisition, tmp_path):
         projection = core.notes_mapping_projection(
             first, target, "git-notes", "1", "native-notes-tree", app.work
         )
-        assert projection.canonical_note_oid == note
+        assert projection.canonical_note_object_oid == note
         assert len(projection.evidence) >= 2  # original attribution plus receiver check
         mapping = projection.evidence[0].mapping
         assert core.read_ref_note(first, mapping, app.work) == b"\0\xffbinary\r\n"
@@ -837,7 +851,7 @@ def test_distinct_conflicts_survive_and_evidence_rebinding_is_refused(
     competing = replace(
         original,
         provenance=replace(original.provenance, coordinate="independent-root"),
-        root_oid=other_root,
+        root_object_oid=other_root,
     )
     absence = RefObservationClaim(
         original.ref_observation_key,
@@ -882,7 +896,7 @@ def test_distinct_conflicts_survive_and_evidence_rebinding_is_refused(
         for r in altered["ref_observation_claims"]
         if r["provenance_json"] == original.provenance.encoded
     )
-    row["root_oid"] = [fmt, "c" * (40 if fmt == "sha1" else 64)]
+    row["root_object_oid"] = [fmt, "c" * (40 if fmt == "sha1" else 64)]
     forged = replace(package, package_id=str(uuid4()), core=altered, digest_sha256=None)
     with pytest.raises(ExchangeError) as error:
         receiver.import_package(
@@ -909,9 +923,9 @@ def test_lossless_symbolic_direct_resolved_and_peeled_metadata(acquisition, tmp_
         "present",
         "symbolic",
         symbolic_target_ref_name=b"refs/tags/target-\xfe",
-        resolved_target_oid=OID(fmt, "a" * width),
-        peeled_target_oid=OID(fmt, "b" * width),
-        root_oid=OID(fmt, "a" * width),
+        resolved_target_object_oid=OID(fmt, "a" * width),
+        peeled_target_object_oid=OID(fmt, "b" * width),
+        root_object_oid=OID(fmt, "a" * width),
     )
     app.core.admit_ref_observation(observation)
     app.core.admit_ref_observation_claim(claim)
@@ -980,7 +994,7 @@ def test_explicit_member_selection_preserves_whole_original_event(
 ):
     app, path, _fmt, repository, origin, *_ = acquisition
     capture, _, _ = p4_fixtures.fixture_note(acquisition)
-    p4_fixtures.git(path, "update-ref", "refs/notes/second", capture.root.full_oid)
+    p4_fixtures.git(path, "update-ref", "refs/notes/second", capture.root.object_oid)
     event = discover(app, repository, origin, str(uuid4())).enumerations[0]
     assert len(event.links) == 2
     selection = ExchangeSelectionScope(

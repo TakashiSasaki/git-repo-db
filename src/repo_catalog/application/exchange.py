@@ -98,35 +98,37 @@ def _recomputed_intrinsic_keys(
 ) -> tuple[
     set[tuple[str, str, str, str, str]], set[tuple[str, str, str, str, str, str]]
 ]:
-    """Compute exact (object_format, full_oid, ...) keys that GitCore.admit_metadata generates."""
+    """Compute exact (object_format, object_oid, ...) keys that GitCore.admit_metadata generates."""
     claim_keys: set[tuple[str, str, str, str, str]] = set()
     group_keys: set[tuple[str, str, str, str, str, str]] = set()
 
     for field_name, val in (("type", native.native_type), ("size", len(native.body))):
         prov = Provenance(
             "receiver-intrinsic",
-            encode(native.oid.key),
+            encode(native.object_oid.key),
             f"native-{field_name}",
             "p1-native",
             "1",
             "receiver_intrinsic",
         )
-        claim = ScalarClaim(native.oid, field_name, val, prov)
+        claim = ScalarClaim(native.object_oid, field_name, val, prov)
         claim_keys.add(claim.key)
 
-    parsed = parse_metadata(native.oid.object_format, native.native_type, native.body)
+    parsed = parse_metadata(
+        native.object_oid.object_format, native.native_type, native.body
+    )
     for field_name, val in parsed.scalars.items():
         if field_name in ("type", "size", "tree_count"):
             continue
         prov = Provenance(
             "receiver-intrinsic",
-            encode(native.oid.key),
+            encode(native.object_oid.key),
             "native-" + field_name,
             DECODER,
             DECODER_VERSION,
             "receiver_intrinsic",
         )
-        claim = ScalarClaim(native.oid, field_name, val, prov)
+        claim = ScalarClaim(native.object_oid, field_name, val, prov)
         claim_keys.add(claim.key)
 
     relations = {
@@ -136,18 +138,18 @@ def _recomputed_intrinsic_keys(
     }[native.native_type]
     for rel_name in relations:
         members = intrinsic_members(
-            native.oid.object_format, native.native_type, native.body, rel_name
+            native.object_oid.object_format, native.native_type, native.body, rel_name
         )
         prov = Provenance(
             "receiver-intrinsic",
-            encode(native.oid.key),
+            encode(native.object_oid.key),
             rel_name,
             "p1-native",
             "1",
             "receiver_intrinsic",
         )
         group = RelationGroup(
-            native.oid,
+            native.object_oid,
             rel_name,
             "native-entire-relation",
             "complete" if members else "known_empty",
@@ -566,7 +568,7 @@ class ExchangeService:
                     for r in (core_section or {}).get("repositories", [])
                 ],
                 "objects": [
-                    [r["object_format"], r["full_oid"]]
+                    [r["object_format"], r["object_oid"]]
                     for r in (core_section or {}).get("git_objects", [])
                 ],
                 "resources": [
@@ -600,7 +602,7 @@ class ExchangeService:
             self._bound_export_connection(core._db)
             for depth in range(scope.max_depth):
                 added = set()
-                for owner in sorted(frontier, key=lambda oid: oid.key):
+                for owner in sorted(frontier, key=lambda object_oid: object_oid.key):
                     for row in core.exchange_metadata_rows(
                         "relation_membership", owner.key, self._export_work
                     ):
@@ -651,7 +653,7 @@ class ExchangeService:
                                     }
                                 )
                             elif not core.sql(
-                                "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                                "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                                 target.key,
                             ):
                                 self._selection_details["omissions"].append(
@@ -675,7 +677,8 @@ class ExchangeService:
                 if not frontier:
                     break
         return replace(
-            scope, object_oids=tuple(sorted(chosen, key=lambda oid: oid.key))
+            scope,
+            object_oids=tuple(sorted(chosen, key=lambda object_oid: object_oid.key)),
         )
 
     def _export_steps(self, amount):
@@ -764,30 +767,32 @@ class ExchangeService:
                             }
                         )
                         continue
-                    oid = core._stored("retained metadata", OID, row[0], row[1])
-                    if selected_oids is not None and oid not in selected_oids:
+                    object_oid = core._stored("retained metadata", OID, row[0], row[1])
+                    if selected_oids is not None and object_oid not in selected_oids:
                         continue
                     copy = core._stored("retained metadata", uuid4_value, row[2])
-                    actual = core.read_metadata_copy(oid, copy, ref_work)
+                    actual = core.read_metadata_copy(object_oid, copy, ref_work)
                     if tuple(
                         actual[name]
                         for name in (
                             "object_format",
-                            "full_oid",
+                            "object_oid",
                             "physical_copy_uuidv4",
                             "native_type",
                             "size",
                             "digest_sha256",
                         )
                     ) != tuple(row):
-                        core._integrity_stop((oid, copy, "changed metadata copy"))
+                        core._integrity_stop(
+                            (object_oid, copy, "changed metadata copy")
+                        )
                     body = actual["body"]
-                    referenced_oids.add(oid)
+                    referenced_oids.add(object_oid)
                     if scope.include_retained_bytes:
                         section["retained_metadata"].append(
                             {
                                 "object_format": row[0],
-                                "full_oid": row[1],
+                                "object_oid": row[1],
                                 "physical_copy_uuidv4": row[2],
                                 "native_type": row[3],
                                 "body_hex": body.hex(),
@@ -798,12 +803,12 @@ class ExchangeService:
 
                 claim_rows = core.exchange_metadata_rows("scalar_claims", (), ref_work)
                 for row in claim_rows:
-                    oid = core._stored("scalar claim", OID, row[0], row[1])
-                    if selected_oids is not None and oid not in selected_oids:
+                    object_oid = core._stored("scalar claim", OID, row[0], row[1])
+                    if selected_oids is not None and object_oid not in selected_oids:
                         continue
                     # Run typed scalar projection check on this field
-                    core.scalar(oid, row[2])
-                    referenced_oids.add(oid)
+                    core.scalar(object_oid, row[2])
+                    referenced_oids.add(object_oid)
                     is_checked = bool(row[5])
                     if is_checked and not scope.include_retained_bytes:
                         orig_prov = Provenance(*json.loads(row[4]))
@@ -818,7 +823,7 @@ class ExchangeService:
                         section["scalar_claims"].append(
                             {
                                 "object_format": row[0],
-                                "full_oid": row[1],
+                                "object_oid": row[1],
                                 "field": row[2],
                                 "value_json": row[3],
                                 "provenance_json": downgraded_prov.encoded,
@@ -829,7 +834,7 @@ class ExchangeService:
                         section["scalar_claims"].append(
                             {
                                 "object_format": row[0],
-                                "full_oid": row[1],
+                                "object_oid": row[1],
                                 "field": row[2],
                                 "value_json": row[3],
                                 "provenance_json": row[4],
@@ -841,11 +846,11 @@ class ExchangeService:
                     "relation_groups", (), ref_work
                 )
                 for row in group_rows:
-                    oid = core._stored("relation group", OID, row[0], row[1])
-                    if selected_oids is not None and oid not in selected_oids:
+                    object_oid = core._stored("relation group", OID, row[0], row[1])
+                    if selected_oids is not None and object_oid not in selected_oids:
                         continue
-                    core.relations(oid, row[2], row[3])
-                    referenced_oids.add(oid)
+                    core.relations(object_oid, row[2], row[3])
+                    referenced_oids.add(object_oid)
                     for m in json.loads(row[5]):
                         referenced_oids.add(OID(m[1], m[2]))
                     is_checked = bool(row[7])
@@ -862,7 +867,7 @@ class ExchangeService:
                         section["relation_groups"].append(
                             {
                                 "object_format": row[0],
-                                "full_oid": row[1],
+                                "object_oid": row[1],
                                 "relation": row[2],
                                 "scope": row[3],
                                 "status": row[4],
@@ -875,7 +880,7 @@ class ExchangeService:
                         section["relation_groups"].append(
                             {
                                 "object_format": row[0],
-                                "full_oid": row[1],
+                                "object_oid": row[1],
                                 "relation": row[2],
                                 "scope": row[3],
                                 "status": row[4],
@@ -966,7 +971,7 @@ class ExchangeService:
                     columns = (
                         "repository_uuidv4",
                         "object_format",
-                        "full_oid",
+                        "object_oid",
                         "field",
                         "observation_origin_uuidv4",
                         "ref_observation_uuidv7",
@@ -978,8 +983,8 @@ class ExchangeService:
                             "observation_origin_uuidv4",
                             "ref_observation_uuidv7",
                         ),
-                        "object": ("object_format", "full_oid"),
-                        "field": ("object_format", "full_oid", "field"),
+                        "object": ("object_format", "object_oid"),
+                        "field": ("object_format", "object_oid", "field"),
                     }
                     expected.update(
                         zip(
@@ -1173,7 +1178,7 @@ class ExchangeService:
                     ref_work.charge("input_bytes", 2 * input_size)
                     for m in members:
                         if not core.sql(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                             m.key,
                         ):
                             core._integrity_stop(
@@ -1192,15 +1197,15 @@ class ExchangeService:
                     )
 
                 for row in core.exchange_metadata_rows("git_objects", (), ref_work):
-                    oid = core._stored("git object", OID, row[0], row[1])
+                    object_oid = core._stored("git object", OID, row[0], row[1])
                     if (
                         selected_oids is not None
-                        and oid not in selected_oids
-                        and oid not in referenced_oids
+                        and object_oid not in selected_oids
+                        and object_oid not in referenced_oids
                     ):
                         continue
                     section["git_objects"].append(
-                        {"object_format": row[0], "full_oid": row[1]}
+                        {"object_format": row[0], "object_oid": row[1]}
                     )
 
                 return section
@@ -1681,7 +1686,7 @@ class ExchangeService:
                         "provider_resource_id": row[2],
                         "role": row[3],
                         "object_format": row[4],
-                        "full_oid": row[5],
+                        "object_oid": row[5],
                         "provenance_json": row[6],
                     }
                 )
@@ -2212,9 +2217,9 @@ class ExchangeService:
 
         for ref in context_data.get("core_references", ()):
             fmt = ref.get("object_format")
-            oid = ref.get("full_oid")
-            if fmt and oid:
-                object_oids.add(OID(fmt, oid))
+            object_oid = ref.get("object_oid")
+            if fmt and object_oid:
+                object_oids.add(OID(fmt, object_oid))
 
         return DependencySet(
             resources=resources,
@@ -2735,14 +2740,14 @@ class ExchangeService:
                 ),
                 (
                     "scalar_claims",
-                    ("object_format", "full_oid", "field", "provenance_json"),
+                    ("object_format", "object_oid", "field", "provenance_json"),
                     ("value_json",),
                 ),
                 (
                     "relation_groups",
                     (
                         "object_format",
-                        "full_oid",
+                        "object_oid",
                         "relation",
                         "scope",
                         "provenance_json",
@@ -2795,11 +2800,11 @@ class ExchangeService:
                         )
             oids = {
                 tuple(r)
-                for r in core.sql("SELECT object_format,full_oid FROM git_objects")
+                for r in core.sql("SELECT object_format,object_oid FROM git_objects")
             }
         self._dependency_rows += len(repos) + len(oids)
         repos.update(r["repository_uuidv4"] for r in data["repositories"])
-        oids.update((r["object_format"], r["full_oid"]) for r in data["git_objects"])
+        oids.update((r["object_format"], r["object_oid"]) for r in data["git_objects"])
 
         def keep(key, predicate):
             kept = []
@@ -2831,10 +2836,10 @@ class ExchangeService:
                 and all(
                     r[field] is None or tuple(r[field]) in oids
                     for field in (
-                        "direct_target_oid",
-                        "resolved_target_oid",
-                        "peeled_target_oid",
-                        "root_oid",
+                        "direct_target_object_oid",
+                        "resolved_target_object_oid",
+                        "peeled_target_object_oid",
+                        "root_object_oid",
                     )
                 )
             ),
@@ -2865,11 +2870,11 @@ class ExchangeService:
                 lambda r: (
                     mapping_owner_available(r)
                     and all(
-                        (r["object_format"], oid) in oids
-                        for oid in (
-                            r["root_oid"],
+                        (r["object_format"], object_oid) in oids
+                        for object_oid in (
+                            r["root_object_oid"],
                             r["annotated_object_oid"],
-                            r["note_oid"],
+                            r["note_object_oid"],
                         )
                     )
                 ),
@@ -2878,11 +2883,11 @@ class ExchangeService:
             "notes_mapping_groups",
             lambda r: (
                 mapping_owner_available(r)
-                and (r["object_format"], r["root_oid"]) in oids
+                and (r["object_format"], r["root_object_oid"]) in oids
                 and all(
-                    (r["object_format"], oid) in oids
+                    (r["object_format"], object_oid) in oids
                     for target, note, _ in json.loads(r["membership_json"])
-                    for oid in (target, note)
+                    for object_oid in (target, note)
                 )
             ),
         )
@@ -3391,13 +3396,13 @@ class ExchangeService:
     def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
         core_path = self.directory / "core.sqlite3"
 
-        def _validate(fmt: str, oid: str) -> bool:
+        def _validate(fmt: str, object_oid: str) -> bool:
             if not core_path.is_file():
                 return False
             with closing(connect(core_path, "core")) as db:
                 row = db.execute(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    (fmt, oid),
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    (fmt, object_oid),
                 ).fetchone()
                 return row is not None
 
@@ -3422,29 +3427,31 @@ class ExchangeService:
                 )
 
         for meta in core_data["retained_metadata"]:
-            oid = OID(meta["object_format"], meta["full_oid"])
+            object_oid = OID(meta["object_format"], meta["object_oid"])
             native_type = meta["native_type"]
             if native_type == "blob":
                 raise CoreFailure(
                     "RETENTION_PURPOSE",
-                    oid,
+                    object_oid,
                     "ordinary file blob bodies are excluded from retained_metadata",
                 )
             try:
                 body = bytes.fromhex(meta["body_hex"])
             except (ValueError, TypeError) as exc:
                 raise CoreFailure(
-                    "NATIVE_INTEGRITY", oid, "invalid hex body in retained_metadata"
+                    "NATIVE_INTEGRITY",
+                    object_oid,
+                    "invalid hex body in retained_metadata",
                 ) from exc
             native = NativeObject(
-                oid,
+                object_oid,
                 native_type,
                 body,
                 meta["size"],
                 str(meta["digest_sha256"]),
             )
             native.validate()
-            parse_metadata(oid.object_format, native_type, body)
+            parse_metadata(object_oid.object_format, native_type, body)
 
     def _prevalidate_context_section(
         self,
@@ -3528,8 +3535,8 @@ class ExchangeService:
         admitted_objects = 0
         for obj in core_data["git_objects"]:
             _performed("metadata_units", 1)
-            oid = OID(obj["object_format"], obj["full_oid"])
-            core_cap.admit_object(oid)
+            object_oid = OID(obj["object_format"], obj["object_oid"])
+            core_cap.admit_object(object_oid)
             admitted_objects += 1
 
         # Original ref subjects/results and whole enumeration links are typed
@@ -3548,10 +3555,10 @@ class ExchangeService:
         admitted_meta = 0
         for meta in core_data["retained_metadata"]:
             _performed("metadata_units", 1)
-            oid = OID(meta["object_format"], meta["full_oid"])
+            object_oid = OID(meta["object_format"], meta["object_oid"])
             body = bytes.fromhex(meta["body_hex"])
             native = NativeObject(
-                oid,
+                object_oid,
                 meta["native_type"],
                 body,
                 meta["size"],
@@ -3566,11 +3573,11 @@ class ExchangeService:
         ignored_claims = 0
         for sc in core_data["scalar_claims"]:
             _performed("metadata_units", 1)
-            oid = OID(sc["object_format"], sc["full_oid"])
+            object_oid = OID(sc["object_format"], sc["object_oid"])
             prov = Provenance(*json.loads(sc["provenance_json"]))
             val_dec = json.loads(sc["value_json"])
             orig_val = None if val_dec == ["unknown"] else val_dec[1]
-            claim = ScalarClaim(oid, sc["field"], orig_val, prov)
+            claim = ScalarClaim(object_oid, sc["field"], orig_val, prov)
             if (
                 claim.key[3] != sc["value_json"]
                 or claim.key[4] != sc["provenance_json"]
@@ -3586,7 +3593,7 @@ class ExchangeService:
         ignored_groups = 0
         for rg in core_data["relation_groups"]:
             _performed("metadata_units", 1)
-            oid = OID(rg["object_format"], rg["full_oid"])
+            object_oid = OID(rg["object_format"], rg["object_oid"])
             prov = Provenance(*json.loads(rg["provenance_json"]))
             members = tuple(
                 RelationMember(
@@ -3596,7 +3603,7 @@ class ExchangeService:
                 for m in json.loads(rg["membership_json"])
             )
             group = RelationGroup(
-                oid,
+                object_oid,
                 rg["relation"],
                 rg["scope"],
                 rg["status"],
@@ -3836,12 +3843,12 @@ class ExchangeService:
             if field_name.startswith("reported_core_reference:"):
                 role = field_name.removeprefix("reported_core_reference:")
                 oid_pair = json.loads(fc["value_json"])
-                oid = OID(oid_pair[0], oid_pair[1])
+                object_oid = OID(oid_pair[0], oid_pair[1])
                 ref_key = (
                     rk,
                     role,
-                    oid.object_format,
-                    oid.full_oid,
+                    object_oid.object_format,
+                    object_oid.object_oid,
                     fc["provenance_json"],
                 )
                 seen_core_refs.add(ref_key)
@@ -3855,12 +3862,12 @@ class ExchangeService:
                         fc["observed_at_us"],
                     )
                 )
-                if validate_core(oid.object_format, oid.full_oid):
+                if validate_core(object_oid.object_format, object_oid.object_oid):
                     ctx.link_core(
                         rk,
                         role,
-                        oid.object_format,
-                        oid.full_oid,
+                        object_oid.object_format,
+                        object_oid.object_oid,
                         fc["provenance_json"],
                         validate_core,
                     )
@@ -3872,7 +3879,7 @@ class ExchangeService:
                             "unit": [
                                 list(rk.coordinates()),
                                 role,
-                                *oid.key,
+                                *object_oid.key,
                                 fc["provenance_json"],
                             ],
                             "reason": "missing_core_oid",
@@ -3898,19 +3905,25 @@ class ExchangeService:
                 cr["resource_kind"],
                 cr["provider_resource_id"],
             )
-            oid = OID(cr["object_format"], cr["full_oid"])
+            object_oid = OID(cr["object_format"], cr["object_oid"])
             role = cr["role"]
             prov_json = cr["provenance_json"]
-            ref_key = (rk, role, oid.object_format, oid.full_oid, prov_json)
+            ref_key = (
+                rk,
+                role,
+                object_oid.object_format,
+                object_oid.object_oid,
+                prov_json,
+            )
             if ref_key in seen_core_refs:
                 continue
             seen_core_refs.add(ref_key)
-            if validate_core(oid.object_format, oid.full_oid):
+            if validate_core(object_oid.object_format, object_oid.object_oid):
                 ctx.link_core(
                     rk,
                     role,
-                    oid.object_format,
-                    oid.full_oid,
+                    object_oid.object_format,
+                    object_oid.object_oid,
                     prov_json,
                     validate_core,
                 )
@@ -3919,7 +3932,12 @@ class ExchangeService:
                 missing_refs.append(
                     {
                         "section": "core_references",
-                        "unit": [list(rk.coordinates()), role, *oid.key, prov_json],
+                        "unit": [
+                            list(rk.coordinates()),
+                            role,
+                            *object_oid.key,
+                            prov_json,
+                        ],
                         "reason": "missing_core_oid",
                     }
                 )

@@ -147,12 +147,12 @@ def assembled_template(tmp_path_factory):
                 str(uuid4()),
                 "i5-native-synthetic",
                 100,
-                select_oids=(oids["commit2"], oids["tree"]),
+                select_object_oids=(oids["commit2"], oids["tree"]),
                 retain_bytes=True,
                 notes=NotesAcquisitionSpec(
                     discover_notes=True,
                     acquire_inventories=True,
-                    target_oids=(oids["commit2"],),
+                    target_object_oids=(oids["commit2"],),
                     retain_note_bodies=True,
                 ),
             ),
@@ -231,8 +231,8 @@ def assembled_template(tmp_path_factory):
                     "id": 601,
                     "title": "i5 pull request needle",
                     "body": "independent PR document",
-                    "head": {"repo": {"id": 202}, "sha": oids["commit2"].full_oid},
-                    "base": {"repo": {"id": 101}, "sha": oids["commit2"].full_oid},
+                    "head": {"repo": {"id": 202}, "sha": oids["commit2"].object_oid},
+                    "base": {"repo": {"id": 101}, "sha": oids["commit2"].object_oid},
                 },
                 140,
                 prov("forked PR with shared oid"),
@@ -315,7 +315,7 @@ def test_independent_selection_does_not_turn_dependencies_into_permission(
     with closing(GitCore(recipient / "core.sqlite3")) as core:
         assert core.catalog_identity() == (seed, instance)
         present = core.sql(
-            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
             oids["commit2"].key,
         )
         assert bool(present) == ("O" in roots)

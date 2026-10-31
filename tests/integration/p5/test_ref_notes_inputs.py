@@ -47,7 +47,7 @@ def test_r226_01_rejects_mutated_mapping(acquisition, metadata, paired, mutation
         )
     else:
         object.__setattr__(
-            value.mapping_claims[0].mapping.note_oid, "full_oid", "not-an-oid"
+            value.mapping_claims[0].mapping.note_object_oid, "object_oid", "not-an-oid"
         )
     if paired:
         enable_context(acquisition)
@@ -194,10 +194,10 @@ def original_input(case, *, body=b"\x00\xfforiginal\n", commit=False):
     )
     provenance = Provenance("original", "original-read", "result", "reporter", "1")
     claim = RefObservationClaim(
-        subject.ref_observation_key, provenance, "present", root_oid=capture.root
+        subject.ref_observation_key, provenance, "present", root_object_oid=capture.root
     )
     mapping = NotesMapping(
-        capture.root, "git-notes", "1", "tree", target, note, target.full_oid
+        capture.root, "git-notes", "1", "tree", target, note, target.object_oid
     )
     mapping_claim = NotesMappingClaim(
         claim, mapping, replace(provenance, coordinate="mapping")
@@ -209,7 +209,7 @@ def original_input(case, *, body=b"\x00\xfforiginal\n", commit=False):
         "tree",
         "all-notes-mappings",
         "complete",
-        ((target.full_oid, note.full_oid, target.full_oid),),
+        ((target.object_oid, note.object_oid, target.object_oid),),
         replace(provenance, coordinate="whole-group"),
     )
     return RefNotesInput(subject, (claim,), (mapping_claim,), (group,)), target, note
@@ -251,7 +251,9 @@ def test_original_reports_never_become_receiver_proof(acquisition, paired, metad
     assert not hasattr(first, "notes_inventories") and not hasattr(
         first, "note_acquisitions"
     )
-    assert set((value.claims[0].root_oid, target, note)) <= set(first.admitted_objects)
+    assert set((value.claims[0].root_object_oid, target, note)) <= set(
+        first.admitted_objects
+    )
     before = budget_spent(acquisition, request)
     again = run_request(
         acquisition, request, paired=paired, metadata=metadata, new_request=False
@@ -284,7 +286,7 @@ def test_explicit_claims_use_real_root_specific_checks(acquisition, paired, meta
         value,
         metadata=metadata,
         acquire_inventories=True,
-        target_oids=(target,),
+        target_object_oids=(target,),
     )
     result = run_request(acquisition, request, paired=paired, metadata=metadata)
     assert result.status == "complete"
@@ -299,10 +301,10 @@ def test_explicit_claims_use_real_root_specific_checks(acquisition, paired, meta
         "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='retained_notes'"
     )
     assert not app.core.sql(
-        "SELECT 1 FROM retained_metadata WHERE full_oid=?", (target.full_oid,)
+        "SELECT 1 FROM retained_metadata WHERE object_oid=?", (target.object_oid,)
     )
     assert app.core.sql(
-        "SELECT 1 FROM ref_retained_notes WHERE note_oid=?", (note.full_oid,)
+        "SELECT 1 FROM ref_retained_notes WHERE note_object_oid=?", (note.object_oid,)
     )
     before = budget_spent(acquisition, request)
     replay = run_request(
@@ -324,11 +326,13 @@ def test_all_competing_claims_keep_their_roots_and_permissions(acquisition, pair
     first = value.claims[0]
     second = replace(
         first,
-        root_oid=other.claims[0].root_oid,
+        root_object_oid=other.claims[0].root_object_oid,
         provenance=replace(first.provenance, coordinate="independent-root"),
     )
     unknown = replace(
-        first, root_oid=None, provenance=replace(first.provenance, coordinate="unknown")
+        first,
+        root_object_oid=None,
+        provenance=replace(first.provenance, coordinate="unknown"),
     )
     absent = RefObservationClaim(
         first.ref_observation_key,
@@ -346,7 +350,7 @@ def test_all_competing_claims_keep_their_roots_and_permissions(acquisition, pair
     if paired:
         enable_context(acquisition)
     request = with_input(
-        acquisition, value, acquire_inventories=True, target_oids=(target,)
+        acquisition, value, acquire_inventories=True, target_object_oids=(target,)
     )
     result = run_request(acquisition, request, paired=paired)
     view = app.core.ref_observation(first.ref_observation_key, app.work)
@@ -414,7 +418,7 @@ def test_input_budget_stop_cannot_admit_reports_or_proofs(acquisition):
 def test_rootless_metadata_stays_rootless_and_verification_deferred(acquisition):
     app, *_ = acquisition
     value, _, _ = original_input(acquisition)
-    claim = replace(value.claims[0], root_oid=None)
+    claim = replace(value.claims[0], root_object_oid=None)
     value = replace(value, claims=(claim,), mapping_claims=(), mapping_groups=())
     result = run_request(
         acquisition, with_input(acquisition, value, acquire_inventories=True)
@@ -449,7 +453,7 @@ def test_intent_binds_every_original_result_and_mapping(acquisition):
                 *value.claims,
                 replace(
                     value.claims[0],
-                    root_oid=None,
+                    root_object_oid=None,
                     provenance=replace(
                         value.claims[0].provenance, coordinate="unknown"
                     ),

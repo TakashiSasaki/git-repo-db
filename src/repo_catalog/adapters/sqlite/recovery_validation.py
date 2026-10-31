@@ -94,7 +94,7 @@ def charge_ref_integrity_inputs(connection, work):
 def _charge_note_comparisons(connection, work):
     """Bound exact-body comparisons made by trusted cross-family guards."""
     cursor = connection.execute(
-        "SELECT count(*),sum(octet_length(body)) FROM ref_retained_notes GROUP BY object_format,full_oid"
+        "SELECT count(*),sum(octet_length(body)) FROM ref_retained_notes GROUP BY object_format,object_oid"
     )
     while True:
         work.require("metadata_units", 1)
@@ -198,12 +198,12 @@ def validate_stored_ref_authority(connection, work, budget):
 
             mapping_cols = (
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
                 "annotated_object_oid",
-                "note_oid",
+                "note_object_oid",
                 "mapping_path_json",
             )
             for row in scan("notes_mappings", mapping_cols):
@@ -222,7 +222,7 @@ def validate_stored_ref_authority(connection, work, budget):
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -280,13 +280,13 @@ def validate_stored_ref_authority(connection, work, budget):
                     ),
                     row,
                 )
-                root_oid = core._stored("mapping root", OID, fmt, root)
-                target_oid = core._stored("mapping target", OID, fmt, target)
-                if claim.root_oid != root_oid:
+                root_object_oid = core._stored("mapping root", OID, fmt, root)
+                target_object_oid = core._stored("mapping target", OID, fmt, target)
+                if claim.root_object_oid != root_object_oid:
                     raise StoredRefInvariantError("Mapping Claim/root mismatch")
                 core.notes_mapping_projection(
                     claim,
-                    target_oid,
+                    target_object_oid,
                     kind,
                     version,
                     scope,
@@ -298,7 +298,7 @@ def validate_stored_ref_authority(connection, work, budget):
             notes = total_bytes = 0
             for row in scan(
                 "ref_retained_notes",
-                ("object_format", "full_oid", "physical_copy_uuidv4"),
+                ("object_format", "object_oid", "physical_copy_uuidv4"),
             ):
                 copy = core._bounded_stored_row(
                     "ref_retained_notes", tuple(row), work, max_bytes, max_bytes

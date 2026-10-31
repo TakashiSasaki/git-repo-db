@@ -137,57 +137,67 @@ class GitNotesSource:
             if process.stdout is not None:
                 process.stdout.close()
 
-    def _native(self, oid, kinds, cap, work):
-        if oid.object_format != self.object_format:
+    def _native(self, object_oid, kinds, cap, work):
+        if object_oid.object_format != self.object_format:
             raise CoreFailure(
-                "NATIVE_FORMAT", oid, "Git storage format differs from requested OID"
+                "NATIVE_FORMAT",
+                object_oid,
+                "Git storage format differs from requested OID",
             )
         header = (
             self._output(
                 ("cat-file", "--batch-check"),
                 128,
                 work,
-                data=(oid.full_oid + "\n").encode("ascii"),
+                data=(object_oid.object_oid + "\n").encode("ascii"),
             )
             .strip()
             .split()
         )
-        if header == [oid.full_oid.encode(), b"missing"]:
+        if header == [object_oid.object_oid.encode(), b"missing"]:
             raise CoreFailure(
-                "OBJECT_UNAVAILABLE", oid, "native object unavailable locally"
+                "OBJECT_UNAVAILABLE", object_oid, "native object unavailable locally"
             )
-        if len(header) != 3 or header[0] != oid.full_oid.encode():
-            raise CoreFailure("GIT_INPUT", oid, "unexpected native object header")
+        if len(header) != 3 or header[0] != object_oid.object_oid.encode():
+            raise CoreFailure(
+                "GIT_INPUT", object_oid, "unexpected native object header"
+            )
         kind = header[1].decode("ascii", "replace")
         if kind not in kinds:
             raise CoreFailure(
-                "RETENTION_PURPOSE", oid, "native type outside the requested Notes role"
+                "RETENTION_PURPOSE",
+                object_oid,
+                "native type outside the requested Notes role",
             )
         size_raw = header[2]
         if not size_raw.isdigit() or len(size_raw) > 19:
-            raise CoreFailure("GIT_INPUT", oid, "invalid declared native size")
+            raise CoreFailure("GIT_INPUT", object_oid, "invalid declared native size")
         size = int(size_raw)
         if size > cap:
             raise CoreFailure(
-                "BUDGET", oid, "native body exceeds configured per-object limit"
+                "BUDGET", object_oid, "native body exceeds configured per-object limit"
             )
-        body = self._output(("cat-file", kind, oid.full_oid), size, work)
+        body = self._output(("cat-file", kind, object_oid.object_oid), size, work)
         if len(body) != size:
             raise CoreFailure(
-                "NATIVE_INTEGRITY", oid, "native size changed or output truncated"
+                "NATIVE_INTEGRITY",
+                object_oid,
+                "native size changed or output truncated",
             )
         _prepay(work, "verification_bytes", len(body))
-        native = NativeObject(oid, kind, body, size, hashlib.sha256(body).hexdigest())
+        native = NativeObject(
+            object_oid, kind, body, size, hashlib.sha256(body).hexdigest()
+        )
         with account_verification(work):
             native.validate()
             if kind != "blob":
-                parse_metadata(oid.object_format, kind, body)
+                parse_metadata(object_oid.object_format, kind, body)
         return native
 
-    def metadata(self, oid: OID, work: WorkBudget) -> NativeObject:
+    def metadata(self, object_oid: OID, work: WorkBudget) -> NativeObject:
         """Bounded production structural input; ordinary file blobs refused."""
         return self._native(
-            oid, ("commit", "tree", "tag"), self.source.metadata_bytes, work
+            object_oid, ("commit", "tree", "tag"), self.source.metadata_bytes, work
         )
 
     def lookup_ref_presence(self, name: bytes, work: WorkBudget) -> bool:
@@ -199,8 +209,8 @@ class GitNotesSource:
         with account_verification(work):
             proof.validate()
         root, note, scope = (
-            proof.mapping.root_oid,
-            proof.mapping.note_oid,
+            proof.mapping.root_object_oid,
+            proof.mapping.note_object_oid,
             proof.ref_claim.identity,
         )
         if root.object_format != self.object_format:
@@ -231,10 +241,10 @@ class GitNotesSource:
                 name, raw_oid = pieces
                 if not (name.startswith(b"refs/notes/") or name in nominated):
                     continue
-                oid = OID(self.object_format, raw_oid.decode("ascii"))
+                object_oid = OID(self.object_format, raw_oid.decode("ascii"))
                 if name in observed:
                     raise CoreFailure("GIT_INPUT", name, "duplicate ref record")
-                observed[name] = oid
+                observed[name] = object_oid
 
         self._output(
             (

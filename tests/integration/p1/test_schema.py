@@ -95,7 +95,7 @@ def test_required_udfs_and_actual_generated_column_behavior():
     with pytest.raises(sqlite3.OperationalError, match="generated"):
         db.execute("INSERT INTO example(a,n) VALUES(?,?)", (str(uuid4()), 7))
     assert db.execute(
-        "SELECT p1_json(?),p1_json(?),p1_oid(?,?)",
+        "SELECT p1_json(?),p1_json(?),p1_object_oid(?,?)",
         ('["\\u65e5"]', '[ "x" ]', "sha1", "a" * 40),
     ).fetchone() == (1, 0, 1)
     with pytest.raises(sqlite3.IntegrityError):

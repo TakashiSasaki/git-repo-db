@@ -48,7 +48,7 @@ from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_core import OID, NativeObject, Provenance, native_oid
+from repo_catalog.domain.p1_core import OID, NativeObject, Provenance, native_object_oid
 from repo_catalog.domain.ref_observation import RefObservation, RefObservationClaim, RefObservationKey, new_uuid7
 
 assert "site-packages" in str(Path(__import__("repo_catalog.application.recovery", fromlist=["x"]).__file__))
@@ -69,18 +69,18 @@ core = GitCore(core_path)
 core.admit_repository(repo_uuid)
 
 tree_body = b"100644 README.md\0" + bytes.fromhex("1" * 40)
-tree_oid = native_oid("sha1", "tree", tree_body)
+tree_object_oid = native_object_oid("sha1", "tree", tree_body)
 tree_obj = NativeObject(
-    oid=OID("sha1", tree_oid),
+    object_oid=OID("sha1", tree_object_oid),
     native_type="tree",
     body=tree_body,
     declared_size=len(tree_body),
     digest_sha256=hashlib.sha256(tree_body).hexdigest(),
 )
-body = f"tree {tree_oid}\nauthor A <a@b> 1700000000 +0000\ncommitter A <a@b> 1700000000 +0000\n\nDist commit\n".encode("utf-8")
-oid = native_oid("sha1", "commit", body)
+body = f"tree {tree_object_oid}\nauthor A <a@b> 1700000000 +0000\ncommitter A <a@b> 1700000000 +0000\n\nDist commit\n".encode("utf-8")
+oid = native_object_oid("sha1", "commit", body)
 commit_obj = NativeObject(
-    oid=OID("sha1", oid),
+    object_oid=OID("sha1", oid),
     native_type="commit",
     body=body,
     declared_size=len(body),

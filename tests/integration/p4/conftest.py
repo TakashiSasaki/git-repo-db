@@ -35,7 +35,7 @@ def write(path, fmt, kind, body, literal=False):
 
 
 def entry(mode, name, target):
-    return mode + b" " + name + b"\0" + bytes.fromhex(target.full_oid)
+    return mode + b" " + name + b"\0" + bytes.fromhex(target.object_oid)
 
 
 @pytest.fixture(
@@ -75,14 +75,16 @@ def fixture_note(acquisition, body=b"\0\xffbinary\r\n", *, fanout=0, commit=Fals
     app, path, fmt, repository, origin, *_ = acquisition
     note = write(path, fmt, "blob", body)
     target = OID(fmt, "a" * (40 if fmt == "sha1" else 64))
-    suffix = target.full_oid[2 * fanout :]
+    suffix = target.object_oid[2 * fanout :]
     root = write(path, fmt, "tree", entry(b"100644", suffix.encode(), note))
     for index in range(fanout - 1, -1, -1):
         root = write(
             path,
             fmt,
             "tree",
-            entry(b"40000", target.full_oid[2 * index : 2 * index + 2].encode(), root),
+            entry(
+                b"40000", target.object_oid[2 * index : 2 * index + 2].encode(), root
+            ),
         )
     if commit:
         root = write(
@@ -90,10 +92,10 @@ def fixture_note(acquisition, body=b"\0\xffbinary\r\n", *, fanout=0, commit=Fals
             fmt,
             "commit",
             b"tree "
-            + root.full_oid.encode()
+            + root.object_oid.encode()
             + b"\nauthor A <a@invalid> 1 +0000\ncommitter A <a@invalid> 1 +0000\n\nnotes\n",
         )
-    git(path, "update-ref", "refs/notes/nested/review", root.full_oid)
+    git(path, "update-ref", "refs/notes/nested/review", root.object_oid)
     from types import SimpleNamespace
 
     captured_root = SimpleNamespace(root=root, ref="refs/notes/nested/review")

@@ -42,7 +42,7 @@ def test_inventory_report_and_receiver_proof_remain_claim_specific(
     capture, target, _ = fixtures.fixture_note(acquisition, fanout=1, commit=not empty)
     if empty:
         root = fixtures.write(path, fmt, "tree", b"")
-        fixtures.git(path, "update-ref", capture.ref, root.full_oid)
+        fixtures.git(path, "update-ref", capture.ref, root.object_oid)
     events = discover(app, repository, origin, str(uuid4())).enumerations
     first_claim, second_claim = (event.links[0].claim for event in events)
     reported = app.inventory_ref(first_claim).group
@@ -70,7 +70,7 @@ def test_inventory_report_and_receiver_proof_remain_claim_specific(
     assert app.verify_ref_inventory(reported) == checked
     if not empty:
         assert not app.core.sql("SELECT 1 FROM ref_retained_notes")
-        assert target.full_oid in repr(reported.members)
+        assert target.object_oid in repr(reported.members)
 
 
 def test_later_partial_does_not_fall_back_to_verified_complete(acquisition):
@@ -110,7 +110,7 @@ def test_competing_claims_keep_separate_groups_and_no_winner(acquisition):
     second = replace(
         first,
         provenance=replace(first.provenance, coordinate="independent-result"),
-        root_oid=second_capture.root,
+        root_object_oid=second_capture.root,
     )
     app.core.admit_ref_observation_claim(second)
     group2 = app.inventory_ref(second).group
@@ -148,7 +148,10 @@ def test_shared_root_does_not_share_claim_verification(acquisition):
     app.core.admit_ref_observation_claim(second)
     group1 = app.inventory_ref(first).group
     group2 = app.inventory_ref(second).group
-    assert group1.members == group2.members and first.root_oid == second.root_oid
+    assert (
+        group1.members == group2.members
+        and first.root_object_oid == second.root_object_oid
+    )
     assert app.verify_ref_inventory(group1).verified
     query = ProductionQueryService(core_path.parent, mode="core_only")
     assert query.list_ref_notes_inventories(first, app.work).groups[0].current_verified
@@ -175,7 +178,7 @@ def test_absent_ref_has_no_invented_inventory(acquisition):
     view = ProductionQueryService(
         core_path.parent, mode="auto"
     ).list_ref_notes_inventories(absence, app.work)
-    assert absence.root_oid is None and not view.groups
+    assert absence.root_object_oid is None and not view.groups
     assert view.coverage.state == "unknown"
 
 
@@ -259,13 +262,13 @@ def test_group_limits_refuse_without_stopping_healthy_catalog(acquisition):
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     first = app.inventory_ref(claim).group
-    extra_target = replace(target, full_oid="b" * len(target.full_oid))
+    extra_target = replace(target, object_oid="b" * len(target.object_oid))
     app.core.admit_object(extra_target)
     second = replace(
         first,
         members=(
             first.members[0],
-            (extra_target.full_oid, note.full_oid, extra_target.full_oid),
+            (extra_target.object_oid, note.object_oid, extra_target.object_oid),
         ),
         provenance=Provenance("other", "other-observation", "whole", "test", "1"),
     )
@@ -563,11 +566,11 @@ def test_forged_group_and_source_failure_never_prove_completeness(
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     original = app.inventory_ref(claim).group
-    fake_note = replace(target, full_oid="b" * len(target.full_oid))
+    fake_note = replace(target, object_oid="b" * len(target.object_oid))
     app.core.admit_object(fake_note)
     forged = replace(
         original,
-        members=((target.full_oid, fake_note.full_oid, target.full_oid),),
+        members=((target.object_oid, fake_note.object_oid, target.object_oid),),
         provenance=Provenance("external", "different", "report", "test", "1"),
     )
     app.core.admit_notes_mapping_group(forged, app.work)

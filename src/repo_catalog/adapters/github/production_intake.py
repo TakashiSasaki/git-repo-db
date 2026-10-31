@@ -663,7 +663,7 @@ def normalize_pull_request(
                 fields.append(
                     _candidate(
                         pr_key,
-                        f"{role}_oid",
+                        f"{role}_object_oid",
                         None,
                         clock,
                         provenance_json,
@@ -693,12 +693,12 @@ def normalize_pull_request(
                         )
                     )
                 if "sha" in branch:
-                    oid = parse_git_oid(branch["sha"], f"pr.{role}.sha")
-                    if oid is None:
+                    object_oid = parse_git_oid(branch["sha"], f"pr.{role}.sha")
+                    if object_oid is None:
                         fields.append(
                             _candidate(
                                 pr_key,
-                                f"{role}_oid",
+                                f"{role}_object_oid",
                                 None,
                                 clock,
                                 provenance_json,
@@ -706,12 +706,12 @@ def normalize_pull_request(
                             )
                         )
                     else:
-                        seen_formats.add(oid.object_format)
+                        seen_formats.add(object_oid.object_format)
                         fields.append(
                             _candidate(
                                 pr_key,
-                                f"{role}_oid",
-                                oid.full_oid,
+                                f"{role}_object_oid",
+                                object_oid.object_oid,
                                 clock,
                                 provenance_json,
                                 observed_at_us,
@@ -719,7 +719,9 @@ def normalize_pull_request(
                         )
                         core_refs.append(
                             (
-                                CoreReference(pr_key, role, oid, provenance_json),
+                                CoreReference(
+                                    pr_key, role, object_oid, provenance_json
+                                ),
                                 clock,
                                 observed_at_us,
                             )
@@ -741,12 +743,12 @@ def normalize_pull_request(
                     )
                 )
             if gql_oid_key in payload:
-                oid = parse_git_oid(payload[gql_oid_key], f"pr.{gql_oid_key}")
-                if oid is None:
+                object_oid = parse_git_oid(payload[gql_oid_key], f"pr.{gql_oid_key}")
+                if object_oid is None:
                     fields.append(
                         _candidate(
                             pr_key,
-                            f"{role}_oid",
+                            f"{role}_object_oid",
                             None,
                             clock,
                             provenance_json,
@@ -754,12 +756,12 @@ def normalize_pull_request(
                         )
                     )
                 else:
-                    seen_formats.add(oid.object_format)
+                    seen_formats.add(object_oid.object_format)
                     fields.append(
                         _candidate(
                             pr_key,
-                            f"{role}_oid",
-                            oid.full_oid,
+                            f"{role}_object_oid",
+                            object_oid.object_oid,
                             clock,
                             provenance_json,
                             observed_at_us,
@@ -767,27 +769,32 @@ def normalize_pull_request(
                     )
                     core_refs.append(
                         (
-                            CoreReference(pr_key, role, oid, provenance_json),
+                            CoreReference(pr_key, role, object_oid, provenance_json),
                             clock,
                             observed_at_us,
                         )
                     )
 
     if "merge_commit_sha" in payload:
-        oid = parse_git_oid(payload["merge_commit_sha"], "pr.merge_commit_sha")
-        if oid is None:
-            fields.append(
-                _candidate(
-                    pr_key, "merge_oid", None, clock, provenance_json, observed_at_us
-                )
-            )
-        else:
-            seen_formats.add(oid.object_format)
+        object_oid = parse_git_oid(payload["merge_commit_sha"], "pr.merge_commit_sha")
+        if object_oid is None:
             fields.append(
                 _candidate(
                     pr_key,
-                    "merge_oid",
-                    oid.full_oid,
+                    "merge_object_oid",
+                    None,
+                    clock,
+                    provenance_json,
+                    observed_at_us,
+                )
+            )
+        else:
+            seen_formats.add(object_oid.object_format)
+            fields.append(
+                _candidate(
+                    pr_key,
+                    "merge_object_oid",
+                    object_oid.object_oid,
                     clock,
                     provenance_json,
                     observed_at_us,
@@ -795,7 +802,7 @@ def normalize_pull_request(
             )
             core_refs.append(
                 (
-                    CoreReference(pr_key, "merge", oid, provenance_json),
+                    CoreReference(pr_key, "merge", object_oid, provenance_json),
                     clock,
                     observed_at_us,
                 )
@@ -805,16 +812,21 @@ def normalize_pull_request(
         if mc is None:
             fields.append(
                 _candidate(
-                    pr_key, "merge_oid", None, clock, provenance_json, observed_at_us
+                    pr_key,
+                    "merge_object_oid",
+                    None,
+                    clock,
+                    provenance_json,
+                    observed_at_us,
                 )
             )
         elif isinstance(mc, dict) and "oid" in mc:
-            oid = parse_git_oid(mc["oid"], "pr.mergeCommit.oid")
-            if oid is None:
+            object_oid = parse_git_oid(mc["oid"], "pr.mergeCommit.oid")
+            if object_oid is None:
                 fields.append(
                     _candidate(
                         pr_key,
-                        "merge_oid",
+                        "merge_object_oid",
                         None,
                         clock,
                         provenance_json,
@@ -822,12 +834,12 @@ def normalize_pull_request(
                     )
                 )
             else:
-                seen_formats.add(oid.object_format)
+                seen_formats.add(object_oid.object_format)
                 fields.append(
                     _candidate(
                         pr_key,
-                        "merge_oid",
-                        oid.full_oid,
+                        "merge_object_oid",
+                        object_oid.object_oid,
                         clock,
                         provenance_json,
                         observed_at_us,
@@ -835,7 +847,7 @@ def normalize_pull_request(
                 )
                 core_refs.append(
                     (
-                        CoreReference(pr_key, "merge", oid, provenance_json),
+                        CoreReference(pr_key, "merge", object_oid, provenance_json),
                         clock,
                         observed_at_us,
                     )
@@ -1033,12 +1045,12 @@ def normalize_review(
         c_obj = payload["commit"]
         commit_raw = c_obj.get("oid") if isinstance(c_obj, dict) else None
     if has_commit:
-        oid = parse_git_oid(commit_raw, "review.commit_id")
-        if oid is None:
+        object_oid = parse_git_oid(commit_raw, "review.commit_id")
+        if object_oid is None:
             fields.append(
                 _candidate(
                     review_key,
-                    "target_commit_oid",
+                    "target_commit_object_oid",
                     None,
                     clock,
                     provenance_json,
@@ -1049,8 +1061,8 @@ def normalize_review(
             fields.append(
                 _candidate(
                     review_key,
-                    "target_commit_oid",
-                    oid.full_oid,
+                    "target_commit_object_oid",
+                    object_oid.object_oid,
                     clock,
                     provenance_json,
                     observed_at_us,
@@ -1058,7 +1070,9 @@ def normalize_review(
             )
             core_refs.append(
                 (
-                    CoreReference(review_key, "target_commit", oid, provenance_json),
+                    CoreReference(
+                        review_key, "target_commit", object_oid, provenance_json
+                    ),
                     clock,
                     observed_at_us,
                 )
@@ -1460,12 +1474,12 @@ def normalize_review_comment(
             c_obj = payload[gql_key]
             raw_oid = c_obj.get("oid") if isinstance(c_obj, dict) else None
         if has_oid:
-            oid = parse_git_oid(raw_oid, f"review_comment.{role}")
-            if oid is None:
+            object_oid = parse_git_oid(raw_oid, f"review_comment.{role}")
+            if object_oid is None:
                 fields.append(
                     _candidate(
                         comment_key,
-                        f"{role}_oid",
+                        f"{role}_object_oid",
                         None,
                         clock,
                         provenance_json,
@@ -1476,8 +1490,8 @@ def normalize_review_comment(
                 fields.append(
                     _candidate(
                         comment_key,
-                        f"{role}_oid",
-                        oid.full_oid,
+                        f"{role}_object_oid",
+                        object_oid.object_oid,
                         clock,
                         provenance_json,
                         observed_at_us,
@@ -1485,7 +1499,7 @@ def normalize_review_comment(
                 )
                 core_refs.append(
                     (
-                        CoreReference(comment_key, role, oid, provenance_json),
+                        CoreReference(comment_key, role, object_oid, provenance_json),
                         clock,
                         observed_at_us,
                     )
@@ -1780,21 +1794,23 @@ def normalize_timeline_event(
         )
     if "commit_id" in payload:
         raw_cid = payload["commit_id"]
-        oid = parse_git_oid(raw_cid, "timeline.commit_id")
+        object_oid = parse_git_oid(raw_cid, "timeline.commit_id")
         fields.append(
             _candidate(
                 event_key,
                 "commit_id",
-                None if oid is None else oid.full_oid,
+                None if object_oid is None else object_oid.object_oid,
                 clock,
                 provenance_json,
                 observed_at_us,
             )
         )
-        if oid is not None:
+        if object_oid is not None:
             core_refs.append(
                 (
-                    CoreReference(event_key, "referenced_commit", oid, provenance_json),
+                    CoreReference(
+                        event_key, "referenced_commit", object_oid, provenance_json
+                    ),
                     clock,
                     observed_at_us,
                 )
@@ -1867,16 +1883,23 @@ def normalize_pr_commit(
     json_value(provenance_json, provenance=True)
     pr_id = canonical_database_id(pull_request_id, "pull_request_id")
     pr_key = ResourceKey.from_native(service_instance_uuidv4, "pull_request", pr_id)
-    oid = parse_git_oid(payload.get("sha"), "pr_commit.sha")
-    if oid is None:
+    object_oid = parse_git_oid(payload.get("sha"), "pr_commit.sha")
+    if object_oid is None:
         raise AcquisitionError(
             "INVALID_GIT_OID", "pr_commit.sha", "commit sha required"
         )
-    commit_doc = make_document_key(pr_key, "pr_commit", "pr_commit", oid.full_oid)
+    commit_doc = make_document_key(
+        pr_key, "pr_commit", "pr_commit", object_oid.object_oid
+    )
     clock = FieldClock("github:pr_commit:observation", None)
     fields: list[FieldCandidate] = [
         _candidate(
-            commit_doc, "sha", oid.full_oid, clock, provenance_json, observed_at_us
+            commit_doc,
+            "sha",
+            object_oid.object_oid,
+            clock,
+            provenance_json,
+            observed_at_us,
         )
     ]
     if "html_url" in payload:
@@ -1938,12 +1961,12 @@ def normalize_pr_commit(
         )
     core_refs = (
         (
-            CoreReference(commit_doc, "commit", oid, provenance_json),
+            CoreReference(commit_doc, "commit", object_oid, provenance_json),
             clock,
             observed_at_us,
         ),
         (
-            CoreReference(pr_key, "pr_commit", oid, provenance_json),
+            CoreReference(pr_key, "pr_commit", object_oid, provenance_json),
             clock,
             observed_at_us,
         ),
@@ -1953,7 +1976,7 @@ def normalize_pr_commit(
         "documents",
         (commit_doc,),
         provenance_json,
-        canonical({"pr_commit": oid.full_oid}),
+        canonical({"pr_commit": object_oid.object_oid}),
         observed_at_us,
     )
     return NormalizedContextUnit(
@@ -1967,7 +1990,7 @@ def normalize_pr_commit(
                 commit_doc,
                 tuple(fields),
                 ResourceIdentification.scoped(
-                    commit_doc, pr_key, "pr_commit", oid.full_oid
+                    commit_doc, pr_key, "pr_commit", object_oid.object_oid
                 ),
             ),
         ),

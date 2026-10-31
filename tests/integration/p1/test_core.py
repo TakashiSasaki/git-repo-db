@@ -22,7 +22,7 @@ from repo_catalog.domain.p1_core import (
     RepositoryClaim,
     ScalarClaim,
     encode,
-    native_oid,
+    native_object_oid,
 )
 
 
@@ -52,7 +52,7 @@ def oid(letter="a", fmt="sha1"):
 
 def native(kind, body, fmt="sha1"):
     return NativeObject(
-        OID(fmt, native_oid(fmt, kind, body)),
+        OID(fmt, native_object_oid(fmt, kind, body)),
         kind,
         body,
         len(body),
@@ -91,7 +91,7 @@ def test_metadata_only_core_without_context_reopen_and_unknown_size(core):
 @pytest.mark.parametrize(
     "sql",
     [
-        "UPDATE git_objects SET full_oid=full_oid",
+        "UPDATE git_objects SET object_oid=object_oid",
         "DELETE FROM git_objects",
         "INSERT OR REPLACE INTO git_objects VALUES('sha1','" + "a" * 40 + "')",
         "CREATE TABLE unauthorized(value TEXT)",
@@ -113,7 +113,7 @@ def test_supported_connection_rejects_arbitrary_operations(core, sql):
 @pytest.mark.parametrize(
     "action",
     [
-        "UPDATE git_objects SET full_oid=full_oid",
+        "UPDATE git_objects SET object_oid=object_oid",
         "DELETE FROM git_objects",
         "INSERT OR REPLACE INTO git_objects SELECT * FROM git_objects",
     ],
@@ -199,23 +199,26 @@ def test_ordered_groups_are_whole_atomic_and_never_union(core):
 def test_verified_commit_bounded_canonical_preserves_reports_and_no_closure(core, fmt):
     c, _, _ = core
     tree, parent = oid("a", fmt), oid("b", fmt)
-    body = f"tree {tree.full_oid}\nparent {parent.full_oid}\nauthor A <a@invalid> 0 +0000\ncommitter C <c@invalid> 0 +0000\n\nmessage\n".encode()
+    body = f"tree {tree.object_oid}\nparent {parent.object_oid}\nauthor A <a@invalid> 0 +0000\ncommitter C <c@invalid> 0 +0000\n\nmessage\n".encode()
     commit = native("commit", body, fmt)
-    c.admit_claim(ScalarClaim(commit.oid, "type", "blob", provenance()))
+    c.admit_claim(ScalarClaim(commit.object_oid, "type", "blob", provenance()))
     c.admit_claim(
         ScalarClaim(
-            commit.oid, "author", "claimed author", provenance(coordinate="author")
+            commit.object_oid,
+            "author",
+            "claimed author",
+            provenance(coordinate="author"),
         )
     )
     c.admit_metadata(commit, str(uuid4()), Budget())
-    assert c.scalar(commit.oid, "type").canonical == ["known", "commit"]
-    assert c.scalar(commit.oid, "type").reported_conflict
-    assert c.scalar(commit.oid, "author").canonical is None
-    assert c.relations(commit.oid, "commit_parents").canonical == [
+    assert c.scalar(commit.object_oid, "type").canonical == ["known", "commit"]
+    assert c.scalar(commit.object_oid, "type").reported_conflict
+    assert c.scalar(commit.object_oid, "author").canonical is None
+    assert c.relations(commit.object_oid, "commit_parents").canonical == [
         "complete",
         [[0, *parent.key]],
     ]
-    assert c.read_metadata(commit.oid) == body
+    assert c.read_metadata(commit.object_oid) == body
     assert len(c.sql("SELECT physical_copy_uuidv4 FROM retained_metadata")) == 1
     assert len(c.sql("SELECT * FROM git_objects")) == 3
 
@@ -234,7 +237,7 @@ def test_native_body_and_intrinsic_scope_cannot_be_forged_in_sql(core):
     metadata = native("tree", b"")
     copy = str(uuid4())
     c.admit_metadata(metadata, copy, Budget())
-    claim = ScalarClaim(metadata.oid, "author", "forged author", provenance())
+    claim = ScalarClaim(metadata.object_oid, "author", "forged author", provenance())
     c.admit_claim(claim)
     db = connect(path, "core")
     try:
@@ -313,7 +316,7 @@ def test_multiple_repositories_share_nominal_object_with_distinct_ref_observatio
             )
         )
         c.admit_ref_observation_claim(
-            RefObservationClaim(key, provenance(), "present", root_oid=oid())
+            RefObservationClaim(key, provenance(), "present", root_object_oid=oid())
         )
     assert len(c.sql("SELECT * FROM git_objects")) == 1
     assert len(c.sql("SELECT * FROM ref_observations")) == 2
@@ -821,11 +824,11 @@ def test_checked_native_full_parent_group_excludes_across_observation_scopes(
     core, has_parent, report_slot, report_target, conflict, reverse
 ):
     c, _, _ = core
-    parent_line = f"parent {oid('b').full_oid}\n" if has_parent else ""
-    body = f"tree {oid().full_oid}\n{parent_line}author A <a@invalid> 0 +0000\ncommitter C <c@invalid> 0 +0000\n\nmessage\n".encode()
+    parent_line = f"parent {oid('b').object_oid}\n" if has_parent else ""
+    body = f"tree {oid().object_oid}\n{parent_line}author A <a@invalid> 0 +0000\ncommitter C <c@invalid> 0 +0000\n\nmessage\n".encode()
     commit = native("commit", body)
     report = RelationGroup(
-        commit.oid,
+        commit.object_oid,
         "commit_parents",
         "source-observation-A",
         "partial",
@@ -838,7 +841,7 @@ def test_checked_native_full_parent_group_excludes_across_observation_scopes(
     else:
         c.admit_metadata(commit, str(uuid4()), Budget())
         c.admit_group(report)
-    projection = c.relations(commit.oid, "commit_parents")
+    projection = c.relations(commit.object_oid, "commit_parents")
     expected = ["complete", [[0, *oid("b").key]]] if has_parent else ["known_empty", []]
     assert projection.canonical == expected
     assert projection.reported_conflict is conflict

@@ -333,7 +333,7 @@ class SourceInventory:
 class CoreReference:
     resource: ResourceKey
     role: str
-    oid: OID
+    object_oid: OID
     provenance_json: str
 
     def __post_init__(self):

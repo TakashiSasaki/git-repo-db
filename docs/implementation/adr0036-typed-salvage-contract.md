@@ -1,5 +1,9 @@
 # ADR 0036 typed salvage contract
 
+Current opt-in OID spelling and fresh-format versions follow the
+[OID naming contract](object-oid-naming-contract.md). Pinned baseline examples
+below retain their historical spelling and do not provide compatibility APIs.
+
 This contract specifies the opt-in RefObservation recovery work on the merged
 I1–I3 stack. The authoritative design is [ADR 0026](../adr/0026-stop-salvage-restore-merge-after-corruption.md),
 with the identity and origin override in [ADR 0036](../adr/0036-ref-observations-and-shared-notes-mappings.md).

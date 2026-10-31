@@ -201,9 +201,9 @@ CREATE TABLE core_references(
  provider_resource_id TEXT NOT NULL,
  role TEXT NOT NULL CHECK(length(role)>0),
  object_format TEXT NOT NULL,
- full_oid TEXT NOT NULL CHECK(p1_oid(object_format,full_oid)),
+ object_oid TEXT NOT NULL CHECK(p1_object_oid(object_format,object_oid)),
  provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),
- PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json),
+ PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources
 ) STRICT, WITHOUT ROWID;
 -- Explicit normalized owners constrain the reversible full coordinate encoding.

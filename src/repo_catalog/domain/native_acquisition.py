@@ -175,20 +175,23 @@ def _ref_notes_input_intent(value, repository):
         claim.__post_init__()
         _typed(claim.provenance, Provenance)
         oids = (
-            claim.direct_target_oid,
-            claim.resolved_target_oid,
-            claim.peeled_target_oid,
-            claim.root_oid,
+            claim.direct_target_object_oid,
+            claim.resolved_target_object_oid,
+            claim.peeled_target_object_oid,
+            claim.root_object_oid,
         )
-        for oid in oids:
-            if oid is not None:
-                _oid(oid)
+        for object_oid in oids:
+            if object_oid is not None:
+                _oid(object_oid)
         claims.append(
             [
                 list(claim.identity),
                 claim.presence_state,
                 claim.ref_form,
-                [None if oid is None else list(oid.key) for oid in oids],
+                [
+                    None if object_oid is None else list(object_oid.key)
+                    for object_oid in oids
+                ],
                 None
                 if claim.symbolic_target_ref_name is None
                 else claim.symbolic_target_ref_name.hex(),
@@ -202,12 +205,12 @@ def _ref_notes_input_intent(value, repository):
         _typed(item.provenance, Provenance)
     for item in value.mapping_claims:
         _typed(item.mapping, NotesMapping)
-        for oid in (
-            item.mapping.root_oid,
+        for object_oid in (
+            item.mapping.root_object_oid,
             item.mapping.annotated_object_oid,
-            item.mapping.note_oid,
+            item.mapping.note_object_oid,
         ):
-            _oid(oid)
+            _oid(object_oid)
     return {
         "subject": [
             *subject.ref_observation_key.key,
@@ -259,8 +262,8 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         if type(value) is not bool:
             raise CoreFailure("REQUEST", "native", "typed boolean required")
     for values in (
-        request.select_oids,
-        request.nominal_missing_oids,
+        request.select_object_oids,
+        request.nominal_missing_object_oids,
         request.ref_prefixes,
         request.nominated_ref_names,
         request.repository_claims,
@@ -269,8 +272,9 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     ):
         if type(values) is not tuple or len(values) > 100_000:
             raise CoreFailure("REQUEST", "native", "bounded tuple input required")
-    if request.retain_oids is not None and (
-        type(request.retain_oids) is not frozenset or len(request.retain_oids) > 100_000
+    if request.retain_object_oids is not None and (
+        type(request.retain_object_oids) is not frozenset
+        or len(request.retain_object_oids) > 100_000
     ):
         raise CoreFailure("REQUEST", "native", "typed retention set required")
     if (
@@ -278,13 +282,13 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         or len(request.physical_copy_uuidv4s) > 100_000
     ):
         raise CoreFailure("REQUEST", "native", "bounded copy coordinates required")
-    for oid in (
-        *request.select_oids,
-        *request.nominal_missing_oids,
-        *(request.retain_oids or ()),
+    for object_oid in (
+        *request.select_object_oids,
+        *request.nominal_missing_object_oids,
+        *(request.retain_object_oids or ()),
         *request.physical_copy_uuidv4s,
     ):
-        _oid(oid)
+        _oid(object_oid)
     for identity in request.physical_copy_uuidv4s.values():
         uuid4_value(identity)
     _text_tuple(request.ref_prefixes)
@@ -327,21 +331,23 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         if notes.discovery_observation_uuidv4 is not None:
             uuid4_value(notes.discovery_observation_uuidv4)
         for values in (
-            notes.target_oids,
+            notes.target_object_oids,
             notes.nominated_refs,
             notes.ref_inputs,
         ):
             if type(values) is not tuple or len(values) > 100_000:
                 raise CoreFailure("REQUEST", "notes", "bounded tuple input required")
         _text_tuple(notes.nominated_refs)
-        for oid in notes.target_oids:
-            _oid(oid)
+        for object_oid in notes.target_object_oids:
+            _oid(object_oid)
         notes_value = {
             "discover": notes.discover_notes,
             "nominated_refs": list(notes.nominated_refs),
             "discovery_observation": notes.discovery_observation_uuidv4,
             "inventories": notes.acquire_inventories,
-            "targets": [list(oid.key) for oid in notes.target_oids],
+            "targets": [
+                list(object_oid.key) for object_oid in notes.target_object_oids
+            ],
             "retain_bodies": notes.retain_note_bodies,
             "ref_inputs": [
                 _ref_notes_input_intent(item, repo) for item in notes.ref_inputs
@@ -353,16 +359,18 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         "capture_uuidv4": request.capture_uuidv4,
         "source_attribution": request.source_attribution,
         "observed_at_us": request.observed_at_us,
-        "selected": [list(oid.key) for oid in request.select_oids],
+        "selected": [list(object_oid.key) for object_oid in request.select_object_oids],
         "retain_bytes": request.retain_bytes,
-        "retain_oids": None
-        if request.retain_oids is None
-        else sorted(list(oid.key) for oid in request.retain_oids),
+        "retain_object_oids": None
+        if request.retain_object_oids is None
+        else sorted(list(object_oid.key) for object_oid in request.retain_object_oids),
         "include_refs": request.include_refs,
         "ref_prefixes": list(request.ref_prefixes),
         "nominated_ref_names": [name.hex() for name in request.nominated_ref_names],
         "traverse_structural_targets": request.traverse_structural_targets,
-        "nominal_missing": [list(oid.key) for oid in request.nominal_missing_oids],
+        "nominal_missing": [
+            list(object_oid.key) for object_oid in request.nominal_missing_object_oids
+        ],
         "repository_claims": [list(claim.key) for claim in request.repository_claims],
         "extra_scalar_claims": [
             list(claim.key) for claim in request.extra_scalar_claims
@@ -371,7 +379,8 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
             list(group.key) for group in request.extra_relation_groups
         ],
         "physical_copies": sorted(
-            [*oid.key, value] for oid, value in request.physical_copy_uuidv4s.items()
+            [*object_oid.key, value]
+            for object_oid, value in request.physical_copy_uuidv4s.items()
         ),
         "notes": notes_value,
     }
@@ -413,7 +422,7 @@ def _metadata_input_intent(unit: GitMetadataInput) -> dict:
             unit.capture_uuidv4,
             unit.source_attribution,
             unit.observed_at_us,
-            select_oids=unit.nominal_objects,
+            select_object_oids=unit.nominal_objects,
             repository_claims=unit.repository_claims,
             extra_scalar_claims=unit.scalar_claims,
             extra_relation_groups=unit.relation_groups,
@@ -458,12 +467,12 @@ def _metadata_input_intent(unit: GitMetadataInput) -> dict:
     for native in unit.native_objects:
         if type(native) is not NativeObject or type(native.body) is not bytes:
             raise CoreFailure("REQUEST", "metadata", "typed native value required")
-        _oid(native.oid)
+        _oid(native.object_oid)
         # Exact bytes are verified and charged by Core after request reservation;
         # Operational stores only their declared immutable coordinates.
         native_values.append(
             [
-                list(native.oid.key),
+                list(native.object_oid.key),
                 native.native_type,
                 native.declared_size,
                 native.digest_sha256,
@@ -476,13 +485,13 @@ def _metadata_input_intent(unit: GitMetadataInput) -> dict:
         claim, members, provenance = proof
         if type(members) is not tuple or len(members) > 100_000:
             raise CoreFailure("REQUEST", "metadata", "bounded proof members required")
-        for oid in members:
-            _oid(oid)
+        for object_oid in members:
+            _oid(object_oid)
         _typed(provenance, Provenance)
         proofs.append(
             [
                 coverage_value(claim),
-                [list(oid.key) for oid in members],
+                [list(object_oid.key) for object_oid in members],
                 list(provenance.key),
             ]
         )

@@ -28,7 +28,11 @@ def test_two_real_scans_have_distinct_keys_and_replay_exactly(acquisition):
         first_link.observation.ref_observation_key
         != second_link.observation.ref_observation_key
     )
-    assert first_link.claim.root_oid == second_link.claim.root_oid == capture.root
+    assert (
+        first_link.claim.root_object_oid
+        == second_link.claim.root_object_oid
+        == capture.root
+    )
     assert first_link.claim.ref_form is None  # this adapter did not read symref form
     repeated = discover(app, repository, origin, request)
     assert repeated.enumerations == first.enumerations
@@ -85,7 +89,7 @@ def test_dangling_symbolic_ref_is_not_absence(acquisition):
     ]
     assert len(lookup) == 1
     assert lookup[0].links[0].claim.presence_state == "present"
-    assert lookup[0].links[0].claim.root_oid is None
+    assert lookup[0].links[0].claim.root_object_oid is None
 
 
 def test_ref_note_evidence_is_bound_to_exact_scan_claim(acquisition):
@@ -188,13 +192,13 @@ def test_two_changed_scans_are_separate_events_not_atomic_snapshot(
     app, path, fmt, repository, origin, *_ = acquisition
     capture, _, _ = fixture_note(acquisition)
     other = fixture_note(acquisition, body=b"another note")[0].root
-    git(path, "update-ref", capture.ref, capture.root.full_oid)
+    git(path, "update-ref", capture.ref, capture.root.object_oid)
     original_scan = app.source._scan
     calls = []
 
     def changing(names, work, observed):
         if calls:
-            git(path, "update-ref", capture.ref, other.full_oid)
+            git(path, "update-ref", capture.ref, other.object_oid)
         calls.append(1)
         return original_scan(names, work, observed)
 
@@ -202,7 +206,7 @@ def test_two_changed_scans_are_separate_events_not_atomic_snapshot(
     result = discover(app, repository, origin, str(uuid4()))
     assert result.failure_code == "REF_CHANGED"
     assert len(result.enumerations) == 2
-    assert [item.links[0].claim.root_oid for item in result.enumerations] == [
+    assert [item.links[0].claim.root_object_oid for item in result.enumerations] == [
         capture.root,
         other,
     ]
@@ -295,7 +299,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
     app, path, fmt, repository, origin, core_path, op_path = acquisition
     initial, _, _ = fixture_note(acquisition)
     updated, _, _ = fixture_note(acquisition, body=b"changed root")
-    git(path, "update-ref", initial.ref, initial.root.full_oid)
+    git(path, "update-ref", initial.ref, initial.root.object_oid)
     attempts = [str(uuid4()) for _ in range(3)]
     for attempt in attempts:
         app.work.ledger.attempt(app.work.request, attempt)
@@ -348,7 +352,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
     with ThreadPoolExecutor(max_workers=2) as executor:
         first = executor.submit(run, attempts[0], slot, True)
         assert seen.wait(15)
-        git(path, "update-ref", initial.ref, updated.root.full_oid)
+        git(path, "update-ref", initial.ref, updated.root.object_oid)
         second = executor.submit(run, attempts[1], slot)
         try:
             with pytest.raises(CoreFailure) as busy:
@@ -367,7 +371,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
         fresh.links[0].observation.ref_observation_key
         != pinned.links[0].observation.ref_observation_key
     )
-    assert fresh.links[0].claim.root_oid == updated.root
+    assert fresh.links[0].claim.root_object_oid == updated.root
 
 
 def test_empty_enumerations_survive_git_only_backup_and_restore(acquisition):
@@ -409,7 +413,9 @@ def test_inventory_is_pinned_as_distinct_claim_specific_whole_groups(
     c1, c2 = [event.links[0].claim for event in events]
     first = app.inventory_ref(c1)
     assert first.group.status == "complete"
-    assert first.group.members == ((target.full_oid, note.full_oid, target.full_oid),)
+    assert first.group.members == (
+        (target.object_oid, note.object_oid, target.object_oid),
+    )
     monkeypatch.setattr(
         app.source, "metadata", lambda *_: pytest.fail("pinned group reread source")
     )
@@ -622,7 +628,7 @@ def test_concurrent_notes_discovery_scans_once_before_pin(acquisition, monkeypat
     app, path, _, repository, origin, core_path, op_path = acquisition
     first_root, _, _ = fixture_note(acquisition)
     next_root, _, _ = fixture_note(acquisition, body=b"second notes discovery")
-    git(path, "update-ref", first_root.ref, first_root.root.full_oid)
+    git(path, "update-ref", first_root.ref, first_root.root.object_oid)
     attempts = [str(uuid4()) for _ in range(3)]
     for attempt in attempts:
         app.work.ledger.attempt(app.work.request, attempt)
@@ -662,7 +668,7 @@ def test_concurrent_notes_discovery_scans_once_before_pin(acquisition, monkeypat
     with ThreadPoolExecutor(max_workers=2) as executor:
         first = executor.submit(run, attempts[0], request)
         assert observed.wait(15)
-        git(path, "update-ref", first_root.ref, next_root.root.full_oid)
+        git(path, "update-ref", first_root.ref, next_root.root.object_oid)
         second = executor.submit(run, attempts[1], request)
         try:
             with pytest.raises(CoreFailure) as busy:
@@ -720,7 +726,7 @@ def test_failed_unpinned_read_releases_guard_and_retry_is_new_read(acquisition):
     app, path, _, repository, origin, *_ = acquisition
     first, _, _ = fixture_note(acquisition)
     second, _, _ = fixture_note(acquisition, body=b"after interrupted read")
-    git(path, "update-ref", first.ref, first.root.full_oid)
+    git(path, "update-ref", first.ref, first.root.object_oid)
     slot = encode(["unpublished-scan-test", str(uuid4())])
     calls = []
 
@@ -753,10 +759,10 @@ def test_failed_unpinned_read_releases_guard_and_retry_is_new_read(acquisition):
     with pytest.raises(CoreFailure, match="crash before pin"):
         pin_scan(app.core, app.progress, app.work, **args)
     assert app.progress.load_bounded(slot, 1_000_000) is None
-    git(path, "update-ref", first.ref, second.root.full_oid)
+    git(path, "update-ref", first.ref, second.root.object_oid)
     result = pin_scan(app.core, app.progress, app.work, **args)
     assert calls == [first.root, second.root]
-    assert result.links[0].claim.root_oid == second.root
+    assert result.links[0].claim.root_object_oid == second.root
     assert len(app.core.sql("SELECT 1 FROM ref_enumeration_observations")) == 1
 
 

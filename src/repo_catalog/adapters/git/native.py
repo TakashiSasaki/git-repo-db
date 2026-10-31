@@ -92,52 +92,62 @@ class GitNativeSource:
             )
         return result.stdout
 
-    def metadata(self, oid: OID, work=None) -> NativeObject:
+    def metadata(self, object_oid: OID, work=None) -> NativeObject:
         if work is not None:
             from repo_catalog.adapters.git.notes import GitNotesSource
 
-            return GitNotesSource(self).metadata(oid, work)
-        if oid.object_format != self.object_format:
+            return GitNotesSource(self).metadata(object_oid, work)
+        if object_oid.object_format != self.object_format:
             raise CoreFailure(
-                "NATIVE_FORMAT", oid, "Git storage format differs from requested OID"
+                "NATIVE_FORMAT",
+                object_oid,
+                "Git storage format differs from requested OID",
             )
         header = (
-            self._run("cat-file", "--batch-check", data=(oid.full_oid + "\n").encode())
+            self._run(
+                "cat-file",
+                "--batch-check",
+                data=(object_oid.object_oid + "\n").encode(),
+            )
             .strip()
             .split()
         )
-        if header == [oid.full_oid.encode(), b"missing"]:
+        if header == [object_oid.object_oid.encode(), b"missing"]:
             raise CoreFailure(
                 "OBJECT_UNAVAILABLE",
-                oid,
+                object_oid,
                 "requested native object is unavailable locally",
             )
-        if len(header) != 3 or header[0] != oid.full_oid.encode():
-            raise CoreFailure("GIT_INPUT", oid, "unexpected native object header")
+        if len(header) != 3 or header[0] != object_oid.object_oid.encode():
+            raise CoreFailure(
+                "GIT_INPUT", object_oid, "unexpected native object header"
+            )
         kind = header[1].decode("ascii")
         if kind not in ("commit", "tree", "tag"):
             raise CoreFailure(
                 "RETENTION_PURPOSE",
-                oid,
+                object_oid,
                 "ordinary blob bodies are excluded from metadata input",
             )
         size = int(header[2])
         if size < 0 or size > self.metadata_bytes:
             raise CoreFailure(
-                "BUDGET", oid, "native metadata exceeds finite input limit"
+                "BUDGET", object_oid, "native metadata exceeds finite input limit"
             )
         # cat-file's <type> form emits the exact representation, never pretty
         # tree output. Read at most the checked size plus one overrun sentinel.
         try:
             process = subprocess.Popen(
-                self._command("cat-file", kind, oid.full_oid),
+                self._command("cat-file", kind, object_oid.object_oid),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 env=self._environment(),
                 **self._process_options(),
             )
         except OSError as error:
-            raise CoreFailure("GIT_INPUT", oid, "local Git could not start") from error
+            raise CoreFailure(
+                "GIT_INPUT", object_oid, "local Git could not start"
+            ) from error
         try:
             assert process.stdout is not None
             body = bytearray()
@@ -148,7 +158,7 @@ class GitNativeSource:
                     remaining = deadline - time.monotonic()
                     if remaining <= 0 or not selector.select(remaining):
                         raise CoreFailure(
-                            "GIT_INPUT", oid, "local Git output timed out"
+                            "GIT_INPUT", object_oid, "local Git output timed out"
                         )
                     chunk = os.read(
                         process.stdout.fileno(), min(65536, size + 1 - len(body))
@@ -159,25 +169,29 @@ class GitNativeSource:
             if len(body) != size:
                 raise CoreFailure(
                     "GIT_INPUT",
-                    oid,
+                    object_oid,
                     "native object size changed or output was truncated",
                 )
             if process.wait(timeout=max(0.001, deadline - time.monotonic())):
                 raise CoreFailure(
-                    "OBJECT_UNAVAILABLE", oid, "native object could not be read"
+                    "OBJECT_UNAVAILABLE", object_oid, "native object could not be read"
                 )
             body = bytes(body)
         except (OSError, subprocess.TimeoutExpired) as error:
-            raise CoreFailure("GIT_INPUT", oid, "local Git output failed") from error
+            raise CoreFailure(
+                "GIT_INPUT", object_oid, "local Git output failed"
+            ) from error
         finally:
             if process.poll() is None:
                 process.kill()
             process.wait()
             if process.stdout is not None:
                 process.stdout.close()
-        native = NativeObject(oid, kind, body, size, hashlib.sha256(body).hexdigest())
+        native = NativeObject(
+            object_oid, kind, body, size, hashlib.sha256(body).hexdigest()
+        )
         native.validate()
-        parse_metadata(oid.object_format, kind, body)
+        parse_metadata(object_oid.object_format, kind, body)
         return native
 
     def ref_records(self, work=None) -> tuple[NativeRef, ...]:

@@ -194,14 +194,14 @@ _EXPORT_CONTEXT_ROWS = {
         ("sha256",),
     ),
     "core_references": (
-        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json FROM core_references ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json",
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json FROM core_references ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json",
         (
             "service_instance_uuidv4",
             "resource_kind",
             "provider_resource_id",
             "role",
             "object_format",
-            "full_oid",
+            "object_oid",
             "provenance_json",
         ),
     ),
@@ -1467,13 +1467,13 @@ class Context(ContextStore):
         resource: ResourceKey,
         role: str,
         object_format: str,
-        full_oid: str,
+        object_oid: str,
         provenance_json: str,
         validate: Callable[[str, str], bool],
     ):
         self._check(write=True)
         return super().link_core(
-            resource, role, object_format, full_oid, provenance_json, validate
+            resource, role, object_format, object_oid, provenance_json, validate
         )
 
     def report_core_reference(
@@ -1493,7 +1493,7 @@ class Context(ContextStore):
             FieldCandidate(
                 reference.resource,
                 "reported_core_reference:" + reference.role,
-                canonical(reference.oid.key),
+                canonical(reference.object_oid.key),
                 clock,
                 reference.provenance_json,
                 observed_at_us,
@@ -1510,14 +1510,14 @@ class Context(ContextStore):
             references = tuple(
                 CoreReference(resource, row[0], OID(row[1], row[2]), row[3])
                 for row in self.db.execute(
-                    "SELECT role,object_format,full_oid,provenance_json FROM core_references WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? ORDER BY role,object_format,full_oid,provenance_json",
+                    "SELECT role,object_format,object_oid,provenance_json FROM core_references WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? ORDER BY role,object_format,object_oid,provenance_json",
                     resource.coordinates(),
                 )
             )
         required = tuple(
             CoreDependency(
                 reference,
-                bool(validate and validate(*reference.oid.key)),
+                bool(validate and validate(*reference.object_oid.key)),
                 required=True,
             )
             for reference in references
@@ -1536,7 +1536,7 @@ class Context(ContextStore):
                         or any(not isinstance(item, str) for item in value)
                     ):
                         raise ContextError("REFERENCE_VALUE", "core_reference")
-                    oid = OID(*value)
+                    object_oid = OID(*value)
                 reported.append(
                     CoreDependency(
                         CoreReference(
@@ -1544,10 +1544,10 @@ class Context(ContextStore):
                             candidate.field_name.removeprefix(
                                 "reported_core_reference:"
                             ),
-                            oid,
+                            object_oid,
                             candidate.provenance_json,
                         ),
-                        bool(validate and validate(*oid.key)),
+                        bool(validate and validate(*object_oid.key)),
                         candidate=candidate,
                     )
                 )

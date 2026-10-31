@@ -370,11 +370,11 @@ class RefObservationClaim:
     provenance: Provenance
     presence_state: Literal["present", "absent"]
     ref_form: Literal["direct", "symbolic"] | None = None
-    direct_target_oid: OID | None = None
+    direct_target_object_oid: OID | None = None
     symbolic_target_ref_name: bytes | None = None
-    resolved_target_oid: OID | None = None
-    peeled_target_oid: OID | None = None
-    root_oid: OID | None = None
+    resolved_target_object_oid: OID | None = None
+    peeled_target_object_oid: OID | None = None
+    root_object_oid: OID | None = None
     absence_evidence: RefAbsenceEvidence | None = None
 
     def __post_init__(self) -> None:
@@ -395,10 +395,10 @@ class RefObservationClaim:
         ):
             raise CoreFailure("REF", self.ref_observation_key, "invalid result state")
         oids = (
-            self.direct_target_oid,
-            self.resolved_target_oid,
-            self.peeled_target_oid,
-            self.root_oid,
+            self.direct_target_object_oid,
+            self.resolved_target_object_oid,
+            self.peeled_target_object_oid,
+            self.root_object_oid,
         )
         if any(x is not None and not isinstance(x, OID) for x in oids):
             raise CoreFailure(
@@ -415,7 +415,7 @@ class RefObservationClaim:
                 "REF", self.symbolic_target_ref_name, "lossless symbolic ref required"
             )
         if (
-            self.direct_target_oid is not None
+            self.direct_target_object_oid is not None
             and self.ref_form != "direct"
             or self.symbolic_target_ref_name is not None
             and self.ref_form != "symbolic"
@@ -446,18 +446,18 @@ class RefObservationClaim:
 
     @property
     def key(self) -> tuple:
-        def parts(oid: OID | None) -> tuple:
-            return oid.key if oid is not None else (None, None)
+        def parts(object_oid: OID | None) -> tuple:
+            return object_oid.key if object_oid is not None else (None, None)
 
         return (
             *self.identity,
             self.presence_state,
             self.ref_form,
-            *parts(self.direct_target_oid),
+            *parts(self.direct_target_object_oid),
             self.symbolic_target_ref_name,
-            *parts(self.resolved_target_oid),
-            *parts(self.peeled_target_oid),
-            *parts(self.root_oid),
+            *parts(self.resolved_target_object_oid),
+            *parts(self.peeled_target_object_oid),
+            *parts(self.root_object_oid),
             None if self.absence_evidence is None else self.absence_evidence.encoded,
         )
 
@@ -475,11 +475,11 @@ def ref_claim_conflict(claims: tuple[RefObservationClaim, ...]) -> bool:
         return True
     for name in (
         "ref_form",
-        "direct_target_oid",
+        "direct_target_object_oid",
         "symbolic_target_ref_name",
-        "resolved_target_oid",
-        "peeled_target_oid",
-        "root_oid",
+        "resolved_target_object_oid",
+        "peeled_target_object_oid",
+        "root_object_oid",
     ):
         known = {
             getattr(claim, name) for claim in claims if getattr(claim, name) is not None
@@ -491,25 +491,29 @@ def ref_claim_conflict(claims: tuple[RefObservationClaim, ...]) -> bool:
 
 @dataclass(frozen=True)
 class NotesMapping:
-    root_oid: OID
+    root_object_oid: OID
     interpretation_kind: str
     interpretation_version: str
     interpretation_scope: str
     annotated_object_oid: OID
-    note_oid: OID
+    note_object_oid: OID
     mapping_path: str | None
 
     def __post_init__(self) -> None:
         if (
             not all(
                 isinstance(x, OID)
-                for x in (self.root_oid, self.annotated_object_oid, self.note_oid)
+                for x in (
+                    self.root_object_oid,
+                    self.annotated_object_oid,
+                    self.note_object_oid,
+                )
             )
             or len(
                 {
-                    self.root_oid.object_format,
+                    self.root_object_oid.object_format,
                     self.annotated_object_oid.object_format,
-                    self.note_oid.object_format,
+                    self.note_object_oid.object_format,
                 }
             )
             != 1
@@ -538,12 +542,12 @@ class NotesMapping:
     @property
     def key(self) -> tuple[str, ...]:
         return (
-            *self.root_oid.key,
+            *self.root_object_oid.key,
             self.interpretation_kind,
             self.interpretation_version,
             self.interpretation_scope,
-            self.annotated_object_oid.full_oid,
-            self.note_oid.full_oid,
+            self.annotated_object_oid.object_oid,
+            self.note_object_oid.object_oid,
             encode(self.mapping_path),
         )
 
@@ -558,7 +562,7 @@ class NotesMappingClaim:
         if (
             not isinstance(self.ref_claim, RefObservationClaim)
             or not isinstance(self.mapping, NotesMapping)
-            or self.ref_claim.root_oid != self.mapping.root_oid
+            or self.ref_claim.root_object_oid != self.mapping.root_object_oid
         ):
             raise CoreFailure(
                 "NOTES_MAPPING", self, "mapping requires the exact claimed typed root"
@@ -590,7 +594,7 @@ class NotesMappingGroup:
     def __post_init__(self) -> None:
         if (
             not isinstance(self.ref_claim, RefObservationClaim)
-            or self.ref_claim.root_oid is None
+            or self.ref_claim.root_object_oid is None
         ):
             raise CoreFailure("NOTES_GROUP", self, "claimed typed root required")
         if (
@@ -616,7 +620,9 @@ class NotesMappingGroup:
                 for member in self.members
             )
             or not _notes_group(
-                self.ref_claim.root_oid.object_format, self.status, encode(self.members)
+                self.ref_claim.root_object_oid.object_format,
+                self.status,
+                encode(self.members),
             )
         ):
             raise CoreFailure("NOTES_GROUP", self, "invalid whole immutable group")
@@ -625,7 +631,7 @@ class NotesMappingGroup:
     def key(self) -> tuple:
         return (
             *self.ref_claim.identity,
-            *self.ref_claim.root_oid.key,
+            *self.ref_claim.root_object_oid.key,
             self.interpretation_kind,
             self.interpretation_version,
             self.interpretation_scope,
@@ -705,14 +711,14 @@ def account_notes_group_comparison(left, right, work) -> None:
                 *group.provenance.key,
             )
         )
-        for oid in (
-            claim.direct_target_oid,
-            claim.resolved_target_oid,
-            claim.peeled_target_oid,
-            claim.root_oid,
+        for object_oid in (
+            claim.direct_target_object_oid,
+            claim.resolved_target_object_oid,
+            claim.peeled_target_object_oid,
+            claim.root_object_oid,
         ):
-            if oid is not None:
-                fields.extend(oid.key)
+            if object_oid is not None:
+                fields.extend(object_oid.key)
     work.require("metadata_units", 3 * len(fields))
     work.charge("metadata_units", 3 * len(fields))
     _account_comparison_texts(lambda: iter(fields), work)
@@ -732,7 +738,7 @@ class NotesMappingEvidence:
         if (
             not isinstance(self.ref_claim, RefObservationClaim)
             or not isinstance(self.mapping, NotesMapping)
-            or self.ref_claim.root_oid != self.mapping.root_oid
+            or self.ref_claim.root_object_oid != self.mapping.root_object_oid
             or self.mapping.mapping_path is None
         ):
             raise CoreFailure(
@@ -770,20 +776,26 @@ class NotesMappingEvidence:
     @property
     def bundle(self) -> str:
         return encode(
-            [[x.oid.full_oid, x.native_type, x.body.hex()] for x in self.structures]
+            [
+                [x.object_oid.object_oid, x.native_type, x.body.hex()]
+                for x in self.structures
+            ]
         )
 
     def validate(self) -> None:
         for structure in self.structures:
             structure.validate()
-            if structure.oid.object_format != self.mapping.root_oid.object_format:
+            if (
+                structure.object_oid.object_format
+                != self.mapping.root_object_oid.object_format
+            ):
                 raise CoreFailure(
                     "NOTES_ROLE", self, "structural object format mismatch"
                 )
         if not valid_note_role(
-            *self.mapping.root_oid.key,
-            self.mapping.annotated_object_oid.full_oid,
-            self.mapping.note_oid.full_oid,
+            *self.mapping.root_object_oid.key,
+            self.mapping.annotated_object_oid.object_oid,
+            self.mapping.note_object_oid.object_oid,
             self.mapping.mapping_path,
             self.bundle,
         ):
@@ -848,7 +860,7 @@ class NotesMappingProjection:
     claims: tuple[NotesMappingClaim, ...]
     groups: tuple[NotesMappingGroup, ...]
     evidence: tuple[NotesMappingEvidenceRecord, ...]
-    canonical_note_oid: OID | None
+    canonical_note_object_oid: OID | None
     reported_conflict: bool
 
 

@@ -144,7 +144,7 @@ git_req = GitNativeAcquisitionRequest(
     capture_uuidv4=str(uuid4()),
     source_attribution="src-installed",
     observed_at_us=1_700_000_000_000_000,
-    select_oids=(OID("FORMAT", commit1),),
+    select_object_oids=(OID("FORMAT", commit1),),
     retain_bytes=True,
     include_refs=False,
 )

@@ -86,7 +86,7 @@ from repo_catalog.domain.exchange import FORMAT, ExchangeSelectionScope
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.domain.recovery import BackupScope
 package=ExchangeService(Path("."),operational=Path(".")).export_package(selection=ExchangeSelectionScope(all_selected=True,include_context=False))
-assert FORMAT==package.format=="git-repo-db/adr0036-exchange-v7"
+assert FORMAT==package.format=="git-repo-db/adr0036-exchange-v8"
 receiver=Path("receiver"); receiver.mkdir()
 for role in ("core","operational"):
     initialize(receiver/(role+".sqlite3"),role,repo,instance)

@@ -277,13 +277,13 @@ def _finish_ref_inventories(report, core, source, work, progress, source_attribu
 
 def _defer_ref_work(report, spec, source):
     """A rootless report or missing source cannot satisfy requested verification."""
-    if spec is None or not (spec.acquire_inventories or spec.target_oids):
+    if spec is None or not (spec.acquire_inventories or spec.target_object_oids):
         return report
     deferred = tuple(
         claim
         for unit in spec.ref_inputs
         for claim in unit.claims
-        if claim.root_oid is None or source is None
+        if claim.root_object_oid is None or source is None
     )
     if not deferred:
         return report
@@ -425,12 +425,12 @@ class GitAcquisition:
         with account_verification(work):
             native.validate()
             parsed = parse_metadata(
-                native.oid.object_format, native.native_type, native.body
+                native.object_oid.object_format, native.native_type, native.body
             )
             _charge(work, "metadata_units", 1)
 
-        evidence_coord = encode([origin_uuidv4, capture_uuidv4, *native.oid.key])
-        core_cap.admit_object(native.oid)
+        evidence_coord = encode([origin_uuidv4, capture_uuidv4, *native.object_oid.key])
+        core_cap.admit_object(native.object_oid)
         discovered_targets: list[OID] = []
 
         for field_name, val in parsed.scalars.items():
@@ -442,7 +442,7 @@ class GitAcquisition:
                 DECODER_VERSION,
                 "reported",
             )
-            claim = ScalarClaim(native.oid, field_name, val, prov)
+            claim = ScalarClaim(native.object_oid, field_name, val, prov)
             _charge(work, "metadata_units", 1)
             core_cap.admit_claim(claim)
 
@@ -465,7 +465,7 @@ class GitAcquisition:
             for member in members:
                 discovered_targets.append(member.target)
             group = RelationGroup(
-                native.oid,
+                native.object_oid,
                 rel_name,
                 "native-entire-relation",
                 "complete" if members else "known_empty",
@@ -510,14 +510,14 @@ class GitAcquisition:
                 core_cap.admit_ref_observation_claim(claim)
                 active_ref_claims.append(claim)
                 extra_oids.extend(
-                    oid
-                    for oid in (
-                        claim.direct_target_oid,
-                        claim.resolved_target_oid,
-                        claim.peeled_target_oid,
-                        claim.root_oid,
+                    object_oid
+                    for object_oid in (
+                        claim.direct_target_object_oid,
+                        claim.resolved_target_object_oid,
+                        claim.peeled_target_object_oid,
+                        claim.root_object_oid,
                     )
-                    if oid is not None
+                    if object_oid is not None
                 )
             for mapping_claim in unit.mapping_claims:
                 core_cap.admit_notes_mapping(mapping_claim.mapping, work)
@@ -525,20 +525,20 @@ class GitAcquisition:
                 core_cap.admit_notes_mapping_claim(mapping_claim)
                 extra_oids.extend(
                     (
-                        mapping_claim.mapping.root_oid,
+                        mapping_claim.mapping.root_object_oid,
                         mapping_claim.mapping.annotated_object_oid,
-                        mapping_claim.mapping.note_oid,
+                        mapping_claim.mapping.note_object_oid,
                     )
                 )
             for group in unit.mapping_groups:
                 core_cap.admit_notes_mapping_group(group, work)
-                extra_oids.append(group.ref_claim.root_oid)
-                fmt = group.ref_claim.root_oid.object_format
+                extra_oids.append(group.ref_claim.root_object_oid)
+                fmt = group.ref_claim.root_object_oid.object_format
                 for target, note, _ in group.members:
                     extra_oids.extend((OID(fmt, target), OID(fmt, note)))
 
         if notes_source is not None and (
-            spec.discover_notes or spec.acquire_inventories or spec.target_oids
+            spec.discover_notes or spec.acquire_inventories or spec.target_object_oids
         ):
             notes_app = NotesAcquisition(
                 core_cap,
@@ -549,11 +549,11 @@ class GitAcquisition:
                 repository_uuidv4=repository_uuidv4,
             )
             for claim in active_ref_claims:
-                if claim.root_oid is None:
+                if claim.root_object_oid is None:
                     continue
                 if spec.acquire_inventories:
                     ref_notes_inventories.append(notes_app.inventory_ref(claim))
-                for target in spec.target_oids:
+                for target in spec.target_object_oids:
                     result = notes_app.acquire_ref_note(
                         claim, target, retain_body=spec.retain_note_bodies
                     )
@@ -583,17 +583,17 @@ class GitAcquisition:
                 discoveries.append(disc)
                 for enumeration in disc.enumerations:
                     for link in enumeration.links:
-                        if link.claim.root_oid is None:
+                        if link.claim.root_object_oid is None:
                             continue
-                        extra_oids.append(link.claim.root_oid)
+                        extra_oids.append(link.claim.root_object_oid)
                         if spec.acquire_inventories:
                             ref_notes_inventories.append(
                                 notes_app.inventory_ref(link.claim)
                             )
-                        for target_oid in spec.target_oids:
+                        for target_object_oid in spec.target_object_oids:
                             result = notes_app.acquire_ref_note(
                                 link.claim,
-                                target_oid,
+                                target_object_oid,
                                 retain_body=spec.retain_note_bodies,
                             )
                             ref_note_acquisitions.append(result)
@@ -601,7 +601,7 @@ class GitAcquisition:
                                 extra_oids.append(result.note)
 
         for inventory in ref_notes_inventories:
-            fmt = inventory.group.ref_claim.root_oid.object_format
+            fmt = inventory.group.ref_claim.root_object_oid.object_format
             for target, note, _ in inventory.group.members:
                 _charge(work, "metadata_units", 2)
                 extra_oids.extend((OID(fmt, target), OID(fmt, note)))
@@ -681,12 +681,19 @@ class GitAcquisition:
                     request.source_attribution,
                 ],
                 "observed_at_us": request.observed_at_us,
-                "selected": [list(oid.key) for oid in request.select_oids],
+                "selected": [
+                    list(object_oid.key) for object_oid in request.select_object_oids
+                ],
                 "retention": [
                     request.retain_bytes,
                     None
-                    if request.retain_oids is None
-                    else sorted([list(oid.key) for oid in request.retain_oids]),
+                    if request.retain_object_oids is None
+                    else sorted(
+                        [
+                            list(object_oid.key)
+                            for object_oid in request.retain_object_oids
+                        ]
+                    ),
                 ],
                 "refs": [
                     request.include_refs,
@@ -721,9 +728,9 @@ class GitAcquisition:
             failure_code: str | None = None
             failure_detail: str = ""
 
-            def _record_admitted(oid: OID) -> None:
-                if oid not in admitted_order:
-                    admitted_order.append(oid)
+            def _record_admitted(object_oid: OID) -> None:
+                if object_oid not in admitted_order:
+                    admitted_order.append(object_oid)
 
             if request.include_refs:
                 configured = tuple(os.fsencode(p) for p in request.ref_prefixes)
@@ -792,20 +799,25 @@ class GitAcquisition:
                         link.observation.ref_name_bytes.decode(
                             "utf-8", "surrogateescape"
                         ),
-                        link.claim.root_oid,
+                        link.claim.root_object_oid,
                         "",
-                        link.claim.peeled_target_oid,
+                        link.claim.peeled_target_object_oid,
                     )
                     for link in enumeration.links
                 ]
 
                 _charge(active_work, "metadata_units", 1 + len(selected_refs))
-                for _ref_name, target_oid, _kind, peeled_oid in selected_refs:
-                    core_cap.admit_object(target_oid)
-                    _record_admitted(target_oid)
-                    if peeled_oid is not None:
-                        core_cap.admit_object(peeled_oid)
-                        _record_admitted(peeled_oid)
+                for (
+                    _ref_name,
+                    target_object_oid,
+                    _kind,
+                    peeled_object_oid,
+                ) in selected_refs:
+                    core_cap.admit_object(target_object_oid)
+                    _record_admitted(target_object_oid)
+                    if peeled_object_oid is not None:
+                        core_cap.admit_object(peeled_object_oid)
+                        _record_admitted(peeled_object_oid)
 
                 obs_prov = Provenance(
                     request.source_attribution,
@@ -899,7 +911,7 @@ class GitAcquisition:
                         failure_code, failure_detail = error.code, str(error)
                         break
 
-            for missing_oid in request.nominal_missing_oids:
+            for missing_oid in request.nominal_missing_object_oids:
                 if missing_oid.object_format != source.object_format:
                     raise CoreFailure(
                         "NATIVE_FORMAT",
@@ -914,22 +926,22 @@ class GitAcquisition:
                 if missing_oid not in metadata_only_order:
                     metadata_only_order.append(missing_oid)
 
-            for oid in request.select_oids:
+            for object_oid in request.select_object_oids:
                 should_retain = (
-                    oid in request.retain_oids
-                    if request.retain_oids is not None
+                    object_oid in request.retain_object_oids
+                    if request.retain_object_oids is not None
                     else request.retain_bytes
                 )
                 copy_id = None
                 if should_retain:
-                    copy_id = request.physical_copy_uuidv4s.get(oid)
+                    copy_id = request.physical_copy_uuidv4s.get(object_oid)
                     if copy_id is None:
                         key = encode(
                             [
                                 "p5-native-copy",
                                 request.capture_origin_uuidv4,
                                 request.capture_uuidv4,
-                                *oid.key,
+                                *object_oid.key,
                             ]
                         )
                         saved = active_progress.load(key)
@@ -939,16 +951,16 @@ class GitAcquisition:
                             )
                         copy_id = saved["copy"]
                 try:
-                    native = source.metadata(oid, active_work)
+                    native = source.metadata(object_oid, active_work)
                 except CoreFailure as err:
                     if err.code == "OBJECT_UNAVAILABLE":
                         _charge(active_work, "metadata_units", 1)
-                        core_cap.admit_object(oid)
-                        _record_admitted(oid)
-                        if oid not in nominal_missing_order:
-                            nominal_missing_order.append(oid)
-                        if oid not in metadata_only_order:
-                            metadata_only_order.append(oid)
+                        core_cap.admit_object(object_oid)
+                        _record_admitted(object_oid)
+                        if object_oid not in nominal_missing_order:
+                            nominal_missing_order.append(object_oid)
+                        if object_oid not in metadata_only_order:
+                            metadata_only_order.append(object_oid)
                         failure_code = err.code
                         failure_detail = str(err)
                         continue
@@ -956,23 +968,25 @@ class GitAcquisition:
 
                 if should_retain:
                     core_cap.admit_metadata(native, copy_id, active_work)
-                    _record_admitted(oid)
-                    if oid not in retained_order:
-                        retained_order.append(oid)
+                    _record_admitted(object_oid)
+                    if object_oid not in retained_order:
+                        retained_order.append(object_oid)
                     if request.traverse_structural_targets:
                         with account_verification(active_work):
                             parsed = parse_metadata(
-                                oid.object_format, native.native_type, native.body
+                                object_oid.object_format,
+                                native.native_type,
+                                native.body,
                             )
                         for raw_members in parsed.relations.values():
                             for m in raw_members:
-                                target_oid = OID(m[1], m[2])
-                                _record_admitted(target_oid)
+                                target_object_oid = OID(m[1], m[2])
+                                _record_admitted(target_object_oid)
                                 if (
-                                    target_oid not in retained_order
-                                    and target_oid not in metadata_only_order
+                                    target_object_oid not in retained_order
+                                    and target_object_oid not in metadata_only_order
                                 ):
-                                    metadata_only_order.append(target_oid)
+                                    metadata_only_order.append(target_object_oid)
                 else:
                     targets = self._admit_metadata_claims_only(
                         core_cap,
@@ -982,17 +996,17 @@ class GitAcquisition:
                         request.capture_uuidv4,
                         active_work,
                     )
-                    _record_admitted(oid)
-                    if oid not in metadata_only_order:
-                        metadata_only_order.append(oid)
+                    _record_admitted(object_oid)
+                    if object_oid not in metadata_only_order:
+                        metadata_only_order.append(object_oid)
                     if request.traverse_structural_targets:
-                        for target_oid in targets:
-                            _record_admitted(target_oid)
+                        for target_object_oid in targets:
+                            _record_admitted(target_object_oid)
                             if (
-                                target_oid not in retained_order
-                                and target_oid not in metadata_only_order
+                                target_object_oid not in retained_order
+                                and target_object_oid not in metadata_only_order
                             ):
-                                metadata_only_order.append(target_oid)
+                                metadata_only_order.append(target_object_oid)
 
             for claim in request.extra_scalar_claims:
                 _charge(active_work, "metadata_units", 1)
@@ -1055,11 +1069,15 @@ class GitAcquisition:
 
             # Clean metadata_only_order so any OID that was also retained is only in retained_order
             metadata_only_final = tuple(
-                oid for oid in metadata_only_order if oid not in retained_order
+                object_oid
+                for object_oid in metadata_only_order
+                if object_oid not in retained_order
             )
 
             non_missing_admitted = [
-                oid for oid in admitted_order if oid not in nominal_missing_order
+                object_oid
+                for object_oid in admitted_order
+                if object_oid not in nominal_missing_order
             ]
             if nominal_missing_order or failure_code is not None:
                 status = "partial" if non_missing_admitted else "unknown"
@@ -1210,9 +1228,9 @@ class GitAcquisition:
             retained_order: list[OID] = []
             metadata_only_order: list[OID] = []
 
-            def _record_admitted(oid: OID) -> None:
-                if oid not in admitted_order:
-                    admitted_order.append(oid)
+            def _record_admitted(object_oid: OID) -> None:
+                if object_oid not in admitted_order:
+                    admitted_order.append(object_oid)
 
             for repo_claim in unit.repository_claims:
                 _charge(active_work, "metadata_units", 1)
@@ -1230,14 +1248,14 @@ class GitAcquisition:
                     metadata_only_order.append(nom_oid)
 
             for native in unit.native_objects:
-                copy_id = unit.physical_copy_uuidv4s.get(native.oid)
+                copy_id = unit.physical_copy_uuidv4s.get(native.object_oid)
                 if copy_id is None:
                     key = encode(
                         [
                             "p5-native-copy",
                             unit.capture_origin_uuidv4,
                             unit.capture_uuidv4,
-                            *native.oid.key,
+                            *native.object_oid.key,
                         ]
                     )
                     saved = active_progress.load(key)
@@ -1245,22 +1263,22 @@ class GitAcquisition:
                         saved = active_progress.save_once(key, {"copy": str(uuid4())})
                     copy_id = saved["copy"]
                 core_cap.admit_metadata(native, copy_id, active_work)
-                _record_admitted(native.oid)
-                if native.oid not in retained_order:
-                    retained_order.append(native.oid)
+                _record_admitted(native.object_oid)
+                if native.object_oid not in retained_order:
+                    retained_order.append(native.object_oid)
                 with account_verification(active_work):
                     parsed = parse_metadata(
-                        native.oid.object_format, native.native_type, native.body
+                        native.object_oid.object_format, native.native_type, native.body
                     )
                 for raw_members in parsed.relations.values():
                     for m in raw_members:
-                        target_oid = OID(m[1], m[2])
-                        _record_admitted(target_oid)
+                        target_object_oid = OID(m[1], m[2])
+                        _record_admitted(target_object_oid)
                         if (
-                            target_oid not in retained_order
-                            and target_oid not in metadata_only_order
+                            target_object_oid not in retained_order
+                            and target_object_oid not in metadata_only_order
                         ):
-                            metadata_only_order.append(target_oid)
+                            metadata_only_order.append(target_object_oid)
 
             for s_claim in unit.scalar_claims:
                 _charge(active_work, "metadata_units", 1)
@@ -1334,7 +1352,9 @@ class GitAcquisition:
                     admitted_cov_claims.append(p_claim)
 
             metadata_only_final = tuple(
-                oid for oid in metadata_only_order if oid not in retained_order
+                object_oid
+                for object_oid in metadata_only_order
+                if object_oid not in retained_order
             )
             status = "complete" if admitted_order else "known_empty"
             note_failure = next(
@@ -1432,10 +1452,10 @@ class ProviderAcquisition:
     ) -> Callable[[str, str], bool]:
         target_core = core_override if core_override is not None else self.core
         if isinstance(target_core, GitCore):
-            return lambda fmt, oid: bool(
+            return lambda fmt, object_oid: bool(
                 target_core.sql(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    (fmt, oid),
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    (fmt, object_oid),
                 )
             )
         core_path: Path | None = None
@@ -1448,11 +1468,11 @@ class ProviderAcquisition:
         if core_path is None or not core_path.is_file():
             return lambda _fmt, _oid: False
 
-        def _validate(fmt: str, oid: str) -> bool:
+        def _validate(fmt: str, object_oid: str) -> bool:
             with closing(connect(core_path, "core")) as db:
                 row = db.execute(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    (fmt, oid),
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    (fmt, object_oid),
                 ).fetchone()
                 return row is not None
 
@@ -1479,12 +1499,14 @@ class ProviderAcquisition:
     ) -> None:
         self._register_reference(ctx, core_ref.resource)
         ctx.report_core_reference(core_ref, clock=clock, observed_at_us=observed_at_us)
-        if validate_core(core_ref.oid.object_format, core_ref.oid.full_oid):
+        if validate_core(
+            core_ref.object_oid.object_format, core_ref.object_oid.object_oid
+        ):
             ctx.link_core(
                 core_ref.resource,
                 core_ref.role,
-                core_ref.oid.object_format,
-                core_ref.oid.full_oid,
+                core_ref.object_oid.object_format,
+                core_ref.object_oid.object_oid,
                 core_ref.provenance_json,
                 validate_core,
             )
@@ -2294,8 +2316,8 @@ def _reconcile_context_dependencies_in_tx(
         already_required = {
             (
                 d.reference.role,
-                d.reference.oid.object_format,
-                d.reference.oid.full_oid,
+                d.reference.object_oid.object_format,
+                d.reference.object_oid.object_oid,
                 d.reference.provenance_json,
             )
             for d in deps
@@ -2307,8 +2329,8 @@ def _reconcile_context_dependencies_in_tx(
             ref = dep.reference
             key_tuple = (
                 ref.role,
-                ref.oid.object_format,
-                ref.oid.full_oid,
+                ref.object_oid.object_format,
+                ref.object_oid.object_oid,
                 ref.provenance_json,
             )
             if dep.available:
@@ -2316,8 +2338,8 @@ def _reconcile_context_dependencies_in_tx(
                     ctx.link_core(
                         ref.resource,
                         ref.role,
-                        ref.oid.object_format,
-                        ref.oid.full_oid,
+                        ref.object_oid.object_format,
+                        ref.object_oid.object_oid,
                         ref.provenance_json,
                         validate_core,
                     )
@@ -2354,13 +2376,13 @@ class PairedAcquisitionCoordinator:
     def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
         core_path = self.directory / "core.sqlite3"
 
-        def _validate(fmt: str, oid: str) -> bool:
+        def _validate(fmt: str, object_oid: str) -> bool:
             if not core_path.is_file():
                 return False
             with closing(connect(core_path, "core")) as db:
                 row = db.execute(
-                    "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                    (fmt, oid),
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    (fmt, object_oid),
                 ).fetchone()
                 return row is not None
 

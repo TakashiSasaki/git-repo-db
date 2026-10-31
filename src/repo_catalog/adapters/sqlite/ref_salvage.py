@@ -74,14 +74,14 @@ _COLUMNS = {
         "presence_state",
         "ref_form",
         "direct_format",
-        "direct_target_oid",
+        "direct_target_object_oid",
         "symbolic_target_ref_name",
         "resolved_format",
-        "resolved_target_oid",
+        "resolved_target_object_oid",
         "peeled_format",
-        "peeled_target_oid",
+        "peeled_target_object_oid",
         "root_format",
-        "root_oid",
+        "root_object_oid",
         "absence_evidence",
     ),
     "ref_enumeration_observations": (
@@ -109,12 +109,12 @@ _COLUMNS = {
     ),
     "notes_mappings": (
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
     ),
     "notes_mapping_claims": (
@@ -122,12 +122,12 @@ _COLUMNS = {
         "ref_observation_uuidv7",
         "ref_claim_provenance",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
         "provenance",
     ),
@@ -136,7 +136,7 @@ _COLUMNS = {
         "ref_observation_uuidv7",
         "ref_claim_provenance",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
@@ -150,12 +150,12 @@ _COLUMNS = {
         "ref_observation_uuidv7",
         "ref_claim_provenance",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
         "verification_scope",
         "provenance",
@@ -163,7 +163,7 @@ _COLUMNS = {
     ),
     "ref_retained_notes": (
         "object_format",
-        "full_oid",
+        "object_oid",
         "physical_copy_uuidv4",
         "body",
         "size",
@@ -172,12 +172,12 @@ _COLUMNS = {
         "ref_observation_uuidv7",
         "ref_claim_provenance",
         "role_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
         "annotated_object_oid",
-        "note_oid",
+        "note_object_oid",
         "mapping_path_json",
         "verification_scope",
         "role_provenance",
@@ -190,7 +190,7 @@ _COLUMNS = {
         "observation_origin_uuidv4",
         "ref_observation_uuidv7",
         "object_format",
-        "full_oid",
+        "object_oid",
         "field",
         "coverage_kind",
     ),
@@ -210,7 +210,7 @@ _COLUMNS = {
         "ref_observation_uuidv7",
         "ref_claim_provenance",
         "object_format",
-        "root_oid",
+        "root_object_oid",
         "interpretation_kind",
         "interpretation_version",
         "interpretation_scope",
@@ -458,15 +458,15 @@ def _observation_wire(row):
 
 def _claim_wire(row):
     def pair(prefix):
-        fmt, oid = row[prefix + "_format"], row[prefix + "_target_oid"]
-        if fmt is None and oid is None:
+        fmt, object_oid = row[prefix + "_format"], row[prefix + "_target_object_oid"]
+        if fmt is None and object_oid is None:
             return None
-        return [fmt, oid]
+        return [fmt, object_oid]
 
     root = (
         None
-        if row["root_format"] is None and row["root_oid"] is None
-        else [row["root_format"], row["root_oid"]]
+        if row["root_format"] is None and row["root_object_oid"] is None
+        else [row["root_format"], row["root_object_oid"]]
     )
     symbolic = row["symbolic_target_ref_name"]
     return {
@@ -475,11 +475,11 @@ def _claim_wire(row):
         "provenance_json": row["provenance"],
         "presence_state": row["presence_state"],
         "ref_form": row["ref_form"],
-        "direct_target_oid": pair("direct"),
+        "direct_target_object_oid": pair("direct"),
         "symbolic_target_hex": None if symbolic is None else symbolic.hex(),
-        "resolved_target_oid": pair("resolved"),
-        "peeled_target_oid": pair("peeled"),
-        "root_oid": root,
+        "resolved_target_object_oid": pair("resolved"),
+        "peeled_target_object_oid": pair("peeled"),
+        "root_object_oid": root,
         "absence_evidence_json": row["absence_evidence"],
     }
 
@@ -502,7 +502,7 @@ def _notes_wire(row, *, evidence=False, retained=False):
         "ref_observation_uuidv7": row["ref_observation_uuidv7"],
         "ref_claim_provenance_json": row["ref_claim_provenance"],
         "object_format": row["role_format"] if retained else row["object_format"],
-        "root_oid": row["root_oid"],
+        "root_object_oid": row["root_object_oid"],
         "interpretation_kind": row["interpretation_kind"],
         "interpretation_version": row["interpretation_version"],
         "interpretation_scope": row["interpretation_scope"],
@@ -517,7 +517,7 @@ def _notes_wire(row, *, evidence=False, retained=False):
     else:
         result.update(
             annotated_object_oid=row["annotated_object_oid"],
-            note_oid=row["note_oid"],
+            note_object_oid=row["note_object_oid"],
             mapping_path_json=row["mapping_path_json"],
         )
         if evidence:
@@ -538,7 +538,7 @@ def _precheck_unresolved_notes(row, wire, kind, work):
     RefObservationKey(wire["observation_origin_uuidv4"], wire["ref_observation_uuidv7"])
     _provenance(wire["ref_claim_provenance_json"])
     if kind == "group":
-        OID(wire["object_format"], wire["root_oid"])
+        OID(wire["object_format"], wire["root_object_oid"])
         if (
             not all(
                 type(wire[name]) is str and wire[name]
@@ -580,9 +580,9 @@ def _precheck_unresolved_notes(row, wire, kind, work):
         raise ValueError("original structural proof required")
     _charge(work, "input_bytes", 4 * len(proof))
     if not valid_note_role(
-        *mapping.root_oid.key,
-        mapping.annotated_object_oid.full_oid,
-        mapping.note_oid.full_oid,
+        *mapping.root_object_oid.key,
+        mapping.annotated_object_oid.object_oid,
+        mapping.note_object_oid.object_oid,
         mapping.mapping_path,
         proof,
     ):
@@ -590,7 +590,7 @@ def _precheck_unresolved_notes(row, wire, kind, work):
     if kind == "note":
         if (
             row["object_format"] != row["role_format"]
-            or row["full_oid"] != row["note_oid"]
+            or row["object_oid"] != row["note_object_oid"]
         ):
             raise ValueError("physical copy role identity differs")
         body = row["body"]
@@ -598,7 +598,7 @@ def _precheck_unresolved_notes(row, wire, kind, work):
             raise ValueError("exact stored note bytes required")
         uuid4_value(row["physical_copy_uuidv4"])
         NativeObject(
-            mapping.note_oid, "blob", body, row["size"], row["digest_sha256"]
+            mapping.note_object_oid, "blob", body, row["size"], row["digest_sha256"]
         ).validate()
         _charge(work, "input_bytes", 2 * len(body))
         wire.update(
@@ -1008,7 +1008,7 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                                 )
                             if (
                                 row["object_format"] != row["role_format"]
-                                or row["full_oid"] != row["note_oid"]
+                                or row["object_oid"] != row["note_object_oid"]
                             ):
                                 raise ValueError("physical copy role identity differs")
                             body = row["body"]
@@ -1026,7 +1026,7 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                     scope_id = (
                         *identity,
                         wire["object_format"],
-                        wire["root_oid"],
+                        wire["root_object_oid"],
                         wire["interpretation_kind"],
                         wire["interpretation_version"],
                         wire["interpretation_scope"],
@@ -1093,7 +1093,7 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                     for column in (
                         "repository_uuidv4",
                         "object_format",
-                        "full_oid",
+                        "object_oid",
                         "field",
                     )
                 ):
@@ -1207,7 +1207,7 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                         "ref_observation_uuidv7": key[1],
                         "ref_claim_provenance_json": identity[2],
                         "object_format": row["object_format"],
-                        "root_oid": row["root_oid"],
+                        "root_object_oid": row["root_object_oid"],
                         "interpretation_kind": row["interpretation_kind"],
                         "interpretation_version": row["interpretation_version"],
                         "interpretation_scope": row["interpretation_scope"],
@@ -1249,7 +1249,9 @@ def _scan_ref_units(conn: sqlite3.Connection, work, *, max_records, max_row_byte
                             )
                         native.validate()
                         parse_metadata(
-                            native.oid.object_format, native.native_type, native.body
+                            native.object_oid.object_format,
+                            native.native_type,
+                            native.body,
                         )
                     if claim is not None and matched:
                         coverage = CoverageClaim(
@@ -1451,7 +1453,7 @@ def admit_ref_unit(core, kind, payload, work):
         _charge(work, "metadata_units", 1)
         existed = bool(
             core.sql(
-                "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=?",
+                "SELECT 1 FROM notes_mappings WHERE object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_object_oid=? AND mapping_path_json=?",
                 mapping.key,
             )
         )
@@ -1667,7 +1669,7 @@ def admit_ref_unit(core, kind, payload, work):
                             *claim.ref_observation_key.key,
                             list(claim.provenance.key),
                             "group",
-                            *claim.root_oid.key,
+                            *claim.root_object_oid.key,
                             group.interpretation_kind,
                             group.interpretation_version,
                             group.interpretation_scope,
@@ -1690,7 +1692,7 @@ def admit_ref_unit(core, kind, payload, work):
             _charge(work, "metadata_units", 1)
             existed = bool(
                 core.sql(
-                    "SELECT 1 FROM notes_mapping_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_oid=? AND mapping_path_json=? AND provenance=?",
+                    "SELECT 1 FROM notes_mapping_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? AND note_object_oid=? AND mapping_path_json=? AND provenance=?",
                     mapping.key,
                 )
             )
@@ -1701,7 +1703,7 @@ def admit_ref_unit(core, kind, payload, work):
             _charge(work, "metadata_units", 1)
             existed = bool(
                 core.sql(
-                    "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
+                    "SELECT 1 FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND group_scope=? AND status=? AND membership=? AND provenance=?",
                     group.key,
                 )
             )
@@ -1736,8 +1738,8 @@ def admit_ref_unit(core, kind, payload, work):
             _charge(work, "metadata_units", 1)
             existed = bool(
                 core.sql(
-                    "SELECT 1 FROM ref_retained_notes WHERE object_format=? AND full_oid=? AND physical_copy_uuidv4=?",
-                    (*native.oid.key, copy_id),
+                    "SELECT 1 FROM ref_retained_notes WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+                    (*native.object_oid.key, copy_id),
                 )
             )
             core.admit_ref_note(evidence, native, copy_id, work)

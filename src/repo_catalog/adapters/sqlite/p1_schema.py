@@ -19,7 +19,7 @@ from uuid import UUID
 # Access has a separate opt-in factory: adapters/sqlite/access_schema.py.
 STORES = ("core", "context", "operational", "search")
 MIN_SQLITE = (3, 51, 3)  # Includes the verified WAL-reset fix, STRICT and JSON.
-FORMAT = "repo-catalog/p1-isolated-2"
+FORMAT = "repo-catalog/p1-isolated-3"
 
 REQUIRED_PRAGMAS = {
     "foreign_keys": 1,
@@ -45,12 +45,12 @@ def uuid4(value: object) -> bool:
         return False
 
 
-def oid(object_format: object, full_oid: object) -> bool:
+def valid_object_oid(object_format: object, object_oid: object) -> bool:
     width = {"sha1": 40, "sha256": 64}.get(object_format)
     return bool(
         width
-        and isinstance(full_oid, str)
-        and re.fullmatch("[0-9a-f]{%d}" % width, full_oid)
+        and isinstance(object_oid, str)
+        and re.fullmatch("[0-9a-f]{%d}" % width, object_oid)
     )
 
 
@@ -72,7 +72,7 @@ def register_functions(db: sqlite3.Connection, store: str | None = None) -> None
     if store is not None and store not in STORES:
         raise SchemaError(f"unknown store: {store}")
     db.create_function("p1_uuid4", 1, uuid4, deterministic=True)
-    db.create_function("p1_oid", 2, oid, deterministic=True)
+    db.create_function("p1_object_oid", 2, valid_object_oid, deterministic=True)
     db.create_function("p1_json", 1, _json, deterministic=True)
     db.create_function(
         "p1_array", -1, lambda *values: canonical(values), deterministic=True
@@ -179,7 +179,7 @@ def verify_connection(db: sqlite3.Connection, store: str | None = None) -> None:
             raise SchemaError(f"unsupported SQLite configuration: {name}")
     if store is not None and store not in STORES:
         raise SchemaError(f"unknown store: {store}")
-    required = [("p1_uuid4", 1), ("p1_oid", 2), ("p1_json", 1), ("p1_array", -1)]
+    required = [("p1_uuid4", 1), ("p1_object_oid", 2), ("p1_json", 1), ("p1_array", -1)]
     if store == "core":
         required += [
             ("p1_uuid7", 1),

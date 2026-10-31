@@ -15,7 +15,7 @@ from repo_catalog.domain.p1_core import (
     Provenance,
     RelationGroup,
     ScalarClaim,
-    native_oid,
+    native_object_oid,
 )
 
 
@@ -33,7 +33,7 @@ def test_callback_cannot_promote_original_report(tmp_path, object_format, kind):
     repository, instance = str(uuid4()), str(uuid4())
     for store in ("core", "context"):
         initialize(tmp_path / f"{store}.sqlite3", store, repository, instance)
-    oid = OID(object_format, native_oid(object_format, "tree", b""))
+    oid = OID(object_format, native_object_oid(object_format, "tree", b""))
     native = NativeObject(oid, "tree", b"", 0, hashlib.sha256(b"").hexdigest())
     provenance = Provenance("original", "observation", kind, "source-parser", "1")
     copy = str(uuid4())

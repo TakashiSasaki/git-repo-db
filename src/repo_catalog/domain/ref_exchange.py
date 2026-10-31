@@ -126,8 +126,8 @@ def observation_from_wire(row: dict) -> RefObservation:
 
 
 def claim_to_wire(value: RefObservationClaim) -> dict:
-    def pair(oid):
-        return None if oid is None else list(oid.key)
+    def pair(object_oid):
+        return None if object_oid is None else list(object_oid.key)
 
     return {
         "observation_origin_uuidv4": value.ref_observation_key.observation_origin_uuidv4,
@@ -135,13 +135,13 @@ def claim_to_wire(value: RefObservationClaim) -> dict:
         "provenance_json": value.provenance.encoded,
         "presence_state": value.presence_state,
         "ref_form": value.ref_form,
-        "direct_target_oid": pair(value.direct_target_oid),
+        "direct_target_object_oid": pair(value.direct_target_object_oid),
         "symbolic_target_hex": None
         if value.symbolic_target_ref_name is None
         else value.symbolic_target_ref_name.hex(),
-        "resolved_target_oid": pair(value.resolved_target_oid),
-        "peeled_target_oid": pair(value.peeled_target_oid),
-        "root_oid": pair(value.root_oid),
+        "resolved_target_object_oid": pair(value.resolved_target_object_oid),
+        "peeled_target_object_oid": pair(value.peeled_target_object_oid),
+        "root_object_oid": pair(value.root_object_oid),
         "absence_evidence_json": None
         if value.absence_evidence is None
         else value.absence_evidence.encoded,
@@ -157,11 +157,11 @@ def claim_from_wire(row: dict) -> RefObservationClaim:
             "provenance_json",
             "presence_state",
             "ref_form",
-            "direct_target_oid",
+            "direct_target_object_oid",
             "symbolic_target_hex",
-            "resolved_target_oid",
-            "peeled_target_oid",
-            "root_oid",
+            "resolved_target_object_oid",
+            "peeled_target_object_oid",
+            "root_object_oid",
             "absence_evidence_json",
         ),
     )
@@ -178,13 +178,13 @@ def claim_from_wire(row: dict) -> RefObservationClaim:
         _provenance(row["provenance_json"]),
         row["presence_state"],
         row["ref_form"],
-        _oid(row["direct_target_oid"]),
+        _oid(row["direct_target_object_oid"]),
         None
         if row["symbolic_target_hex"] is None
         else _hex(row["symbolic_target_hex"]),
-        _oid(row["resolved_target_oid"]),
-        _oid(row["peeled_target_oid"]),
-        _oid(row["root_oid"]),
+        _oid(row["resolved_target_object_oid"]),
+        _oid(row["peeled_target_object_oid"]),
+        _oid(row["root_object_oid"]),
         absence,
     )
 
@@ -308,13 +308,13 @@ def _require_claim_ref(row, claim):
 
 def mapping_to_wire(mapping: NotesMapping) -> dict:
     return {
-        "object_format": mapping.root_oid.object_format,
-        "root_oid": mapping.root_oid.full_oid,
+        "object_format": mapping.root_object_oid.object_format,
+        "root_object_oid": mapping.root_object_oid.object_oid,
         "interpretation_kind": mapping.interpretation_kind,
         "interpretation_version": mapping.interpretation_version,
         "interpretation_scope": mapping.interpretation_scope,
-        "annotated_object_oid": mapping.annotated_object_oid.full_oid,
-        "note_oid": mapping.note_oid.full_oid,
+        "annotated_object_oid": mapping.annotated_object_oid.object_oid,
+        "note_object_oid": mapping.note_object_oid.object_oid,
         "mapping_path_json": encode(mapping.mapping_path),
     }
 
@@ -330,12 +330,12 @@ def mapping_from_wire(row: dict) -> NotesMapping:
         raise ValueError("canonical mapping path required")
     fmt = row["object_format"]
     return NotesMapping(
-        OID(fmt, row["root_oid"]),
+        OID(fmt, row["root_object_oid"]),
         row["interpretation_kind"],
         row["interpretation_version"],
         row["interpretation_scope"],
         OID(fmt, row["annotated_object_oid"]),
-        OID(fmt, row["note_oid"]),
+        OID(fmt, row["note_object_oid"]),
         decoded,
     )
 
@@ -360,8 +360,8 @@ def mapping_group_to_wire(
 ) -> dict:
     return {
         **_claim_ref(group.ref_claim),
-        "object_format": group.ref_claim.root_oid.object_format,
-        "root_oid": group.ref_claim.root_oid.full_oid,
+        "object_format": group.ref_claim.root_object_oid.object_format,
+        "root_object_oid": group.ref_claim.root_object_oid.object_oid,
         "interpretation_kind": group.interpretation_kind,
         "interpretation_version": group.interpretation_version,
         "interpretation_scope": group.interpretation_scope,
@@ -378,9 +378,9 @@ def mapping_group_to_wire(
 
 def mapping_group_from_wire(row: dict, claim: RefObservationClaim) -> NotesMappingGroup:
     _require_claim_ref(row, claim)
-    if claim.root_oid is None or claim.root_oid.key != (
+    if claim.root_object_oid is None or claim.root_object_oid.key != (
         row["object_format"],
-        row["root_oid"],
+        row["root_object_oid"],
     ):
         raise ValueError("mapping group belongs to another result root")
     raw = row["membership_json"]
@@ -439,7 +439,7 @@ def mapping_evidence_from_wire(
         _performed("verification_bytes", len(body))
         structures.append(
             NativeObject(
-                OID(mapping.root_oid.object_format, entry[0]),
+                OID(mapping.root_object_oid.object_format, entry[0]),
                 entry[1],
                 body,
                 len(body),
@@ -460,6 +460,10 @@ def ref_note_from_wire(
 ) -> tuple[NativeObject, str]:
     body = _hex(row["body_hex"])
     native = NativeObject(
-        evidence.mapping.note_oid, "blob", body, row["size"], row["digest_sha256"]
+        evidence.mapping.note_object_oid,
+        "blob",
+        body,
+        row["size"],
+        row["digest_sha256"],
     )
     return native, uuid4_value(row["physical_copy_uuidv4"])

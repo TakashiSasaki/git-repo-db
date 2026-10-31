@@ -46,7 +46,9 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
     )
     run_request(
         acquisition,
-        with_input(acquisition, first, target_oids=(target,), acquire_inventories=True),
+        with_input(
+            acquisition, first, target_object_oids=(target,), acquire_inventories=True
+        ),
         paired=paired,
     )
     service = ProductionQueryService(path.parent)
@@ -68,7 +70,7 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
     package = ExchangeService(path.parent).export_package(
         selection=ExchangeSelectionScope(all_selected=True, include_context=False)
     )
-    assert package.format == FORMAT == "git-repo-db/adr0036-exchange-v7"
+    assert package.format == FORMAT == "git-repo-db/adr0036-exchange-v8"
     wire = json.loads(encode_package(package))
     wire["format"] = "git-repo-db/adr0036-exchange-v6"
     with pytest.raises(ExchangeError):
@@ -117,7 +119,7 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
     scope = BackupScope.PAIRED if paired else BackupScope.GIT_ONLY
     assert adapter.create_consistent_backup(path.parent, backup, scope).verified_clean
     manifest = json.loads((backup / "manifest.json").read_text())
-    assert manifest["manifest_version"] == 2
+    assert manifest["manifest_version"] == 3
     # A genuinely new post-backup subject must arrive through typed salvage.
     late = replace(
         value.observation,

@@ -77,20 +77,20 @@ def uuid4_value(value: str) -> str:
 @dataclass(frozen=True, order=True)
 class OID:
     object_format: Literal["sha1", "sha256"]
-    full_oid: str
+    object_oid: str
 
     def __post_init__(self) -> None:
         width = {"sha1": 40, "sha256": 64}.get(self.object_format)
         if (
             width is None
-            or not isinstance(self.full_oid, str)
-            or not re.fullmatch(f"[0-9a-f]{{{width}}}", self.full_oid)
+            or not isinstance(self.object_oid, str)
+            or not re.fullmatch(f"[0-9a-f]{{{width}}}", self.object_oid)
         ):
             raise CoreFailure("IDENTITY", self, "full lowercase typed Git OID required")
 
     @property
     def key(self) -> tuple[str, str]:
-        return self.object_format, self.full_oid
+        return self.object_format, self.object_oid
 
 
 @dataclass(frozen=True)
@@ -260,7 +260,7 @@ class RelationGroup:
 
 @dataclass(frozen=True)
 class NativeObject:
-    oid: OID
+    object_oid: OID
     native_type: Literal["commit", "tree", "tag", "blob"]
     body: bytes
     declared_size: int
@@ -268,7 +268,7 @@ class NativeObject:
 
     def validate(self) -> None:
         if not valid_native(
-            *self.oid.key,
+            *self.object_oid.key,
             self.native_type,
             self.body,
             self.declared_size,
@@ -276,7 +276,7 @@ class NativeObject:
         ):
             raise CoreFailure(
                 "NATIVE_INTEGRITY",
-                self.oid,
+                self.object_oid,
                 "exact native OID/type/size/digest mismatch",
             )
 
@@ -289,7 +289,7 @@ class Projection:
     checked_scope: str | None
 
 
-def native_oid(fmt: str, kind: str, body: bytes) -> str:
+def native_object_oid(fmt: str, kind: str, body: bytes) -> str:
     _performed("verification_bytes", len(body))
     return hashlib.new(fmt, f"{kind} {len(body)}\0".encode() + body).hexdigest()
 
@@ -300,10 +300,10 @@ def _body_digest(body: bytes) -> str:
 
 
 def valid_native(
-    fmt: str, oid: str, kind: str, body: bytes, size: int, digest: str
+    fmt: str, object_oid: str, kind: str, body: bytes, size: int, digest: str
 ) -> bool:
     try:
-        OID(fmt, oid)  # type: ignore[arg-type]
+        OID(fmt, object_oid)  # type: ignore[arg-type]
         return (
             kind in ("commit", "tree", "tag", "blob")
             and type(body) is bytes
@@ -311,7 +311,7 @@ def valid_native(
             and 0 <= size < 2**63
             and size == len(body)
             and _body_digest(body) == digest
-            and native_oid(fmt, kind, body) == oid
+            and native_object_oid(fmt, kind, body) == object_oid
         )
     except (ValueError, TypeError):
         return False
@@ -349,8 +349,8 @@ def valid_group(fmt: str, relation: str, status: str, membership: str) -> bool:
             return False
         slots = []
         unknown_targets = set()
-        for coordinate, target_format, target_oid in members:
-            OID(target_format, target_oid)
+        for coordinate, target_format, target_object_oid in members:
+            OID(target_format, target_object_oid)
             if target_format != fmt:
                 return False
             if relation == "tree_entries":
@@ -376,9 +376,9 @@ def valid_group(fmt: str, relation: str, status: str, membership: str) -> bool:
                     return False
                 slots.append(name_hex)
             elif relation == "commit_parents" and coordinate is None:
-                if target_oid in unknown_targets or status == "complete":
+                if target_object_oid in unknown_targets or status == "complete":
                     return False
-                unknown_targets.add(target_oid)
+                unknown_targets.add(target_object_oid)
                 continue
             else:
                 if type(coordinate) is not int or coordinate < 0:
@@ -412,19 +412,19 @@ def valid_note_role(
     fmt: str, root: str, target: str, note: str, path: str, bundle: str
 ) -> bool:
     try:
-        for oid in (root, target, note):
-            OID(fmt, oid)  # type: ignore[arg-type]
+        for object_oid in (root, target, note):
+            OID(fmt, object_oid)  # type: ignore[arg-type]
         proof = json.loads(bundle)
         if encode(proof) != bundle or not proof:
             return False
         expected, suffix, actual_path = root, target, []
-        for index, (oid, kind, hex_body) in enumerate(proof):
+        for index, (object_oid, kind, hex_body) in enumerate(proof):
             _performed("proof_steps", 1)
             body = bytes.fromhex(hex_body)
             if (
                 body.hex() != hex_body
-                or oid != expected
-                or native_oid(fmt, kind, body) != oid
+                or object_oid != expected
+                or native_object_oid(fmt, kind, body) != object_oid
             ):
                 return False
             from repo_catalog.domain.git_native import parse_metadata
@@ -489,8 +489,8 @@ def register_functions(connection: sqlite3.Connection) -> None:
     connection.create_function("p1_claim", 2, check_claim, deterministic=True)
     connection.create_function("p1_group", 4, valid_group, deterministic=True)
 
-    def retained_native(fmt, oid, kind, body, size, digest):
-        if not valid_native(fmt, oid, kind, body, size, digest):
+    def retained_native(fmt, object_oid, kind, body, size, digest):
+        if not valid_native(fmt, object_oid, kind, body, size, digest):
             return False
         if kind == "blob":
             return True  # Physical notes-role FK separately restricts this body.
@@ -755,7 +755,7 @@ class GitObservation:
                 "ref",
                 "source_ordinal",
                 "source",
-                "expected_oid",
+                "expected_object_oid",
                 "root_kind",
                 "enumeration_state",
                 "terminal_observation",
@@ -951,7 +951,7 @@ class GitObservation:
             or not self.value["ref"].startswith("refs/")
         ):
             raise CoreFailure("OBSERVATION", self.scope, "full original ref required")
-        for name in ("object", "target", "peeled", "expected_oid", "root"):
+        for name in ("object", "target", "peeled", "expected_object_oid", "root"):
             if name in self.value and self.value[name] is not None:
                 OID(*self.value[name])
         if self.kind == "snapshot":

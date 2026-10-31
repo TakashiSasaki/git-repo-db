@@ -243,7 +243,7 @@ def filter_sections(core, context, scope, *, permitted=None):
         data[key] = retained
 
     if core is not None:
-        available = {(r["object_format"], r["full_oid"]) for r in core["git_objects"]}
+        available = {(r["object_format"], r["object_oid"]) for r in core["git_objects"]}
         chosen = (
             available.copy()
             if scope.object_oids is None
@@ -274,8 +274,8 @@ def filter_sections(core, context, scope, *, permitted=None):
                         row["ref_observation_uuidv7"],
                     )
                     if (
-                        row["root_oid"] is not None
-                        and tuple(row["root_oid"]) in roots
+                        row["root_object_oid"] is not None
+                        and tuple(row["root_object_oid"]) in roots
                         and key in refs
                     ):
                         selected_refs.add(key)
@@ -366,10 +366,10 @@ def filter_sections(core, context, scope, *, permitted=None):
         }
         for row in core["ref_observation_claims"]:
             for field in (
-                "direct_target_oid",
-                "resolved_target_oid",
-                "peeled_target_oid",
-                "root_oid",
+                "direct_target_object_oid",
+                "resolved_target_object_oid",
+                "peeled_target_object_oid",
+                "root_object_oid",
             ):
                 if row[field] is not None and tuple(row[field]) in available:
                     chosen.add(tuple(row[field]))
@@ -389,20 +389,20 @@ def filter_sections(core, context, scope, *, permitted=None):
             for row in core[key]:
                 _performed("metadata_units", 1)
                 if ref_claim_selected(row):
-                    for oid in (
-                        row["root_oid"],
+                    for object_oid in (
+                        row["root_object_oid"],
                         row["annotated_object_oid"],
-                        row["note_oid"],
+                        row["note_object_oid"],
                     ):
-                        if (row["object_format"], oid) in available:
-                            chosen.add((row["object_format"], oid))
+                        if (row["object_format"], object_oid) in available:
+                            chosen.add((row["object_format"], object_oid))
         for row in core["notes_mapping_groups"]:
             _performed("metadata_units", 1)
             if ref_claim_selected(row):
                 for target, note, _ in json.loads(row["membership_json"]):
-                    for oid in (target, note):
-                        if (row["object_format"], oid) in available:
-                            chosen.add((row["object_format"], oid))
+                    for object_oid in (target, note):
+                        if (row["object_format"], object_oid) in available:
+                            chosen.add((row["object_format"], object_oid))
         for key in (
             "notes_mapping_claims",
             "notes_mapping_evidence",
@@ -414,11 +414,11 @@ def filter_sections(core, context, scope, *, permitted=None):
                 lambda r: (
                     ref_claim_selected(r)
                     and all(
-                        (r["object_format"], oid) in chosen
-                        for oid in (
-                            r["root_oid"],
+                        (r["object_format"], object_oid) in chosen
+                        for object_oid in (
+                            r["root_object_oid"],
                             r["annotated_object_oid"],
-                            r["note_oid"],
+                            r["note_object_oid"],
                         )
                     )
                 ),
@@ -429,11 +429,11 @@ def filter_sections(core, context, scope, *, permitted=None):
             "notes_mapping_groups",
             lambda r: (
                 ref_claim_selected(r)
-                and (r["object_format"], r["root_oid"]) in chosen
+                and (r["object_format"], r["root_object_oid"]) in chosen
                 and all(
-                    (r["object_format"], oid) in chosen
+                    (r["object_format"], object_oid) in chosen
                     for target, note, _ in json.loads(r["membership_json"])
-                    for oid in (target, note)
+                    for object_oid in (target, note)
                 )
             ),
             "whole_mapping_group_dependency_not_selected",
@@ -473,7 +473,7 @@ def filter_sections(core, context, scope, *, permitted=None):
         frontier = chosen.copy()
         edges = {}
         for row in core["relation_groups"]:
-            edges.setdefault((row["object_format"], row["full_oid"]), set()).update(
+            edges.setdefault((row["object_format"], row["object_oid"]), set()).update(
                 (m[1], m[2]) for m in json.loads(row["membership_json"])
             )
         for depth in range(scope.max_depth):
@@ -492,7 +492,7 @@ def filter_sections(core, context, scope, *, permitted=None):
                 break
 
         def oid_selected(r):
-            return (r["object_format"], r["full_oid"]) in chosen
+            return (r["object_format"], r["object_oid"]) in chosen
 
         retain(core, "git_objects", oid_selected, "object_not_selected")
         retain(core, "scalar_claims", oid_selected, "object_not_selected")
@@ -1032,7 +1032,7 @@ def validate_context(data):
         CoreReference(
             resource(row),
             row["role"],
-            OID(row["object_format"], row["full_oid"]),
+            OID(row["object_format"], row["object_oid"]),
             row["provenance_json"],
         )
     for key in ("coverage_scopes", "coverage_claims", "coverage_proofs"):

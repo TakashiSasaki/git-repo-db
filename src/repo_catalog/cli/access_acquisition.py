@@ -47,7 +47,7 @@ def parser():
         result.add_argument("--" + name, required=True)
     result.add_argument("--observed-at-us", type=int, required=True)
     result.add_argument("--object-format", choices=("sha1", "sha256"), required=True)
-    result.add_argument("--oid", action="append", default=[])
+    result.add_argument("--object-oid", action="append", default=[])
     result.add_argument("--metadata-only", action="store_true")
     result.add_argument("--no-refs", action="store_true")
     result.add_argument("--notes", action="store_true")
@@ -101,8 +101,9 @@ def main(argv: list[str] | None = None) -> int:
             notes = NotesAcquisitionSpec(
                 discover_notes=True,
                 acquire_inventories=True,
-                target_oids=tuple(
-                    OID(args.object_format, oid) for oid in args.note_target
+                target_object_oids=tuple(
+                    OID(args.object_format, object_oid)
+                    for object_oid in args.note_target
                 ),
                 retain_note_bodies=not args.metadata_only,
             )
@@ -112,7 +113,9 @@ def main(argv: list[str] | None = None) -> int:
             args.capture,
             args.source_attribution,
             args.observed_at_us,
-            select_oids=tuple(OID(args.object_format, oid) for oid in args.oid),
+            select_object_oids=tuple(
+                OID(args.object_format, object_oid) for object_oid in args.object_oid
+            ),
             include_refs=not args.no_refs,
             retain_bytes=not args.metadata_only,
             notes=notes,
@@ -142,10 +145,11 @@ def main(argv: list[str] | None = None) -> int:
                     "capture_origin_uuidv4": report.capture_origin_uuidv4,
                     "capture_uuidv4": report.capture_uuidv4,
                     "retained_objects": [
-                        list(oid.key) for oid in report.retained_objects
+                        list(object_oid.key) for object_oid in report.retained_objects
                     ],
                     "nominal_missing_objects": [
-                        list(oid.key) for oid in report.nominal_missing_objects
+                        list(object_oid.key)
+                        for object_oid in report.nominal_missing_objects
                     ],
                     "retained_notes_count": len(
                         {

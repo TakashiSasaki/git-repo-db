@@ -32,17 +32,17 @@ def admit_fixture_note(
         key,
         Provenance("fixture", "read", "claim", "test", "1"),
         "present",
-        root_oid=tree.oid,
+        root_object_oid=tree.object_oid,
     )
     core.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
-        tree.oid,
+        tree.object_oid,
         "git-notes",
         "1",
         "native-notes-tree",
         target,
-        note.oid,
-        target.full_oid,
+        note.object_oid,
+        target.object_oid,
     )
     evidence = NotesMappingEvidence(
         claim,

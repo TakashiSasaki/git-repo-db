@@ -30,7 +30,7 @@ from repo_catalog.domain.p1_core import (
     CoreCoverageScope,
     CoreFailure,
     NativeObject,
-    native_oid,
+    native_object_oid,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from tests.support.context_admission import (
@@ -67,7 +67,7 @@ def fixture_grants():
                 for fmt, width in (("sha1", 40), ("sha256", 64))
                 for letter in ("a", "b")
             ),
-            OID("sha1", native_oid("sha1", "tree", b"")),
+            OID("sha1", native_object_oid("sha1", "tree", b"")),
         },
     )
 
@@ -162,7 +162,7 @@ def test_original_capture_retry_after_core_success_context_rollback(tmp_path, fm
             key,
             Provenance("source", "read", "claim", "fixture", "1"),
             "present",
-            root_oid=oid,
+            root_object_oid=oid,
         ),
     )
     coordinator = PairCoordinator(directory)
@@ -323,7 +323,7 @@ def test_detected_core_byte_corruption_permanently_fences_context_success(tmp_pa
     build(directory)
     body = b""
     native = NativeObject(
-        OID("sha1", native_oid("sha1", "tree", body)),
+        OID("sha1", native_object_oid("sha1", "tree", body)),
         "tree",
         body,
         0,
@@ -336,8 +336,8 @@ def test_detected_core_byte_corruption_permanently_fences_context_success(tmp_pa
         core.close()
     admit_pair(
         PairCoordinator(directory),
-        core_unit(native.oid),
-        context_unit(directory, native.oid),
+        core_unit(native.object_oid),
+        context_unit(directory, native.object_oid),
     )
     # Deliberately corrupt an already admitted representation with final schema
     # restored. This emulates damage outside the supported application boundary.
@@ -354,7 +354,7 @@ def test_detected_core_byte_corruption_permanently_fences_context_success(tmp_pa
     core = GitCore(directory / "core.sqlite3")
     try:
         with pytest.raises(CoreFailure) as failed:
-            core.read_metadata(native.oid)
+            core.read_metadata(native.object_oid)
         assert failed.value.code == "AUTHORITATIVE_CORRUPTION"
     finally:
         core.close()
@@ -370,8 +370,8 @@ def test_detected_core_byte_corruption_permanently_fences_context_success(tmp_pa
     with pytest.raises(Exception) as blocked:
         admit_pair(
             PairCoordinator(directory),
-            core_unit(native.oid),
-            context_unit(directory, native.oid),
+            core_unit(native.object_oid),
+            context_unit(directory, native.object_oid),
         )
     assert getattr(blocked.value, "code", "") in {"RECOVERY_REQUIRED", "RECOVERY_STOP"}
     assert marker.read_bytes() == original_marker
@@ -417,16 +417,16 @@ def test_durable_unavailable_context_reference_keeps_pair_sound(tmp_path, fmt):
             "base",
             *oid.key,
             PROVENANCE,
-            lambda object_format, full_oid: (object_format, full_oid) == oid.key,
+            lambda object_format, object_oid: (object_format, object_oid) == oid.key,
         )
     with coordinator.snapshots() as pair:
         with Context.for_snapshot(pair.context, directory) as context:
             resolved = context.core_dependencies(
                 RESOURCE,
-                lambda object_format, full_oid: bool(
+                lambda object_format, object_oid: bool(
                     pair.core.execute(
-                        "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
-                        (object_format, full_oid),
+                        "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                        (object_format, object_oid),
                     ).fetchone()
                 ),
             )
@@ -444,7 +444,7 @@ def test_forbidden_git_blob_retention_does_not_poison_legitimate_context_text(
     build(directory)
     body = b"ordinary-file-candidate"
     native = NativeObject(
-        OID(fmt, native_oid(fmt, "blob", body)),
+        OID(fmt, native_object_oid(fmt, "blob", body)),
         "blob",
         body,
         len(body),
@@ -528,7 +528,7 @@ def test_coordinated_raw_admission_cannot_retain_malformed_native_representation
     directory = tmp_path / "catalog"
     build(directory)
     body = b"not-a-valid-native-structure"
-    oid = OID(fmt, native_oid(fmt, kind, body))
+    oid = OID(fmt, native_object_oid(fmt, kind, body))
 
     def malformed(tx):
         tx.execute("INSERT INTO git_objects VALUES(?,?)", oid.key)

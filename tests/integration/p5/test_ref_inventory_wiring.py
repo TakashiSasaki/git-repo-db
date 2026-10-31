@@ -122,7 +122,7 @@ def test_inventory_wiring_keeps_original_claims_and_receiver_checks(
         )
     )
     assert any(
-        link.claim.presence_state == "absent" and link.claim.root_oid is None
+        link.claim.presence_state == "absent" and link.claim.root_object_oid is None
         for discovery in first.notes_discoveries
         for enumeration in discovery.enumerations
         for link in enumeration.links
@@ -173,7 +173,7 @@ def test_replay_reports_current_coverage_without_losing_historical_proof(
         competing = replace(
             claim,
             provenance=replace(claim.provenance, coordinate="independent-conflict"),
-            root_oid=other_root,
+            root_object_oid=other_root,
         )
         app.core.admit_ref_observation_claim(competing)
     replay = run_request(acquisition, request, paired=paired, new_request=False)
@@ -331,12 +331,12 @@ def test_inventory_wiring_preserves_exact_source_scope(acquisition, shape):
     capture, _, note = fixtures.fixture_note(acquisition)
     if shape == "empty":
         root = fixtures.write(path, fmt, "tree", b"")
-        fixtures.git(path, "update-ref", capture.ref, root.full_oid)
+        fixtures.git(path, "update-ref", capture.ref, root.object_oid)
     elif shape == "malformed":
         root = fixtures.write(
             path, fmt, "tree", fixtures.entry(b"100644", b"not-notes", note)
         )
-        fixtures.git(path, "update-ref", capture.ref, root.full_oid)
+        fixtures.git(path, "update-ref", capture.ref, root.object_oid)
     else:
         raw = b"refs/notes/invalid-\xff"
         subprocess.run(
@@ -346,7 +346,7 @@ def test_inventory_wiring_preserves_exact_source_scope(acquisition, shape):
                 os.fsencode(path),
                 b"update-ref",
                 raw,
-                capture.root.full_oid.encode(),
+                capture.root.object_oid.encode(),
             ],
             check=True,
             capture_output=True,
@@ -669,7 +669,7 @@ def test_existing_orphaned_pin_refuses_without_fabricating_a_proof(acquisition):
         *app.progress.request_identity(),
         *claim.ref_observation_key.key,
         encode(claim.provenance.key),
-        *claim.root_oid.key,
+        *claim.root_object_oid.key,
         group.interpretation_kind,
         group.interpretation_version,
         group.interpretation_scope,

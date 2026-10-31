@@ -95,9 +95,9 @@ def _setup_git_repo(git_dir: Path, fmt: str = "sha1") -> dict[str, str]:
             .decode("utf-8")
         )
 
-    tree_oid = write_obj("tree", b"")
+    tree_object_oid = write_obj("tree", b"")
     c1_raw = (
-        f"tree {tree_oid}\n"
+        f"tree {tree_object_oid}\n"
         f"author Alice <alice@example.com> -1 +0000\n"
         f"committer Alice <alice@example.com> 0 +0000\n\n"
         f"commit 1 needle_kw\n"
@@ -108,7 +108,7 @@ def _setup_git_repo(git_dir: Path, fmt: str = "sha1") -> dict[str, str]:
     )
 
     c2_raw = (
-        f"tree {tree_oid}\n"
+        f"tree {tree_object_oid}\n"
         f"parent {c1_oid}\n"
         f"author Bob <bob@example.com> 1700000100 +0000\n"
         f"committer Bob <bob@example.com> 1700000100 +0000\n\n"
@@ -120,9 +120,9 @@ def _setup_git_repo(git_dir: Path, fmt: str = "sha1") -> dict[str, str]:
         check=True,
     )
 
-    note_oid = write_obj("blob", "日本語 needle_kw note\n".encode())
+    note_object_oid = write_obj("blob", "日本語 needle_kw note\n".encode())
     notes_root = write_obj(
-        "tree", b"100644 " + c1_oid.encode() + b"\0" + bytes.fromhex(note_oid)
+        "tree", b"100644 " + c1_oid.encode() + b"\0" + bytes.fromhex(note_object_oid)
     )
     subprocess.run(
         [
@@ -136,10 +136,10 @@ def _setup_git_repo(git_dir: Path, fmt: str = "sha1") -> dict[str, str]:
         check=True,
     )
     return {
-        "tree": tree_oid,
+        "tree": tree_object_oid,
         "commit1": c1_oid,
         "commit2": c2_oid,
-        "note": note_oid,
+        "note": note_object_oid,
         "notes_root": notes_root,
     }
 
@@ -162,12 +162,12 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
         capture_uuidv4=str(uuid4()),
         source_attribution="test-git",
         observed_at_us=1_700_000_000_000_000,
-        select_oids=(OID(fmt, oids["commit1"]), OID(fmt, oids["commit2"])),
+        select_object_oids=(OID(fmt, oids["commit1"]), OID(fmt, oids["commit2"])),
         retain_bytes=True,
         notes=NotesAcquisitionSpec(
             discover_notes=True,
             acquire_inventories=True,
-            target_oids=(OID(fmt, oids["commit1"]),),
+            target_object_oids=(OID(fmt, oids["commit1"]),),
         ),
     )
     git_acq = GitAcquisition(cat_dir, operational=cat_dir)
@@ -214,7 +214,7 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
     # 3. P6 Query Service verification
     qs = ProductionQueryService(cat_dir)
     obj1 = qs.get_git_object(OID(fmt, oids["commit1"]), include_bytes=True)
-    assert obj1.oid.full_oid == oids["commit1"]
+    assert obj1.object_oid.object_oid == oids["commit1"]
     assert obj1.native_type == "commit"
     assert obj1.metadata_retained is True
     exact = qs.read_metadata_bytes(OID(fmt, oids["commit1"]))
@@ -285,7 +285,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
             capture_uuidv4=str(uuid4()),
             source_attribution="src-a",
             observed_at_us=1_700_000_000_000_000,
-            select_oids=(OID(fmt, oids["commit1"]),),
+            select_object_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
             include_refs=False,
         ),
@@ -382,7 +382,7 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
             capture_uuidv4=str(uuid4()),
             source_attribution="src-git-late",
             observed_at_us=1_700_000_100_000_000,
-            select_oids=(OID(fmt, oids["commit1"]),),
+            select_object_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
         ),
         new_request=True,
@@ -399,7 +399,7 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
     assert any(r.available_in_core for r in paired_after.core_resolutions)
     resolved_deps = [r for r in paired_after.core_resolutions if r.available_in_core]
     assert resolved_deps[0].object_view is not None
-    assert resolved_deps[0].object_view.oid.full_oid == oids["commit1"]
+    assert resolved_deps[0].object_view.object_oid.object_oid == oids["commit1"]
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
@@ -423,7 +423,7 @@ def test_derivative_loss_resilience_and_transparent_fallback(
             capture_uuidv4=str(uuid4()),
             source_attribution="src-git",
             observed_at_us=1_700_000_000_000_000,
-            select_oids=(OID(fmt, oids["commit1"]),),
+            select_object_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
         ),
         new_request=True,
@@ -475,7 +475,7 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> No
             capture_uuidv4=str(uuid4()),
             source_attribution="src-git",
             observed_at_us=1_700_000_000_000_000,
-            select_oids=(OID(fmt, oids["commit1"]),),
+            select_object_oids=(OID(fmt, oids["commit1"]),),
             retain_bytes=True,
         ),
         new_request=True,
@@ -490,7 +490,7 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> No
         db.execute("BEGIN IMMEDIATE")
         db.execute("DROP TRIGGER p1_immutable_retained_metadata_update")
         db.execute(
-            "UPDATE retained_metadata SET body=x'636f7272757074' WHERE full_oid=?",
+            "UPDATE retained_metadata SET body=x'636f7272757074' WHERE object_oid=?",
             (oids["commit1"],),
         )
         db.execute(trigger)

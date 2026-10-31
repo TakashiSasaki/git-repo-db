@@ -120,7 +120,7 @@ class NotesAcquisitionSpec:
     nominated_refs: tuple[str, ...] = ()
     discovery_observation_uuidv4: str | None = None
     acquire_inventories: bool = False
-    target_oids: tuple[OID, ...] = ()
+    target_object_oids: tuple[OID, ...] = ()
     retain_note_bodies: bool = True
     ref_inputs: tuple[RefNotesInput, ...] = ()
 
@@ -174,14 +174,14 @@ class GitNativeAcquisitionRequest:
     capture_uuidv4: str
     source_attribution: str
     observed_at_us: int | None
-    select_oids: tuple[OID, ...] = ()
+    select_object_oids: tuple[OID, ...] = ()
     retain_bytes: bool = True
-    retain_oids: frozenset[OID] | None = None
+    retain_object_oids: frozenset[OID] | None = None
     include_refs: bool = True
     ref_prefixes: tuple[str, ...] = ()
     nominated_ref_names: tuple[bytes, ...] = ()
     traverse_structural_targets: bool = True
-    nominal_missing_oids: tuple[OID, ...] = ()
+    nominal_missing_object_oids: tuple[OID, ...] = ()
     repository_claims: tuple[RepositoryClaim, ...] = ()
     extra_scalar_claims: tuple[ScalarClaim, ...] = ()
     extra_relation_groups: tuple[RelationGroup, ...] = ()

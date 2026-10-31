@@ -109,13 +109,18 @@ def _setup_source_catalog(
         capture_uuidv4=str(uuid4()),
         source_attribution="src-cat-git",
         observed_at_us=1_700_000_100_000_000,
-        select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
+        select_object_oids=(
+            oids["commit1"],
+            oids["commit2"],
+            oids["tree"],
+            oids["tag"],
+        ),
         retain_bytes=True,
         include_refs=False,
         notes=NotesAcquisitionSpec(
             discover_notes=True,
             acquire_inventories=True,
-            target_oids=(oids["commit2"],),
+            target_object_oids=(oids["commit2"],),
         ),
     )
 
@@ -128,11 +133,11 @@ def _setup_source_catalog(
         "state": "open",
         "body": "PR description body text",
         "head": {
-            "sha": oids["commit2"].full_oid,
+            "sha": oids["commit2"].object_oid,
             "ref": "feat/init",
             "repo": {"id": 2},
         },
-        "base": {"sha": oids["commit1"].full_oid, "ref": "main", "repo": {"id": 1}},
+        "base": {"sha": oids["commit1"].object_oid, "ref": "main", "repo": {"id": 1}},
     }
     batch = ProviderIntakeBatch(
         service_instance_uuidv4=service_uuid,
@@ -285,7 +290,7 @@ def test_exchange_selective_filters_and_partial_input(tmp_path: Path) -> None:
     assert pkg.core is not None
     assert len(pkg.core.get("retained_metadata", [])) == 0
     assert any(
-        o["full_oid"] == oids["commit1"].full_oid
+        o["object_oid"] == oids["commit1"].object_oid
         for o in pkg.core.get("git_objects", [])
     )
 
@@ -377,7 +382,7 @@ def test_exchange_refuses_tampered_payloads_without_store_corruption(
     # 1. Tamper retained_metadata raw bytes (hash mismatch)
     bad_dict = json.loads(wire_bytes)
     assert bad_dict["core"]["retained_metadata"]
-    # Alter the hex bytes so hash no longer matches declared full_oid
+    # Alter the hex bytes so hash no longer matches declared object_oid
     bad_dict["core"]["retained_metadata"][0]["body_hex"] = "00" * 30
     with pytest.raises(CoreFailure) as native_failure:
         svc_b.import_package(
@@ -404,7 +409,7 @@ def test_exchange_refuses_tampered_payloads_without_store_corruption(
     bad_dict3["core"]["retained_metadata"].append(
         {
             "object_format": "sha1",
-            "full_oid": "1" * 40,
+            "object_oid": "1" * 40,
             "native_type": "blob",  # ORDINARY BLOB FORBIDDEN
             "size": 5,
             "physical_copy_uuidv4": str(uuid4()),

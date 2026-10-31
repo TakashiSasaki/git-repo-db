@@ -51,7 +51,7 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
 
     # Verified commit with competing reported message claim
     commit_obj = fixtures["commit_obj"]
-    commit_view = service.get_git_object(commit_obj.oid, include_bytes=True)
+    commit_view = service.get_git_object(commit_obj.object_oid, include_bytes=True)
     assert commit_view.native_type == "commit"
     assert commit_view.metadata_retained is True
     assert commit_view.retained_bytes is not None
@@ -70,15 +70,15 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
     missing_parent_oid = fixtures["missing_parent_oid"]
     assert commit_view.relations["commit_tree"].canonical == [
         "complete",
-        [[0, fmt, tree_obj.oid.full_oid]],
+        [[0, fmt, tree_obj.object_oid.object_oid]],
     ]
     assert commit_view.relations["commit_parents"].canonical == [
         "complete",
-        [[0, fmt, missing_parent_oid.full_oid]],
+        [[0, fmt, missing_parent_oid.object_oid]],
     ]
 
     # Tree object & tree_entries relation
-    tree_view = service.get_git_object(tree_obj.oid, include_bytes=True)
+    tree_view = service.get_git_object(tree_obj.object_oid, include_bytes=True)
     assert tree_view.native_type == "tree"
     assert tree_view.scalars["type"].canonical == ["known", "tree"]
     assert tree_view.scalars["size"].canonical == ["known", len(tree_obj.body)]
@@ -88,19 +88,19 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
             [
                 ["100644", b"README.md".hex()],
                 fmt,
-                fixtures["missing_blob_oid"].full_oid,
+                fixtures["missing_blob_oid"].object_oid,
             ]
         ],
     ]
 
     # Tag object & tag_target relation
     tag_obj = fixtures["tag_obj"]
-    tag_view = service.get_git_object(tag_obj.oid, include_bytes=True)
+    tag_view = service.get_git_object(tag_obj.object_oid, include_bytes=True)
     assert tag_view.native_type == "tag"
     assert tag_view.scalars["tag_name"].canonical == ["known", "v1.0.0-p6"]
     assert tag_view.relations["tag_target"].canonical == [
         "complete",
-        [[0, fmt, commit_obj.oid.full_oid]],
+        [[0, fmt, commit_obj.object_oid.object_oid]],
     ]
 
     # Missing child/parent OIDs are nominal entries in git_objects without retained bytes
@@ -140,13 +140,13 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
     )
     view = service.get_notes_mapping(
         claim,
-        commit_obj.oid,
+        commit_obj.object_oid,
         "git-notes",
         "1",
         "native-notes-tree",
         UnlimitedWorkBudget(),
     )
-    assert view.canonical_note_oid == fixtures["note_blob"].oid
+    assert view.canonical_note_object_oid == fixtures["note_blob"].object_oid
     assert view.reported_conflict
     assert (
         service.read_ref_note_bytes(claim, content, UnlimitedWorkBudget()).body_bytes
@@ -278,19 +278,19 @@ def test_paired_cross_store_resolution_present_vs_absent_core_oids(
     by_role = {res.reference.role: res for res in paired_pr.core_resolutions}
     assert set(by_role.keys()) == {"head", "base"}
 
-    # 'head' points to commit_obj.oid which IS in Core and linked via link_core
+    # 'head' points to commit_obj.object_oid which IS in Core and linked via link_core
     head_res = by_role["head"]
     assert head_res.available_in_core is True
     assert head_res.core_required is True
     assert head_res.object_view is not None
-    assert head_res.object_view.oid == fixtures["commit_obj"].oid
+    assert head_res.object_view.object_oid == fixtures["commit_obj"].object_oid
     assert head_res.object_view.native_type == "commit"
     assert head_res.object_view.retained_bytes is not None
     assert head_res.object_view.retained_bytes.body_bytes == fixtures["commit_obj"].body
     assert len(head_res.ref_notes_targets) == 1
     assert (
-        head_res.ref_notes_targets[0].mapping.canonical_note_oid
-        == fixtures["note_blob"].oid
+        head_res.ref_notes_targets[0].mapping.canonical_note_object_oid
+        == fixtures["note_blob"].object_oid
     )
 
     # 'base' points to absent_oid which is NOT in Core (reported only)
@@ -309,10 +309,10 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
     fix_meta = populate_rich_catalog(
         cat_meta, fmt="sha1", include_core=True, include_context=False
     )
-    commit_oid = fix_meta["commit_obj"].oid
+    commit_object_oid = fix_meta["commit_obj"].object_oid
     service_meta = ProductionQueryService(cat_meta)
 
-    valid_res = service_meta.read_metadata_bytes(commit_oid)
+    valid_res = service_meta.read_metadata_bytes(commit_object_oid)
     assert valid_res.available is True and valid_res.verified is True
 
     with closing(connect(cat_meta / "core.sqlite3", "core")) as db:
@@ -323,14 +323,14 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
         db.execute("BEGIN IMMEDIATE")
         db.execute("DROP TRIGGER p1_immutable_retained_metadata_update")
         db.execute(
-            "UPDATE retained_metadata SET body=x'636f7272757074' WHERE full_oid=?",
-            (commit_oid.full_oid,),
+            "UPDATE retained_metadata SET body=x'636f7272757074' WHERE object_oid=?",
+            (commit_object_oid.object_oid,),
         )
         db.execute(trigger)
         db.commit()
 
     with pytest.raises(CoreFailure) as exc_info:
-        service_meta.read_metadata_bytes(commit_oid)
+        service_meta.read_metadata_bytes(commit_object_oid)
     assert exc_info.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (cat_meta / "p1-recovery-stop.json").exists()
 

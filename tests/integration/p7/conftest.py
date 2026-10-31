@@ -14,7 +14,7 @@ from repo_catalog.adapters.sqlite.p1_schema import connect as p1_connect
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.context_admission import DependencySet
-from repo_catalog.domain.p1_core import OID, NativeObject, native_oid
+from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
 from tests.support.context_admission import fixture_context, fixture_service
 
 
@@ -46,9 +46,9 @@ def recovery_service() -> RecoveryService:
 
 
 def make_native(fmt: str, kind: str, body: bytes) -> NativeObject:
-    oid_hex = native_oid(fmt, kind, body)
+    oid_hex = native_object_oid(fmt, kind, body)
     return NativeObject(
-        oid=OID(fmt, oid_hex),
+        object_oid=OID(fmt, oid_hex),
         native_type=kind,
         body=body,
         declared_size=len(body),
@@ -69,14 +69,14 @@ def make_tree(fmt: str, entries: list[tuple[bytes, bytes, str]]) -> NativeObject
 
 def make_commit(
     fmt: str,
-    tree_oid: str,
+    tree_object_oid: str,
     parents: list[str],
     *,
     author: str = "Test Author <test@example.com> 1700000000 +0000",
     committer: str = "Test Committer <test@example.com> 1700000000 +0000",
     message: str = "Initial commit\n",
 ) -> NativeObject:
-    lines = [f"tree {tree_oid}"]
+    lines = [f"tree {tree_object_oid}"]
     for parent in parents:
         lines.append(f"parent {parent}")
     lines.append(f"author {author}")
@@ -87,7 +87,7 @@ def make_commit(
 
 def make_tag(
     fmt: str,
-    target_oid: str,
+    target_object_oid: str,
     target_type: str = "commit",
     tag_name: str = "v1.0.0",
     *,
@@ -95,7 +95,7 @@ def make_tag(
     message: str = "Release v1.0.0 tag\n",
 ) -> NativeObject:
     lines = [
-        f"object {target_oid}",
+        f"object {target_object_oid}",
         f"type {target_type}",
         f"tag {tag_name}",
         f"tagger {tagger}",
@@ -126,8 +126,8 @@ def _synthetic_catalog_template(tmp_path_factory):
     core.admit_repository(DEFAULT_REPO_UUID)
 
     tree = make_tree("sha1", [(b"100644", b"README.md", "1" * 40)])
-    commit = make_commit("sha1", tree.oid.full_oid, [])
-    tag = make_tag("sha1", commit.oid.full_oid)
+    commit = make_commit("sha1", tree.object_oid.object_oid, [])
+    tag = make_tag("sha1", commit.object_oid.object_oid)
 
     core.admit_metadata(tree, "33333333-3333-4333-8333-333333333333", budget)
     core.admit_metadata(commit, "44444444-4444-4444-8444-444444444444", budget)
@@ -139,7 +139,13 @@ def _synthetic_catalog_template(tmp_path_factory):
     )
     notes_tree = make_tree(
         "sha1",
-        [(b"100644", commit.oid.full_oid.encode("ascii"), note_blob.oid.full_oid)],
+        [
+            (
+                b"100644",
+                commit.object_oid.object_oid.encode("ascii"),
+                note_blob.object_oid.object_oid,
+            )
+        ],
     )
     cap_origin = "66666666-6666-4666-8666-666666666666"
     from repo_catalog.domain.p1_core import Provenance
@@ -162,17 +168,17 @@ def _synthetic_catalog_template(tmp_path_factory):
         key,
         Provenance("source", "read", "claim", "fixture", "1"),
         "present",
-        root_oid=notes_tree.oid,
+        root_object_oid=notes_tree.object_oid,
     )
     core.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
-        notes_tree.oid,
+        notes_tree.object_oid,
         "git-notes",
         "1",
         "native-notes-tree",
-        commit.oid,
-        note_blob.oid,
-        commit.oid.full_oid,
+        commit.object_oid,
+        note_blob.object_oid,
+        commit.object_oid.object_oid,
     )
     evidence = NotesMappingEvidence(
         claim,

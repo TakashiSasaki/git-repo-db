@@ -1,5 +1,9 @@
 # ADR 0036 I1 Core contract and stack boundary
 
+Current opt-in OID spelling and fresh-format versions follow the
+[OID naming contract](object-oid-naming-contract.md). Pinned baseline examples
+below retain their historical spelling and do not provide compatibility APIs.
+
 This is the I1 implementation contract on the accepted ADR 0036 design. It
 covers the opt-in P1 Core only. It does not activate normal Schema 21, perform
 catalog conversion, or claim I2 acquisition/enumeration or I3 Exchange/backup

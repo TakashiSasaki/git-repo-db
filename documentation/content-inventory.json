@@ -11382,6 +11382,15 @@
       "producer": "Authored browser regressions with disposable synthetic UI data.",
       "consumers": "Documentation maintainers and independent reviewers.",
       "publication": "not staged"
+    },
+    "docs/implementation/object-oid-naming-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "Owner-selected Git OID naming refinement of ADRs 0005/0017/0036; unchanged identity and trust semantics.",
+      "source": "docs/implementation/object-oid-naming-contract.md",
+      "producer": "Coordinated opt-in OID implementation.",
+      "consumers": "Product implementers and independent reviewers; canonical naming scope and format boundary.",
+      "publication": "not staged"
     }
   }
 }

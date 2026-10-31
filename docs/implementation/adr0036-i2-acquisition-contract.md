@@ -1,5 +1,9 @@
 # ADR 0036 I2 acquisition contract
 
+Current opt-in OID spelling and fresh-format versions follow the
+[OID naming contract](object-oid-naming-contract.md). Pinned baseline examples
+below retain their historical spelling and do not provide compatibility APIs.
+
 This describes the opt-in P1 acquisition stack after I2; the ordinary Schema 21
 runtime is unchanged. The direct parent is I1. I3 Exchange, Query and typed
 backup/restore integration remain separate, and neither real-catalog migration

@@ -99,7 +99,7 @@ def test_recomputed_valid_position_grants_no_authenticity(tmp_path):
     result = service.list_git_objects(
         PageRequest(limit=1, cursor=_rechecksum(page.next_cursor, ["sha1", "0" * 40]))
     )
-    assert result.items[0].oid == page.items[0].oid
+    assert result.items[0].object_oid == page.items[0].object_oid
 
 
 @pytest.mark.parametrize("stored", ["'{'", "'123'", "CAST(x'ff' AS TEXT)"])
@@ -117,7 +117,7 @@ def test_persisted_json_utf8_and_typed_metadata_stop(tmp_path, stored):
 
 def test_metadata_queries_do_not_hydrate_or_rehash_all_retained_bodies(tmp_path):
     fixture = populate_rich_catalog(tmp_path)
-    oid = fixture["commit_obj"].oid
+    oid = fixture["commit_obj"].object_oid
     _mutate(
         tmp_path / "core.sqlite3", "retained_metadata", "body=zeroblob(length(body))"
     )
@@ -199,7 +199,9 @@ def test_binary_notes_rebuild_and_scan_equivalence(tmp_path):
     init_catalog(tmp_path, ("core", "search"))
     blob = make_native("sha1", "blob", b"hello\xff\x00world")
     target = OID("sha1", "1" * 40)
-    tree = make_tree("sha1", [(b"100644", target.full_oid.encode(), blob.oid.full_oid)])
+    tree = make_tree(
+        "sha1", [(b"100644", target.object_oid.encode(), blob.object_oid.object_oid)]
+    )
     from repo_catalog.domain.p1_core import Provenance
     from repo_catalog.domain.ref_observation import (
         NotesMapping,
@@ -216,16 +218,16 @@ def test_binary_notes_rebuild_and_scan_equivalence(tmp_path):
         key,
         Provenance("source", "read", "claim", "test", "1"),
         "present",
-        root_oid=tree.oid,
+        root_object_oid=tree.object_oid,
     )
     mapping = NotesMapping(
-        tree.oid,
+        tree.object_oid,
         "git-notes",
         "1",
         "native-notes-tree",
         target,
-        blob.oid,
-        target.full_oid,
+        blob.object_oid,
+        target.object_oid,
     )
     evidence = NotesMappingEvidence(
         claim,

@@ -120,7 +120,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -139,7 +139,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -154,7 +154,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -477,7 +477,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'commit_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -553,7 +553,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'object_format' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -702,7 +702,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'base_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -820,7 +820,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'head_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -914,7 +914,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'merge_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -990,7 +990,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'object_format' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -1349,7 +1349,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'base_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -1401,7 +1401,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'head_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -1417,7 +1417,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'object_format' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -2205,7 +2205,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -2242,7 +2242,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -2260,7 +2260,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -2341,7 +2341,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -2378,7 +2378,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -3756,7 +3756,7 @@
               "columns": [
                 "value"
               ],
-              "encoding": "value.roots is whole actual ordered [object_format,full_oid] list normalized from supplied manifest; unknown roots remain absent. Actual role/ref evidence is preserved by separate typed root/ref observations under the same genuine occurrence.",
+              "encoding": "value.roots is whole actual ordered [object_format,object_oid] list normalized from supplied manifest; unknown roots remain absent. Actual role/ref evidence is preserved by separate typed root/ref observations under the same genuine occurrence.",
               "store": "core",
               "table": "git_observations"
             }
@@ -4099,7 +4099,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "native_type",
                 "body",
                 "size",
@@ -4112,7 +4112,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "size",
                 "digest_sha256",
@@ -4130,7 +4130,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "native_type",
                 "body",
                 "size",
@@ -4143,7 +4143,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "size",
                 "digest_sha256",
@@ -4183,7 +4183,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid"
+                "object_oid"
               ],
               "encoding": "Direct complete typed Git OID, no repository duplication or storage ID.",
               "store": "core",
@@ -4197,7 +4197,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid"
+                "object_oid"
               ],
               "encoding": "Direct complete typed Git OID, no repository duplication or storage ID.",
               "store": "core",
@@ -5538,7 +5538,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "native_type",
                 "body",
                 "size",
@@ -5551,7 +5551,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "size",
                 "digest_sha256",
@@ -5569,7 +5569,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "native_type",
                 "body",
                 "size",
@@ -5582,7 +5582,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "size",
                 "digest_sha256",
@@ -5708,7 +5708,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -5723,7 +5723,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -5770,7 +5770,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -6564,7 +6564,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'original_commit_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -6872,7 +6872,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'target_commit_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -6964,7 +6964,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'commit_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -7088,7 +7088,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'object_format' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -7117,7 +7117,7 @@
               "columns": [
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "encoding": "Actual 'original_commit_oid' portable typed Core reference, with full original role/Provider provenance; cross-store validation is explicit, no receiver verification is inferred.",
@@ -7480,7 +7480,7 @@
               "columns": [
                 "value"
               ],
-              "encoding": "value.entries is whole scoped typed [{raw_path_hex: original_bytes.hex(), mode: actual_native_mode, object: [actual_format,full_oid]}]; preserve real ordinal/byte_offset only when actually supplied. No required child bytes.",
+              "encoding": "value.entries is whole scoped typed [{raw_path_hex: original_bytes.hex(), mode: actual_native_mode, object: [actual_format,object_oid]}]; preserve real ordinal/byte_offset only when actually supplied. No required child bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -7495,7 +7495,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -7510,7 +7510,7 @@
                 "value",
                 "provenance"
               ],
-              "encoding": "Full actual typed OID pairs [object_format,full_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
+              "encoding": "Full actual typed OID pairs [object_format,object_oid] in value.object for root/membership, value.target/value.peeled for ref and value.expected_oid for genuine expected root; value.entries[*].object for manifest entries. No lexical abbreviation, invented oid, local resolution pointer or mandatory target bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -7523,7 +7523,7 @@
               "columns": [
                 "value"
               ],
-              "encoding": "value.entries is whole scoped typed [{raw_path_hex: original_bytes.hex(), mode: actual_native_mode, object: [actual_format,full_oid]}]; preserve real ordinal/byte_offset only when actually supplied. No required child bytes.",
+              "encoding": "value.entries is whole scoped typed [{raw_path_hex: original_bytes.hex(), mode: actual_native_mode, object: [actual_format,object_oid]}]; preserve real ordinal/byte_offset only when actually supplied. No required child bytes.",
               "store": "core",
               "table": "git_observations"
             }
@@ -8634,7 +8634,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "native_type",
                 "body",
                 "size",
@@ -8647,7 +8647,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "size",
                 "digest_sha256",
@@ -8665,7 +8665,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "native_type",
                 "body",
                 "size",
@@ -8678,7 +8678,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "size",
                 "digest_sha256",
@@ -8696,7 +8696,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "native_type",
                 "body",
                 "size",
@@ -8709,7 +8709,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "size",
                 "digest_sha256",
@@ -8749,7 +8749,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "body",
                 "native_type"
               ],
@@ -8765,7 +8765,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -8787,7 +8787,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -9152,7 +9152,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -9174,7 +9174,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -9222,7 +9222,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -9240,7 +9240,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "membership",
@@ -9354,7 +9354,7 @@
       "durability": "authoritative",
       "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
       "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
-      "semantic_key": "Direct full semantic tuple: service_instance_uuidv4, resource_kind, provider_resource_id, role, object_format, full_oid, provenance_json. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+      "semantic_key": "Direct full semantic tuple: service_instance_uuidv4, resource_kind, provider_resource_id, role, object_format, object_oid, provenance_json. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "context.coverage_claims": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9514,7 +9514,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+      "semantic_key": "Direct full semantic tuple: object_format, object_oid. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "core.git_observations": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9530,7 +9530,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid, field, value, provenance, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+      "semantic_key": "Direct full semantic tuple: object_format, object_oid, field, value, provenance, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "core.intrinsic_groups": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9538,7 +9538,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid, relation, scope, status, membership, provenance, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+      "semantic_key": "Direct full semantic tuple: object_format, object_oid, relation, scope, status, membership, provenance, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "core.notes_mapping_claims": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9570,7 +9570,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, root_oid, interpretation_kind, interpretation_version, interpretation_scope, annotated_object_oid, note_oid, mapping_path_json. Coordinates and whole values are actual domain values, not storage-only IDs or hash-only authority."
+      "semantic_key": "Direct full semantic tuple: object_format, root_object_oid, interpretation_kind, interpretation_version, interpretation_scope, annotated_object_oid, note_object_oid, mapping_path_json. Coordinates and whole values are actual domain values, not storage-only IDs or hash-only authority."
     },
     "core.ref_coverage_proofs": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9618,7 +9618,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid, physical_copy_uuidv4. Coordinates and whole values are actual domain values, not storage-only IDs or hash-only authority."
+      "semantic_key": "Direct full semantic tuple: object_format, object_oid, physical_copy_uuidv4. Coordinates and whole values are actual domain values, not storage-only IDs or hash-only authority."
     },
     "core.relation_groups": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9626,7 +9626,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid, relation, scope, status, membership, provenance. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+      "semantic_key": "Direct full semantic tuple: object_format, object_oid, relation, scope, status, membership, provenance. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "core.repositories": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9650,7 +9650,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+      "semantic_key": "Direct full semantic tuple: object_format, object_oid, physical_copy_uuidv4. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "core.scalar_claims": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9658,7 +9658,7 @@
       "durability": "authoritative",
       "mutation": "INSERT-only; immutable UPDATE/DELETE triggers; supported Core boundary denies replacement and unsafe SQL",
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
-      "semantic_key": "Direct full semantic tuple: object_format, full_oid, field, value, provenance. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+      "semantic_key": "Direct full semantic tuple: object_format, object_oid, field, value, provenance. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
     "core.store_identity": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9759,7 +9759,7 @@
   },
   "target_schemas": {
     "context": {
-      "ddl_sha256": "924cc7557fb3da6211ea070185881f5fcaeff9bf52b6e237a361a238a2ea0c6e",
+      "ddl_sha256": "4465f77fa11d18526632e38bd516d2e2a3dbb564b90e5117dff66747f9bd4681",
       "tables": {
         "collection_terminals": {
           "columns": [
@@ -10027,7 +10027,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -10076,10 +10076,10 @@
             "provider_resource_id",
             "role",
             "object_format",
-            "full_oid",
+            "object_oid",
             "provenance_json"
           ],
-          "sql": "CREATE TABLE core_references(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n role TEXT NOT NULL CHECK(length(role)>0),\n object_format TEXT NOT NULL,\n full_oid TEXT NOT NULL CHECK(p1_oid(object_format,full_oid)),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,full_oid,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE core_references(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n role TEXT NOT NULL CHECK(length(role)>0),\n object_format TEXT NOT NULL,\n object_oid TEXT NOT NULL CHECK(p1_object_oid(object_format,object_oid)),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "core_references_no_delete": "CREATE TRIGGER core_references_no_delete BEFORE DELETE ON core_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END",
             "core_references_no_update": "CREATE TRIGGER core_references_no_update BEFORE UPDATE ON core_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
@@ -10092,7 +10092,7 @@
                 "provider_resource_id",
                 "role",
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "provenance_json"
               ],
               "origin": "pk",
@@ -12465,7 +12465,7 @@
       }
     },
     "core": {
-      "ddl_sha256": "753f97a2126f18311d6029483dffb9846fd2442db9908eba5a1c1aff98e4f8fc",
+      "ddl_sha256": "d7b4802144952b3b7a17cde06003427c46a69c94c56a809a8745b0933572268f",
       "tables": {
         "core_coverage_proofs": {
           "columns": [
@@ -12558,7 +12558,7 @@
           ],
           "sql": "CREATE TABLE core_coverage_proofs (\n owner_kind TEXT NOT NULL, owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0), coverage_state TEXT NOT NULL,\n members_json TEXT NOT NULL CHECK(p1_coverage_members(members_json)),\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,members_json,provenance),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state)\n REFERENCES coverage_claims(owner_kind,owner_coordinates_json,observed_at_us,coverage_state)\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "core_coverage_members": "CREATE TRIGGER core_coverage_members BEFORE INSERT ON core_coverage_proofs\nWHEN p1_coverage_members(NEW.members_json) AND EXISTS(SELECT 1 FROM json_each(NEW.members_json) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects o WHERE o.object_format=json_extract(j.value,'$[0]') AND o.full_oid=json_extract(j.value,'$[1]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal Core Coverage member'); END",
+            "core_coverage_members": "CREATE TRIGGER core_coverage_members BEFORE INSERT ON core_coverage_proofs\nWHEN p1_coverage_members(NEW.members_json) AND EXISTS(SELECT 1 FROM json_each(NEW.members_json) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects o WHERE o.object_format=json_extract(j.value,'$[0]') AND o.object_oid=json_extract(j.value,'$[1]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal Core Coverage member'); END",
             "p1_immutable_core_coverage_proofs_delete": "CREATE TRIGGER p1_immutable_core_coverage_proofs_delete BEFORE DELETE ON core_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_core_coverage_proofs_update": "CREATE TRIGGER p1_immutable_core_coverage_proofs_update BEFORE UPDATE ON core_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "ref_coverage_proof_requires_typed_evidence": "CREATE TRIGGER ref_coverage_proof_requires_typed_evidence BEFORE INSERT ON core_coverage_proofs\nWHEN NEW.owner_kind='ref_observation'\nBEGIN SELECT RAISE(ABORT,'ref-observation Coverage proof requires I2 typed evidence'); END"
@@ -12700,7 +12700,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": false,
               "type": "TEXT"
             },
@@ -12732,7 +12732,7 @@
               0,
               1,
               "git_objects",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -12773,7 +12773,7 @@
             "owner_kind",
             "owner_coordinates_json"
           ],
-          "sql": "CREATE TABLE coverage_scopes (\n owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','ref_observation','object','field')),\n owner_coordinates_json TEXT NOT NULL CHECK(p1_json(owner_coordinates_json)),\n repository_uuidv4 TEXT,\n observation_origin_uuidv4 TEXT, ref_observation_uuidv7 TEXT,\n object_format TEXT, full_oid TEXT, field TEXT,\n coverage_kind TEXT NOT NULL CHECK(length(coverage_kind)>0),\n CHECK(\n (owner_kind='repository' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NOT NULL AND p1_uuid4(repository_uuidv4) AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(repository_uuidv4,coverage_kind)) OR\n (owner_kind='ref_observation' AND repository_uuidv4 IS NULL AND observation_origin_uuidv4 IS NOT NULL AND ref_observation_uuidv7 IS NOT NULL AND object_format IS NULL AND full_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,coverage_kind)) OR\n (owner_kind='object' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NULL AND owner_coordinates_json=p1_array(object_format,full_oid,coverage_kind)) OR\n (owner_kind='field' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND full_oid IS NOT NULL AND field IS NOT NULL AND length(field)>0 AND owner_coordinates_json=p1_array(object_format,full_oid,field,coverage_kind))),\n PRIMARY KEY(owner_kind,owner_coordinates_json),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7) REFERENCES ref_observations,\n FOREIGN KEY(repository_uuidv4) REFERENCES repositories,\n FOREIGN KEY(object_format,full_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE coverage_scopes (\n owner_kind TEXT NOT NULL CHECK(owner_kind IN ('repository','ref_observation','object','field')),\n owner_coordinates_json TEXT NOT NULL CHECK(p1_json(owner_coordinates_json)),\n repository_uuidv4 TEXT,\n observation_origin_uuidv4 TEXT, ref_observation_uuidv7 TEXT,\n object_format TEXT, object_oid TEXT, field TEXT,\n coverage_kind TEXT NOT NULL CHECK(length(coverage_kind)>0),\n CHECK(\n (owner_kind='repository' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NOT NULL AND p1_uuid4(repository_uuidv4) AND object_format IS NULL AND object_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(repository_uuidv4,coverage_kind)) OR\n (owner_kind='ref_observation' AND repository_uuidv4 IS NULL AND observation_origin_uuidv4 IS NOT NULL AND ref_observation_uuidv7 IS NOT NULL AND object_format IS NULL AND object_oid IS NULL AND field IS NULL AND owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,coverage_kind)) OR\n (owner_kind='object' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND object_oid IS NOT NULL AND field IS NULL AND owner_coordinates_json=p1_array(object_format,object_oid,coverage_kind)) OR\n (owner_kind='field' AND observation_origin_uuidv4 IS NULL AND ref_observation_uuidv7 IS NULL AND repository_uuidv4 IS NULL AND object_format IS NOT NULL AND object_oid IS NOT NULL AND field IS NOT NULL AND length(field)>0 AND owner_coordinates_json=p1_array(object_format,object_oid,field,coverage_kind))),\n PRIMARY KEY(owner_kind,owner_coordinates_json),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7) REFERENCES ref_observations,\n FOREIGN KEY(repository_uuidv4) REFERENCES repositories,\n FOREIGN KEY(object_format,object_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_coverage_scopes_delete": "CREATE TRIGGER p1_immutable_coverage_scopes_delete BEFORE DELETE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_coverage_scopes_update": "CREATE TRIGGER p1_immutable_coverage_scopes_update BEFORE UPDATE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -12799,7 +12799,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             }
@@ -12807,9 +12807,9 @@
           "foreign_keys": [],
           "primary_key": [
             "object_format",
-            "full_oid"
+            "object_oid"
           ],
-          "sql": "CREATE TABLE git_objects (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n CHECK(p1_oid(object_format,full_oid)),\n PRIMARY KEY(object_format,full_oid)\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE git_objects (\n object_format TEXT NOT NULL, object_oid TEXT NOT NULL,\n CHECK(p1_object_oid(object_format,object_oid)),\n PRIMARY KEY(object_format,object_oid)\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_git_objects_delete": "CREATE TRIGGER p1_immutable_git_objects_delete BEFORE DELETE ON git_objects BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_git_objects_update": "CREATE TRIGGER p1_immutable_git_objects_update BEFORE UPDATE ON git_objects BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -12818,7 +12818,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid"
+                "object_oid"
               ],
               "origin": "pk",
               "partial": false
@@ -12934,7 +12934,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -12978,7 +12978,7 @@
               0,
               1,
               "retained_metadata",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13008,7 +13008,7 @@
               1,
               1,
               "scalar_claims",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13047,15 +13047,15 @@
           ],
           "primary_key": [
             "object_format",
-            "full_oid",
+            "object_oid",
             "field",
             "value",
             "provenance",
             "physical_copy_uuidv4"
           ],
-          "sql": "CREATE TABLE intrinsic_claims (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n field TEXT NOT NULL, value TEXT NOT NULL, provenance TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL,\n PRIMARY KEY(object_format,full_oid,field,value,provenance,physical_copy_uuidv4),\n FOREIGN KEY(object_format,full_oid,field,value,provenance) REFERENCES scalar_claims,\n FOREIGN KEY(object_format,full_oid,physical_copy_uuidv4) REFERENCES retained_metadata\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE intrinsic_claims (\n object_format TEXT NOT NULL, object_oid TEXT NOT NULL,\n field TEXT NOT NULL, value TEXT NOT NULL, provenance TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL,\n PRIMARY KEY(object_format,object_oid,field,value,provenance,physical_copy_uuidv4),\n FOREIGN KEY(object_format,object_oid,field,value,provenance) REFERENCES scalar_claims,\n FOREIGN KEY(object_format,object_oid,physical_copy_uuidv4) REFERENCES retained_metadata\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "intrinsic_claim_guard": "CREATE TRIGGER intrinsic_claim_guard BEFORE INSERT ON intrinsic_claims\nWHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'\n OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_claim(NEW.field,NEW.value,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'field outside checked intrinsic scope'); END",
+            "intrinsic_claim_guard": "CREATE TRIGGER intrinsic_claim_guard BEFORE INSERT ON intrinsic_claims\nWHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'\n OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.object_oid=NEW.object_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_claim(NEW.field,NEW.value,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'field outside checked intrinsic scope'); END",
             "p1_immutable_intrinsic_claims_delete": "CREATE TRIGGER p1_immutable_intrinsic_claims_delete BEFORE DELETE ON intrinsic_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_intrinsic_claims_update": "CREATE TRIGGER p1_immutable_intrinsic_claims_update BEFORE UPDATE ON intrinsic_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
@@ -13063,7 +13063,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "field",
                 "value",
                 "provenance",
@@ -13084,7 +13084,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -13140,7 +13140,7 @@
               0,
               1,
               "retained_metadata",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13170,7 +13170,7 @@
               1,
               1,
               "relation_groups",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13229,7 +13229,7 @@
           ],
           "primary_key": [
             "object_format",
-            "full_oid",
+            "object_oid",
             "relation",
             "scope",
             "status",
@@ -13237,9 +13237,9 @@
             "provenance",
             "physical_copy_uuidv4"
           ],
-          "sql": "CREATE TABLE intrinsic_groups (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n relation TEXT NOT NULL, scope TEXT NOT NULL, status TEXT NOT NULL,\n membership TEXT NOT NULL, provenance TEXT NOT NULL, physical_copy_uuidv4 TEXT NOT NULL,\n PRIMARY KEY(object_format,full_oid,relation,scope,status,membership,provenance,physical_copy_uuidv4),\n FOREIGN KEY(object_format,full_oid,relation,scope,status,membership,provenance) REFERENCES relation_groups,\n FOREIGN KEY(object_format,full_oid,physical_copy_uuidv4) REFERENCES retained_metadata\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE intrinsic_groups (\n object_format TEXT NOT NULL, object_oid TEXT NOT NULL,\n relation TEXT NOT NULL, scope TEXT NOT NULL, status TEXT NOT NULL,\n membership TEXT NOT NULL, provenance TEXT NOT NULL, physical_copy_uuidv4 TEXT NOT NULL,\n PRIMARY KEY(object_format,object_oid,relation,scope,status,membership,provenance,physical_copy_uuidv4),\n FOREIGN KEY(object_format,object_oid,relation,scope,status,membership,provenance) REFERENCES relation_groups,\n FOREIGN KEY(object_format,object_oid,physical_copy_uuidv4) REFERENCES retained_metadata\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "intrinsic_group_guard": "CREATE TRIGGER intrinsic_group_guard BEFORE INSERT ON intrinsic_groups\nWHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'\n OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.full_oid=NEW.full_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_group(NEW.object_format,NEW.relation,NEW.status,NEW.membership,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'relation outside checked intrinsic scope'); END",
+            "intrinsic_group_guard": "CREATE TRIGGER intrinsic_group_guard BEFORE INSERT ON intrinsic_groups\nWHEN json_extract(NEW.provenance,'$[5]') IS NOT 'receiver_intrinsic'\n OR NOT EXISTS(SELECT 1 FROM retained_metadata r WHERE r.object_format=NEW.object_format AND r.object_oid=NEW.object_oid\n AND r.physical_copy_uuidv4=NEW.physical_copy_uuidv4 AND p1_intrinsic_group(NEW.object_format,NEW.relation,NEW.status,NEW.membership,r.native_type,r.body))\nBEGIN SELECT RAISE(ABORT,'relation outside checked intrinsic scope'); END",
             "p1_immutable_intrinsic_groups_delete": "CREATE TRIGGER p1_immutable_intrinsic_groups_delete BEFORE DELETE ON intrinsic_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_intrinsic_groups_update": "CREATE TRIGGER p1_immutable_intrinsic_groups_update BEFORE UPDATE ON intrinsic_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
@@ -13247,7 +13247,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "status",
@@ -13288,7 +13288,7 @@
             },
             {
               "generated": 0,
-              "name": "root_oid",
+              "name": "root_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -13318,7 +13318,7 @@
             },
             {
               "generated": 0,
-              "name": "note_oid",
+              "name": "note_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -13350,7 +13350,7 @@
               0,
               1,
               "notes_mappings",
-              "root_oid",
+              "root_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13400,7 +13400,7 @@
               0,
               6,
               "notes_mappings",
-              "note_oid",
+              "note_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13460,8 +13460,8 @@
               1,
               4,
               "ref_observation_claims",
-              "root_oid",
-              "root_oid",
+              "root_object_oid",
+              "root_object_oid",
               "NO ACTION",
               "NO ACTION",
               "NONE"
@@ -13472,16 +13472,16 @@
             "ref_observation_uuidv7",
             "ref_claim_provenance",
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
             "annotated_object_oid",
-            "note_oid",
+            "note_object_oid",
             "mapping_path_json",
             "provenance"
           ],
-          "sql": "CREATE TABLE notes_mapping_claims (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n object_format TEXT NOT NULL, root_oid TEXT NOT NULL, interpretation_kind TEXT NOT NULL,\n interpretation_version TEXT NOT NULL, interpretation_scope TEXT NOT NULL,\n annotated_object_oid TEXT NOT NULL, note_oid TEXT NOT NULL, mapping_path_json TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='reported'),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_oid,mapping_path_json,provenance),\n UNIQUE(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,provenance),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid) REFERENCES ref_observation_claims(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_oid),\n FOREIGN KEY(object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_oid,mapping_path_json) REFERENCES notes_mappings\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE notes_mapping_claims (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n object_format TEXT NOT NULL, root_object_oid TEXT NOT NULL, interpretation_kind TEXT NOT NULL,\n interpretation_version TEXT NOT NULL, interpretation_scope TEXT NOT NULL,\n annotated_object_oid TEXT NOT NULL, note_object_oid TEXT NOT NULL, mapping_path_json TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='reported'),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_object_oid,mapping_path_json,provenance),\n UNIQUE(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,provenance),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid) REFERENCES ref_observation_claims(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_object_oid),\n FOREIGN KEY(object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_object_oid,mapping_path_json) REFERENCES notes_mappings\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_notes_mapping_claims_delete": "CREATE TRIGGER p1_immutable_notes_mapping_claims_delete BEFORE DELETE ON notes_mapping_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_notes_mapping_claims_update": "CREATE TRIGGER p1_immutable_notes_mapping_claims_update BEFORE UPDATE ON notes_mapping_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -13493,7 +13493,7 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -13502,7 +13502,7 @@
                 "<expression:10>",
                 "<expression:11>"
               ],
-              "expression_sql": "CREATE UNIQUE INDEX notes_mapping_claim_coordinate ON notes_mapping_claims(\n observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,\n object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,\n json_extract(provenance,'$[0]'),json_extract(provenance,'$[1]'),json_extract(provenance,'$[2]'))",
+              "expression_sql": "CREATE UNIQUE INDEX notes_mapping_claim_coordinate ON notes_mapping_claims(\n observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,\n object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,\n json_extract(provenance,'$[0]'),json_extract(provenance,'$[1]'),json_extract(provenance,'$[2]'))",
               "origin": "c",
               "partial": false
             },
@@ -13512,12 +13512,12 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
                 "annotated_object_oid",
-                "note_oid",
+                "note_object_oid",
                 "mapping_path_json",
                 "provenance"
               ],
@@ -13530,7 +13530,7 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -13570,7 +13570,7 @@
             },
             {
               "generated": 0,
-              "name": "root_oid",
+              "name": "root_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -13600,7 +13600,7 @@
             },
             {
               "generated": 0,
-              "name": "note_oid",
+              "name": "note_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -13644,7 +13644,7 @@
               0,
               1,
               "notes_mappings",
-              "root_oid",
+              "root_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13694,7 +13694,7 @@
               0,
               6,
               "notes_mappings",
-              "note_oid",
+              "note_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -13754,8 +13754,8 @@
               1,
               4,
               "ref_observation_claims",
-              "root_oid",
-              "root_oid",
+              "root_object_oid",
+              "root_object_oid",
               "NO ACTION",
               "NO ACTION",
               "NONE"
@@ -13766,18 +13766,18 @@
             "ref_observation_uuidv7",
             "ref_claim_provenance",
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
             "annotated_object_oid",
-            "note_oid",
+            "note_object_oid",
             "mapping_path_json",
             "verification_scope",
             "provenance",
             "proof_bundle"
           ],
-          "sql": "CREATE TABLE notes_mapping_evidence (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n object_format TEXT NOT NULL, root_oid TEXT NOT NULL, interpretation_kind TEXT NOT NULL,\n interpretation_version TEXT NOT NULL, interpretation_scope TEXT NOT NULL,\n annotated_object_oid TEXT NOT NULL, note_oid TEXT NOT NULL, mapping_path_json TEXT NOT NULL,\n verification_scope TEXT NOT NULL CHECK(length(verification_scope)>0),\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='receiver_intrinsic'),\n proof_bundle TEXT NOT NULL,\n CHECK(interpretation_kind='git-notes' AND interpretation_version='1' AND verification_scope='single-path' AND json_extract(provenance,'$[3]')='native-notes' AND json_extract(provenance,'$[4]')='1'),\n CHECK(json_type(mapping_path_json)='text' AND p1_note_role(object_format,root_oid,annotated_object_oid,note_oid,json_extract(mapping_path_json,'$'),proof_bundle)),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_oid,mapping_path_json,verification_scope,provenance,proof_bundle),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid) REFERENCES ref_observation_claims(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_oid),\n FOREIGN KEY(object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_oid,mapping_path_json) REFERENCES notes_mappings\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE notes_mapping_evidence (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n object_format TEXT NOT NULL, root_object_oid TEXT NOT NULL, interpretation_kind TEXT NOT NULL,\n interpretation_version TEXT NOT NULL, interpretation_scope TEXT NOT NULL,\n annotated_object_oid TEXT NOT NULL, note_object_oid TEXT NOT NULL, mapping_path_json TEXT NOT NULL,\n verification_scope TEXT NOT NULL CHECK(length(verification_scope)>0),\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='receiver_intrinsic'),\n proof_bundle TEXT NOT NULL,\n CHECK(interpretation_kind='git-notes' AND interpretation_version='1' AND verification_scope='single-path' AND json_extract(provenance,'$[3]')='native-notes' AND json_extract(provenance,'$[4]')='1'),\n CHECK(json_type(mapping_path_json)='text' AND p1_note_role(object_format,root_object_oid,annotated_object_oid,note_object_oid,json_extract(mapping_path_json,'$'),proof_bundle)),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_object_oid,mapping_path_json,verification_scope,provenance,proof_bundle),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid) REFERENCES ref_observation_claims(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_object_oid),\n FOREIGN KEY(object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_object_oid,mapping_path_json) REFERENCES notes_mappings\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_notes_mapping_evidence_delete": "CREATE TRIGGER p1_immutable_notes_mapping_evidence_delete BEFORE DELETE ON notes_mapping_evidence BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_notes_mapping_evidence_update": "CREATE TRIGGER p1_immutable_notes_mapping_evidence_update BEFORE UPDATE ON notes_mapping_evidence BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -13789,7 +13789,7 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -13798,7 +13798,7 @@
                 "<expression:10>",
                 "<expression:11>"
               ],
-              "expression_sql": "CREATE UNIQUE INDEX notes_mapping_evidence_coordinate ON notes_mapping_evidence(\n observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,\n object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,\n json_extract(provenance,'$[0]'),json_extract(provenance,'$[1]'),json_extract(provenance,'$[2]'))",
+              "expression_sql": "CREATE UNIQUE INDEX notes_mapping_evidence_coordinate ON notes_mapping_evidence(\n observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,\n object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,\n json_extract(provenance,'$[0]'),json_extract(provenance,'$[1]'),json_extract(provenance,'$[2]'))",
               "origin": "c",
               "partial": false
             },
@@ -13808,12 +13808,12 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
                 "annotated_object_oid",
-                "note_oid",
+                "note_object_oid",
                 "mapping_path_json",
                 "verification_scope",
                 "provenance",
@@ -13852,7 +13852,7 @@
             },
             {
               "generated": 0,
-              "name": "root_oid",
+              "name": "root_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -13944,8 +13944,8 @@
               0,
               4,
               "ref_observation_claims",
-              "root_oid",
-              "root_oid",
+              "root_object_oid",
+              "root_object_oid",
               "NO ACTION",
               "NO ACTION",
               "NONE"
@@ -13956,7 +13956,7 @@
             "ref_observation_uuidv7",
             "ref_claim_provenance",
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
@@ -13965,9 +13965,9 @@
             "membership",
             "provenance"
           ],
-          "sql": "CREATE TABLE notes_mapping_groups (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n object_format TEXT NOT NULL, root_oid TEXT NOT NULL,\n interpretation_kind TEXT NOT NULL CHECK(length(interpretation_kind)>0), interpretation_version TEXT NOT NULL CHECK(length(interpretation_version)>0),\n interpretation_scope TEXT NOT NULL CHECK(length(interpretation_scope)>0), group_scope TEXT NOT NULL CHECK(length(group_scope)>0),\n status TEXT NOT NULL, membership TEXT NOT NULL CHECK(p1_notes_group(object_format,status,membership)),\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='reported'),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,status,membership,provenance),\n UNIQUE(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,provenance),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid) REFERENCES ref_observation_claims(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_oid)\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE notes_mapping_groups (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n object_format TEXT NOT NULL, root_object_oid TEXT NOT NULL,\n interpretation_kind TEXT NOT NULL CHECK(length(interpretation_kind)>0), interpretation_version TEXT NOT NULL CHECK(length(interpretation_version)>0),\n interpretation_scope TEXT NOT NULL CHECK(length(interpretation_scope)>0), group_scope TEXT NOT NULL CHECK(length(group_scope)>0),\n status TEXT NOT NULL, membership TEXT NOT NULL CHECK(p1_notes_group(object_format,status,membership)),\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='reported'),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,status,membership,provenance),\n UNIQUE(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,provenance),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid) REFERENCES ref_observation_claims(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_object_oid)\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "notes_mapping_group_targets": "CREATE TRIGGER notes_mapping_group_targets BEFORE INSERT ON notes_mapping_groups\nWHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[0]'))\n OR NOT EXISTS(SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND full_oid=json_extract(j.value,'$[1]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal notes group target'); END",
+            "notes_mapping_group_targets": "CREATE TRIGGER notes_mapping_group_targets BEFORE INSERT ON notes_mapping_groups\nWHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND object_oid=json_extract(j.value,'$[0]'))\n OR NOT EXISTS(SELECT 1 FROM git_objects WHERE object_format=NEW.object_format AND object_oid=json_extract(j.value,'$[1]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal notes group target'); END",
             "p1_immutable_notes_mapping_groups_delete": "CREATE TRIGGER p1_immutable_notes_mapping_groups_delete BEFORE DELETE ON notes_mapping_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_notes_mapping_groups_update": "CREATE TRIGGER p1_immutable_notes_mapping_groups_update BEFORE UPDATE ON notes_mapping_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
@@ -13978,7 +13978,7 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -13987,7 +13987,7 @@
                 "<expression:10>",
                 "<expression:11>"
               ],
-              "expression_sql": "CREATE UNIQUE INDEX notes_mapping_group_coordinate ON notes_mapping_groups(\n observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,\n object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,\n json_extract(provenance,'$[0]'),json_extract(provenance,'$[1]'),json_extract(provenance,'$[2]'))",
+              "expression_sql": "CREATE UNIQUE INDEX notes_mapping_group_coordinate ON notes_mapping_groups(\n observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,\n object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,\n json_extract(provenance,'$[0]'),json_extract(provenance,'$[1]'),json_extract(provenance,'$[2]'))",
               "origin": "c",
               "partial": false
             },
@@ -13997,7 +13997,7 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -14013,7 +14013,7 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -14037,7 +14037,7 @@
             },
             {
               "generated": 0,
-              "name": "root_oid",
+              "name": "root_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -14067,7 +14067,7 @@
             },
             {
               "generated": 0,
-              "name": "note_oid",
+              "name": "note_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -14093,7 +14093,7 @@
               0,
               1,
               "git_objects",
-              "note_oid",
+              "note_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -14133,7 +14133,7 @@
               2,
               1,
               "git_objects",
-              "root_oid",
+              "root_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -14142,15 +14142,15 @@
           ],
           "primary_key": [
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
             "annotated_object_oid",
-            "note_oid",
+            "note_object_oid",
             "mapping_path_json"
           ],
-          "sql": "CREATE TABLE notes_mappings (\n object_format TEXT NOT NULL, root_oid TEXT NOT NULL,\n interpretation_kind TEXT NOT NULL CHECK(length(interpretation_kind)>0),\n interpretation_version TEXT NOT NULL CHECK(length(interpretation_version)>0),\n interpretation_scope TEXT NOT NULL CHECK(length(interpretation_scope)>0),\n annotated_object_oid TEXT NOT NULL, note_oid TEXT NOT NULL,\n mapping_path_json TEXT NOT NULL CHECK(p1_mapping_path(mapping_path_json)),\n PRIMARY KEY(object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_oid,mapping_path_json),\n FOREIGN KEY(object_format,root_oid) REFERENCES git_objects,\n FOREIGN KEY(object_format,annotated_object_oid) REFERENCES git_objects,\n FOREIGN KEY(object_format,note_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE notes_mappings (\n object_format TEXT NOT NULL, root_object_oid TEXT NOT NULL,\n interpretation_kind TEXT NOT NULL CHECK(length(interpretation_kind)>0),\n interpretation_version TEXT NOT NULL CHECK(length(interpretation_version)>0),\n interpretation_scope TEXT NOT NULL CHECK(length(interpretation_scope)>0),\n annotated_object_oid TEXT NOT NULL, note_object_oid TEXT NOT NULL,\n mapping_path_json TEXT NOT NULL CHECK(p1_mapping_path(mapping_path_json)),\n PRIMARY KEY(object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_object_oid,mapping_path_json),\n FOREIGN KEY(object_format,root_object_oid) REFERENCES git_objects,\n FOREIGN KEY(object_format,annotated_object_oid) REFERENCES git_objects,\n FOREIGN KEY(object_format,note_object_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_notes_mappings_delete": "CREATE TRIGGER p1_immutable_notes_mappings_delete BEFORE DELETE ON notes_mappings BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_notes_mappings_update": "CREATE TRIGGER p1_immutable_notes_mappings_update BEFORE UPDATE ON notes_mappings BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -14159,12 +14159,12 @@
             {
               "columns": [
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
                 "annotated_object_oid",
-                "note_oid",
+                "note_object_oid",
                 "mapping_path_json"
               ],
               "origin": "pk",
@@ -14224,7 +14224,7 @@
             },
             {
               "generated": 0,
-              "name": "root_oid",
+              "name": "root_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -14328,7 +14328,7 @@
               0,
               4,
               "notes_mapping_groups",
-              "root_oid",
+              "root_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -14454,7 +14454,7 @@
             "ref_observation_uuidv7",
             "ref_claim_provenance",
             "object_format",
-            "root_oid",
+            "root_object_oid",
             "interpretation_kind",
             "interpretation_version",
             "interpretation_scope",
@@ -14464,7 +14464,7 @@
             "group_provenance",
             "verification_provenance"
           ],
-          "sql": "CREATE TABLE ref_coverage_proofs (\n owner_kind TEXT NOT NULL CHECK(owner_kind='ref_observation'),\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state='complete'),\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,\n ref_claim_provenance TEXT NOT NULL, object_format TEXT NOT NULL, root_oid TEXT NOT NULL,\n interpretation_kind TEXT NOT NULL CHECK(interpretation_kind='git-notes'),\n interpretation_version TEXT NOT NULL CHECK(interpretation_version='1'),\n interpretation_scope TEXT NOT NULL CHECK(interpretation_scope='native-notes-tree'),\n group_scope TEXT NOT NULL CHECK(group_scope='all-notes-mappings'),\n group_status TEXT NOT NULL CHECK(group_status IN ('complete','known_empty')),\n group_membership TEXT NOT NULL CHECK(p1_notes_group(object_format,group_status,group_membership)),\n group_provenance TEXT NOT NULL CHECK(p1_provenance(group_provenance) AND json_extract(group_provenance,'$[5]')='reported'),\n verification_provenance TEXT NOT NULL CHECK(p1_provenance(verification_provenance) AND json_extract(verification_provenance,'$[5]')='receiver_intrinsic' AND json_extract(verification_provenance,'$[3]')='git-native-notes-inventory' AND json_extract(verification_provenance,'$[4]')='1'),\n structures_json TEXT NOT NULL CHECK(p1_json(structures_json) AND json_type(structures_json)='array' AND json_array_length(structures_json)>0),\n CHECK(owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,'notes-mapping-inventory')),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance,verification_provenance),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance) REFERENCES notes_mapping_groups\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE ref_coverage_proofs (\n owner_kind TEXT NOT NULL CHECK(owner_kind='ref_observation'),\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state='complete'),\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,\n ref_claim_provenance TEXT NOT NULL, object_format TEXT NOT NULL, root_object_oid TEXT NOT NULL,\n interpretation_kind TEXT NOT NULL CHECK(interpretation_kind='git-notes'),\n interpretation_version TEXT NOT NULL CHECK(interpretation_version='1'),\n interpretation_scope TEXT NOT NULL CHECK(interpretation_scope='native-notes-tree'),\n group_scope TEXT NOT NULL CHECK(group_scope='all-notes-mappings'),\n group_status TEXT NOT NULL CHECK(group_status IN ('complete','known_empty')),\n group_membership TEXT NOT NULL CHECK(p1_notes_group(object_format,group_status,group_membership)),\n group_provenance TEXT NOT NULL CHECK(p1_provenance(group_provenance) AND json_extract(group_provenance,'$[5]')='reported'),\n verification_provenance TEXT NOT NULL CHECK(p1_provenance(verification_provenance) AND json_extract(verification_provenance,'$[5]')='receiver_intrinsic' AND json_extract(verification_provenance,'$[3]')='git-native-notes-inventory' AND json_extract(verification_provenance,'$[4]')='1'),\n structures_json TEXT NOT NULL CHECK(p1_json(structures_json) AND json_type(structures_json)='array' AND json_array_length(structures_json)>0),\n CHECK(owner_coordinates_json=p1_array(observation_origin_uuidv4,ref_observation_uuidv7,'notes-mapping-inventory')),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance,verification_provenance),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,object_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,group_scope,group_status,group_membership,group_provenance) REFERENCES notes_mapping_groups\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_ref_coverage_proofs_delete": "CREATE TRIGGER p1_immutable_ref_coverage_proofs_delete BEFORE DELETE ON ref_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_ref_coverage_proofs_update": "CREATE TRIGGER p1_immutable_ref_coverage_proofs_update BEFORE UPDATE ON ref_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -14493,7 +14493,7 @@
                 "ref_observation_uuidv7",
                 "ref_claim_provenance",
                 "object_format",
-                "root_oid",
+                "root_object_oid",
                 "interpretation_kind",
                 "interpretation_version",
                 "interpretation_scope",
@@ -14787,7 +14787,7 @@
             },
             {
               "generated": 0,
-              "name": "direct_target_oid",
+              "name": "direct_target_object_oid",
               "notnull": false,
               "type": "TEXT"
             },
@@ -14805,7 +14805,7 @@
             },
             {
               "generated": 0,
-              "name": "resolved_target_oid",
+              "name": "resolved_target_object_oid",
               "notnull": false,
               "type": "TEXT"
             },
@@ -14817,7 +14817,7 @@
             },
             {
               "generated": 0,
-              "name": "peeled_target_oid",
+              "name": "peeled_target_object_oid",
               "notnull": false,
               "type": "TEXT"
             },
@@ -14829,7 +14829,7 @@
             },
             {
               "generated": 0,
-              "name": "root_oid",
+              "name": "root_object_oid",
               "notnull": false,
               "type": "TEXT"
             },
@@ -14855,7 +14855,7 @@
               0,
               1,
               "git_objects",
-              "root_oid",
+              "root_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -14875,7 +14875,7 @@
               1,
               1,
               "git_objects",
-              "peeled_target_oid",
+              "peeled_target_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -14895,7 +14895,7 @@
               2,
               1,
               "git_objects",
-              "resolved_target_oid",
+              "resolved_target_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -14915,7 +14915,7 @@
               3,
               1,
               "git_objects",
-              "direct_target_oid",
+              "direct_target_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -14947,7 +14947,7 @@
             "ref_observation_uuidv7",
             "provenance"
           ],
-          "sql": "CREATE TABLE ref_observation_claims (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='reported'),\n presence_state TEXT NOT NULL CHECK(presence_state IN ('present','absent')),\n ref_form TEXT CHECK(ref_form IS NULL OR ref_form IN ('direct','symbolic')),\n direct_format TEXT, direct_target_oid TEXT, symbolic_target_ref_name BLOB,\n resolved_format TEXT, resolved_target_oid TEXT, peeled_format TEXT, peeled_target_oid TEXT,\n root_format TEXT, root_oid TEXT, absence_evidence TEXT,\n CHECK((direct_format IS NULL AND direct_target_oid IS NULL) OR (direct_format IS NOT NULL AND direct_target_oid IS NOT NULL AND p1_oid(direct_format,direct_target_oid))),\n CHECK((resolved_format IS NULL AND resolved_target_oid IS NULL) OR (resolved_format IS NOT NULL AND resolved_target_oid IS NOT NULL AND p1_oid(resolved_format,resolved_target_oid))),\n CHECK((peeled_format IS NULL AND peeled_target_oid IS NULL) OR (peeled_format IS NOT NULL AND peeled_target_oid IS NOT NULL AND p1_oid(peeled_format,peeled_target_oid))),\n CHECK((root_format IS NULL AND root_oid IS NULL) OR (root_format IS NOT NULL AND root_oid IS NOT NULL AND p1_oid(root_format,root_oid))),\n CHECK(symbolic_target_ref_name IS NULL OR (substr(symbolic_target_ref_name,1,5)=X'726566732F' AND instr(symbolic_target_ref_name,X'00')=0)),\n CHECK(direct_target_oid IS NULL OR ref_form IS 'direct'),\n CHECK(symbolic_target_ref_name IS NULL OR ref_form IS 'symbolic'),\n CHECK(p1_ref_result_formats(direct_format,resolved_format,peeled_format,root_format)),\n CHECK((presence_state='present' AND absence_evidence IS NULL) OR\n       (presence_state='absent' AND p1_ref_absence(absence_evidence) AND ref_form IS NULL AND direct_target_oid IS NULL AND symbolic_target_ref_name IS NULL AND resolved_target_oid IS NULL AND peeled_target_oid IS NULL AND root_oid IS NULL)),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,provenance),\n UNIQUE(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_oid),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7) REFERENCES ref_observations,\n FOREIGN KEY(direct_format,direct_target_oid) REFERENCES git_objects,\n FOREIGN KEY(resolved_format,resolved_target_oid) REFERENCES git_objects,\n FOREIGN KEY(peeled_format,peeled_target_oid) REFERENCES git_objects,\n FOREIGN KEY(root_format,root_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE ref_observation_claims (\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance) AND json_extract(provenance,'$[5]')='reported'),\n presence_state TEXT NOT NULL CHECK(presence_state IN ('present','absent')),\n ref_form TEXT CHECK(ref_form IS NULL OR ref_form IN ('direct','symbolic')),\n direct_format TEXT, direct_target_object_oid TEXT, symbolic_target_ref_name BLOB,\n resolved_format TEXT, resolved_target_object_oid TEXT, peeled_format TEXT, peeled_target_object_oid TEXT,\n root_format TEXT, root_object_oid TEXT, absence_evidence TEXT,\n CHECK((direct_format IS NULL AND direct_target_object_oid IS NULL) OR (direct_format IS NOT NULL AND direct_target_object_oid IS NOT NULL AND p1_object_oid(direct_format,direct_target_object_oid))),\n CHECK((resolved_format IS NULL AND resolved_target_object_oid IS NULL) OR (resolved_format IS NOT NULL AND resolved_target_object_oid IS NOT NULL AND p1_object_oid(resolved_format,resolved_target_object_oid))),\n CHECK((peeled_format IS NULL AND peeled_target_object_oid IS NULL) OR (peeled_format IS NOT NULL AND peeled_target_object_oid IS NOT NULL AND p1_object_oid(peeled_format,peeled_target_object_oid))),\n CHECK((root_format IS NULL AND root_object_oid IS NULL) OR (root_format IS NOT NULL AND root_object_oid IS NOT NULL AND p1_object_oid(root_format,root_object_oid))),\n CHECK(symbolic_target_ref_name IS NULL OR (substr(symbolic_target_ref_name,1,5)=X'726566732F' AND instr(symbolic_target_ref_name,X'00')=0)),\n CHECK(direct_target_object_oid IS NULL OR ref_form IS 'direct'),\n CHECK(symbolic_target_ref_name IS NULL OR ref_form IS 'symbolic'),\n CHECK(p1_ref_result_formats(direct_format,resolved_format,peeled_format,root_format)),\n CHECK((presence_state='present' AND absence_evidence IS NULL) OR\n       (presence_state='absent' AND p1_ref_absence(absence_evidence) AND ref_form IS NULL AND direct_target_object_oid IS NULL AND symbolic_target_ref_name IS NULL AND resolved_target_object_oid IS NULL AND peeled_target_object_oid IS NULL AND root_object_oid IS NULL)),\n PRIMARY KEY(observation_origin_uuidv4,ref_observation_uuidv7,provenance),\n UNIQUE(observation_origin_uuidv4,ref_observation_uuidv7,provenance,root_format,root_object_oid),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7) REFERENCES ref_observations,\n FOREIGN KEY(direct_format,direct_target_object_oid) REFERENCES git_objects,\n FOREIGN KEY(resolved_format,resolved_target_object_oid) REFERENCES git_objects,\n FOREIGN KEY(peeled_format,peeled_target_object_oid) REFERENCES git_objects,\n FOREIGN KEY(root_format,root_object_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_ref_observation_claims_delete": "CREATE TRIGGER p1_immutable_ref_observation_claims_delete BEFORE DELETE ON ref_observation_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_ref_observation_claims_update": "CREATE TRIGGER p1_immutable_ref_observation_claims_update BEFORE UPDATE ON ref_observation_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
@@ -14981,7 +14981,7 @@
                 "ref_observation_uuidv7",
                 "provenance",
                 "root_format",
-                "root_oid"
+                "root_object_oid"
               ],
               "origin": "u",
               "partial": false
@@ -15075,7 +15075,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -15129,7 +15129,7 @@
             },
             {
               "generated": 0,
-              "name": "root_oid",
+              "name": "root_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -15159,7 +15159,7 @@
             },
             {
               "generated": 0,
-              "name": "note_oid",
+              "name": "note_object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -15233,7 +15233,7 @@
               0,
               4,
               "notes_mapping_evidence",
-              "root_oid",
+              "root_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -15283,7 +15283,7 @@
               0,
               9,
               "notes_mapping_evidence",
-              "note_oid",
+              "note_object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -15332,20 +15332,20 @@
           ],
           "primary_key": [
             "object_format",
-            "full_oid",
+            "object_oid",
             "physical_copy_uuidv4"
           ],
-          "sql": "CREATE TABLE ref_retained_notes (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),\n body BLOB NOT NULL, size INTEGER NOT NULL, digest_sha256 TEXT NOT NULL,\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n role_format TEXT NOT NULL, root_oid TEXT NOT NULL, interpretation_kind TEXT NOT NULL,\n interpretation_version TEXT NOT NULL, interpretation_scope TEXT NOT NULL,\n annotated_object_oid TEXT NOT NULL, note_oid TEXT NOT NULL, mapping_path_json TEXT NOT NULL,\n verification_scope TEXT NOT NULL, role_provenance TEXT NOT NULL, proof_bundle TEXT NOT NULL,\n CHECK(object_format=role_format AND full_oid=note_oid),\n CHECK(p1_native(object_format,full_oid,'blob',body,size,digest_sha256)),\n PRIMARY KEY(object_format,full_oid,physical_copy_uuidv4),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,role_format,root_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_oid,mapping_path_json,verification_scope,role_provenance,proof_bundle) REFERENCES notes_mapping_evidence\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE ref_retained_notes (\n object_format TEXT NOT NULL, object_oid TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),\n body BLOB NOT NULL, size INTEGER NOT NULL, digest_sha256 TEXT NOT NULL,\n observation_origin_uuidv4 TEXT NOT NULL, ref_observation_uuidv7 TEXT NOT NULL, ref_claim_provenance TEXT NOT NULL,\n role_format TEXT NOT NULL, root_object_oid TEXT NOT NULL, interpretation_kind TEXT NOT NULL,\n interpretation_version TEXT NOT NULL, interpretation_scope TEXT NOT NULL,\n annotated_object_oid TEXT NOT NULL, note_object_oid TEXT NOT NULL, mapping_path_json TEXT NOT NULL,\n verification_scope TEXT NOT NULL, role_provenance TEXT NOT NULL, proof_bundle TEXT NOT NULL,\n CHECK(object_format=role_format AND object_oid=note_object_oid),\n CHECK(p1_native(object_format,object_oid,'blob',body,size,digest_sha256)),\n PRIMARY KEY(object_format,object_oid,physical_copy_uuidv4),\n FOREIGN KEY(observation_origin_uuidv4,ref_observation_uuidv7,ref_claim_provenance,role_format,root_object_oid,interpretation_kind,interpretation_version,interpretation_scope,annotated_object_oid,note_object_oid,mapping_path_json,verification_scope,role_provenance,proof_bundle) REFERENCES notes_mapping_evidence\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_ref_retained_notes_delete": "CREATE TRIGGER p1_immutable_ref_retained_notes_delete BEFORE DELETE ON ref_retained_notes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_ref_retained_notes_update": "CREATE TRIGGER p1_immutable_ref_retained_notes_update BEFORE UPDATE ON ref_retained_notes BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "ref_notes_same_representation": "CREATE TRIGGER ref_notes_same_representation BEFORE INSERT ON ref_retained_notes\nWHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND full_oid=NEW.full_oid AND body<>NEW.body)\nBEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END"
+            "ref_notes_same_representation": "CREATE TRIGGER ref_notes_same_representation BEFORE INSERT ON ref_retained_notes\nWHEN EXISTS(SELECT 1 FROM ref_retained_notes WHERE object_format=NEW.object_format AND object_oid=NEW.object_oid AND body<>NEW.body)\nBEGIN SELECT RAISE(ABORT,'conflicting exact note representation'); END"
           },
           "unique": [
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "physical_copy_uuidv4"
               ],
               "origin": "pk",
@@ -15363,7 +15363,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -15413,7 +15413,7 @@
               0,
               1,
               "git_objects",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -15422,24 +15422,24 @@
           ],
           "primary_key": [
             "object_format",
-            "full_oid",
+            "object_oid",
             "relation",
             "scope",
             "status",
             "membership",
             "provenance"
           ],
-          "sql": "CREATE TABLE relation_groups (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n relation TEXT NOT NULL, scope TEXT NOT NULL CHECK(length(scope)>0),\n status TEXT NOT NULL, membership TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),\n CHECK(p1_group(object_format,relation,status,membership)),\n PRIMARY KEY(object_format,full_oid,relation,scope,status,membership,provenance),\n UNIQUE(object_format,full_oid,relation,scope,provenance),\n FOREIGN KEY(object_format,full_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE relation_groups (\n object_format TEXT NOT NULL, object_oid TEXT NOT NULL,\n relation TEXT NOT NULL, scope TEXT NOT NULL CHECK(length(scope)>0),\n status TEXT NOT NULL, membership TEXT NOT NULL,\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),\n CHECK(p1_group(object_format,relation,status,membership)),\n PRIMARY KEY(object_format,object_oid,relation,scope,status,membership,provenance),\n UNIQUE(object_format,object_oid,relation,scope,provenance),\n FOREIGN KEY(object_format,object_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_relation_groups_delete": "CREATE TRIGGER p1_immutable_relation_groups_delete BEFORE DELETE ON relation_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_relation_groups_update": "CREATE TRIGGER p1_immutable_relation_groups_update BEFORE UPDATE ON relation_groups BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
-            "relation_targets": "CREATE TRIGGER relation_targets BEFORE INSERT ON relation_groups\nWHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects o WHERE o.object_format=json_extract(j.value,'$[1]')\n AND o.full_oid=json_extract(j.value,'$[2]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal relation target'); END"
+            "relation_targets": "CREATE TRIGGER relation_targets BEFORE INSERT ON relation_groups\nWHEN EXISTS(SELECT 1 FROM json_each(NEW.membership) j WHERE NOT EXISTS(\n SELECT 1 FROM git_objects o WHERE o.object_format=json_extract(j.value,'$[1]')\n AND o.object_oid=json_extract(j.value,'$[2]')))\nBEGIN SELECT RAISE(ABORT,'missing nominal relation target'); END"
           },
           "unique": [
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "provenance"
@@ -15450,7 +15450,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "relation",
                 "scope",
                 "status",
@@ -15572,7 +15572,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -15622,7 +15622,7 @@
               0,
               1,
               "git_objects",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -15631,12 +15631,12 @@
           ],
           "primary_key": [
             "object_format",
-            "full_oid",
+            "object_oid",
             "physical_copy_uuidv4"
           ],
-          "sql": "CREATE TABLE retained_metadata (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),\n native_type TEXT NOT NULL CHECK(native_type IN ('commit','tree','tag')),\n body BLOB NOT NULL, size INTEGER NOT NULL, digest_sha256 TEXT NOT NULL,\n CHECK(p1_native(object_format,full_oid,native_type,body,size,digest_sha256)),\n PRIMARY KEY(object_format,full_oid,physical_copy_uuidv4),\n FOREIGN KEY(object_format,full_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE retained_metadata (\n object_format TEXT NOT NULL, object_oid TEXT NOT NULL,\n physical_copy_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(physical_copy_uuidv4)),\n native_type TEXT NOT NULL CHECK(native_type IN ('commit','tree','tag')),\n body BLOB NOT NULL, size INTEGER NOT NULL, digest_sha256 TEXT NOT NULL,\n CHECK(p1_native(object_format,object_oid,native_type,body,size,digest_sha256)),\n PRIMARY KEY(object_format,object_oid,physical_copy_uuidv4),\n FOREIGN KEY(object_format,object_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "metadata_same_representation": "CREATE TRIGGER metadata_same_representation BEFORE INSERT ON retained_metadata\nWHEN EXISTS(SELECT 1 FROM retained_metadata WHERE object_format=NEW.object_format\n AND full_oid=NEW.full_oid AND (native_type<>NEW.native_type OR body<>NEW.body))\nBEGIN SELECT RAISE(ABORT,'conflicting exact metadata representation'); END",
+            "metadata_same_representation": "CREATE TRIGGER metadata_same_representation BEFORE INSERT ON retained_metadata\nWHEN EXISTS(SELECT 1 FROM retained_metadata WHERE object_format=NEW.object_format\n AND object_oid=NEW.object_oid AND (native_type<>NEW.native_type OR body<>NEW.body))\nBEGIN SELECT RAISE(ABORT,'conflicting exact metadata representation'); END",
             "p1_immutable_retained_metadata_delete": "CREATE TRIGGER p1_immutable_retained_metadata_delete BEFORE DELETE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_retained_metadata_update": "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
           },
@@ -15644,7 +15644,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "physical_copy_uuidv4"
               ],
               "origin": "pk",
@@ -15662,7 +15662,7 @@
             },
             {
               "generated": 0,
-              "name": "full_oid",
+              "name": "object_oid",
               "notnull": true,
               "type": "TEXT"
             },
@@ -15700,7 +15700,7 @@
               0,
               1,
               "git_objects",
-              "full_oid",
+              "object_oid",
               null,
               "NO ACTION",
               "NO ACTION",
@@ -15709,12 +15709,12 @@
           ],
           "primary_key": [
             "object_format",
-            "full_oid",
+            "object_oid",
             "field",
             "value",
             "provenance"
           ],
-          "sql": "CREATE TABLE scalar_claims (\n object_format TEXT NOT NULL, full_oid TEXT NOT NULL,\n field TEXT NOT NULL, value TEXT NOT NULL CHECK(p1_claim(field,value)),\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),\n PRIMARY KEY(object_format,full_oid,field,value,provenance),\n UNIQUE(object_format,full_oid,field,provenance),\n FOREIGN KEY(object_format,full_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE scalar_claims (\n object_format TEXT NOT NULL, object_oid TEXT NOT NULL,\n field TEXT NOT NULL, value TEXT NOT NULL CHECK(p1_claim(field,value)),\n provenance TEXT NOT NULL CHECK(p1_provenance(provenance)),\n PRIMARY KEY(object_format,object_oid,field,value,provenance),\n UNIQUE(object_format,object_oid,field,provenance),\n FOREIGN KEY(object_format,object_oid) REFERENCES git_objects\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "p1_immutable_scalar_claims_delete": "CREATE TRIGGER p1_immutable_scalar_claims_delete BEFORE DELETE ON scalar_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
             "p1_immutable_scalar_claims_update": "CREATE TRIGGER p1_immutable_scalar_claims_update BEFORE UPDATE ON scalar_claims BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
@@ -15723,7 +15723,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "field",
                 "provenance"
               ],
@@ -15733,7 +15733,7 @@
             {
               "columns": [
                 "object_format",
-                "full_oid",
+                "object_oid",
                 "field",
                 "value",
                 "provenance"

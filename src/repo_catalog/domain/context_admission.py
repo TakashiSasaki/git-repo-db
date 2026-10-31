@@ -270,7 +270,7 @@ def _selection_state(selection):
         if value is not None and member.name == "resource_keys":
             value = frozenset(key.coordinates() for key in value)
         elif value is not None and member.name == "object_oids":
-            value = frozenset(oid.key for oid in value)
+            value = frozenset(object_oid.key for object_oid in value)
         result.append(value)
     return tuple(result)
 

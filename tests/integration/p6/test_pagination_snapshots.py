@@ -61,9 +61,11 @@ def test_deterministic_pagination_across_all_endpoints(tmp_path: Path) -> None:
     # 1. Git objects pagination
     all_objs = service.list_git_objects(PageRequest(limit=100))
     paged_objs, _ = _collect_all_pages(service.list_git_objects, limit=2)
-    assert [o.oid for o in paged_objs] == [o.oid for o in all_objs.items]
+    assert [o.object_oid for o in paged_objs] == [o.object_oid for o in all_objs.items]
     assert len(paged_objs) == all_objs.total_count
-    assert [o.oid.key for o in paged_objs] == sorted(o.oid.key for o in paged_objs)
+    assert [o.object_oid.key for o in paged_objs] == sorted(
+        o.object_oid.key for o in paged_objs
+    )
 
     # 2. Git observations pagination
     all_obs = service.list_git_observations(PageRequest(limit=100))

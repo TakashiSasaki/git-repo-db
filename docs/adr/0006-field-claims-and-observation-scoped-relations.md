@@ -9,7 +9,7 @@
 
 ## 1. Decision: two different metadata units
 
-Each Git object has the **common nominal identity** `(object_format, oid)` already accepted in GCTX-M02. That common identity does not assert type, size, repository membership, object possession, or cryptographic verification. A usable Git Core metadata catalog must work with no canonical object bytes or Context DB (GCTX-M01).
+Each Git object has the **common nominal identity** `(object_format, object_oid)` already accepted in GCTX-M02. That common identity does not assert type, size, repository membership, object possession, or cryptographic verification. A usable Git Core metadata catalog must work with no canonical object bytes or Context DB (GCTX-M01).
 
 ### 1.1 Single-valued Git attributes: independent, typed claims
 

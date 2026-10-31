@@ -87,7 +87,7 @@ def request(repo, oid, *, notes=None):
         str(uuid4()),
         "synthetic",
         10,
-        select_oids=(oid,),
+        select_object_oids=(oid,),
         include_refs=False,
         notes=notes,
     )
@@ -245,7 +245,7 @@ def test_retry_preserves_notes_capture_and_all_copy_ids(tmp_path, git_format):
         notes=NotesAcquisitionSpec(
             discover_notes=True,
             acquire_inventories=True,
-            target_oids=(oids["commit2"],),
+            target_object_oids=(oids["commit2"],),
         ),
     )
     acq = GitAcquisition(cat, operational=cat)

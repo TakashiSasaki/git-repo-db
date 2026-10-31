@@ -109,7 +109,7 @@ def setup(tmp_path, request):
         str(uuid4()),
         "local-fixture",
         1700000000000000,
-        select_oids=(objects["commit2"], objects["tree"], objects["tag"]),
+        select_object_oids=(objects["commit2"], objects["tree"], objects["tag"]),
     )
     yield dict(
         fmt=fmt,
@@ -160,7 +160,7 @@ def usage(data):
 def test_nonseed_repository_acquires_actual_metadata(setup):
     report = acquire(setup, new_request=True)
     assert report.repository_uuidv4 == setup["target"] != setup["seed"]
-    assert set(report.retained_objects) == set(setup["unit"].select_oids)
+    assert set(report.retained_objects) == set(setup["unit"].select_object_oids)
     assert {r[0] for r in rows(setup, "repositories")} == {
         setup["target"],
         setup["seed"],
@@ -195,7 +195,7 @@ def test_nonseed_notes_reuse_original_capture_and_budget(setup):
         notes=NotesAcquisitionSpec(
             discover_notes=True,
             acquire_inventories=True,
-            target_oids=(setup["objects"]["commit2"],),
+            target_object_oids=(setup["objects"]["commit2"],),
         ),
     )
     first = acquire(setup, unit=unit, new_request=True)
@@ -372,7 +372,9 @@ def test_changed_request_oids_rejected_before_git(setup, monkeypatch):
     with pytest.raises(CoreFailure, match="original request cannot change"):
         acquire(
             setup,
-            unit=replace(setup["unit"], select_oids=(setup["objects"]["commit1"],)),
+            unit=replace(
+                setup["unit"], select_object_oids=(setup["objects"]["commit1"],)
+            ),
         )
 
 
@@ -411,7 +413,7 @@ def test_ordinary_blob_body_is_never_retained(setup):
     with pytest.raises(CoreFailure):
         acquire(
             setup,
-            unit=replace(setup["unit"], select_oids=(setup["objects"]["blob"],)),
+            unit=replace(setup["unit"], select_object_oids=(setup["objects"]["blob"],)),
             new_request=True,
         )
     assert (
@@ -428,7 +430,7 @@ def test_promised_missing_metadata_is_not_lazy_fetched(setup, monkeypatch):
     missing = OID(setup["fmt"], "f" * (40 if setup["fmt"] == "sha1" else 64))
     report = acquire(
         setup,
-        unit=replace(setup["unit"], select_oids=(missing,), include_refs=False),
+        unit=replace(setup["unit"], select_object_oids=(missing,), include_refs=False),
         new_request=True,
     )
     assert report.status == "unknown" and report.nominal_missing_objects == (missing,)
@@ -489,11 +491,11 @@ def test_plain_p5_native_scope_cannot_replay_under_another_repository(setup):
 
 
 def test_reviewed_request_cannot_be_mutated_by_confirmation_callback(setup):
-    original = setup["unit"].select_oids
+    original = setup["unit"].select_object_oids
 
     def confirm(doc):
         doc["request"]["selected"].clear()
-        object.__setattr__(setup["unit"], "select_oids", ())
+        object.__setattr__(setup["unit"], "select_object_oids", ())
         return True
 
     report = acquire(setup, new_request=True, reviewer=confirm)
@@ -516,7 +518,7 @@ def test_worktree_with_local_git_directory_is_supported(setup):
     shutil.copytree(original, setup["repo"] / ".git")
     git(setup["repo"], "config", "core.bare", "false")
     report = acquire(setup, new_request=True)
-    assert report.retained_objects == setup["unit"].select_oids
+    assert report.retained_objects == setup["unit"].select_object_oids
 
 
 @pytest.mark.parametrize(
@@ -639,8 +641,8 @@ def cli_args(setup):
         str(setup["unit"].observed_at_us),
         "--object-format",
         setup["fmt"],
-        "--oid",
-        setup["objects"]["commit2"].full_oid,
+        "--object-oid",
+        setup["objects"]["commit2"].object_oid,
         "--new-request",
     ]
 
@@ -675,7 +677,9 @@ def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys, notes):
     monkeypatch.setattr(sys, "stderr", Error())
     args = cli_args(setup)
     if notes:
-        args.extend(["--notes", "--note-target", setup["objects"]["commit2"].full_oid])
+        args.extend(
+            ["--notes", "--note-target", setup["objects"]["commit2"].object_oid]
+        )
     assert cli.main(args) == 0
     result = json.loads(capsys.readouterr().out)
     assert result["git_acquired"] is True
@@ -783,7 +787,7 @@ def ref_input_request(data, path="reported"):
     report = Provenance("external", "read", "result", "test", "1")
     root = data["objects"]["tree"]
     claim = RefObservationClaim(
-        subject.ref_observation_key, report, "present", root_oid=root
+        subject.ref_observation_key, report, "present", root_object_oid=root
     )
     group = NotesMappingGroup(
         claim,
@@ -792,7 +796,7 @@ def ref_input_request(data, path="reported"):
         "tree",
         "all",
         "complete",
-        ((root.full_oid, root.full_oid, path),),
+        ((root.object_oid, root.object_oid, path),),
         report,
     )
     return replace(

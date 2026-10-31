@@ -1,5 +1,9 @@
 # ADR 0036 I3 Exchange, Query and backup contract
 
+Current opt-in OID spelling and fresh-format versions follow the
+[OID naming contract](object-oid-naming-contract.md). Pinned baseline examples
+below retain their historical spelling and do not provide compatibility APIs.
+
 This describes the opt-in P1 I3 integration on top of I2. It does not activate
 the ordinary Schema 21 runtime, migrate existing catalogs, establish release
 acceptance, or authorize a merge. The fixed I1 and I2 contracts describe those

@@ -108,7 +108,7 @@ class ContextAdmission(Protocol):
         resource: ResourceKey,
         role: str,
         object_format: str,
-        full_oid: str,
+        object_oid: str,
         provenance_json: str,
         validate: Callable[[str, str], bool],
         *,

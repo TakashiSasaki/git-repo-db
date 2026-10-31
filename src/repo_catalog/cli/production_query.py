@@ -65,7 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_gobj = sub.add_parser("git-object", help="Query a single Git object by OID")
     _add_common_args(p_gobj)
     p_gobj.add_argument("--format", required=True, choices=("sha1", "sha256"))
-    p_gobj.add_argument("--oid", required=True)
+    p_gobj.add_argument("--object-oid", required=True)
     p_gobj.add_argument("--include-bytes", action="store_true")
 
     # git-objects
@@ -198,8 +198,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "snapshot_token": page.snapshot_token,
             }
         elif cmd == "git-object":
-            oid = OID(args.format, args.oid)
-            view = service.get_git_object(oid, include_bytes=args.include_bytes)
+            object_oid = OID(args.format, args.object_oid)
+            view = service.get_git_object(object_oid, include_bytes=args.include_bytes)
             payload = view.to_dict()
         elif cmd == "git-objects":
             page = service.list_git_objects(

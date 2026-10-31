@@ -60,7 +60,9 @@ def test_ref_body_real_commit_denial_rolls_back_and_retry_keeps_work(
     projection = app.core.notes_mapping_projection(
         claim, target, "git-notes", "1", "native-notes-tree", app.work
     )
-    assert projection.canonical_note_oid == note  # independently admitted role prefix
+    assert (
+        projection.canonical_note_object_oid == note
+    )  # independently admitted role prefix
     result = app.acquire_ref_note(claim, target, physical_copy_uuidv4=copy)
     assert result.body_retained and result.physical_copy_uuidv4 == copy
     assert (
@@ -159,15 +161,15 @@ def test_ref_narrow_path_and_body_refusal_preserve_role_reports(
 
     app, git_path, fmt, repository, origin, path, _ = acquisition
     _, target, note = fixtures.fixture_note(acquisition)
-    missing = OID(fmt, "b" * len(target.full_oid))
+    missing = OID(fmt, "b" * len(target.object_oid))
     root = fixtures.write(
         git_path,
         fmt,
         "tree",
-        fixtures.entry(b"100644", target.full_oid.encode(), note)
+        fixtures.entry(b"100644", target.object_oid.encode(), note)
         + fixtures.entry(b"40000", b"zz-unrelated", missing),
     )
-    fixtures.git(git_path, "update-ref", "refs/notes/nested/review", root.full_oid)
+    fixtures.git(git_path, "update-ref", "refs/notes/nested/review", root.object_oid)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
@@ -204,7 +206,7 @@ def test_ref_narrow_path_and_body_refusal_preserve_role_reports(
     after = app.core.notes_mapping_projection(
         claim, target, "git-notes", "1", "native-notes-tree", app.work
     )
-    assert after.canonical_note_oid == before.canonical_note_oid == note
+    assert after.canonical_note_object_oid == before.canonical_note_object_oid == note
     assert not app.core.sql("SELECT 1 FROM ref_retained_notes")
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
@@ -216,19 +218,19 @@ def test_ref_unsupported_or_ambiguous_native_path_never_grants_body(
     app, git_path, fmt, repository, origin, path, _ = acquisition
     _, target, note = fixtures.fixture_note(acquisition)
     if damage == "mode":
-        body = fixtures.entry(b"100755", target.full_oid.encode(), note)
+        body = fixtures.entry(b"100755", target.object_oid.encode(), note)
     else:
         inner = fixtures.write(
             git_path,
             fmt,
             "tree",
-            fixtures.entry(b"100644", target.full_oid[2:].encode(), note),
+            fixtures.entry(b"100644", target.object_oid[2:].encode(), note),
         )
         body = fixtures.entry(
-            b"40000", target.full_oid[:2].encode(), inner
-        ) + fixtures.entry(b"100644", target.full_oid.encode(), note)
+            b"40000", target.object_oid[:2].encode(), inner
+        ) + fixtures.entry(b"100644", target.object_oid.encode(), note)
     root = fixtures.write(git_path, fmt, "tree", body)
-    fixtures.git(git_path, "update-ref", "refs/notes/nested/review", root.full_oid)
+    fixtures.git(git_path, "update-ref", "refs/notes/nested/review", root.object_oid)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
@@ -260,7 +262,7 @@ def test_ref_group_insert_failure_rolls_back_new_objects_and_keeps_original(
     target, note = OID(fmt, "c" * width), OID(fmt, "d" * width)
     new = replace(
         original,
-        members=((target.full_oid, note.full_oid, target.full_oid),),
+        members=((target.object_oid, note.object_oid, target.object_oid),),
         provenance=replace(original.provenance, coordinate="independent-report"),
     )
     insert = app.core._insert
@@ -278,7 +280,7 @@ def test_ref_group_insert_failure_rolls_back_new_objects_and_keeps_original(
     assert not app.core._db.in_transaction
     for oid in (target, note):
         assert not app.core.sql(
-            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?", oid.key
+            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?", oid.key
         )
     projection = app.core.ref_notes_inventory_projection(claim, app.work)
     assert tuple(entry.group for entry in projection.groups) == (original,)

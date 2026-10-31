@@ -51,7 +51,12 @@ def test_git_acquisition_metadata_only_and_retained_modes(
         capture_uuidv4=cap_uuid,
         source_attribution="local-git-test",
         observed_at_us=1_700_000_500_000_000,
-        select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
+        select_object_oids=(
+            oids["commit1"],
+            oids["commit2"],
+            oids["tree"],
+            oids["tag"],
+        ),
         retain_bytes=False,
         include_refs=True,
     )
@@ -83,12 +88,12 @@ def test_git_acquisition_metadata_only_and_retained_modes(
         parents_proj = core_meta.relations(oids["commit2"], "commit_parents")
         assert len(parents_proj.alternatives) == 1
         assert parents_proj.alternatives[0]["membership"] == [
-            [0, git_format, oids["commit1"].full_oid]
+            [0, git_format, oids["commit1"].object_oid]
         ]
     finally:
         core_meta.close()
 
-    # 2. Hybrid mode (retain_oids={commit2, tag}) + P4 Notes discovery/inventory/note body
+    # 2. Hybrid mode (retain_object_oids={commit2, tag}) + P4 Notes discovery/inventory/note body
     cat_hybrid = tmp_path / "cat_hybrid"
     init_catalog_stores(
         cat_hybrid,
@@ -98,7 +103,7 @@ def test_git_acquisition_metadata_only_and_retained_modes(
     notes_spec = NotesAcquisitionSpec(
         discover_notes=True,
         acquire_inventories=True,
-        target_oids=(oids["commit2"],),
+        target_object_oids=(oids["commit2"],),
         retain_note_bodies=True,
     )
     req_hybrid = GitNativeAcquisitionRequest(
@@ -107,9 +112,14 @@ def test_git_acquisition_metadata_only_and_retained_modes(
         capture_uuidv4=str(uuid4()),
         source_attribution="local-git-test",
         observed_at_us=1_700_000_600_000_000,
-        select_oids=(oids["commit1"], oids["commit2"], oids["tree"], oids["tag"]),
+        select_object_oids=(
+            oids["commit1"],
+            oids["commit2"],
+            oids["tree"],
+            oids["tag"],
+        ),
         retain_bytes=False,
-        retain_oids=frozenset({oids["commit2"], oids["tag"]}),
+        retain_object_oids=frozenset({oids["commit2"], oids["tag"]}),
         notes=notes_spec,
     )
     acq_hybrid = GitAcquisition(cat_hybrid, operational=cat_hybrid)
@@ -177,7 +187,7 @@ def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
         capture_uuidv4=str(uuid4()),
         source_attribution="local-git",
         observed_at_us=1_700_000_000_000_000,
-        select_oids=(oids["blob"],),
+        select_object_oids=(oids["blob"],),
         include_refs=False,
     )
     with pytest.raises(CoreFailure) as exc_info:
@@ -192,7 +202,7 @@ def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
         capture_uuidv4=str(uuid4()),
         source_attribution="local-git",
         observed_at_us=1_700_000_100_000_000,
-        select_oids=(oids["commit1"], missing_oid),
+        select_object_oids=(oids["commit1"], missing_oid),
         include_refs=False,
     )
     report = acq.acquire_from_native(source, partial_req, new_request=True)
@@ -292,7 +302,7 @@ def test_native_ref_reads_pin_exact_result_and_preserve_symbolic_and_peeled(
         capture_uuidv4=str(uuid4()),
         source_attribution="local-i2",
         observed_at_us=1_700_000_500_000_000,
-        select_oids=(),
+        select_object_oids=(),
         retain_bytes=False,
         include_refs=True,
     )
@@ -304,10 +314,10 @@ def test_native_ref_reads_pin_exact_result_and_preserve_symbolic_and_peeled(
     symbolic = by_name[b"refs/heads/alias"]
     assert symbolic.ref_form == "symbolic"
     assert symbolic.symbolic_target_ref_name == b"refs/heads/main"
-    assert symbolic.resolved_target_oid == oids["commit2"]
-    assert symbolic.direct_target_oid is None
-    assert by_name[b"refs/tags/v1.0.0"].peeled_target_oid == oids["commit2"]
-    git(repo_path, "update-ref", "refs/heads/main", oids["commit1"].full_oid)
+    assert symbolic.resolved_target_object_oid == oids["commit2"]
+    assert symbolic.direct_target_object_oid is None
+    assert by_name[b"refs/tags/v1.0.0"].peeled_target_object_oid == oids["commit2"]
+    git(repo_path, "update-ref", "refs/heads/main", oids["commit1"].object_oid)
     replay = app.acquire_from_native(source, request)
     assert replay.ref_enumerations == first.ref_enumerations
     fresh_request = replace(request, capture_uuidv4=str(uuid4()))
@@ -316,7 +326,7 @@ def test_native_ref_reads_pin_exact_result_and_preserve_symbolic_and_peeled(
         link.observation.ref_name_bytes: link.claim
         for link in fresh.ref_enumerations[0].links
     }
-    assert newer[b"refs/heads/main"].root_oid == oids["commit1"]
+    assert newer[b"refs/heads/main"].root_object_oid == oids["commit1"]
     assert (
         newer[b"refs/heads/main"].ref_observation_key
         != by_name[b"refs/heads/main"].ref_observation_key
@@ -386,7 +396,7 @@ def test_native_ref_lossless_non_utf8_and_failed_lookup_no_absence(
             bytes(repo_path),
             b"update-ref",
             raw_name,
-            oids["commit1"].full_oid.encode(),
+            oids["commit1"].object_oid.encode(),
         ],
         check=True,
         capture_output=True,
@@ -400,7 +410,7 @@ def test_native_ref_lossless_non_utf8_and_failed_lookup_no_absence(
         str(uuid4()),
         "local",
         1_700_000_500_000_000,
-        select_oids=(),
+        select_object_oids=(),
         retain_bytes=False,
         nominated_ref_names=(b"refs/heads/missing",),
     )

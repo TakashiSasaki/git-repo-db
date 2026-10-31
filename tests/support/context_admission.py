@@ -294,7 +294,7 @@ def _extract_directory_context_grants(directory) -> DependencySet:
         try:
             with sqlite3.connect(db_path) as db:
                 for row in db.execute(
-                    "SELECT object_format, full_oid FROM core_references"
+                    "SELECT object_format, object_oid FROM core_references"
                 ):
                     from repo_catalog.domain.p1_core import OID
 
@@ -306,7 +306,7 @@ def _extract_directory_context_grants(directory) -> DependencySet:
             try:
                 with sqlite3.connect(core_path) as cdb:
                     for row in cdb.execute(
-                        "SELECT object_format, full_oid FROM git_objects"
+                        "SELECT object_format, object_oid FROM git_objects"
                     ):
                         from repo_catalog.domain.p1_core import OID
 
@@ -344,14 +344,14 @@ def extract_unit_dependencies(unit, directory=None) -> DependencySet:
     oids = set(deps.object_oids)
     if getattr(unit, "core_references", None):
         for cr, clock, us in unit.core_references:
-            if hasattr(cr, "oid"):
+            if hasattr(cr, "object_oid"):
                 oids.add(
-                    cr.oid
-                    if isinstance(cr.oid, OID)
-                    else OID(cr.oid.object_format, cr.oid.full_oid)
+                    cr.object_oid
+                    if isinstance(cr.object_oid, OID)
+                    else OID(cr.object_oid.object_format, cr.object_oid.object_oid)
                 )
-            elif hasattr(cr, "object_format") and hasattr(cr, "full_oid"):
-                oids.add(OID(cr.object_format, cr.full_oid))
+            elif hasattr(cr, "object_format") and hasattr(cr, "object_oid"):
+                oids.add(OID(cr.object_format, cr.object_oid))
     result = deps | DependencySet(
         sources=frozenset(sources), object_oids=frozenset(oids)
     )
@@ -423,7 +423,7 @@ def extract_batch_dependencies(batch, directory=None) -> DependencySet:
         deps |= dependencies(batch.coverage_claims)
     if getattr(batch, "core_references", ()):
         oids = {
-            OID(cr.object_format, cr.full_oid)
+            OID(cr.object_format, cr.object_oid)
             for cr, clock, us in batch.core_references
         }
         deps |= DependencySet(object_oids=frozenset(oids))
@@ -974,11 +974,11 @@ class AuthorizedPairedAcquisitionCoordinator(PairedAcquisitionCoordinator):
                     def resource(self, rk):
                         self.resources.add(rk)
 
-                    def link_core(self, rk, role, fmt, full_oid, prov, val=None):
+                    def link_core(self, rk, role, fmt, object_oid, prov, val=None):
                         self.resources.add(rk)
                         from repo_catalog.domain.p1_core import OID
 
-                        self.oids.add(OID(fmt, full_oid))
+                        self.oids.add(OID(fmt, object_oid))
 
                     def __getattr__(self, name):
                         return lambda *args, **kwargs: None

@@ -376,7 +376,9 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
         ):
             row["target_json"] = "null"
     before = rows(c, "core", "git_objects")
-    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    package.core["git_objects"].append(
+        {"object_format": "sha1", "object_oid": "2" * 40}
+    )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(c, changed, (r1, r2))
@@ -479,7 +481,9 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
     )
     before = rows(b, "core", "git_objects")
     package.context["repository_mapping_dispositions"][0]["observed_at_us"] += 1
-    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    package.core["git_objects"].append(
+        {"object_format": "sha1", "object_oid": "2" * 40}
+    )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(
@@ -502,7 +506,7 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
 
     seed = catalog(tmp_path)
     data = empty_core_section()
-    data["git_objects"] = [{"object_format": "sha1", "full_oid": "a" * 40}]
+    data["git_objects"] = [{"object_format": "sha1", "object_oid": "a" * 40}]
     ctxdata = empty_context_section()
     service = str(uuid4())
     ctxdata["providers"] = [
@@ -579,9 +583,9 @@ def test_bounded_typed_core_graph_and_shared_oid_identity(tmp_path):
     )
     package = ExchangeService(tmp_path).export_package(selection=selected)
     assert {
-        (r["object_format"], r["full_oid"]) for r in package.core["git_objects"]
+        (r["object_format"], r["object_oid"]) for r in package.core["git_objects"]
     } == {one.key, two.key}
-    assert any(r["full_oid"] == two.full_oid for r in package.core["scalar_claims"])
+    assert any(r["object_oid"] == two.object_oid for r in package.core["scalar_claims"])
     assert package.selection_report["dependency_reasons"]
     package = ExchangeService(tmp_path).export_package(
         selection=replace(selected, max_depth=8)
@@ -767,7 +771,7 @@ def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
     seed = catalog(tmp_path)
     unknown = str(uuid4())
     data = empty_core_section()
-    data["git_objects"] = [{"object_format": "sha1", "full_oid": "b" * 40}]
+    data["git_objects"] = [{"object_format": "sha1", "object_oid": "b" * 40}]
     data["repository_claims"] = [
         {
             "repository_uuidv4": unknown,
@@ -797,11 +801,11 @@ def test_malformed_scalar_tag_cannot_be_reencoded_as_known_claim(tmp_path):
 
     seed = catalog(tmp_path)
     data = empty_core_section()
-    data["git_objects"] = [{"object_format": "sha1", "full_oid": "c" * 40}]
+    data["git_objects"] = [{"object_format": "sha1", "object_oid": "c" * 40}]
     data["scalar_claims"] = [
         {
             "object_format": "sha1",
-            "full_oid": "c" * 40,
+            "object_oid": "c" * 40,
             "field": "size",
             "value_json": '["bogus",1]',
             "provenance_json": Provenance(
@@ -983,7 +987,7 @@ def test_caller_mutation_after_preflight_cannot_change_bound_content(
     def mutate(point):
         if point == "after_preflight":
             data = raw["core"] if raw_dict else raw.core
-            data["git_objects"][0]["full_oid"] = "2" * 40
+            data["git_objects"][0]["object_oid"] = "2" * 40
 
     report = receive(b, raw, (r1, r2), cut=mutate)
     assert report.package_digest_sha256 == original_digest
@@ -1100,7 +1104,9 @@ def test_existing_relation_time_conflict_rejected_before_independent_core_commit
     receive(b, package, (r1, r2))
     before = rows(b, "core", "git_objects")
     package.context["resource_repository_relations"][0]["observed_at_us"] += 1
-    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    package.core["git_objects"].append(
+        {"object_format": "sha1", "object_oid": "2" * 40}
+    )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(b, changed, (r1, r2))
@@ -1180,7 +1186,9 @@ def test_collection_scope_binding_rejected_before_core_commit(tmp_path, existing
     package.context["collections"] = (
         [changed_row] if existing else [original, changed_row]
     )
-    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    package.core["git_objects"].append(
+        {"object_format": "sha1", "object_oid": "2" * 40}
+    )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(b, changed, (r1, r2))
@@ -1279,7 +1287,9 @@ def test_core_immutable_unique_payload_preflight(tmp_path, section, existing):
     elif section == "relation_groups":
         changed_row["status"] = "unknown"
     package.core[section] = [changed_row] if existing else [original, changed_row]
-    package.core["git_objects"].append({"object_format": "sha1", "full_oid": "2" * 40})
+    package.core["git_objects"].append(
+        {"object_format": "sha1", "object_oid": "2" * 40}
+    )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(b, changed, (r1, r2))

@@ -39,10 +39,10 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
     )
     width = 40 if fmt == "sha1" else 64
     nominal = OID(fmt, "a" * width)
-    tree = make_tree(fmt, [(b"100644", b"not-archived", nominal.full_oid)])
-    commit = make_commit(fmt, tree.oid.full_oid, [], message="post-backup\n")
-    tag = make_tag(fmt, commit.oid.full_oid)
-    originals = {obj.oid: (obj, str(uuid4())) for obj in (tree, commit, tag)}
+    tree = make_tree(fmt, [(b"100644", b"not-archived", nominal.object_oid)])
+    commit = make_commit(fmt, tree.object_oid.object_oid, [], message="post-backup\n")
+    tag = make_tag(fmt, commit.object_oid.object_oid)
+    originals = {obj.object_oid: (obj, str(uuid4())) for obj in (tree, commit, tag)}
     bad_copy = str(uuid4())
     with closing(GitCore(source / "core.sqlite3")) as core:
         core.admit_object(nominal)
@@ -89,7 +89,7 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
     }
     for row in retained:
         payload = row["payload"]
-        obj, copy = originals[OID(payload["object_format"], payload["full_oid"])]
+        obj, copy = originals[OID(payload["object_format"], payload["object_oid"])]
         assert payload["native_type"] == obj.native_type
         assert base64.b64decode(payload["body_base64"]) == obj.body
         assert payload["physical_copy_uuidv4"] == copy
@@ -115,9 +115,9 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
     )
     service = ProductionQueryService(fresh)
     for obj, _ in originals.values():
-        read = service.read_metadata_bytes(obj.oid)
+        read = service.read_metadata_bytes(obj.object_oid)
         assert read.available and read.verified
-        assert service.get_git_object(obj.oid).native_type == obj.native_type
+        assert service.get_git_object(obj.object_oid).native_type == obj.native_type
         assert read.body_bytes == obj.body
     with closing(GitCore(fresh / "core.sqlite3")) as core:
         assert {
@@ -125,7 +125,7 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
             for row in core.sql("SELECT physical_copy_uuidv4 FROM retained_metadata")
         } == {copy for _, copy in originals.values()}
         assert core.sql(
-            "SELECT 1 FROM git_objects WHERE object_format=? AND full_oid=?",
+            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
             nominal.key,
         )
     if paired:

@@ -75,7 +75,7 @@ def test_existing_copy_resource_refusal_never_claims_corruption(
             table,
             (
                 payload["object_format"],
-                payload["full_oid"],
+                payload["object_oid"],
                 payload["physical_copy_uuidv4"],
             ),
             budget,

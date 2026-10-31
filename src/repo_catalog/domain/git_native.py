@@ -60,7 +60,7 @@ def headers(body: bytes, kind: str) -> tuple[list[tuple[bytes, bytes]], bytes, b
 def _oid(fmt: str, raw: bytes, kind: str) -> OID:
     try:
         result = OID(fmt, raw.decode("ascii"))
-        if not any(char != "0" for char in result.full_oid):
+        if not any(char != "0" for char in result.object_oid):
             _fail(kind, "null native object reference")
         return result
     except (UnicodeError, CoreFailure) as error:

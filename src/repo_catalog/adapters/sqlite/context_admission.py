@@ -67,7 +67,7 @@ def _dependencies(name, values):
         from repo_catalog.domain.p1_core import OID
 
         result |= DependencySet(
-            object_oids={OID(values["object_format"], values["full_oid"])}
+            object_oids={OID(values["object_format"], values["object_oid"])}
         )
     repositories = set(result.repositories)
     sources = set(result.sources)
