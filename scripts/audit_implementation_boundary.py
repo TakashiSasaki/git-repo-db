@@ -17,7 +17,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from audit_callsite_dependencies import is_baseline_source  # noqa: E402
+from audit_callsite_dependencies import (  # noqa: E402
+    SOURCE_ROOTS,
+    is_baseline_source,
+    source_files,
+)
 from schema_inventory import introspect_all  # noqa: E402
 
 OUTPUT = ROOT / "docs/implementation"
@@ -32,7 +36,7 @@ def source_references(names: set[str]) -> dict[str, list[dict]]:
     """
     result: dict[str, list[dict]] = {name: [] for name in names}
     token = re.compile(r"\b(" + "|".join(sorted(names)) + r")\b")
-    for path in sorted((ROOT / "src").rglob("*.py")):
+    for path in source_files():
         if not is_baseline_source(path):
             continue
         content = path.read_text()
@@ -138,7 +142,10 @@ def build() -> tuple[dict, str]:
         "inputs": [
             "src/repo_catalog/adapters/sqlite/schema.py",
             "src/repo_catalog/resources/*.sql composed by schema.py",
-            "src/**/*.py lexical references",
+            *[
+                f"{source.relative_to(ROOT).as_posix()}/**/*.py lexical references"
+                for source in SOURCE_ROOTS
+            ],
             "docs/implementation/table-disposition.json explicit authored dispositions",
         ],
         "checks": [

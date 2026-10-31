@@ -323,3 +323,83 @@ def test_documentation_bytes_reuse_product_cache_but_root_edits_invalidate(
     )
     assert inputs() != identity
     assert build_once(cache, products, inputs=inputs) != first
+
+
+def test_selected_workspace_distribution_and_sibling_inputs_are_cache_identity(
+    source, tmp_path
+):
+    workspace = tmp_path / "workspace"
+    shutil.copytree(source, workspace)
+    child = workspace / "packages/core"
+    shutil.copytree(source, child)
+    root_config = workspace / "pyproject.toml"
+    root_config.write_text(
+        root_config.read_text() + '\n[tool.uv.workspace]\nmembers = ["packages/core"]\n'
+    )
+    child_config = child / "pyproject.toml"
+    child_config.write_text(
+        child_config.read_text().replace(
+            'name="repo-catalog"', 'name="repo-catalog-core"'
+        )
+    )
+    before = package_build_inputs(workspace, {})
+    selected_core = package_build_inputs(child, {})
+    assert before != selected_core
+    resource = child / "src/repo_catalog/schema.sql"
+    # The specimen's runtime source set is finite; use a new classified resource
+    # to show a same-path checkout edit affects both owning and composed builds.
+    resource.write_text("SELECT 1;")
+    assert package_build_inputs(workspace, {}) != before
+    assert package_build_inputs(child, {}) != selected_core
+    old = package_build_inputs(child, {})
+    root_config.write_text(root_config.read_text() + "# changed workspace metadata\n")
+    assert package_build_inputs(child, {}) != old
+    for name, content in (
+        ("hatch.toml", "[build]\nignore-vcs = true\n"),
+        ("hatch_build.py", "# changed sibling backend hook\n"),
+        ("uv.toml", "offline = true\n"),
+    ):
+        old_root = package_build_inputs(workspace, {})
+        control = child / name
+        control.write_text(content)
+        assert package_build_inputs(workspace, {}) != old_root
+        control.unlink()
+        assert package_build_inputs(workspace, {}) == old_root
+    old = package_build_inputs(child, {})
+    (workspace / "uv.lock").write_text("changed shared dependency lock")
+    assert package_build_inputs(child, {}) != old
+
+
+def test_cached_dependency_artifact_tampering_is_rejected(tmp_path):
+    def build(root):
+        result = products(root)
+        dependency = root / "dependencies/contract.whl"
+        dependency.parent.mkdir()
+        dependency.write_bytes(b"original dependency")
+        result["sdist_contract"].write_text(
+            json.dumps(
+                {
+                    "dependencies": [
+                        {
+                            "wheel": {
+                                "path": str(dependency.relative_to(root)),
+                                "sha256": hashlib.sha256(
+                                    dependency.read_bytes()
+                                ).hexdigest(),
+                            }
+                        }
+                    ],
+                }
+            )
+        )
+        return result
+
+    cached = build_once(tmp_path, build, inputs=lambda: "e" * 64)
+    dependency = cached["wheel"].parent / "dependencies/contract.whl"
+    dependency.write_bytes(b"tampered dependency")
+    with pytest.raises(ValueError, match="Dependency build product changed"):
+        build_once(
+            tmp_path,
+            lambda _: pytest.fail("must not rebuild silently"),
+            inputs=lambda: "e" * 64,
+        )

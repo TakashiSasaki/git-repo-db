@@ -162,12 +162,12 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.p1_context import (
     validate_timeline_event_coordinates as validate_timeline_event_coordinates,
 )
-from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.parent_report import ParentReportKey, validate_parent_report
 from repo_catalog.domain.resource_identification import (
     ResourceIdentification,
     require_identification,
 )
+from repo_catalog.domain.shared_values import OID
 from repo_catalog.domain.time import (
     validate_observation_us,
     validate_required_observation_us,

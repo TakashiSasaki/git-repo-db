@@ -28,7 +28,7 @@ opens three databases or that all deployments have a fixed file count.
 
 ## Optional implemented surfaces and accepted target
 
-The opt-in [P1 factory](../src/repo_catalog/adapters/sqlite/p1_schema.py) lists
+The opt-in [P1 factory](../packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py) lists
 four entries: Core, Context, Operational and Search. It is not the complete
 five-responsibility target and is not the normal CLI initializer. Independent
 Access has its own opt-in [schema](../src/repo_catalog/adapters/sqlite/access_schema.py)

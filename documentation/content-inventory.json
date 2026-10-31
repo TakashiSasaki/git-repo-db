@@ -11387,6 +11387,15 @@
         "docs/adr/0038-scoped-recovery-and-optional-initialization.md"
       ],
       "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
+    },
+    "docs/implementation/minimal-core-distribution.md": {
+      "status": "implementation-handoff",
+      "owner": "docs/implementation/",
+      "authority": "Bounded OP-01 engineering ownership/build rationale under accepted ADR0037/0038; implementation and executed evidence remain separate.",
+      "source": "docs/implementation/minimal-core-distribution.md",
+      "producer": "A+B source and distribution implementation.",
+      "consumers": "Implementers and independent reviewers of the minimal Core distribution boundary.",
+      "publication": "not staged"
     }
   }
 }

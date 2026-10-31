@@ -41,6 +41,7 @@ on:
       - 'docs/architecture/access-store-design.md'
       - 'scripts/**'
       - 'src/**'
+      - 'packages/**'
       # Transitive Python inputs executed by schema_viz.py --check.
       - 'src/repo_catalog/__init__.py'
       - 'src/repo_catalog/adapters/sqlite/cas_integrity.py'
@@ -96,6 +97,7 @@ on:
       - 'docs/architecture/access-store-design.md'
       - 'scripts/**'
       - 'src/**'
+      - 'packages/**'
       # Transitive Python inputs executed by schema_viz.py --check.
       - 'src/repo_catalog/__init__.py'
       - 'src/repo_catalog/adapters/sqlite/cas_integrity.py'

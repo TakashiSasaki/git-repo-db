@@ -244,7 +244,7 @@ apply every bound/Unicode check of _parse_canonical_json. Do not infer uniform
 validation from shared names. Reproduce the source inventory with:
 
 ```sh
-rg -n 'def canonical|def _parse_canonical_json|ensure_ascii|def _json' src/repo_catalog/domain/p1_context.py src/repo_catalog/adapters/sqlite/p1_schema.py
+rg -n 'def canonical|def _parse_canonical_json|ensure_ascii|def _json' src/repo_catalog/domain/p1_context.py packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py
 rg -n '_canonical_content|ensure_ascii|digest_sha256|verify_digest' src/repo_catalog/domain/exchange.py
 ```
 

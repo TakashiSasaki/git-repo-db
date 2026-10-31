@@ -39,7 +39,6 @@ STEPS = (
     "product_preflight",
     "final_verification",
 )
-LOCKED_INPUTS = ("uv.lock", "pyproject.toml")
 UV_INSTALL = "https://docs.astral.sh/uv/getting-started/installation/"
 
 
@@ -284,7 +283,10 @@ def bootstrap(root, args, recorder, receipt):
         CI_PRODUCT_PYTHON=str(selected),
         CI_RUNTIME_REFERENCE=str(root / local_env.REFERENCE),
     )
-    inputs_before = {name: local_env.digest(root / name) for name in LOCKED_INPUTS}
+    inputs_before = {
+        name: local_env.digest(root / name)
+        for name in local_env.locked_input_names(root)
+    }
 
     recorder.begin("identity_before_dependencies")
     before = probe(selected, root, environment, "selected.json")
@@ -320,7 +322,10 @@ def bootstrap(root, args, recorder, receipt):
     synchronized = execute(
         [tools["uv"]["path"], *command[1:]], environment, root, "uv sync"
     )
-    inputs_after = {name: local_env.digest(root / name) for name in LOCKED_INPUTS}
+    inputs_after = {
+        name: local_env.digest(root / name)
+        for name in local_env.locked_input_names(root)
+    }
     if inputs_after != inputs_before:
         raise SetupFailure("uv.lock or pyproject.toml changed during synchronization")
     view = local_env.check_venv(root / ".venv", Path(before["base_executable"]))

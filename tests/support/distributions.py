@@ -5,15 +5,18 @@ import hashlib
 import inspect
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tarfile
+import tomllib
 from pathlib import Path
 
 from scripts.check_sdist_contract import (
     check_sdist,
     compare_wheels,
+    distribution_workspace,
     save,
     source_inventory,
 )
@@ -57,15 +60,54 @@ def package_build_runner(args, cwd, env):
     return result.stdout
 
 
-def make_package_distributions(work, root=None, env=None, wheelhouse=None, runner=None):
+def dependency_projects(root):
+    """Return transitive local dependencies in dependency-before-dependent order."""
+    root = Path(root).resolve()
+    _, projects = distribution_workspace(root)
+    by_name = {}
+    for project in projects:
+        metadata = tomllib.loads((project / "pyproject.toml").read_text())["project"]
+        by_name[metadata["name"]] = (project, metadata)
+    result, active, visited = [], set(), set()
+
+    def visit(project):
+        if project in active:
+            raise ValueError("Cyclic product distribution dependencies")
+        if project in visited:
+            return
+        active.add(project)
+        metadata = tomllib.loads((project / "pyproject.toml").read_text())["project"]
+        for requirement in metadata.get("dependencies", []):
+            name = re.match(r"[A-Za-z0-9_.-]+", requirement).group()
+            if name in by_name:
+                visit(by_name[name][0])
+        active.remove(project)
+        visited.add(project)
+        if project != root:
+            result.append(project)
+
+    visit(root)
+    return result
+
+
+def make_package_distributions(
+    work, root=None, env=None, wheelhouse=None, runner=None, *, _built=None
+):
     """Build wheel, sdist, requirements and sdist-wheel into work directory."""
     if root is None:
         root = Path(__file__).resolve().parents[2]
+    root = Path(root).resolve()
+    if _built is None:
+        _built = {}
+    workspace, projects = distribution_workspace(root)
     if env is None:
         env = package_build_environment()
+    env = dict(env)
     if wheelhouse is None:
         wheelhouse = Path(
-            os.environ.get("REPO_CATALOG_WHEELHOUSE", root / "artifacts/wheelhouse")
+            os.environ.get(
+                "REPO_CATALOG_WHEELHOUSE", workspace / "artifacts/wheelhouse"
+            )
         ).resolve()
 
     offline_sources = []
@@ -80,12 +122,32 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None, runne
             return runner(args, cwd, env)
         return package_build_runner(args, cwd, env)
 
+    selection = []
+    if len(projects) > 1:
+        name = tomllib.loads((root / "pyproject.toml").read_text())["project"]["name"]
+        selection = ["--package", name]
     checked(
-        ["uv", "build", "--sdist", *offline_sources, "--out-dir", work / "dist"],
+        [
+            "uv",
+            "build",
+            *selection,
+            "--sdist",
+            *offline_sources,
+            "--out-dir",
+            work / "dist",
+        ],
         cwd=root,
     )
     checked(
-        ["uv", "build", "--wheel", *offline_sources, "--out-dir", work / "dist"],
+        [
+            "uv",
+            "build",
+            *selection,
+            "--wheel",
+            *offline_sources,
+            "--out-dir",
+            work / "dist",
+        ],
         cwd=root,
     )
     sdist = next((work / "dist").glob("*.tar.gz"))
@@ -96,7 +158,8 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None, runne
             "export",
             "--locked",
             "--no-dev",
-            "--no-emit-project",
+            "--no-emit-workspace",
+            *selection,
             "--format",
             "requirements-txt",
             "--output-file",
@@ -104,6 +167,40 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None, runne
         ],
         cwd=root,
     )
+    local_requirements = []
+    local_products = []
+    for dependency in dependency_projects(root):
+        if dependency not in _built:
+            target = work / "dependencies" / dependency.name
+            target.mkdir(parents=True)
+            _built[dependency] = make_package_distributions(
+                target,
+                dependency,
+                env,
+                wheelhouse=wheelhouse,
+                runner=runner,
+                _built=_built,
+            )
+        products = _built[dependency]
+        local_products.append(
+            {
+                key: {
+                    "path": os.path.relpath(products[key], work),
+                    "sha256": hashlib.sha256(
+                        Path(products[key]).read_bytes()
+                    ).hexdigest(),
+                }
+                for key in ("wheel", "sdist_wheel", "sdist", "sdist_contract")
+            }
+        )
+        wheel = products["wheel"]
+        digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
+        local_requirements.append(
+            f"{wheel.resolve().as_uri()} --hash=sha256:{digest}\n"
+        )
+    if local_requirements:
+        with (work / "requirements.txt").open("a") as stream:
+            stream.writelines(local_requirements)
     with tarfile.open(sdist) as archive:
         archive.extractall(work / "sdist", filter="data")
     source = next((work / "sdist").iterdir())
@@ -120,6 +217,7 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None, runne
     )
     direct = next((work / "dist").glob("*.whl"))
     derived = next((work / "sdist-wheel").glob("*.whl"))
+    contract["dependencies"] = local_products
     contract["wheel_equivalence"] = compare_wheels(
         direct, derived, sdist_metadata=contract["members"]["PKG-INFO"]["sha256"]
     )
@@ -131,6 +229,22 @@ def make_package_distributions(work, root=None, env=None, wheelhouse=None, runne
         "sdist_wheel": derived,
         "requirements": work / "requirements.txt",
     }
+
+
+def dependency_wheels(products, variant="wheel"):
+    """Get a selected variant's strictly built sibling artifacts from its receipt."""
+    if variant not in {"wheel", "sdist_wheel"}:
+        raise ValueError("Unknown wheel variant")
+    receipt = Path(products["sdist_contract"])
+    contract = json.loads(receipt.read_text())
+    result = []
+    for dependency in contract.get("dependencies", []):
+        item = dependency[variant]
+        path = (receipt.parent / item["path"]).resolve()
+        if hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
+            raise ValueError("Dependency wheel hash differs from checked artifact")
+        result.append(path)
+    return result
 
 
 def uv_configuration_files(env):
@@ -229,7 +343,12 @@ def package_build_inputs(root, env, wheelhouse=None, runner=None):
     required inputs and linked inputs fail before any cached artifact is returned.
     """
     root = Path(root).resolve()
+    workspace, projects = distribution_workspace(root)
     inventory = source_inventory(root)
+    for project in projects:
+        prefix = "workspace/" + project.relative_to(workspace).as_posix()
+        for name, detail in source_inventory(project).items():
+            inventory[prefix + "/" + name] = detail
     for path in sorted((root / "src/repo_catalog").rglob("*")):
         if "__pycache__" in path.parts or path.suffix in (".pyc", ".pyo"):
             continue
@@ -239,7 +358,7 @@ def package_build_inputs(root, env, wheelhouse=None, runner=None):
             inventory[path.relative_to(root).as_posix()] = {
                 "sha256": hashlib.sha256(path.read_bytes()).hexdigest()
             }
-    lock = root / "uv.lock"
+    lock = workspace / "uv.lock"
     if lock.is_symlink():
         raise ValueError("Linked dependency lock")
     # Archive attack specimens need not contain a lock, but absence is part of
@@ -249,7 +368,7 @@ def package_build_inputs(root, env, wheelhouse=None, runner=None):
     )
     if wheelhouse is None:
         wheelhouse = Path(
-            env.get("REPO_CATALOG_WHEELHOUSE", root / "artifacts/wheelhouse")
+            env.get("REPO_CATALOG_WHEELHOUSE", workspace / "artifacts/wheelhouse")
         )
     wheelhouse = Path(wheelhouse)
     wheels = {}
@@ -263,9 +382,15 @@ def package_build_inputs(root, env, wheelhouse=None, runner=None):
     if (wheelhouse / "manifest.json").is_file():
         effective_env["REPO_CATALOG_WHEELHOUSE"] = str(wheelhouse.resolve())
     contract = {
-        "schema": 1,
+        "schema": 2,
+        "selected_distribution": root.relative_to(workspace).as_posix(),
         "source": inventory,
-        "backend_controls": backend_control_inputs(root, env),
+        "backend_controls": {
+            project.relative_to(workspace).as_posix(): backend_control_inputs(
+                project, env
+            )
+            for project in projects
+        },
         "wheelhouse": wheels,
         "builder": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "sdist_checker": hashlib.sha256(
@@ -449,6 +574,19 @@ def build_once(directory, build, *, inputs):
             if hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
                 raise ValueError("Package build product changed after publication")
             products[key] = path
+        try:
+            dependency_contract = json.loads(products["sdist_contract"].read_text())
+        except (ValueError, UnicodeDecodeError):
+            dependency_contract = {}  # Generic build_once unit products have no package receipt.
+        for dependency in dependency_contract.get("dependencies", []):
+            for item in dependency.values():
+                path = (products["sdist_contract"].parent / item["path"]).resolve()
+                if not path.is_relative_to(root.resolve()):
+                    raise ValueError("Dependency build product escaped its invocation")
+                if hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
+                    raise ValueError(
+                        "Dependency build product changed after publication"
+                    )
         if (
             inputs() != source_fingerprint
             or build_cache_key(cache_directory, source_fingerprint) != fingerprint

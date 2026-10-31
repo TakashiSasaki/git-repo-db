@@ -19,6 +19,8 @@
       "src/repo_catalog/adapters/sqlite/schema.py",
       "src/repo_catalog/resources/*.sql composed by schema.py",
       "src/**/*.py lexical references",
+      "packages/core/src/**/*.py lexical references",
+      "packages/contracts/src/**/*.py lexical references",
       "docs/implementation/table-disposition.json explicit authored dispositions"
     ],
     "limits": [

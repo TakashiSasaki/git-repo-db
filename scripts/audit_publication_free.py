@@ -13,7 +13,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+for source in (
+    ROOT / "src",
+    ROOT / "packages/core/src",
+    ROOT / "packages/contracts/src",
+):
+    sys.path.insert(0, str(source))
 from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402
     register_git_object_sql_function,
 )

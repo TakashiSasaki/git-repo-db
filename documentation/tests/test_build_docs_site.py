@@ -312,12 +312,12 @@ def test_pages_trigger_paths_decision_matrix():
             "Mixed site and internal-documentation changes",
         ),
         (
-            ["src/repo_catalog/adapters/sqlite/p1_ddl/core.sql"],
+            ["packages/core/src/repo_catalog/adapters/sqlite/p1_ddl/core.sql"],
             True,
             "Selected producer source includes opt-in P1-P7 target schema DDL not yet visualized on site",
         ),
         (
-            ["src/repo_catalog/adapters/sqlite/p1_schema.py"],
+            ["packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py"],
             True,
             "Selected producer source includes opt-in P1-P7 target schema code not yet visualized on site",
         ),
@@ -330,13 +330,14 @@ def test_pages_trigger_paths_decision_matrix():
         )
 
 
-def test_pages_trigger_covers_executed_schema_dependencies():
+def test_pages_trigger_covers_executed_schema_dependencies(product_source_env):
     """A schema-check dependency change must trigger the complete Pages build."""
     root = Path(__file__).resolve().parents[2]
     probe = """
 import json, runpy, sys
 from pathlib import Path
 root = Path.cwd()
+source_roots = [root / 'src/repo_catalog', root / 'packages/core/src/repo_catalog', root / 'packages/contracts/src/repo_catalog']
 sys.argv = ['scripts/schema_inventory.py', '--check']
 try:
     runpy.run_path('scripts/schema_inventory.py', run_name='__main__')
@@ -346,19 +347,21 @@ loaded = sorted({
     Path(module.__file__).relative_to(root).as_posix()
     for module in tuple(sys.modules.values())
     if getattr(module, '__file__', None)
-    and str(root / 'src/repo_catalog') in module.__file__
+    and any(Path(module.__file__).resolve().is_relative_to(source) for source in source_roots)
 })
 print('DEPENDENCIES=' + json.dumps(loaded))
 """
     result = subprocess.run(
         [sys.executable, "-c", probe],
         cwd=root,
+        env=product_source_env,
         capture_output=True,
         text=True,
         check=True,
     )
     loaded = json.loads(result.stdout.split("DEPENDENCIES=", 1)[1])
     assert "src/repo_catalog/adapters/sqlite/git_intrinsic.py" in loaded
+    assert any(path.startswith("packages/contracts/src/") for path in loaded)
     cfg = yaml.safe_load((root / ".github/workflows/pages.yml").read_text())
     triggers = cfg.get("on") or cfg[True]
     for event in ("push", "pull_request"):

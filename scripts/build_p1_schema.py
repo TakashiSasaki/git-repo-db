@@ -7,7 +7,9 @@ from pathlib import Path
 from repo_catalog.adapters.sqlite.p1_schema import expected_ddl_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json"
+OUTPUT = (
+    ROOT / "packages/core/src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json"
+)
 
 
 def main():

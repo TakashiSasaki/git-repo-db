@@ -2,6 +2,13 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
+[manifest]
+members = [
+    "repo-catalog",
+    "repo-catalog-contracts",
+    "repo-catalog-core",
+]
+
 [[package]]
 name = "anyio"
 version = "4.15.1"
@@ -234,6 +241,8 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "repo-catalog-contracts" },
+    { name = "repo-catalog-core" },
 ]
 
 [package.dev-dependencies]
@@ -246,7 +255,11 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "httpx", specifier = ">=0.28,<1" }]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28,<1" },
+    { name = "repo-catalog-contracts", editable = "packages/contracts" },
+    { name = "repo-catalog-core", editable = "packages/core" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -256,6 +269,22 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "ruff", specifier = ">=0.14,<1" },
 ]
+
+[[package]]
+name = "repo-catalog-contracts"
+version = "0.2.0"
+source = { editable = "packages/contracts" }
+
+[[package]]
+name = "repo-catalog-core"
+version = "0.2.0"
+source = { editable = "packages/core" }
+dependencies = [
+    { name = "repo-catalog-contracts" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "repo-catalog-contracts", editable = "packages/contracts" }]
 
 [[package]]
 name = "rpds-py"

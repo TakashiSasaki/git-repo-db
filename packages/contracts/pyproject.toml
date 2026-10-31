@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repo-catalog-contracts"
+version = "0.2.0"
+description = "Shared nominal values and read contracts"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/repo_catalog", "pyproject.toml", "README.md"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_catalog"]

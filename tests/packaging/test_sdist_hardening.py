@@ -41,6 +41,26 @@ def source(tmp_path):
     return root
 
 
+def prepare_workspace_metadata(source):
+    """Use current synchronized build metadata with tiny, non-runtime fixtures.
+
+    These cache/configuration attacks test builders, not product behavior. Each
+    declared member needs its own finite source input; no real Core fixture or
+    repeated behavioral acceptance is required for every hostile uv setting.
+    """
+    from scripts.check_sdist_contract import ROOT_FILES, distribution_workspace
+
+    for filename in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(ROOT / filename, source / filename)
+    for project in distribution_workspace(ROOT)[1][1:]:
+        member = source / project.relative_to(ROOT)
+        package = member / "src/repo_catalog"
+        package.mkdir(parents=True)
+        for filename in ROOT_FILES:
+            shutil.copyfile(project / filename, member / filename)
+        (package / (project.name + "_fixture.py")).write_text("# build fixture only\n")
+
+
 def source_members(source):
     """Read the fixture independently of the checker's inventory routine."""
     members = {
@@ -509,8 +529,7 @@ def test_real_backend_control_changes_force_sdist_gate(
         package_build_inputs,
     )
 
-    for filename in ("pyproject.toml", "uv.lock"):
-        shutil.copyfile(ROOT / filename, source / filename)
+    prepare_workspace_metadata(source)
     env = package_build_environment()
     wheelhouse = ROOT / "artifacts/wheelhouse"
     assert (wheelhouse / "manifest.json").is_file(), (
@@ -573,8 +592,7 @@ def test_real_uv_configuration_discovery_warm_cache(
         package_build_inputs,
     )
 
-    for filename in ("pyproject.toml", "uv.lock"):
-        shutil.copyfile(ROOT / filename, source / filename)
+    prepare_workspace_metadata(source)
     context = source.parent / "context"
     first, second, user = context / "first", context / "second", context / "user"
     env = package_build_environment()

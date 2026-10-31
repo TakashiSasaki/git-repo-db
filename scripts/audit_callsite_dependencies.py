@@ -8,21 +8,85 @@ import hashlib
 import importlib.util
 import json
 import re
+import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs/implementation/callsite-dependencies.json"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from scripts.check_sdist_contract import distribution_workspace  # noqa: E402
+
+PROJECTS = distribution_workspace(ROOT)[1]
+SOURCE_ROOTS = tuple(project / "src" for project in PROJECTS)
+SOURCE_OWNERS = {
+    project / "src": tomllib.loads((project / "pyproject.toml").read_text())["project"][
+        "name"
+    ]
+    for project in PROJECTS
+}
+
+
+def source_relative(path: Path, roots=None) -> Path:
+    """One installed namespace path, independent of its distribution's root."""
+    for source in SOURCE_ROOTS if roots is None else roots:
+        if path.is_relative_to(source):
+            return path.relative_to(source)
+    raise ValueError(f"Unrecognized product source owner: {path}")
+
+
+def owned_source(relative: str) -> str:
+    matches = [
+        source / "repo_catalog" / relative
+        for source in SOURCE_ROOTS
+        if (source / "repo_catalog" / relative).is_file()
+    ]
+    if len(matches) > 1:
+        raise ValueError(f"Overlapping installed source ownership: {relative}")
+    # Optional later-stage paths may be absent in an isolated stage checkout.
+    return (
+        (matches[0] if matches else SOURCE_ROOTS[0] / "repo_catalog" / relative)
+        .relative_to(ROOT)
+        .as_posix()
+    )
+
+
+def source_files(suffixes=(".py",), *, roots=None) -> list[Path]:
+    """Scan every owner; refuse two owners for any installed product file."""
+    roots = SOURCE_ROOTS if roots is None else roots
+    result, owners = [], {}
+    for source in roots:
+        for path in sorted((source / "repo_catalog").rglob("*")):
+            if path.suffix not in suffixes or not path.is_file():
+                continue
+            relative = source_relative(path, roots).as_posix()
+            if relative in owners:
+                raise ValueError(f"Overlapping installed source ownership: {relative}")
+            owners[relative] = path
+            result.append(path)
+    return sorted(result)
+
+
+def source_owner(path: Path) -> str:
+    return next(
+        owner for source, owner in SOURCE_OWNERS.items() if path.is_relative_to(source)
+    )
+
 
 # This explicit list is the isolated P1 target, not the normal Schema 21 runtime.
 # Do not expand it to a filename-prefix ignore: newly integrated runtime paths
 # must enter the baseline source audit when P8 switches the application.
 ISOLATED_P1_MODULES = frozenset(
-    "src/repo_catalog/" + relative
+    owned_source(relative)
     for relative in (
         "adapters/sqlite/p1_schema.py",
         "adapters/sqlite/p1_core.py",
         "adapters/sqlite/p1_context.py",
         "adapters/sqlite/p1_coordination.py",
+        "adapters/sqlite/core_coordination.py",
+        "domain/shared_values.py",
+        "domain/query_work.py",
         "domain/p1_core.py",
         "domain/ref_observation.py",
         "domain/ref_coverage.py",
@@ -39,7 +103,7 @@ ISOLATED_P1_MODULES = frozenset(
 # A sibling branch need not contain the other stage's modules. Their presence
 # does not change the historical Schema 21 call-site inventory or activate them.
 ISOLATED_NEXT_STAGE_MODULES = frozenset(
-    "src/repo_catalog/" + relative
+    owned_source(relative)
     for relative in (
         "adapters/git/native.py",
         "adapters/sqlite/git_core.py",
@@ -81,7 +145,13 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "domain/ports/production_query.py",
         "application/production_query.py",
         "adapters/sqlite/production_search.py",
+        "application/core_query.py",
+        "application/query_encoding.py",
+        "domain/core_query.py",
+        "domain/query_contracts.py",
+        "domain/ports/core_query.py",
         "cli/production_query.py",
+        "cli/query_features.py",
         "domain/recovery.py",
         "domain/ports/recovery.py",
         "application/recovery.py",
@@ -119,7 +189,7 @@ ISOLATED_TARGET_MODULES = ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES
 def isolated_runtime_imports(source: str, package: str) -> set[str]:
     """Find direct imports of isolated targets, including relative/from forms."""
     targets = {
-        path.removeprefix("src/").removesuffix(".py").replace("/", ".")
+        source_relative(ROOT / path).as_posix().removesuffix(".py").replace("/", ".")
         for path in ISOLATED_TARGET_MODULES
     }
     imported = set()
@@ -136,7 +206,11 @@ def isolated_runtime_imports(source: str, package: str) -> set[str]:
 
 
 def is_baseline_source(path: Path) -> bool:
-    return path.relative_to(ROOT).as_posix() not in ISOLATED_TARGET_MODULES
+    module = source_relative(path).as_posix()
+    return module not in {
+        source_relative(ROOT / relative).as_posix()
+        for relative in ISOLATED_TARGET_MODULES
+    }
 
 
 def build():
@@ -151,15 +225,11 @@ def build():
         )
     names = sorted(vocabulary)
     pattern = re.compile(r"\b(?:" + "|".join(names) + r")\b")
-    modules, references, revisions = [], [], []
-    paths = sorted(source.rglob("*.py")) + sorted(resources.glob("*.sql"))
+    modules, isolated_modules, references, revisions = [], [], [], []
+    paths = source_files() + sorted(resources.glob("*.sql"))
     # Prototypes deliberately do not become baseline production dependencies.
     paths = [
-        p
-        for p in paths
-        if "spikes" not in p.parts
-        and "experimental" not in p.parts
-        and is_baseline_source(p)
+        p for p in paths if "spikes" not in p.parts and "experimental" not in p.parts
     ]
     for path in paths:
         relative = path.relative_to(ROOT).as_posix()
@@ -171,16 +241,22 @@ def build():
                 for node in ast.walk(ast.parse(text))
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
             ]
-        modules.append(
-            {
-                "path": relative,
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-                "functions": [
-                    {"name": name, "line": start, "end_line": end}
-                    for start, end, name in sorted(definitions)
-                ],
-            }
-        )
+        entry = {
+            "path": relative,
+            "owner": source_owner(path),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "functions": [
+                {"name": name, "line": start, "end_line": end}
+                for start, end, name in sorted(definitions)
+            ],
+        }
+        if not is_baseline_source(path):
+            # Retain syntax validation and complete ownership/hash coverage;
+            # opt-in functions do not duplicate the normal-runtime lexical index.
+            entry.pop("functions")
+            isolated_modules.append(entry)
+            continue
+        modules.append(entry)
         for number, line in enumerate(text.splitlines(), 1):
             enclosing = sorted(
                 (end - start, name)
@@ -226,7 +302,20 @@ def build():
         "format": "git-repo-db/implementation-callsite-audit-v1",
         "baseline_main": "57de60b65c2ef29420a885b0c2102dc90e11fa75",
         "status": "baseline-source-index-not-target-implementation",
-        "method": "All production Python and packaged SQL; AST enclosing functions and literal table/view vocabulary. Source SHA-256 detects drift. Manual semantic interpretation is in callsite-dependencies.md and legacy-operations.md.",
+        "method": "All distribution source roots: syntax-checked owner/hash inventory separates explicit opt-in modules from the normal-runtime AST/function lexical index; all packaged resource owners/hashes are retained. Literal baseline table/view vocabulary is not proof of runtime reachability. Manual semantic interpretation is in callsite-dependencies.md and legacy-operations.md.",
+        "source_roots": {
+            source.relative_to(ROOT).as_posix(): owner
+            for source, owner in SOURCE_OWNERS.items()
+        },
+        "isolated_modules": isolated_modules,
+        "packaged_resources": [
+            {
+                "path": path.relative_to(ROOT).as_posix(),
+                "owner": source_owner(path),
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+            for path in source_files((".sql", ".json", ".graphql"))
+        ],
         "limits": [
             "Lexical references include declarations, comments and vocabulary, not proven executed SQL.",
             "Dynamic SQL variable substitutions are traced manually by module and function in the companion report; this index cannot prove dynamic reachability or absence of an indirect byte path.",

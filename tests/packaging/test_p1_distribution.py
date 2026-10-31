@@ -9,6 +9,7 @@ import pytest
 from scripts.installed_test_harness import stage_support
 from tests.support.distributions import (
     build_once,
+    dependency_wheels,
     make_package_distributions,
     package_build_environment,
     package_build_inputs,
@@ -31,7 +32,10 @@ def p1_distributions(tmp_path_factory):
         lambda w: make_package_distributions(w, ROOT, env, runner=run),
         inputs=lambda: package_build_inputs(ROOT, env, runner=run),
     )
-    return env, [products["wheel"], products["sdist_wheel"]]
+    return env, [
+        [*dependency_wheels(products, variant), products[variant]]
+        for variant in ("wheel", "sdist_wheel")
+    ]
 
 
 @pytest.mark.parametrize("variant", [0, 1], ids=["wheel", "sdist-wheel"])
@@ -52,7 +56,7 @@ def test_p1_packaged_ddl_outside_checkout(p1_distributions, tmp_path, variant):
             python,
             "--offline",
             "--no-deps",
-            wheels[variant],
+            *wheels[variant],
         ],
         outside,
         env,

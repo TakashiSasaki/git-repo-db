@@ -14,7 +14,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tarfile
 import tempfile
 import venv
 import zipfile
@@ -22,7 +21,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from scripts.check_sdist_contract import check_sdist, compare_wheels, save  # noqa: E402
+from scripts.check_sdist_contract import save  # noqa: E402
+from tests.support.distributions import (  # noqa: E402
+    dependency_wheels,
+    make_package_distributions,
+)
 
 SMOKE = r"""
 import importlib.util, json, os, sqlite3, sys, tempfile
@@ -33,7 +36,10 @@ from repo_catalog.adapters.sqlite.access_schema import initialize, require_runti
 from repo_catalog.adapters.sqlite.access_registry import AccessRegistry
 from repo_catalog.domain.access_registry import AccessScope, ScopeLocatorRegistration
 import repo_catalog
-module_origin = Path(repo_catalog.__file__).resolve()
+from repo_catalog import _version
+module_origin = Path(_version.__file__).resolve()
+namespace_roots = [str(Path(p).resolve()) for p in repo_catalog.__path__]
+assert namespace_roots and all(Path(p).is_relative_to(Path(sys.prefix).resolve()) for p in namespace_roots), namespace_roots
 assert module_origin.is_relative_to(Path(sys.prefix).resolve()), module_origin
 require_runtime()
 assert importlib.util.find_spec("httpx") is None
@@ -366,7 +372,7 @@ with tempfile.TemporaryDirectory() as directory:
     rq.rebuild_search(("context_text",))
     assert rq.search(SearchQuery("owning_repository", projection_kinds=("context_text",))).backend == "verified_projection_scan"
     assert not any((restored / f"{role}.sqlite3").exists() for role in ("operational", "access"))
-print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_i2_i3_cross_seed": "passed", "installed_i4_query_search_backup": "passed", "installed_smoke": "passed"}))
+print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.connect(":memory:").execute("SELECT sqlite_source_id()").fetchone()[0], "module_origin": str(module_origin), "namespace_roots": namespace_roots, "interpreter": sys.executable, "ddl_sha256": fingerprint(), "context_ddl_sha256": p1_schema.fingerprint("context"), "table_count": len(tables), "exchange_format": EXCHANGE_FORMAT, "local_git_acquired": True, "access_backup_restored": True, "scope_forked": True, "installed_i2_i3_cross_seed": "passed", "installed_i4_query_search_backup": "passed", "installed_smoke": "passed"}))
 """
 
 
@@ -412,6 +418,7 @@ def main() -> None:
         dist_path = Path(dist_dir) if dist_dir else None
         reusable = False
         direct, swheel, archive = None, None, None
+        local_artifacts = {}
 
         if dist_path and dist_path.is_dir():
             binding_file = dist_path / "build-binding.json"
@@ -431,9 +438,23 @@ def main() -> None:
                             swheel = f
                         if f_sha == archive_sha:
                             archive = f
+                    for variant in ("wheel", "sdist_wheel"):
+                        local_artifacts[variant] = []
+                        for item in binding["dependency_wheels"][variant]:
+                            path = (dist_path / item["path"]).resolve()
+                            if not path.is_relative_to(dist_path.resolve()):
+                                raise ValueError("dependency artifact outside binding")
+                            if (
+                                hashlib.sha256(path.read_bytes()).hexdigest()
+                                != item["sha256"]
+                            ):
+                                raise ValueError("dependency artifact hash mismatch")
+                            local_artifacts[variant].append(path)
+                        if not local_artifacts[variant]:
+                            raise ValueError("missing local product dependencies")
                     if direct and swheel and archive:
                         reusable = True
-                except (json.JSONDecodeError, KeyError):
+                except (json.JSONDecodeError, KeyError, OSError, ValueError):
                     pass
 
         if reusable:
@@ -447,48 +468,24 @@ def main() -> None:
         else:
             built = base / "built"
             built.mkdir()
-            print(
-                run(
-                    sys.executable,
-                    "-m",
-                    "hatchling",
-                    "build",
-                    "-t",
-                    "wheel",
-                    "-t",
-                    "sdist",
-                    "-d",
-                    str(built),
-                    cwd=ROOT,
-                    env=env,
-                )
+            products = make_package_distributions(
+                built,
+                root=ROOT,
+                env=env,
+                runner=lambda argv, cwd, environment: run(
+                    *map(str, argv), cwd=cwd, env=environment
+                ),
             )
-            direct = next(built.glob("*.whl"))
-            archive = next(built.glob("*.tar.gz"))
-            unpacked = base / "sdist"
-            unpacked.mkdir()
-            contract = check_sdist(archive, ROOT)
-            with tarfile.open(archive) as source:
-                source.extractall(unpacked, filter="data")
-            source_root = next(unpacked.iterdir())
-            rebuilt = base / "rebuilt"
-            rebuilt.mkdir()
-            print(
-                run(
-                    sys.executable,
-                    "-m",
-                    "hatchling",
-                    "build",
-                    "-t",
-                    "wheel",
-                    "-d",
-                    str(rebuilt),
-                    cwd=source_root,
-                    env=env,
-                )
+            direct, archive, swheel = (
+                products["wheel"],
+                products["sdist"],
+                products["sdist_wheel"],
             )
-            swheel = next(rebuilt.glob("*.whl"))
-            contract["wheel_equivalence"] = compare_wheels(direct, swheel)
+            contract = json.loads(products["sdist_contract"].read_text())
+            local_artifacts = {
+                variant: dependency_wheels(products, variant)
+                for variant in ("wheel", "sdist_wheel")
+            }
             save(ROOT / "artifacts/access-registry/sdist-contract.json", contract)
 
         for label, wheel in (
@@ -517,6 +514,10 @@ def main() -> None:
                     str(python),
                     "--no-deps",
                     str(wheel),
+                    *map(
+                        str,
+                        local_artifacts["wheel" if label == "wheel" else "sdist_wheel"],
+                    ),
                     cwd=base,
                     env=env,
                 )
@@ -541,13 +542,17 @@ def main() -> None:
                     "-I",
                     "-c",
                     "import json, sqlite3, sys, repo_catalog; "
+                    "from pathlib import Path; "
+                    "from repo_catalog import _version; "
+                    "namespace_roots=[str(Path(p).resolve()) for p in repo_catalog.__path__]; "
+                    "assert namespace_roots and all(Path(p).is_relative_to(Path(sys.prefix).resolve()) for p in namespace_roots), namespace_roots; "
                     "from repo_catalog.adapters.sqlite import p1_schema; "
                     "from repo_catalog.adapters.sqlite.access_schema import fingerprint; "
                     "print(json.dumps(dict(interpreter=sys.executable, "
                     "sqlite=sqlite3.sqlite_version, "
                     "sqlite_source_id=sqlite3.connect(':memory:').execute("
                     "'SELECT sqlite_source_id()').fetchone()[0], "
-                    "module_origin=repo_catalog.__file__, "
+                    "module_origin=_version.__file__, namespace_roots=namespace_roots, "
                     "context_ddl_sha256=p1_schema.fingerprint('context'), "
                     "ddl_sha256=fingerprint())))",
                     cwd=base,
