@@ -44,7 +44,7 @@ It inspects the host and tools, resolves or installs the verified distribution,
 checks its Python/SQLite identity and the real product guards **before** any
 dependency, creates or verifies `.venv` on that interpreter, runs
 `uv sync --locked --group dev` with `UV_PYTHON` and
-`UV_PYTHON_DOWNLOADS=never`, confirms `uv.lock` and `pyproject.toml` are unchanged,
+`UV_PYTHON_DOWNLOADS=never`, confirms `uv.lock`, root `pyproject.toml` and every workspace project metadata file are unchanged,
 re-probes the runtime against the pre-dependency identity, runs
 `scripts/preflight_access.py` and writes `artifacts/local-python/receipt.json`.
 Any failed mandatory verification exits nonzero and the receipt says
@@ -66,7 +66,7 @@ eval "$(.venv/bin/python scripts/local_env.py env)"   # or export into this shel
 overrides, then puts `.venv/bin` first on `PATH` and exports `UV_PYTHON`,
 `UV_PYTHON_DOWNLOADS=never`, `CI_PRODUCT_PYTHON` and `CI_RUNTIME_REFERENCE`. Child
 processes and installed wheel/sdist verification therefore select the same Python.
-A command named `python*` that would resolve elsewhere is refused. After a lock or
+A command named `python*` that would resolve elsewhere is refused. After a lock, workspace metadata or
 dependency change, rerun the setup command (it is idempotent) to resynchronize.
 
 ## Verification

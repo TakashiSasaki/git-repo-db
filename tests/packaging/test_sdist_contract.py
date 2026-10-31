@@ -167,6 +167,56 @@ def test_cli_failure_is_nonzero_and_preserves_failed_receipt(source, tmp_path):
     assert json.loads(output.read_text())["status"] == "failed"
 
 
+def test_cli_build_failure_retains_complete_binary_diagnostics_and_owner(
+    source, tmp_path
+):
+    stdout = b"backend stdout:" + b"o" * 16384 + b"\x00\xff\n"
+    stderr = b"backend stderr:" + b"e" * 16384 + b"\x00\xfe\n"
+    metadata = source / "pyproject.toml"
+    metadata.write_text(
+        metadata.read_text()
+        + '\n[tool.hatch.build.hooks.custom]\npath = "hatch_build.py"\n'
+    )
+    (source / "hatch_build.py").write_text(
+        "import sys\n"
+        "from hatchling.builders.hooks.plugin.interface import BuildHookInterface\n"
+        "class CustomBuildHook(BuildHookInterface):\n"
+        "    def initialize(self, version, build_data):\n"
+        f"        sys.stdout.buffer.write({stdout!r})\n"
+        "        sys.stdout.flush()\n"
+        f"        sys.stderr.buffer.write({stderr!r})\n"
+        "        sys.stderr.flush()\n"
+        "        raise RuntimeError('retained backend failure reason')\n"
+    )
+    output = tmp_path / "evidence/result.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            ROOT / "scripts/check_sdist_contract.py",
+            "--source-root",
+            source,
+            "--build",
+            "--output",
+            output,
+        ],
+        capture_output=True,
+    )
+    assert result.returncode == 1
+    receipt = json.loads(output.read_text())
+    assert receipt["status"] == "failed"
+    failed = receipt["build_failure"]
+    assert failed["owner"] == "repo-catalog"
+    assert failed["returncode"] == 1
+    log = Path(failed["log"])
+    assert log.parent == output.parent
+    retained = log.read_bytes()
+    assert stdout in retained
+    assert stderr in retained
+    assert b"retained backend failure reason" in retained
+    assert str(log).encode() in result.stderr
+    assert len(result.stdout) + len(result.stderr) < 1024
+
+
 def test_source_links_and_unclassified_package_inputs_fail(source):
     path = source / "src/repo_catalog/evidence.zip"
     path.write_bytes(b"not product data")

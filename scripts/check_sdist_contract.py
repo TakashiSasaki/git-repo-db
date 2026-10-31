@@ -404,6 +404,7 @@ def main():
     if args.all_distributions and (not args.build or args.wheel):
         parser.error("--all-distributions requires --build without wheel arguments")
     completed = {}
+    active_build = None
     try:
         if args.build:
             import tempfile
@@ -416,28 +417,43 @@ def main():
             with tempfile.TemporaryDirectory(prefix="sdist-contract-") as temp:
                 for index, root in enumerate(roots):
                     output = Path(temp) / str(index)
-                    subprocess.run(
-                        [
-                            sys.executable,
-                            "-m",
-                            "hatchling",
-                            "build",
-                            "-t",
-                            "sdist",
-                            "-d",
-                            str(output),
-                        ],
-                        cwd=root,
-                        check=True,
-                        capture_output=True,
+                    name = tomllib.loads((root / "pyproject.toml").read_text())[
+                        "project"
+                    ]["name"]
+                    slug = re.sub(r"[^A-Za-z0-9_.-]", "_", name)
+                    log = args.output.with_name(
+                        f"{args.output.stem}-{index}-{slug}-build.log"
                     )
+                    log.parent.mkdir(parents=True, exist_ok=True)
+                    active_build = {"owner": name, "returncode": None, "log": str(log)}
+                    # Stream complete binary diagnostics directly to retained disk,
+                    # including non-UTF-8 output, without expanding terminal output.
+                    with log.open("wb") as stream:
+                        process = subprocess.run(
+                            [
+                                sys.executable,
+                                "-m",
+                                "hatchling",
+                                "build",
+                                "-t",
+                                "sdist",
+                                "-d",
+                                str(output),
+                            ],
+                            cwd=root,
+                            stdout=stream,
+                            stderr=subprocess.STDOUT,
+                        )
+                    active_build["returncode"] = process.returncode
+                    if process.returncode != 0:
+                        raise subprocess.CalledProcessError(
+                            process.returncode, process.args
+                        )
                     archives = list(output.glob("*.tar.gz"))
                     if len(archives) != 1:
                         raise ValueError("expected exactly one built sdist")
                     report = check_sdist(archives[0], root)
-                    name = tomllib.loads((root / "pyproject.toml").read_text())[
-                        "project"
-                    ]["name"]
+                    report["build"] = active_build
                     completed[name] = report
                 result = completed[next(iter(completed))]
                 if args.all_distributions:
@@ -473,15 +489,21 @@ def main():
         zipfile.BadZipFile,
         subprocess.CalledProcessError,
     ) as error:
-        save(
-            args.output,
-            {
-                "status": "failed",
-                "error": str(error),
-                "completed_distributions": completed,
-            },
-        )
-        print(str(error), file=sys.stderr)
+        failure = {
+            "status": "failed",
+            "error": str(error),
+            "completed_distributions": completed,
+        }
+        if active_build and active_build["returncode"] != 0:
+            failure["build_failure"] = active_build
+            terminal = (
+                f"{active_build['owner']}: backend failed "
+                f"(exit={active_build['returncode']}); log: {active_build['log']}"
+            )
+        else:
+            terminal = str(error)
+        save(args.output, failure)
+        print(terminal, file=sys.stderr)
         return 1
     return 0
 
