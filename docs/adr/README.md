@@ -87,9 +87,18 @@ exceptions require explicit owner approval.
 
 ## Proposed Records
 
-None.
+| ADR | Proposed scope | State / Do NOT |
+| --- | --- | --- |
+| [0037](0037-operation-scoped-module-independence.md) | Operation-scoped module/install independence; owner-selected M-01–M-07 and [operation contract](../architecture/module-independence-contract.md) | Proposed Full ADR; current implementation is separate. No product split, Schema 21 switch or merge. |
+| [0038](0038-scoped-recovery-and-optional-initialization.md) | Complete intended successor to 0026; Git-only completion without O/S initialization, all surviving recovery clauses carried forward | Proposed Full ADR; preservation review and explicit whole-record acceptance/retirement pending. 0026 remains accepted; paired recovery unchanged. |
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0036** (includes accepted 0032–0036; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
+The owner selected the module directions on 2026-10-31 and authorized design PR
+submission. Full successor text is not thereby accepted. Before integration,
+follow policy §6 to accept the complete records and coherently retire/update
+0026 and its effective references, or remove the proposals; do not merge
+contradictory accepted decisions.
+
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0038** (includes proposed 0037–0038 and accepted 0032–0036; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 

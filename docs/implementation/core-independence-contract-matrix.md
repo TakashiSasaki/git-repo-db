@@ -8,6 +8,17 @@ a release claim, or activation of the normal Schema 21 runtime. Accepted
 [selective Exchange contract](../architecture/selective-exchange-contract.md)
 remain authoritative. Read current source when this snapshot ages.
 
+The proposed [operation-scoped installation contract](../architecture/module-independence-contract.md)
+and [ADR 0037](../adr/0037-operation-scoped-module-independence.md) describe future
+guarantees, not a reinterpretation of this snapshot as physically isolated wheels.
+Its per-operation delta table checks the newer base
+`c2ae058b6402e0f5055c864fba1ed4ec7992a8aa`, including the already completed
+RefObservation transition. The proposed recovery change has its own
+[ADR 0026 carry-forward audit](../adr/0038-scoped-recovery-and-optional-initialization.md#clause-level-reconciliation-of-adr-0026).
+Existing tests linked below are not newly executed by that design task. In
+particular, no proposal removes Exchange's coexisting-Context checks, changes
+default selections, or makes Operational optional for reception.
+
 | Operation | Implementation and local stores used | Coexistence, validation and stop boundary | Regression evidence |
 | --- | --- | --- | --- |
 | Query, explicit `core_only` | Core snapshot and Core implementation; ordinary Core reads do not import Context or Search, or require their databases or Operational. A Search operation deliberately loads Search. | A coexisting Context is not opened or paired. The persistent catalog stop still fences the operation, including completion; an uninspected Context is not certified healthy. | [Core Query isolation](../../tests/integration/p6/test_core_import_independence.py); [Core and byte-integrity queries](../../tests/integration/p6/test_queries.py). |

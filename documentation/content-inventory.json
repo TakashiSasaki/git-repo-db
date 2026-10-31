@@ -11391,6 +11391,59 @@
       "producer": "Coordinated opt-in OID implementation.",
       "consumers": "Product implementers and independent reviewers; canonical naming scope and format boundary.",
       "publication": "not staged"
+    },
+    "docs/adr/0037-operation-scoped-module-independence.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Proposed full record; owner-selected directions do not imply acceptance of complete successor text.",
+      "source": "docs/adr/0037-operation-scoped-module-independence.md",
+      "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
+      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
+      "publication": "not staged",
+      "source_heading": "# ADR 0037: Operation-scoped module and installation independence",
+      "status_in_source": "proposed",
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/implementation/core-independence-contract-matrix.md",
+        "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
+        "docs/architecture/module-independence-contract.md"
+      ],
+      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
+    },
+    "docs/adr/0038-scoped-recovery-and-optional-initialization.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Proposed full record; owner-selected directions do not imply acceptance of complete successor text.",
+      "source": "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
+      "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
+      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
+      "publication": "not staged",
+      "source_heading": "# ADR 0038: Scoped recovery completion and optional-store initialization",
+      "status_in_source": "proposed",
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/implementation/core-independence-contract-matrix.md",
+        "docs/adr/0037-operation-scoped-module-independence.md",
+        "docs/architecture/module-independence-contract.md"
+      ],
+      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
+    },
+    "docs/architecture/module-independence-contract.md": {
+      "status": "scoped-design-contract",
+      "owner": "docs/architecture/",
+      "authority": "Proposed operation obligations under ADR 0037 and recovery successor 0038; no implementation claim.",
+      "source": "docs/architecture/module-independence-contract.md",
+      "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
+      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
+      "publication": "not staged",
+      "source_heading": "# Operation-scoped module-independence contract",
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/implementation/core-independence-contract-matrix.md",
+        "docs/adr/0037-operation-scoped-module-independence.md",
+        "docs/adr/0038-scoped-recovery-and-optional-initialization.md"
+      ],
+      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
     }
   }
 }
