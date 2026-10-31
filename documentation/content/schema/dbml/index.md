@@ -22,11 +22,11 @@
 
 ---
 
-## どんな可視化においても適用される大原則：3つの物理データベース分離の反映
+## このDBML案内の対象：通常3スキーマのストア境界
 
-本プロジェクトのデータベースアーキテクチャ（[ADR 0002](../../adr/0002-three-store-boundary-architecture/)）は、単一の巨大な RDBMS ではなく、**責務の異なる 3 つの独立した SQLite データベースファイルに物理分離** されています。
+この案内は、通常の Catalog3 の **Core Schema 21・Operational Schema 1・Search Schema 1** と、その可視化出力を扱います。[ADR 0002](../../adr/0002-three-store-boundary-architecture/) に従い、各スキーマの所属ストアと、ストアをまたがない物理外部キーを区別します。採択済みの[5責務設計の表示](/design/)は別のモデルです。
 
-いかなるツールや可視化方法（DBML, dbdiagram, Azimutt, SchemaSpy, Eraser, Mermaid, インタラクティブビューアー）においても、**「複数のデータベースに分かれている事実」** が視覚的に明確に反映されます：
+これは、すべての起動で3つのファイルが作成・オープンされるという意味ではありません。通常の初期化は Core を作成し、Operational は必要時に遅延オープンされ、Search は `index rebuild` などで明示的に作成されます。以下の比較は通常3スキーマの出力に限定し、実環境のファイル数を保証しません。
 
 | 可視化ツール / 手法 | 複数データベース分離の反映方法 | 物理境界の保証 |
 |---|---|---|
@@ -45,7 +45,7 @@
 > **物理的な単一データベースではありません**:  
 > `combined.dbml` は、システム全体に存在するテーブル群の関係性を俯瞰するための**概念的な表現（Conceptual Representation）**です。
 > 
-> [ADR 0002](../../adr/0002-three-store-boundary-architecture/) に規定されているとおり、実際の本番環境では `catalog.sqlite3`、`operational.sqlite3`、`search.sqlite3` の **3 つの独立した SQLite ファイルに物理分離** されており、ストアをまたぐ物理外部キー制約は存在しません。dbdiagram.io などにインポートした際も、`TableGroup` によって 3 つの物理ストアの境界が維持されます。
+> 通常3スキーマの対応ファイル名は `catalog.sqlite3`、`operational.sqlite3`、`search.sqlite3` ですが、作成・利用の時点は各ランタイム経路によります。ストアをまたぐ物理外部キー制約は存在せず、`TableGroup` は通常スキーマの所属ストアを区別します。
 
 ---
 
@@ -123,7 +123,7 @@
 
 Eraser.io は SQLite DDL の直接インポートにも対応しています：
 1. Eraser の ERD ブロックで **「Import」** → **「Import from SQL」** を選択。
-2. `src/repo_catalog/resources/sql/` またはリポジトリの SQLite DDL を貼り付けることで、テーブル構造を直接図に変換できます。
+2. `src/repo_catalog/adapters/sqlite/schema.py` が `src/repo_catalog/resources/` 配下の SQL から合成する DDL を貼り付けることで、テーブル構造を直接図に変換できます。
 
 #### 方法 C: Eraser Diagram-as-Code 構文によるドキュメント内埋め込み
 
