@@ -10,7 +10,7 @@ The database architecture implements the **Three-Store Boundary** under **ADR 00
 
 ## 1. Architecture and Three-Store Boundary
 
-The production database is physically partitioned into three distinct SQLite databases:
+The normal Catalog3 DDL defines three separate schemas: Core Schema 21, Operational Schema 1 and Search Schema 1. This inventory describes those schema definitions, not the number of database files opened or created by every startup. Initialization creates Core; Operational opens lazily when requested, and Search is created explicitly, for example by `index rebuild`. The table lists the corresponding filenames when those stores are present:
 
 | Store | Database File | Schema Version | Product Tables | DDL SHA-256 Fingerprint | Operational Responsibility |
 |---|---|---|---|---|---|
