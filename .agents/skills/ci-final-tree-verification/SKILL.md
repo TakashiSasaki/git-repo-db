@@ -756,3 +756,13 @@ When configuring Ruff for the extra source roots, preserve the original `.` and
 `src` roots as well. Otherwise first-party scripts/tests are reclassified and
 unrelated import-order changes obscure the implementation diff. None of these
 procedures requires all feature combinations or release qualification.
+
+Include every product source root in lexical ownership audits and subprocess test
+fixtures too. Compare namespace-relative module identities and reject duplicate
+owners; preserve explicit normal-runtime versus opt-in classification rather than
+inferring activation from the distribution directory. Keep any target hash/owner
+inventory compact instead of duplicating its full function index. The focused
+`tests/unit/test_callsite_source_owners.py` controls cover moved roots, unknown
+modules and duplicate ownership; documentation fixtures exercise fresh-process
+imports across the same roots. Update current machine input labels when a scanner's
+scope changes, without rewriting historical schema facts or frozen evidence.
