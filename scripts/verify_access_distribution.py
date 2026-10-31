@@ -122,7 +122,7 @@ with tempfile.TemporaryDirectory() as directory:
     seed, instance = str(uuid4()), str(uuid4())
     for role in ("core", "operational"):
         p1_schema.initialize(catalog / f"{role}.sqlite3", role, seed, instance)
-    request = GitNativeAcquisitionRequest(repo, str(uuid4()), str(uuid4()), "installed-local-source", 50, select_oids=(OID("sha1", commit),), include_refs=False)
+    request = GitNativeAcquisitionRequest(repo, str(uuid4()), str(uuid4()), "installed-local-source", 50, select_object_oids=(OID("sha1", commit),), include_refs=False)
     with AccessConnections(path) as store:
         report = AccessGitAcquisition(store, catalog).acquire(selected, request, object_format="sha1", reviewer=lambda shown: True, new_request=True)
         assert report.repository_uuidv4 == repo != seed
@@ -211,7 +211,7 @@ with tempfile.TemporaryDirectory() as directory:
     with closing(GitCore(producer / "core.sqlite3")) as core:
         core.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
     package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
-    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0036-exchange-v7"
+    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0036-exchange-v8"
     ExchangeService(receiver).import_package(
         package,
         new_request=True,
