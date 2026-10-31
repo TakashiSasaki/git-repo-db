@@ -1247,63 +1247,6 @@
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
       "status_in_source": "accepted"
     },
-    "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md": {
-      "status": "adr-source-or-governance",
-      "owner": "docs/adr/",
-      "authority": "Resolve status and supersessions through docs/adr/README.md and policy.md; do not infer activation.",
-      "source": "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md",
-      "producer": "Owner decision or ADR governance source; see the file and Git history.",
-      "consumers": "ADR index, dependent design records, reviewers.",
-      "publication": "read-only current-decision staging; original source remains authoritative",
-      "source_heading": "# ADR 0026: Stop, salvage read-only, restore a verified backup, then merge validated recovery data",
-      "cited_adrs": [
-        "0011",
-        "0014",
-        "0020",
-        "0022",
-        "0025",
-        "0026",
-        "0027"
-      ],
-      "status_evidence": [
-        "accepted"
-      ],
-      "baseline_git_object": {
-        "mode": "100644",
-        "blob": "4e9dfa324e45e764d7d1fd7de8dc79f9ea0b846f"
-      },
-      "static_consumer_references": [
-        "docs/adr/0007-verification-aware-git-metadata-reads.md",
-        "docs/adr/0008-domain-split-git-verification-ownership.md",
-        "docs/adr/0009-bounded-byte-admission-and-physical-health.md",
-        "docs/adr/0010-operation-scoped-cas-physical-integrity.md",
-        "docs/adr/0012-append-only-multiple-cas-physical-instances.md",
-        "docs/adr/0013-deterministic-cas-instance-eligibility.md",
-        "docs/adr/0014-history-and-notes-catalog-without-file-archive.md",
-        "docs/adr/0015-automatic-git-notes-ref-discovery.md",
-        "docs/adr/0016-immutable-notes-ref-capture-observations.md",
-        "docs/adr/0017-domain-keys-without-storage-surrogates.md",
-        "docs/adr/0018-notes-capture-uuidv4-composite-identity.md",
-        "docs/adr/0019-monotonic-notes-capture-fact-admission.md",
-        "docs/adr/0020-immutable-competing-notes-member-claims.md",
-        "docs/adr/0021-direct-semantic-notes-claim-group-keys.md",
-        "docs/adr/0022-receiver-verified-notes-role-admission.md",
-        "docs/adr/0023-configurable-finite-notes-resource-budgets.md",
-        "docs/adr/0024-actual-notes-resource-work-accounting.md",
-        "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md",
-        "docs/adr/0027-unauthenticated-external-capture-origin-reports.md",
-        "docs/adr/0029-independent-access-store.md",
-        "docs/adr/README.md",
-        "docs/architecture/git-core-context-transition-plan.md",
-        "docs/integration/design-stack-main-review-2026-10-15.md",
-        "documentation/content/architecture/index.md",
-        "documentation/content/architecture/three-store-boundary.md",
-        "documentation/current-runtime-reference.md",
-        "documentation/tests/test_milestone_content.py"
-      ],
-      "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
-      "status_in_source": "accepted"
-    },
     "docs/adr/0028-classified-times-and-sha256-exchange.md": {
       "status": "adr-source-or-governance",
       "owner": "docs/adr/",
@@ -11395,13 +11338,13 @@
     "docs/adr/0037-operation-scoped-module-independence.md": {
       "status": "adr-source-or-governance",
       "owner": "docs/adr/",
-      "authority": "Proposed full record; owner-selected directions do not imply acceptance of complete successor text.",
+      "authority": "Owner-accepted complete record on 2026-10-31; implementation and runtime activation require separate evidence.",
       "source": "docs/adr/0037-operation-scoped-module-independence.md",
-      "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
+      "producer": "Owner acceptance after independent design review, recorded in PR #235.",
       "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
-      "publication": "not staged",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0037: Operation-scoped module and installation independence",
-      "status_in_source": "proposed",
+      "status_in_source": "accepted",
       "static_consumer_references": [
         "docs/adr/README.md",
         "docs/implementation/core-independence-contract-matrix.md",
@@ -11413,13 +11356,13 @@
     "docs/adr/0038-scoped-recovery-and-optional-initialization.md": {
       "status": "adr-source-or-governance",
       "owner": "docs/adr/",
-      "authority": "Proposed full record; owner-selected directions do not imply acceptance of complete successor text.",
+      "authority": "Owner-accepted complete record on 2026-10-31; implementation and runtime activation require separate evidence.",
       "source": "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
-      "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
+      "producer": "Owner acceptance after independent design review, recorded in PR #235.",
       "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
-      "publication": "not staged",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0038: Scoped recovery completion and optional-store initialization",
-      "status_in_source": "proposed",
+      "status_in_source": "accepted",
       "static_consumer_references": [
         "docs/adr/README.md",
         "docs/implementation/core-independence-contract-matrix.md",
@@ -11431,7 +11374,7 @@
     "docs/architecture/module-independence-contract.md": {
       "status": "scoped-design-contract",
       "owner": "docs/architecture/",
-      "authority": "Proposed operation obligations under ADR 0037 and recovery successor 0038; no implementation claim.",
+      "authority": "Accepted target obligations under ADR 0037 and complete recovery successor 0038; no implementation claim.",
       "source": "docs/architecture/module-independence-contract.md",
       "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
       "consumers": "ADR index, implementation map, future implementers and independent reviewers.",

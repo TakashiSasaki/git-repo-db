@@ -6,7 +6,7 @@ below retain their historical spelling and do not provide compatibility APIs.
 
 This contract scopes the opt-in transition after the merged typed-salvage
 implementation. [ADR 0036](../adr/0036-ref-observations-and-shared-notes-mappings.md)
-and [ADR 0026](../adr/0026-stop-salvage-restore-merge-after-corruption.md)
+and [ADR 0038](../adr/0038-scoped-recovery-and-optional-initialization.md)
 remain authoritative. The fixed baseline for this transition is main
 `3d3776c61e48cbd1e2009d9a167e101c664af02d` (tree
 `1b28a48b51a2da35beec20444458791b42d5f2a6`). This is an engineering contract,
@@ -74,7 +74,7 @@ produces no legacy Capture/Notes fact. It does not activate public Schema 21,
 change the physical/wire format, migrate a catalog, or repeat PR #221/#223's
 completed callback repair. Recovery remains corruption stop, read-only
 preservation, typed salvage, fresh restore, revalidation/merge, validation and
-activation under ADR 0026. Existing Recovery and collision tests remain required
+activation under ADR 0038. Existing Recovery and collision tests remain required
 at the eventual physical cut. No remaining owner-policy blocker was identified
 for this first input boundary; B03/exact grammar and later activation/release
 remain separately scoped.
@@ -451,7 +451,7 @@ budget, not a surviving Capture Notes path. Ref subjects, Claims, alternatives,
 Group-only/partial reports, Mapping content, receiver evidence and each physical
 copy retain their separate original identities and qualifications.
 
-The ADR 0026 sequence is preserved: corruption stops ordinary service/backup;
+The ADR 0038 sequence is preserved: corruption stops ordinary service/backup;
 source DB/WAL bytes are preserved while typed salvage emits untrusted candidates;
 a checked healthy backup restores into a fresh destination; candidate merge
 rechecks dependencies, original identity, structural proof and actual bytes;

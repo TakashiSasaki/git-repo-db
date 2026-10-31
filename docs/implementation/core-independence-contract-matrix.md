@@ -3,20 +3,20 @@
 This is a source and test map for the opt-in P1/P5/P6 implementation at main
 `4404a06870f3b7f9427278337debbddba41c559c`; it is not a new design decision,
 a release claim, or activation of the normal Schema 21 runtime. Accepted
-[ADR 0026](../adr/0026-stop-salvage-restore-merge-after-corruption.md),
+[ADR 0038](../adr/0038-scoped-recovery-and-optional-initialization.md),
 [ADR 0029](../adr/0029-independent-access-store.md) and the
 [selective Exchange contract](../architecture/selective-exchange-contract.md)
 remain authoritative. Read current source when this snapshot ages.
 
-The proposed [operation-scoped installation contract](../architecture/module-independence-contract.md)
+The accepted [operation-scoped installation contract](../architecture/module-independence-contract.md)
 and [ADR 0037](../adr/0037-operation-scoped-module-independence.md) describe future
 guarantees, not a reinterpretation of this snapshot as physically isolated wheels.
 Its per-operation delta table checks the newer base
 `c2ae058b6402e0f5055c864fba1ed4ec7992a8aa`, including the already completed
-RefObservation transition. The proposed recovery change has its own
+RefObservation transition. The accepted recovery successor has its own
 [ADR 0026 carry-forward audit](../adr/0038-scoped-recovery-and-optional-initialization.md#clause-level-reconciliation-of-adr-0026).
 Existing tests linked below are not newly executed by that design task. In
-particular, no proposal removes Exchange's coexisting-Context checks, changes
+particular, this decision does not remove Exchange's coexisting-Context checks, changes
 default selections, or makes Operational optional for reception.
 
 | Operation | Implementation and local stores used | Coexistence, validation and stop boundary | Regression evidence |

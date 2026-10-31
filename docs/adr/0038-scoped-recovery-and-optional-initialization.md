@@ -1,6 +1,6 @@
 ---
-status: proposed
-date: null
+status: accepted
+date: 2026-10-31
 replaces:
   - 0026-stop-salvage-restore-merge-after-corruption.md
 refines: []
@@ -10,17 +10,18 @@ refines: []
 
 ## Decision
 
-**Proposed complete successor to ADR 0026, pending preservation review and explicit
-owner acceptance.** `replaces` declares the intended transition, not an already
-retired predecessor. ADR 0026 remains accepted and unchanged on this review branch.
-The owner selected M-01/M-04 in the 2026-10-31 task; that selects Git-only availability
-and deferred optional initialization, not approval of this complete successor text.
+**Owner-accepted complete successor to ADR 0026, 2026-10-31.** On 2026-10-31, after the reviewed draft at `43aa7ab88816f0a5d1a278b517a63006852269bb`, the owner instructed: 「ADRを引き継ぎ、マージまで進めてください。」 This accepts the complete 0037/0038 carry-forward and predecessor retirement, and separately authorizes this design PR’s merge after focused review and CI. It does not authorize product implementation.
+
+The predecessor is removed in this coherent acceptance/reference update; its exact
+text remains pinned in References. Preservation and dependency reviews of the
+complete draft and all corrections preceded acceptance; the acceptance delta
+receives its own focused review.
 
 GCTX-M10 continues to mean stop, preserve, salvage read-only, restore a suitable
 verified backup into a fresh destination, merge only receiver-validated typed
 candidates, validate and safely activate. Only Git-only completion and O/S
-initialization timing change in R5 and R6.9. All retained clauses below are intended
-successor obligations, subject to the pending acceptance; later accepted ADR 0036
+initialization timing change in R5 and R6.9. All retained clauses below are binding
+successor obligations; later accepted ADR 0036
 already governs observation/Claim/Notes semantics. The clause map identifies each
 retained/changed family and all ten concrete verification cases.
 
@@ -140,7 +141,7 @@ Context remains independently durable; Core never requires Context for fact vali
 **Paired scope retained:** Search/Operational are rebuilt from the recovered
 authorities and valid configuration rather than trusted as salvage authorities
 or reused for old leases/freshness. This established paired recovery obligation
-is unchanged. This proposal grants no paired optional-installation exemption.
+is unchanged. This decision grants no paired optional-installation exemption.
 
 **Git-only change (M-01/M-04):** A Core-only recovery is explicitly Git-only and
 cannot claim recovery of missing Context. Its complete lifecycle, including final
@@ -195,7 +196,7 @@ This is an explicit owner-directed change of fault/recovery policy, including th
 ## Clause-level reconciliation of ADR 0026
 
 Read paragraph coordinates within each numbered section of ADR 0026 at the pinned
-base above. “Retained” means binding meaning carried here if accepted, not a claim
+base above. “Retained” means binding meaning carried here under this accepted successor, not a claim
 that implementation passed. R anchors identify the exact successor section.
 Every retained row applies to both scopes unless its original rule is scope-specific.
 Only rows explicitly marked changed alter Git-only completion; no row removes a
@@ -252,20 +253,18 @@ implementation/tests and minimal future installation verification are mapped in
 the operation contract; historical receipts remain evidence only of their original
 trees. DDL, tools, serialization, stop fencing, journal capture, validation/activation,
 pairing mechanics and defaults remain constrained engineering work. No real data,
-source acquisition, implementation, runtime test, migration, merge or release is
-authorized by this proposal.
+source acquisition, implementation, runtime test, migration or release is
+authorized by this decision. Design merge has separate owner authorization above.
 
-**Pending transition:** independent preservation review must confirm this map and
-complete successor; the owner must explicitly accept its full text and retirement
-of 0026. Then, in a coherent acceptance/retirement commit under policy §6, set the
-actual status/date/approval reference, remove 0026 and update the index, active
-root/nested agent guides, applicable skills and effective normative references.
-Inspect inbound links and plain-text obligations, including ADR 0029, ADR 0036,
-selective Exchange, recovery/transition contracts and implementation navigation.
-Use history-pinned links where original receipts refer to the predecessor; do not
-rewrite evidence. No retirement or acceptance is performed in this draft PR and
-no merge is authorized. The review branch's proposed exception is permitted by
-policy §2; both conflicting records must not enter main as accepted.
+**Acceptance/retirement:** independent preservation review confirmed this map and
+complete successor, including all ten verification cases. The owner then accepted
+its full text and retirement of 0026 with the instruction above. The coherent
+policy §6 transition removes 0026, updates the index and effective root/nested
+agent, skill and normative references, and preserves historical receipts/links.
+No conflicting accepted predecessor remains. Focused acceptance-delta review and
+CI precede the separately authorized design merge; no product implementation follows
+automatically. [PR #235](https://github.com/TakashiSasaki/git-repo-db/pull/235) records
+exact review/source/CI identities separately from design authority.
 
 ## References
 
@@ -276,4 +275,5 @@ policy §2; both conflicting records must not enter main as accepted.
   [five responsibilities](0029-independent-access-store.md),
   [classified times](0028-classified-times-and-sha256-exchange.md).
 - Owner selections M-01/M-04 and authorization to submit design PR, 2026-10-31;
-  full successor acceptance pending. Allocation checked with 0037 in the same PR.
+  subsequent explicit acceptance/carry-forward and merge instruction quoted above.
+  Allocation checked with 0037 in the same PR.

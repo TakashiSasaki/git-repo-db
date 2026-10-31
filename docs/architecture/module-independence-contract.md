@@ -1,8 +1,7 @@
 # Operation-scoped module-independence contract
 
-**Proposed target contract under [ADR 0037](../adr/0037-operation-scoped-module-independence.md).**
-Owner-selected M-01–M-04 and M-05–M-07 are recorded there. Complete record acceptance
-is pending, including [ADR 0038](../adr/0038-scoped-recovery-and-optional-initialization.md).
+**Accepted target contract under [ADR 0037](../adr/0037-operation-scoped-module-independence.md).**
+Owner-selected M-01–M-04 and M-05–M-07 are recorded there. Complete records were accepted on 2026-10-31, including [ADR 0038](../adr/0038-scoped-recovery-and-optional-initialization.md).
 This is a future installation guarantee, not evidence that the current wheel is
 split. Main investigated: `c2ae058b6402e0f5055c864fba1ed4ec7992a8aa` (2026-10-31).
 The [implementation map](../implementation/core-independence-contract-matrix.md)
@@ -125,8 +124,8 @@ implementation PR sequence remain engineering choices. Shared contract ownership
 must respect M-01/M-02/M-03 rather than transitively pull unwanted implementation
 back in. Initially synchronized releases in one repository suffice.
 
-Acceptance of the design and review of ADR 0026 carry-forward precede implementation;
-implementation and merge need separate authorization. This change touches no
+Design acceptance includes the reviewed ADR 0026 carry-forward. The owner separately
+authorized design merge; product implementation still needs separate authorization. This change touches no
 product/runtime/build/DDL/test/CI input, performs no real catalog operation and
 claims no installation target implemented. Existing functionality outside these
 minimums is not removed. No new mandatory follow-up tracker, public-site refresh

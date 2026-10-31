@@ -1,6 +1,6 @@
 ---
-status: proposed
-date: null
+status: accepted
+date: 2026-10-31
 replaces: []
 refines:
   - 0029-independent-access-store.md
@@ -10,11 +10,10 @@ refines:
 
 ## Decision
 
-**Proposed Full ADR.** The owner selected the directions below in the 2026-10-31
-module-independence task and authorized one design-only PR. Those selections are
-settled inputs; acceptance of this complete record and the recovery successor is
-still pending. Neither proposal changes the running product or accepts additional
-clauses by implication. Detailed operation obligations have one home in the
+**Owner-accepted Full ADR, 2026-10-31.** On 2026-10-31, after the reviewed draft at `43aa7ab88816f0a5d1a278b517a63006852269bb`, the owner instructed: 「ADRを引き継ぎ、マージまで進めてください。」 This accepts the complete 0037/0038 carry-forward and predecessor retirement, and separately authorizes this design PR’s merge after focused review and CI. It does not authorize product implementation.
+
+The selected directions are settled. Acceptance changes no running product.
+Detailed operation obligations have one home in the
 [operation contract](../architecture/module-independence-contract.md).
 
 | ID | Selected direction |
@@ -80,10 +79,10 @@ reconstruction defeats Git-only activation on a basic installation.
 
 This record additively specifies ADR 0029's logical boundaries. M-04 **reverses**
 ADR 0026 §5 and §6.9 for Git-only recovery; it is not a `refines` relationship to
-0026. The complete proposed [ADR 0038](0038-scoped-recovery-and-optional-initialization.md)
+0026. The accepted [ADR 0038](0038-scoped-recovery-and-optional-initialization.md)
 contains its surviving obligations and clause audit, applying ADR 0036's later
-supersession. The two proposals must be reconciled/accepted together for M-04;
-0026 remains accepted during review. No contradictory pair is marked accepted.
+supersession. Both records are accepted together; 0026 is retired in this
+coherent acceptance/reference update. No contradictory pair remains accepted.
 
 ## Consequences
 
@@ -93,15 +92,17 @@ isolated build/install evidence. Exact packaging and implementation sequence rem
 engineering work after design acceptance and separate authorization. Existing
 supported functionality outside the minimum is not removed by omission.
 
-Before integration, the owner must review/accept complete 0037/0038 text and the
-carry-forward audit. Acceptance/retirement of 0026 must update all effective
-references coherently under policy §6, after preservation review. Acceptance,
-integration, implementation and executed verification remain separate.
+Independent preservation and dependency reviews, with corrections rechecked at
+`43aa7ab8`, preceded owner acceptance of both complete records and the carry-forward
+audit. This change retires 0026 and updates effective references under policy §6;
+focused review of the acceptance delta and CI remain separate merge gates.
+Acceptance, integration, implementation and executed verification remain separate.
 
 ## References
 
 - Owner task, 2026-10-31: “Record the agreed module-independence design in
-  git-repo-db”; subsequent instruction to proceed only through design PR submission.
+  git-repo-db”; subsequent 2026-10-31 instruction quoted above accepts carry-forward and
+  authorizes design merge. Approval/review evidence is recorded in [PR #235](https://github.com/TakashiSasaki/git-repo-db/pull/235).
 - [ADR policy](policy.md), [ADR 0029](0029-independent-access-store.md),
   [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md).
 - [Recovery successor and audit](0038-scoped-recovery-and-optional-initialization.md),

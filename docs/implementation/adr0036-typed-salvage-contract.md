@@ -5,7 +5,7 @@ Current opt-in OID spelling and fresh-format versions follow the
 below retain their historical spelling and do not provide compatibility APIs.
 
 This contract specifies the opt-in RefObservation recovery work on the merged
-I1–I3 stack. The authoritative design is [ADR 0026](../adr/0026-stop-salvage-restore-merge-after-corruption.md),
+I1–I3 stack. The authoritative design is [ADR 0038](../adr/0038-scoped-recovery-and-optional-initialization.md),
 with the identity and origin override in [ADR 0036](../adr/0036-ref-observations-and-shared-notes-mappings.md).
 It does not activate the ordinary Schema 21 path, migrate a real catalog, retire
 legacy Capture/Notes, or establish issuer authenticity. Implementation and

@@ -9,7 +9,7 @@ refines:
 
 # ADR 0025: Cumulative acquisition-request budgets and scoped architectural blockers
 
-**Current post-corruption override:** [ADR 0026 / GCTX-M10](0026-stop-salvage-restore-merge-after-corruption.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
+**Current post-corruption override:** [ADR 0038 / GCTX-M10](0038-scoped-recovery-and-optional-initialization.md) requires stopping ordinary catalog operation, preserving the suspect source read-only, serializing salvage candidates, restoring a verified backup into a fresh destination and merging only revalidated admissible data. Prior post-fault metadata service, same-DB failover, known-corrupt normal backup/restore and references to M10 as pending are historical in that scope. Ordinary sound-catalog rules and unrelated open work remain. No implementation or merge is authorized.
 
 - **Decision ID:** B02-R04; **owner selected Option A**, accepted 2026-10-15, with the explicit correction that resource limits and their implementation details are not architectural owner blockers.
 - **Direct base:** [PR #65 / ADR 0024](https://github.com/TakashiSasaki/git-repo-db/pull/65), verified HEAD `45f7da24924caa8d4da7a00107e32dc03c6bb416`, branch `codex/adr-0024-actual-notes-resource-accounting`. Direct documentation-only successor; no implementation or merge.
