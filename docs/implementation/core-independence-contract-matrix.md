@@ -16,8 +16,8 @@ Its per-operation delta table checks the newer base
 RefObservation transition. The accepted recovery successor has its own
 [ADR 0026 carry-forward audit](../adr/0038-scoped-recovery-and-optional-initialization.md#clause-level-reconciliation-of-adr-0026).
 Existing tests linked below are not newly executed by that design task. In
-particular, this decision does not remove Exchange's coexisting-Context checks, changes
-default selections, or makes Operational optional for reception.
+particular, this decision does not remove Exchange's coexisting-Context checks, change
+default selections, or make Operational optional for reception.
 
 | Operation | Implementation and local stores used | Coexistence, validation and stop boundary | Regression evidence |
 | --- | --- | --- | --- |
