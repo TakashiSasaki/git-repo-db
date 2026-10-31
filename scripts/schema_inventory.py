@@ -13,10 +13,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Ensure src/ is importable
+# Ensure the three namespace distribution source roots are importable
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT / "src") not in sys.path:
-    sys.path.insert(0, str(ROOT / "src"))
+for source in (
+    ROOT / "src",
+    ROOT / "packages/core/src",
+    ROOT / "packages/contracts/src",
+):
+    if str(source) not in sys.path:
+        sys.path.insert(0, str(source))
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -769,7 +774,7 @@ def producer_input_names(root: Path, source: str) -> list[str]:
     selected = {
         p
         for p in names
-        if p.startswith("src/")
+        if p.startswith(("src/", "packages/"))
         or p.startswith("scripts/")
         and p.endswith(".py")
         or p in PRODUCER_CONTROLS

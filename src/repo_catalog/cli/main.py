@@ -6,7 +6,7 @@ import signal
 import sqlite3
 import sys
 
-from repo_catalog import __version__
+from repo_catalog._version import __version__
 from repo_catalog.application.maintenance_service import MaintenanceService
 from repo_catalog.cli.presenters import envelope, exit_code, render
 from repo_catalog.config import state_path

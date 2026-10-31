@@ -567,7 +567,8 @@ def test_corruption_stop_precedes_gate_release_even_if_detector_dies(tmp_path):
 from tests.integration.p1.test_coordination import admit_fixture
 import sys
 from pathlib import Path
-import repo_catalog.adapters.sqlite.p1_coordination as c
+import repo_catalog.adapters.sqlite.core_coordination as c
+from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.domain.p1_core import CoreFailure
 original=c.persist_catalog_stop
 def stopped(directory,reason):
@@ -577,7 +578,7 @@ def stopped(directory,reason):
 c.persist_catalog_stop=stopped
 def detect(db):
     raise CoreFailure('AUTHORITATIVE_CORRUPTION','retained bytes','mismatch')
-admit_fixture(c.PairCoordinator(Path(sys.argv[1])), detect,lambda db:None)
+admit_fixture(PairCoordinator(Path(sys.argv[1])), detect,lambda db:None)
 """
     writer_code = """
 from tests.integration.p1.test_coordination import admit_fixture
@@ -619,7 +620,7 @@ else: print('COMMITTED',flush=True)
 def test_next_supported_writer_cannot_enter_during_stop_transition(
     tmp_path, monkeypatch
 ):
-    import repo_catalog.adapters.sqlite.p1_coordination as coordination
+    import repo_catalog.adapters.sqlite.core_coordination as coordination
     from repo_catalog.domain.p1_core import CoreFailure
 
     directory = tmp_path / "live"

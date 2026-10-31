@@ -287,7 +287,7 @@ def test_valid_record_does_not_hide_wheel_content_or_metadata_changes(
 ):
     _, _, _, direct, _, _ = real_build
     name = (
-        "repo_catalog/__init__.py"
+        "repo_catalog/__main__.py"
         if not metadata
         else next(
             n
@@ -305,7 +305,7 @@ def test_wheel_record_tampering_is_rejected(real_build, tmp_path):
     changed = rewrite_wheel(
         direct,
         tmp_path / "changed.whl",
-        {"repo_catalog/__init__.py": b"changed"},
+        {"repo_catalog/__main__.py": b"changed"},
         fix_record=False,
     )
     with pytest.raises(ValueError, match="RECORD hash"):

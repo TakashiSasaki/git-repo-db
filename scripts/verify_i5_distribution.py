@@ -17,7 +17,6 @@ import sys
 import tarfile
 import tempfile
 import threading
-import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 from pathlib import Path
@@ -27,7 +26,11 @@ sys.path.insert(0, str(ROOT))
 
 from scripts import installed_test_harness as harness  # noqa: E402
 from scripts import verify_i5_offline as evidence  # noqa: E402
-from scripts.check_sdist_contract import check_sdist, compare_wheels  # noqa: E402
+from tests.support.distributions import (  # noqa: E402
+    dependency_wheels,
+    make_package_distributions,
+    package_build_environment,
+)
 
 
 def sha(path):
@@ -42,18 +45,27 @@ MEASURE_SCRIPT = """import hashlib,json,sqlite3,sys
 from pathlib import Path
 from repo_catalog.adapters.sqlite import p1_schema
 import repo_catalog
-origin=Path(repo_catalog.__file__).resolve()
+from repo_catalog import _version
+origin=Path(_version.__file__).resolve()
+namespace_roots=[str(Path(p).resolve()) for p in repo_catalog.__path__]
+assert namespace_roots and all(Path(p).is_relative_to(Path(sys.prefix).resolve()) for p in namespace_roots), namespace_roots
 assert origin.is_relative_to(Path(sys.prefix).resolve()), origin
 db=sqlite3.connect(':memory:')
 actual=db.execute('SELECT sqlite_version(),sqlite_source_id()').fetchone()
-Path(sys.argv[1]).write_text(json.dumps({'sqlite':actual,'python':sys.version,'executable':sys.executable,'origin':str(origin),'compile_options':db.execute('PRAGMA compile_options').fetchall()},indent=2)+'\\n')
+Path(sys.argv[1]).write_text(json.dumps({'sqlite':actual,'python':sys.version,'executable':sys.executable,'origin':str(origin),'namespace_roots':namespace_roots,'compile_options':db.execute('PRAGMA compile_options').fetchall()},indent=2)+'\\n')
 p1_schema._open(':memory:',fresh=True).close()
 p1_schema.verify_declared()
 p1_schema.register_functions(db); p1_schema.configure(db)
 db.executescript(p1_schema.compose('context'))
-root=origin.parent
-files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file() and p.suffix in ('.py','.sql','.json')}
-result={'sqlite':actual,'python':sys.version,'executable':sys.executable,'origin':str(origin),'compile_options':db.execute('PRAGMA compile_options').fetchall(),'pragmas':{n:db.execute('PRAGMA '+n).fetchall() for n in p1_schema.REQUIRED_PRAGMAS},'functions':[r for r in db.execute('PRAGMA function_list') if r[0].startswith('p1_')],'fingerprint':p1_schema.fingerprint('context'),'schema':p1_schema.schema_rows(db),'installed_files':files}
+files={}
+for namespace_root in namespace_roots:
+    root=Path(namespace_root)
+    for p in root.rglob('*'):
+        if p.is_file() and p.suffix in ('.py','.sql','.json'):
+            name=str(p.relative_to(root))
+            assert name not in files, ('overlapping product namespace file', name)
+            files[name]=hashlib.sha256(p.read_bytes()).hexdigest()
+result={'sqlite':actual,'python':sys.version,'executable':sys.executable,'origin':str(origin),'namespace_roots':namespace_roots,'compile_options':db.execute('PRAGMA compile_options').fetchall(),'pragmas':{n:db.execute('PRAGMA '+n).fetchall() for n in p1_schema.REQUIRED_PRAGMAS},'functions':[r for r in db.execute('PRAGMA function_list') if r[0].startswith('p1_')],'fingerprint':p1_schema.fingerprint('context'),'schema':p1_schema.schema_rows(db),'installed_files':files}
 Path(sys.argv[1]).write_text(json.dumps(result,indent=2)+'\\n')
 """
 
@@ -118,43 +130,35 @@ def main():
         source.mkdir()
         with tarfile.open(archive) as tar:
             tar.extractall(source, filter="data")
-        assert (
-            run(
-                "build-direct",
-                [
-                    sys.executable,
-                    "-m",
-                    "hatchling",
-                    "build",
-                    "-t",
-                    "wheel",
-                    "-t",
-                    "sdist",
-                ],
-                source,
-            )
-            == 0
+        build_work = out / "product-build"
+        build_work.mkdir()
+        build_count = 0
+
+        def build_runner(argv, cwd, env):
+            nonlocal build_count
+            build_count += 1
+            status = run(f"product-build-{build_count:03}", argv, cwd, env)
+            if status:
+                raise subprocess.CalledProcessError(status, argv)
+            return ""
+
+        products = make_package_distributions(
+            build_work,
+            root=source,
+            env=package_build_environment(),
+            wheelhouse=wheelhouse,
+            runner=build_runner,
         )
-        wheel = next((source / "dist").glob("*.whl"))
-        sdist = next((source / "dist").glob("*.tar.gz"))
-        unpack = scratch / "from-sdist"
-        unpack.mkdir()
-        contract = check_sdist(sdist, source)
-        with tarfile.open(sdist) as tar:
-            tar.extractall(unpack, filter="data")
-        derived = next(unpack.iterdir())
-        assert (
-            run(
-                "build-sdist-wheel",
-                [sys.executable, "-m", "hatchling", "build", "-t", "wheel"],
-                derived,
-            )
-            == 0
+        wheel, sdist, swheel = (
+            products["wheel"],
+            products["sdist"],
+            products["sdist_wheel"],
         )
-        swheel = next((derived / "dist").glob("*.whl"))
-        contract["wheel_equivalence"] = compare_wheels(
-            wheel, swheel, sdist_metadata=contract["members"]["PKG-INFO"]["sha256"]
-        )
+        contract = json.loads(products["sdist_contract"].read_text())
+        local_artifacts = {
+            variant: dependency_wheels(products, variant)
+            for variant in ("wheel", "sdist_wheel")
+        }
         write(out / "sdist-contract.json", contract)
         write(
             out / "build-binding.json",
@@ -162,6 +166,13 @@ def main():
                 "head": head,
                 "tree": tree,
                 "archive_sha256": sha(archive),
+                "dependency_wheels": {
+                    variant: [
+                        {"path": str(path.relative_to(out)), "sha256": sha(path)}
+                        for path in paths
+                    ]
+                    for variant, paths in local_artifacts.items()
+                },
                 "direct_wheel": {"sha256": sha(wheel), "bytes": wheel.stat().st_size},
                 "sdist": {"sha256": sha(sdist), "bytes": sdist.stat().st_size},
                 "sdist_wheel": {"sha256": sha(swheel), "bytes": swheel.stat().st_size},
@@ -236,6 +247,12 @@ def main():
             requirements = out / (tag + "-requirements.txt")
             requirements.write_text(
                 f"repo-catalog @ {artifact.as_uri()} --hash=sha256:{sha(artifact)}\n"
+                + "".join(
+                    f"{path.as_uri()} --hash=sha256:{sha(path)}\n"
+                    for path in local_artifacts[
+                        "wheel" if tag == "direct" else "sdist_wheel"
+                    ]
+                )
                 + "".join(
                     f"{record['name']} @ {(wheelhouse / record['file']).as_uri()} --hash=sha256:{record['sha256']}\n"
                     for record in dependencies
@@ -313,18 +330,12 @@ def main():
                 )
                 return
             measured = json.loads((out / (label + "-runtime.json")).read_text())
-            with zipfile.ZipFile(artifact) as z:
-                assert not any(
-                    n.startswith(("tests/", "scripts/")) for n in z.namelist()
-                )
-                expected = {
-                    n.removeprefix("repo_catalog/"): hashlib.sha256(
-                        z.read(n)
-                    ).hexdigest()
-                    for n in z.namelist()
-                    if n.startswith("repo_catalog/")
-                    and Path(n).suffix in (".py", ".sql", ".json")
-                }
+            expected = harness.product_files(
+                [
+                    artifact,
+                    *local_artifacts["wheel" if tag == "direct" else "sdist_wheel"],
+                ]
+            )
             assert expected == measured["installed_files"]
             harness.bind_artifact(outside, expected)
             for test_stage in (5, 4):

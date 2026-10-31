@@ -119,11 +119,11 @@ def check_console_script() -> dict[str, str]:
         )
 
     # 2. Verify imported repo_catalog module originates from the active workspace
-    import repo_catalog
+    from repo_catalog import _version as repo_catalog
 
     rc_file = Path(repo_catalog.__file__).resolve()
     expected_src = (ROOT / "src" / "repo_catalog").resolve()
-    if not (rc_file == expected_src / "__init__.py" or rc_file.is_relative_to(ROOT)):
+    if not (rc_file == expected_src / "_version.py" or rc_file.is_relative_to(ROOT)):
         raise SystemExit(
             f"Preflight failed: 'repo_catalog' module ({rc_file}) does not "
             f"originate from active repository source tree ({ROOT})"

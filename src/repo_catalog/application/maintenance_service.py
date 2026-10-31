@@ -13,7 +13,7 @@ import tempfile
 import uuid
 from pathlib import Path
 
-from repo_catalog import __version__
+from repo_catalog._version import __version__
 from repo_catalog.adapters.filesystem.atomic_publish import (
     fsync_directory,
     publish_directory,

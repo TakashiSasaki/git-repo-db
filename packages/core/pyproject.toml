@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repo-catalog-core"
+version = "0.2.0"
+description = "Minimal opt-in Git Core: initialization, typed admission and reads"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["repo-catalog-contracts==0.2.0"]
+
+[project.scripts]
+repo-catalog-query = "repo_catalog.cli.production_query:main"
+
+[tool.uv.sources]
+repo-catalog-contracts = { workspace = true }
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/repo_catalog", "pyproject.toml", "README.md"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_catalog"]

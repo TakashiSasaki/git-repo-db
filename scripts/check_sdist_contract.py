@@ -68,6 +68,35 @@ def safe_name(name, directory=False):
     return value
 
 
+def distribution_workspace(root):
+    """Identify the selected product and its declared synchronized workspace."""
+    root = Path(root).resolve()
+    for candidate in (root, *root.parents):
+        metadata = candidate / "pyproject.toml"
+        if not metadata.is_file():
+            continue
+        config = tomllib.loads(metadata.read_text())
+        workspace = config.get("tool", {}).get("uv", {}).get("workspace")
+        if workspace is None:
+            continue
+        projects = [candidate]
+        for member in workspace.get("members", []):
+            if not isinstance(member, str) or any(c in member for c in "*?[]"):
+                raise ValueError("Explicit distribution workspace members required")
+            member_path = candidate / member
+            project = member_path.resolve()
+            if (
+                member_path.is_symlink()
+                or not project.is_relative_to(candidate)
+                or not project.is_dir()
+            ):
+                raise ValueError("Invalid distribution workspace member")
+            projects.append(project)
+        if root in projects:
+            return candidate, tuple(projects)
+    return root, (root,)
+
+
 def source_inventory(root):
     root = Path(root).resolve()
     package = root / "src/repo_catalog"
@@ -365,35 +394,54 @@ def main():
     parser.add_argument("--source-root", type=Path, default=Path.cwd())
     parser.add_argument("--sdist", type=Path)
     parser.add_argument("--build", action="store_true")
+    parser.add_argument("--all-distributions", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--wheel", type=Path)
     parser.add_argument("--sdist-wheel", type=Path)
     args = parser.parse_args()
     if args.build == bool(args.sdist) or bool(args.wheel) != bool(args.sdist_wheel):
         parser.error("choose --build or --sdist; supply both wheel paths together")
+    if args.all_distributions and (not args.build or args.wheel):
+        parser.error("--all-distributions requires --build without wheel arguments")
+    completed = {}
     try:
         if args.build:
             import tempfile
 
+            roots = (
+                distribution_workspace(args.source_root)[1]
+                if args.all_distributions
+                else (args.source_root,)
+            )
             with tempfile.TemporaryDirectory(prefix="sdist-contract-") as temp:
-                subprocess.run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "hatchling",
-                        "build",
-                        "-t",
-                        "sdist",
-                        "-d",
-                        temp,
-                    ],
-                    cwd=args.source_root,
-                    check=True,
-                )
-                archives = list(Path(temp).glob("*.tar.gz"))
-                if len(archives) != 1:
-                    raise ValueError("expected exactly one built sdist")
-                result = check_sdist(archives[0], args.source_root)
+                for index, root in enumerate(roots):
+                    output = Path(temp) / str(index)
+                    subprocess.run(
+                        [
+                            sys.executable,
+                            "-m",
+                            "hatchling",
+                            "build",
+                            "-t",
+                            "sdist",
+                            "-d",
+                            str(output),
+                        ],
+                        cwd=root,
+                        check=True,
+                        capture_output=True,
+                    )
+                    archives = list(output.glob("*.tar.gz"))
+                    if len(archives) != 1:
+                        raise ValueError("expected exactly one built sdist")
+                    report = check_sdist(archives[0], root)
+                    name = tomllib.loads((root / "pyproject.toml").read_text())[
+                        "project"
+                    ]["name"]
+                    completed[name] = report
+                result = completed[next(iter(completed))]
+                if args.all_distributions:
+                    result = {"status": "passed", "distributions": completed}
         else:
             result = check_sdist(args.sdist, args.source_root)
         if args.wheel:
@@ -408,7 +456,13 @@ def main():
                 {
                     k: v
                     for k, v in result.items()
-                    if k not in ("members", "source_files", "wheel_equivalence")
+                    if k
+                    not in (
+                        "members",
+                        "source_files",
+                        "wheel_equivalence",
+                        "distributions",
+                    )
                 }
             )
         )
@@ -419,7 +473,14 @@ def main():
         zipfile.BadZipFile,
         subprocess.CalledProcessError,
     ) as error:
-        save(args.output, {"status": "failed", "error": str(error)})
+        save(
+            args.output,
+            {
+                "status": "failed",
+                "error": str(error),
+                "completed_distributions": completed,
+            },
+        )
         print(str(error), file=sys.stderr)
         return 1
     return 0

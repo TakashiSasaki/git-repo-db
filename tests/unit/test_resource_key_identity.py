@@ -31,6 +31,7 @@ from repo_catalog.domain.production_query import (
     QueryError,
     SnapshotFenceToken,
     canonical_json,
+    validate_cursor_key,
 )
 from repo_catalog.domain.resource_identity import encode_identity, parse_identity
 
@@ -78,6 +79,7 @@ def test_rechecksummed_resource_cursor_still_requires_canonical_identity(
             expected_endpoint=endpoint,
             expected_filter_digest="c" * 64,
             current_snapshot_token=token,
+            validate_key=validate_cursor_key,
         ).last_key == (SERVICE, "issue", identity)
     else:
         with pytest.raises(QueryError, match="INVALID_CURSOR"):
@@ -86,6 +88,7 @@ def test_rechecksummed_resource_cursor_still_requires_canonical_identity(
                 expected_endpoint=endpoint,
                 expected_filter_digest="c" * 64,
                 current_snapshot_token=token,
+                validate_key=validate_cursor_key,
             )
 
 

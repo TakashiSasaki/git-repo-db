@@ -63,15 +63,15 @@ jobs:
         run: >-
           python scripts/ci_profile.py run --name sdist_contract --
           uv run --no-sync python scripts/check_sdist_contract.py
-          --build --output artifacts/ci-profile/sdist-members.json
+          --build --all-distributions --output artifacts/ci-profile/sdist-members.json
       - name: Prepare locked wheels (online preparation)
         if: steps.plan.outputs.wheelhouse == 'true'
         run: python scripts/ci_profile.py run --name wheelhouse -- uv run --no-sync python scripts/prepare_wheelhouse.py
       - name: Ruff lint and formatting
         if: steps.plan.outputs.static == 'true'
         run: |
-          python scripts/ci_profile.py run --name lint -- uv run --no-sync ruff check src tests scripts
-          python scripts/ci_profile.py run --name format -- uv run --no-sync ruff format --check src tests scripts
+          python scripts/ci_profile.py run --name lint -- uv run --no-sync ruff check src packages tests scripts
+          python scripts/ci_profile.py run --name format -- uv run --no-sync ruff format --check src packages tests scripts
       - name: Inspect SQLite capabilities and doctor
         if: steps.plan.outputs.smoke == 'true'
         run: |

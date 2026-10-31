@@ -40,7 +40,7 @@ def test_p6_installed_query_search_and_cli(
             python,
             "--offline",
             "--no-deps",
-            wheels[variant],
+            *wheels[variant],
         ],
         outside,
         env,

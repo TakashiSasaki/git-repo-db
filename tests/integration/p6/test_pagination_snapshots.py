@@ -75,11 +75,11 @@ def test_deterministic_pagination_across_all_endpoints(tmp_path: Path) -> None:
     ]
     assert len(paged_obs) == all_obs.total_count
 
-    # 3. Notes captures pagination
+    # 3. Original ref-observation identities survive pagination
     all_caps = service.list_ref_observations(PageRequest(limit=100))
     paged_caps, _ = _collect_all_pages(service.list_ref_observations, limit=1)
-    assert [c.semantic_key for c in paged_caps] == [
-        c.semantic_key for c in all_caps.items
+    assert [c.ref_observation.ref_observation_key.key for c in paged_caps] == [
+        c.ref_observation.ref_observation_key.key for c in all_caps.items
     ]
 
     # 4. Context resources pagination
