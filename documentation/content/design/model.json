@@ -1,7 +1,7 @@
 {
   "id": "accepted-design",
-  "source_revision": "85a8bbf34c998ca8c0eb08b415ccfcda1b38473f",
-  "source_tree": "8b23436ed43c09d3041ace07a47dd50b7f18ddbb",
+  "source_revision": "88e7bef446ca638c69b9da604a30ae556d645320",
+  "source_tree": "ca7203821c879e93698a896cc84a023325600af1",
   "scope": "採択済み責務と意味構造の案内。概念の分割は物理テーブル数・確定 DDL・実装進捗を表さない。A=採択、I=継承、P=実装提案、U=本モデルで未確定。物理キーが未確定でも、意味上の完全等価性と複合参照は保持する。",
   "stores": [
     {
@@ -535,8 +535,8 @@
           "status": "A",
           "sources": [
             {
-              "path": "docs/adr/0026-stop-salvage-restore-merge-after-corruption.md",
-              "anchor": "2-recovery-sequence-and-admission-boundaries"
+              "path": "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
+              "anchor": "r2-recovery-sequence-and-admission-boundaries"
             }
           ]
         }

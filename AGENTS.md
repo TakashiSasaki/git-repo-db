@@ -105,7 +105,7 @@ Retained metadata/notes still require strict verification and physical integrity
 
 The **implemented** normal format remains Catalog3 Core Schema 21, Operational Schema 1 and Search Schema 1; accepted targets include the five-store boundary in ADR 0029 and ref-observation design in ADR 0036. Adoption does not activate or prove implementation. Preserve historical evidence and the Publication-independent reconstruction in its unsuperseded scope.
 
-The developer documentation site is https://git-repo-db.moukaeritai.work/ and publishes from `main` under the existing explicit allowlist. A design-source change does not authorize changing that allowlist or deploying the site.
+The developer documentation site is https://git-repo-db.moukaeritai.work/ and publishes from `main` under the existing explicit allowlist.
 
 The project is unreleased and has one developer. No old database, internal API, CLI or migration compatibility is required. Preserve Git history and other agents' uncommitted work. **Permissions come from the explicit current owner task**, not this file or an older prompt. Create commits/branches/PRs only within that scope. Merge only specifically authorized PRs after required validation; otherwise do not merge `main`. An authorized merge does not authorize release, deployment, tagging, force pushes, bypassing branch protection, retained-catalog mutation or authenticated live collection. Use disposable synthetic state; stateful CLI commands require an explicit disposable `--state-dir`. Never commit real catalogs, credentials, private content, caches or raw authenticated traffic.
 
