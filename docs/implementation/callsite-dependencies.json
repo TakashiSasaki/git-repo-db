@@ -37,7 +37,7 @@
     {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py",
       "owner": "repo-catalog-core",
-      "sha256": "09f53cf01c0242e4b285e13e054978a3d18d81c88abb5289ec7708485594be38"
+      "sha256": "bc2928470b55d9d5c732dec93e2235c04d84a5a08f70934750420a0e3c252f53"
     },
     {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/core_recovery_validation.py",
