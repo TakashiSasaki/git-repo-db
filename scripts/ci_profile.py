@@ -16,7 +16,7 @@ import tempfile
 import time
 import uuid
 import xml.etree.ElementTree as ET
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -25,6 +25,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts import ci_journal, resource_scheduler  # noqa: E402
+from scripts.ci_timing import InvocationTiming, atomic_write_text  # noqa: E402
 
 
 def junit(path):
@@ -142,17 +143,6 @@ def sha256_path(path: Path) -> str:
         while chunk := f.read(65536):
             h.update(chunk)
     return h.hexdigest()
-
-
-def atomic_write_text(path: Path, content: str) -> None:
-    """Write text to a temporary file in the destination directory and replace atomically."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        "w", dir=path.parent, delete=False, encoding="utf-8"
-    ) as tf:
-        tf.write(content)
-        tmp_name = tf.name
-    os.replace(tmp_name, path)
 
 
 def atomic_copy(src: Path, dst: Path) -> None:
@@ -527,74 +517,6 @@ def markdown(record):
     if record.get("interrupted"):
         lines += ["", "**Warning: Execution was interrupted; results are partial.**"]
     return "\n".join(lines) + "\n"
-
-
-class InvocationTiming:
-    """Checkpoint timing in the existing invocation, even before a child exits.
-
-    An unfinished phase has no invented end or duration. SIGKILL/power loss can
-    only leave that checkpoint; ordinary exceptions retain the observed end.
-    """
-
-    def __init__(self, record, path):
-        self.record = record
-        self.path = path
-        self.start = time.perf_counter()
-        self.active = {}
-        record["timing"] = {
-            "version": 1,
-            "status": "running",
-            "task_id": os.environ.get("CI_TASK_ID"),
-            "session_id": os.environ.get("CI_SESSION_ID"),
-            "parent_invocation_id": os.environ.get("CI_PARENT_INVOCATION_ID"),
-            "kind": os.environ.get("CI_PHASE_KIND", "unclassified"),
-            "started_at": datetime.now(UTC).isoformat(),
-            "phases": [],
-        }
-        self.begin("preparation")
-
-    def save(self):
-        atomic_write_text(self.path, json.dumps(self.record, indent=2) + "\n")
-
-    def begin(self, name):
-        row = {"name": name, "started_at": datetime.now(UTC).isoformat()}
-        self.record["timing"]["phases"].append(row)
-        self.active[name] = (row, time.perf_counter())
-        self.save()
-
-    def end(self, name, exception=None):
-        row, start = self.active.pop(name)
-        row.update(
-            completed_at=datetime.now(UTC).isoformat(),
-            elapsed_seconds=time.perf_counter() - start,
-        )
-        if exception is not None:
-            row["exception_type"] = type(exception).__name__
-        self.save()
-
-    @contextmanager
-    def phase(self, name):
-        self.begin(name)
-        exception = None
-        try:
-            yield
-        except BaseException as exc:
-            exception = exc
-            raise
-        finally:
-            self.end(name, exception)
-
-    def finish(self, status, exception=None):
-        for name in list(self.active):
-            self.end(name, exception)
-        self.record["timing"].update(
-            status=status,
-            completed_at=datetime.now(UTC).isoformat(),
-            elapsed_seconds=time.perf_counter() - self.start,
-        )
-        if exception is not None:
-            self.record["timing"]["exception_type"] = type(exception).__name__
-        self.save()
 
 
 def run(args):

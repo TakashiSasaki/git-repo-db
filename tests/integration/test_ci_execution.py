@@ -1864,3 +1864,15 @@ def test_complete_release_requires_documentation_conjunction_after_product_proof
         if documentation_status == "verified"
         else "product_release_passed"
     )
+
+
+def test_measurement_only_records_cannot_satisfy_validation_consumers(acceptance):
+    root, output = acceptance
+    path = output / "tests.json"
+    profile = json.loads(path.read_text())
+    profile["measurement_only"] = True
+    path.write_text(json.dumps(profile))
+    with pytest.raises(ValueError, match="failed|invalid"):
+        ci_execute.successful_profile(path, {}, {})
+    with pytest.raises(ValueError, match="did not complete successfully"):
+        ci_execute.create_receipt(output, root=root)

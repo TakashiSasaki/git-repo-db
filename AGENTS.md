@@ -205,6 +205,9 @@ measured tokens/billing; do not add heavyweight measurements or process gates
 when existing evidence answers the question. Use
 [efficient repository investigation](.agents/skills/efficient-repository-investigation/SKILL.md)
 and [CI verification](.agents/skills/ci-final-tree-verification/SKILL.md) for procedures.
+For explicit work start/pause/resume/end and external preparation, use the
+stdlib-only `scripts/ci_timing.py` helper described in that verification skill.
+Keep raw session timing local; declared active elapsed does not measure effort.
 
 ## Reuse lessons as repository Agent Skills
 

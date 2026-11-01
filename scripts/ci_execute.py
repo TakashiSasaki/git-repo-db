@@ -226,7 +226,8 @@ def reports(root=ROOT):
 def successful_profile(path, context, expected_runtime):
     record = read(path)
     if (
-        record["exit_code"] != 0
+        record.get("measurement_only")
+        or record["exit_code"] != 0
         or record.get("measurement_error")
         or record.get("interrupted")
         or record.get("measurement_recovered_from_journal")
@@ -642,7 +643,8 @@ def create_receipt(output_dir, dest_path=None, root=ROOT):
 
         profile = read(lane_json)
         if (
-            profile.get("exit_code") != 0
+            profile.get("measurement_only")
+            or profile.get("exit_code") != 0
             or profile.get("interrupted")
             or profile.get("measurement_error")
             or profile.get("measurement_recovered_from_journal")

@@ -721,3 +721,68 @@ class CheckoutConcurrencyTests(BootstrapCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TimingAttemptTests(BootstrapCase):
+    def attempts(self):
+        return sorted(
+            (self.root / setup.RECEIPT_DIRECTORY / "invocations").glob("*.json")
+        )
+
+    def test_failure_survives_successful_retry_with_parent_and_step_timing(self):
+        with patch.dict(
+            os.environ,
+            {
+                "CI_TASK_ID": "timing",
+                "CI_SESSION_ID": "author",
+                "CI_PARENT_INVOCATION_ID": "outer",
+            },
+        ):
+            self.project.fail.add("sync")
+            self.assertEqual(self.bootstrap(), 1)
+            first = self.attempts()[0]
+            original = first.read_bytes()
+            self.project.fail.clear()
+            self.assertEqual(self.bootstrap(), 0)
+        self.assertEqual(len(self.attempts()), 2)
+        self.assertEqual(first.read_bytes(), original)
+        failed = json.loads(original)
+        self.assertEqual(failed["status"], "failed")
+        self.assertEqual(failed["timing"]["parent_invocation_id"], "outer")
+        step = failed["steps"]["dependency_sync"]
+        self.assertIn("started_at", step)
+        self.assertIn("completed_at", step)
+        self.assertGreaterEqual(step["seconds"], 0)
+        self.assertEqual(self.receipt()["timing"]["status"], "completed")
+
+    def test_lock_timeout_preserves_prior_valid_pointer_and_retains_attempt(self):
+        self.assertEqual(self.bootstrap(), 0)
+        pointer = self.root / local_env.RECEIPT
+        before = pointer.read_bytes()
+        with setup.CheckoutLock(
+            self.root / setup.RECEIPT_DIRECTORY / ".bootstrap.lock"
+        ):
+            self.assertEqual(self.bootstrap("--lock-timeout", "0"), 1)
+        self.assertEqual(pointer.read_bytes(), before)
+        self.assertEqual(len(self.attempts()), 2)
+        failed = [
+            json.loads(p.read_text())
+            for p in self.attempts()
+            if json.loads(p.read_text())["status"] == "failed"
+        ]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(failed[0]["timing"]["exception_type"], "TimeoutError")
+
+    def test_final_verification_interrupt_invalidates_provisional_success(self):
+        with patch.object(
+            local_env, "verify_environment", side_effect=KeyboardInterrupt
+        ):
+            with self.assertRaises(KeyboardInterrupt):
+                self.bootstrap()
+        receipt = self.receipt()
+        self.assertEqual(receipt["status"], "failed")
+        self.assertEqual(receipt["exit_code"], 130)
+        self.assertEqual(receipt["timing"]["status"], "interrupted")
+        self.assertEqual(receipt["steps"]["final_verification"]["status"], "failed")
+        with self.assertRaises(local_env.EnvironmentRefused):
+            local_env.read_receipt(self.root)
