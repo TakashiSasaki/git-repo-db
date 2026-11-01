@@ -116,6 +116,46 @@ zombie process, progress dots, a partial XML case count or another run's badge.
 See the [I5 merge preparation](../../../docs/implementation/adr0030-i5-merge-plan.md)
 and its independently retained execution receipts.
 
+## Measure verification time without inventing work time
+
+Use the existing invocation profiles, including failed attempts, rather than
+rerunning a cohort to measure historical performance. Set nonsecret `CI_TASK_ID`
+and `CI_SESSION_ID` labels before running the existing runner. Optional
+`CI_PHASE_KIND` labels such as `preflight`, `build_install`, `offline_ci`, or
+`review` distinguish the purpose of a generic `ci_profile.py run` command;
+pytest defaults to `test`, and unlabeled generic commands stay unclassified.
+An installed pytest cohort can contain builds/installations: its command time is
+mixed unless nested evidence separates those operations. Do not call it pure
+test execution or release-only overhead from its filename alone.
+
+`ci_profile.py` checkpoints preparation, CPU reservation wait, command execution
+and finalization in the same invocation JSON. Each completed phase has UTC
+start/end and monotonic elapsed seconds. Controller exceptions preserve observed
+timing without a successful exit claim. A killed controller can leave an open
+phase; its missing end/duration is unknown, not zero. These checkpoints are timing
+evidence, not new acceptance receipts. Preserve the existing input bindings,
+failure reconciliation and child exit status.
+
+Run `scripts/local-run.sh python scripts/ci_query.py timing EVIDENCE_DIR [...]`
+to read all retained invocations, deduplicate identical pointer copies, retain
+retries, and report summed durations separately from the interval union and
+observed span. Conflicting copies fail instead of silently replacing evidence.
+Legacy profiles lack the new phase boundaries; their interval can include CPU
+wait. Summed pytest phase durations are worker work, not elapsed waiting time.
+Nested runner commands identify their parent invocation; do not add parent and
+child durations as independent work. Compare interval unions only on synchronized
+hosts without clock jumps. The monotonic phase durations remain the elapsed
+measurement when wall clocks change.
+
+Task/session labels do not measure thinking or active work. Recover observable
+work windows, approval waits and idle gaps from the author session before
+calculating an active-work ratio. Without those boundaries, report the measured
+lower bound, end-to-end elapsed when known, and an unknown active-work ratio.
+PR creation/merge timestamps and first/last commits are not work boundaries.
+Unprofiled setup, probes, builds and review remain missing costs. Keep online
+GitHub jobs separate from local offline execution, and preserve skipped scopes
+as unexecuted. This analysis adds no test-selection or release gate.
+
 ## Development validation loop (ordinary PRs and stacked iterations)
 
 ### Choose and prepare the next run before executing it
