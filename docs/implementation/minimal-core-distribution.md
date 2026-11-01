@@ -71,6 +71,10 @@ belong to the PR/run artifacts; this document is an implementation rationale.
 Context/paired integration. Composed backup keeps its paired default; Core's
 entry requires no optional implementation. Missing paired capability is a
 `RecoveryCapabilityError`, not a corruption diagnosis or permission to downgrade.
+Callers explicitly pass `BackupScope.GIT_ONLY` to Core backup and salvage.
+The inherited paired backup default is conservative and refuses in the minimum
+installation. Restore, merge and activation derive scope from the checked
+manifest/baseline rather than guessing from available modules.
 
 The canonical Recovery domain/ports and durable request accounting belong to
 Core. The typed wire definitions in `domain.ref_exchange` are codecs, not
