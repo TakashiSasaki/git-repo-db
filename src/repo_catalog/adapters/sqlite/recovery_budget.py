@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from dataclasses import asdict
 from pathlib import Path
 
-from repo_catalog.adapters.sqlite.p1_coordination import _file_gate
+from repo_catalog.adapters.sqlite.core_coordination import _file_gate
 from repo_catalog.domain.recovery import RecoveryBudget, RecoveryError
 
 _MAX_STATE_BYTES = 1024 * 1024

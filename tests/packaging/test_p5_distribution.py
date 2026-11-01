@@ -33,7 +33,7 @@ def test_p5_installed_acquisition_and_exchange(
             python,
             "--offline",
             "--no-deps",
-            wheels[variant],
+            *wheels[variant],
         ],
         outside,
         env,

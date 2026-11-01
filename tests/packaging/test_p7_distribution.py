@@ -31,7 +31,7 @@ def test_p7_installed_recovery_distribution(
             python,
             "--offline",
             "--no-deps",
-            wheels[variant],
+            *wheels[variant],
         ],
         outside,
         env,
