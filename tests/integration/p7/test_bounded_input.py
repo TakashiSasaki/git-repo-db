@@ -203,12 +203,12 @@ def test_jsonl_stops_at_huge_line_without_scanning_suffix():
 
 
 def test_rejected_records_consume_work_and_limit_reports_unknown_suffix(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
     salvage = tmp_path / "malformed.jsonl"
     salvage.write_bytes(b"not-json\n" * 1_000_000)
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
+        restored_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
     )
     assert receipt.candidates_processed == 2
     assert receipt.rejected_units == 2
@@ -216,46 +216,46 @@ def test_rejected_records_consume_work_and_limit_reports_unknown_suffix(
     assert not receipt.input_complete
     assert not receipt.unprocessed_count_exact
     state = json.loads(
-        next(synthetic_catalog.glob("p1-recovery-request-*.json")).read_text()
+        next(restored_catalog.glob("p1-recovery-request-*.json")).read_text()
     )
     assert state["cumulative_usage"]["input_records"] == 2
     assert state["cumulative_usage"]["input_scan_bytes"] == 65536
 
 
 def test_invalid_utf8_is_rejected_without_losing_following_candidate(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
     salvage = tmp_path / "invalid.jsonl"
     salvage.write_bytes(b"\xff\n{}\n")
-    receipt = RecoveryService().merge_salvage(synthetic_catalog, salvage)
+    receipt = RecoveryService().merge_salvage(restored_catalog, salvage)
     assert receipt.candidates_processed == 2
     assert receipt.rejected_units == 2
     assert receipt.input_complete
 
 
-def test_oversized_jsonl_is_incomplete_without_admission(synthetic_catalog, tmp_path):
+def test_oversized_jsonl_is_incomplete_without_admission(restored_catalog, tmp_path):
     salvage = tmp_path / "huge.jsonl"
     salvage.write_bytes(b"x" * 1_000_000)
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog, salvage, budget=RecoveryBudget(max_payload_bytes=16)
+        restored_catalog, salvage, budget=RecoveryBudget(max_payload_bytes=16)
     )
     assert receipt.candidates_processed == receipt.admitted_units == 0
     assert receipt.unprocessed_units == 1
     assert not receipt.input_complete
 
 
-def test_salvage_output_cannot_replace_source_evidence(synthetic_catalog):
-    before = (synthetic_catalog / "core.sqlite3").read_bytes()
+def test_salvage_output_cannot_replace_source_evidence(restored_catalog):
+    before = (restored_catalog / "core.sqlite3").read_bytes()
     with pytest.raises(SalvageError, match="outside preserved source"):
         RecoveryService().extract_salvage(
-            synthetic_catalog, synthetic_catalog / "core.sqlite3"
+            restored_catalog, restored_catalog / "core.sqlite3"
         )
-    assert (synthetic_catalog / "core.sqlite3").read_bytes() == before
+    assert (restored_catalog / "core.sqlite3").read_bytes() == before
 
 
 @pytest.mark.parametrize("text", ["x" * 2000, "あ" * 512, 17, [], {}, "\ud800"])
 def test_context_invalid_or_large_text_does_not_block_later_unit(
-    synthetic_catalog, tmp_path, text
+    restored_catalog, tmp_path, text
 ):
     salvage = tmp_path / "context-bounds.jsonl"
     rows = [
@@ -267,12 +267,12 @@ def test_context_invalid_or_large_text_does_not_block_later_unit(
     ]
     salvage.write_text("".join(json.dumps(row) + "\n" for row in rows))
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog, salvage, budget=RecoveryBudget(max_payload_bytes=1024)
+        restored_catalog, salvage, budget=RecoveryBudget(max_payload_bytes=1024)
     )
     assert receipt.rejected_units == receipt.admitted_units == 1
     assert receipt.candidates_processed == 2
     assert receipt.input_complete
-    with sqlite3.connect(synthetic_catalog / "context.sqlite3") as conn:
+    with sqlite3.connect(restored_catalog / "context.sqlite3") as conn:
         assert conn.execute(
             "SELECT 1 FROM text_bodies WHERE text_value=?",
             ("independent accepted text",),
@@ -296,7 +296,7 @@ def test_context_invalid_or_large_text_does_not_block_later_unit(
     ],
 )
 def test_malformed_primitive_shape_is_one_rejection_not_merge_abort(
-    synthetic_catalog, tmp_path, bad
+    restored_catalog, tmp_path, bad
 ):
     row = {"candidate_type": "git_metadata", "payload": {}}
     row.update(bad)
@@ -312,12 +312,12 @@ def test_malformed_primitive_shape_is_one_rejection_not_merge_abort(
         )
         + "\n"
     )
-    receipt = RecoveryService().merge_salvage(synthetic_catalog, salvage)
+    receipt = RecoveryService().merge_salvage(restored_catalog, salvage)
     assert receipt.rejected_units == receipt.admitted_units == 1
     assert receipt.input_complete
 
 
-def test_none_provenance_remains_a_qualified_observation(synthetic_catalog, tmp_path):
+def test_none_provenance_remains_a_qualified_observation(restored_catalog, tmp_path):
     salvage = tmp_path / "null-provenance.jsonl"
     salvage.write_text(
         json.dumps(
@@ -330,7 +330,7 @@ def test_none_provenance_remains_a_qualified_observation(synthetic_catalog, tmp_
         )
         + "\n"
     )
-    receipt = RecoveryService().merge_salvage(synthetic_catalog, salvage)
+    receipt = RecoveryService().merge_salvage(restored_catalog, salvage)
     assert receipt.observation_units == 1
     assert receipt.input_complete
 
@@ -348,7 +348,7 @@ def test_hash_verification_reserves_before_expenditure(monkeypatch):
 
 @pytest.mark.parametrize("operation", ["merge", "copy"])
 def test_fifo_input_fails_in_separate_process_without_hanging(
-    synthetic_catalog, tmp_path, operation
+    restored_catalog, tmp_path, operation
 ):
     import os
     import subprocess
@@ -385,7 +385,7 @@ else:
             "-c",
             script,
             operation,
-            str(synthetic_catalog),
+            str(restored_catalog),
             str(fifo),
             str(source),
             str(destination),
@@ -437,7 +437,7 @@ def test_native_header_limit_precedes_all_line_materialization():
 
 @pytest.mark.parametrize("trailing_newline", [False, True])
 def test_one_refused_candidate_does_not_invent_another_at_eof(
-    synthetic_catalog, tmp_path, trailing_newline
+    restored_catalog, tmp_path, trailing_newline
 ):
     salvage = tmp_path / "single-refused.jsonl"
     row = json.dumps(
@@ -448,7 +448,7 @@ def test_one_refused_candidate_does_not_invent_another_at_eof(
     )
     salvage.write_text(row + ("\n" if trailing_newline else ""))
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog,
+        restored_catalog,
         salvage,
         budget=RecoveryBudget(max_work_units={"verification_bytes": 1}),
     )
@@ -460,24 +460,24 @@ def test_one_refused_candidate_does_not_invent_another_at_eof(
 
 @pytest.mark.parametrize("trailing_newline", [False, True])
 def test_record_limit_at_exact_eof_does_not_invent_omission(
-    synthetic_catalog, tmp_path, trailing_newline
+    restored_catalog, tmp_path, trailing_newline
 ):
     salvage = tmp_path / "exact-records.jsonl"
     rows = [json.dumps({"candidate_type": "context_resource", "payload": {}})] * 2
     salvage.write_text("\n".join(rows) + ("\n" if trailing_newline else ""))
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
+        restored_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
     )
     assert receipt.candidates_processed == receipt.observation_units == 2
     assert receipt.unprocessed_units == 0
 
 
-def test_record_limit_counts_known_prefetched_suffix_only(synthetic_catalog, tmp_path):
+def test_record_limit_counts_known_prefetched_suffix_only(restored_catalog, tmp_path):
     salvage = tmp_path / "prefetched-records.jsonl"
     row = json.dumps({"candidate_type": "context_resource", "payload": {}}) + "\n"
     salvage.write_text(row * 3)
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
+        restored_catalog, salvage, budget=RecoveryBudget(max_input_records=2)
     )
     assert receipt.candidates_processed == 2
     assert receipt.unprocessed_units == 1
@@ -485,13 +485,13 @@ def test_record_limit_counts_known_prefetched_suffix_only(synthetic_catalog, tmp
 
 
 def test_byte_limit_at_exact_eof_does_not_invent_unread_candidate(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
     salvage = tmp_path / "exact-bytes.jsonl"
     row = json.dumps({"candidate_type": "context_resource", "payload": {}}) + "\n"
     salvage.write_text(row)
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog,
+        restored_catalog,
         salvage,
         budget=RecoveryBudget(max_input_bytes=len(row.encode())),
     )
@@ -500,7 +500,7 @@ def test_byte_limit_at_exact_eof_does_not_invent_unread_candidate(
 
 
 def test_already_exhausted_retry_counts_known_nonempty_input(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
     salvage = tmp_path / "retry-records.jsonl"
     row = (
@@ -515,7 +515,7 @@ def test_already_exhausted_retry_counts_known_nonempty_input(
     salvage.write_text(row)
     budget = RecoveryBudget(max_work_units={"verification_bytes": 1})
     service = RecoveryService()
-    service.merge_salvage(synthetic_catalog, salvage, budget=budget)
-    retry = service.merge_salvage(synthetic_catalog, salvage, budget=budget)
+    service.merge_salvage(restored_catalog, salvage, budget=budget)
+    retry = service.merge_salvage(restored_catalog, salvage, budget=budget)
     assert retry.candidates_processed == 0
     assert retry.unprocessed_units == 1

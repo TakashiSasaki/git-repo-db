@@ -39,7 +39,11 @@ from repo_catalog.domain.recovery import (
     RecoveryBudget,
     RestoreValidationError,
 )
-from tests.integration.p7.conftest import make_commit, make_tree
+from tests.integration.p7.conftest import (
+    make_commit,
+    make_tree,
+    merge_preflight_input_bytes,
+)
 
 
 def test_case_01_real_commit_survives_backup_and_restore(
@@ -1073,7 +1077,13 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
     # One commit spends its decoded input once in recovery and once again
     # through production Core admission. Preserve allowance for exactly one
     # such candidate, with insufficient remainder for a second decoding.
-    budget = RecoveryBudget(max_work_units={"input_bytes": 2 * len(commit1.body) + 30})
+    budget = RecoveryBudget(
+        max_work_units={
+            "input_bytes": merge_preflight_input_bytes(fresh_dest)
+            + 2 * len(commit1.body)
+            + 30
+        }
+    )
     receipt1 = service.merge_salvage(
         fresh_dest, salvage_file, budget=budget, request_id="req-persist-1"
     )

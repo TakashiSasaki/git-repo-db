@@ -2848,21 +2848,13 @@ class CoreRecoveryAdapter:
                         "Fresh authority file must be regular without aliases"
                     )
             pinned = Path(f"/proc/self/fd/{directory_fd}")
-            baseline_path = pinned / "p1-restored-baseline.json"
-            baseline = (
-                _read_restored_baseline(pinned, directory_fd=directory_fd)
-                if baseline_path.exists()
-                else None
-            )
-            effective_scope = (
-                BackupScope(baseline["scope"])
-                if baseline
-                else (
-                    BackupScope.PAIRED
-                    if (pinned / "context.sqlite3").exists()
-                    else BackupScope.GIT_ONLY
-                )
-            )
+            try:
+                baseline = _read_restored_baseline(pinned, directory_fd=directory_fd)
+            except (OSError, RecoveryError, RestoreValidationError) as error:
+                raise RecoveryError(
+                    "Salvage merge requires a validated fresh backup restore"
+                ) from error
+            effective_scope = BackupScope(baseline["scope"])
             self._require_scope(effective_scope)
             if (effective_scope == BackupScope.PAIRED) != (
                 pinned / "context.sqlite3"
@@ -2895,6 +2887,7 @@ class CoreRecoveryAdapter:
                     request,
                     directory_fd=directory_fd,
                     effective_scope=effective_scope,
+                    baseline=baseline,
                     authorization=authorization,
                     admission=admission,
                     fault_stage=fault_stage,
@@ -2915,6 +2908,7 @@ class CoreRecoveryAdapter:
         *,
         directory_fd,
         effective_scope,
+        baseline,
         authorization=None,
         admission=None,
         fault_stage=None,
@@ -2947,7 +2941,6 @@ class CoreRecoveryAdapter:
         unprocessed = 0
         rejections: list[dict] = []
         budget_exhausted = budget_already_exhausted or work_budget.is_exhausted()
-        ref_baseline_checked = False
         pending_candidates = []
 
         # Connect to fresh core via GitCore production admission interface
@@ -2985,6 +2978,50 @@ class CoreRecoveryAdapter:
             pending_candidates.append((candidate_id, kind, raw))
 
         try:
+            if not budget_exhausted:
+                try:
+                    # Validate the same restored target for every candidate family,
+                    # before even a generic repository row or retained copy can commit.
+                    checked_baseline = _read_restored_baseline(
+                        fresh_destination_dir,
+                        directory_fd=directory_fd,
+                        work=work_budget,
+                    )
+                    if not _same_json(checked_baseline, baseline):
+                        raise RecoveryError(
+                            "Recovery request target scope or baseline changed"
+                        )
+                    if (effective_scope == BackupScope.PAIRED) != (
+                        fresh_destination_dir / "context.sqlite3"
+                    ).exists():
+                        raise RecoveryError(
+                            "Restored baseline scope differs from destination"
+                        )
+                    work_budget.require("metadata_units", 2)
+                    work_budget.charge("metadata_units", 2)
+                    work_budget.require("input_bytes", 72)
+                    try:
+                        identity = core.catalog_identity()
+                    except BaseException:
+                        work_budget.abandon("input_bytes")
+                        raise
+                    work_budget.charge("input_bytes", 72)
+                    if identity != (
+                        baseline["repository_uuidv4"],
+                        baseline["catalog_instance_uuidv4"],
+                    ):
+                        raise RecoveryError(
+                            "Restored baseline identity differs from destination"
+                        )
+                    if ctx_identity is not None and ctx_identity != identity:
+                        core._integrity_stop("Core and Context identities differ")
+                except CoreFailure as error:
+                    if error.code not in ("BUDGET", "QUERY_BUDGET"):
+                        raise
+                    budget_exhausted = True
+                    rejections.append(
+                        {"reason": f"Preflight work budget exhausted: {error}"}
+                    )
 
             def reserve_input(unit, amount):
                 work_budget.require(unit, amount)
@@ -3171,51 +3208,6 @@ class CoreRecoveryAdapter:
                         )
 
                         try:
-                            if not ref_baseline_checked:
-                                try:
-                                    baseline = _read_restored_baseline(
-                                        fresh_destination_dir,
-                                        directory_fd=directory_fd,
-                                        work=work_budget,
-                                    )
-                                except (
-                                    OSError,
-                                    RecoveryError,
-                                    RestoreValidationError,
-                                ) as error:
-                                    raise RecoveryError(
-                                        "Ref salvage requires a validated fresh backup restore"
-                                    ) from error
-                                work_budget.require("metadata_units", 2)
-                                work_budget.charge("metadata_units", 2)
-                                work_budget.require("input_bytes", 72)
-                                try:
-                                    repo, instance = core.catalog_identity()
-                                except BaseException:
-                                    work_budget.abandon("input_bytes")
-                                    raise
-                                work_budget.charge("input_bytes", 72)
-                                if (repo, instance) != (
-                                    baseline["repository_uuidv4"],
-                                    baseline["catalog_instance_uuidv4"],
-                                ):
-                                    raise RecoveryError(
-                                        "Restored baseline identity differs from destination"
-                                    )
-                                if (baseline["scope"] == BackupScope.PAIRED.value) != (
-                                    fresh_destination_dir / "context.sqlite3"
-                                ).exists():
-                                    raise RecoveryError(
-                                        "Restored baseline scope differs from destination"
-                                    )
-                                if ctx_identity is not None and ctx_identity != (
-                                    repo,
-                                    instance,
-                                ):
-                                    core._integrity_stop(
-                                        "Core and Context identities differ"
-                                    )
-                                ref_baseline_checked = True
                             was_replay = admit_ref_unit_atomic(
                                 fresh_destination_dir, c_type, payload, work_budget
                             )

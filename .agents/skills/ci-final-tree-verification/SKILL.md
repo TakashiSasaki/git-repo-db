@@ -502,6 +502,18 @@ proven stored-data violation. Preserve the cause, use an explicit typed invarian
 boundary and check both confirmed corruption and existing IO/lock/budget/error
 negative controls. Do not classify every ValueError as authoritative corruption.
 
+For Recovery merge preconditions, pair exception assertions with authority-row
+and retained-copy snapshots. A generic candidate can commit before a later Ref
+candidate rejects a missing baseline, so mixed-stream refusal alone is insufficient.
+Exercise generic-only, retained-only and generic-before-Ref input against missing
+and mismatched restored receipts, plus valid restore/replay and paired scope.
+Use real backup/restore fixtures; never fabricate a marker to satisfy the guard.
+Include bounded baseline/identity work in candidate-focused budgets, preserving
+the allowance for the original candidate assertion. Verify an exhausted preflight
+reads no candidate bytes, persists work and never falsely stops a healthy target.
+The focused controls are in `tests/integration/p7/test_merge_baseline_preflight.py`;
+the installed OP-02 driver checks the same boundary with optional modules absent.
+
 ## Pytest subtest reports are additional measured phases
 
 Pytest 9 unittest `subTest` execution can emit `SubtestReport` call records in

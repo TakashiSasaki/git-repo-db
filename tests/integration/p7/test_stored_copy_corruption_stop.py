@@ -40,23 +40,23 @@ def _damage(catalog, table, column, value):
     ],
 )
 def test_invalid_existing_physical_copy_stops_without_repair(
-    synthetic_catalog, tmp_path, table, column, value
+    restored_catalog, tmp_path, table, column, value
 ):
-    candidate = _candidate(synthetic_catalog, table)
-    _damage(synthetic_catalog, table, column, value)
-    before = _authority(synthetic_catalog)
+    candidate = _candidate(restored_catalog, table)
+    _damage(restored_catalog, table, column, value)
+    before = _authority(restored_catalog)
     with pytest.raises(CorruptionDetectedError, match="destination Core corruption"):
-        _merge(synthetic_catalog, tmp_path, candidate)
-    assert (synthetic_catalog / "p1-recovery-stop.json").exists()
-    assert _authority(synthetic_catalog) == before
+        _merge(restored_catalog, tmp_path, candidate)
+    assert (restored_catalog / "p1-recovery-stop.json").exists()
+    assert _authority(restored_catalog) == before
 
 
 @pytest.mark.parametrize("table", ["retained_metadata"])
 @pytest.mark.parametrize("refusal", ["payload", "verification"])
 def test_existing_copy_resource_refusal_never_claims_corruption(
-    synthetic_catalog, table, refusal
+    restored_catalog, table, refusal
 ):
-    payload = _candidate(synthetic_catalog, table)["payload"]
+    payload = _candidate(restored_catalog, table)["payload"]
     work = (
         RecoveryWorkBudget(work_limits={"verification_bytes": 1})
         if refusal == "verification"
@@ -69,7 +69,7 @@ def test_existing_copy_resource_refusal_never_claims_corruption(
     )
     with pytest.raises(CoreFailure) as error:
         SQLiteRecoveryAdapter()._verify_existing_retained_copy(
-            synthetic_catalog,
+            restored_catalog,
             table,
             (
                 payload["object_format"],
@@ -80,4 +80,4 @@ def test_existing_copy_resource_refusal_never_claims_corruption(
             work,
         )
     assert error.value.code == "BUDGET"
-    assert not (synthetic_catalog / "p1-recovery-stop.json").exists()
+    assert not (restored_catalog / "p1-recovery-stop.json").exists()

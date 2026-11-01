@@ -151,6 +151,7 @@ def test_minimal_core_dependency_resolved_op02(core_distributions, tmp_path, var
         "finite_merge_limit_without_authority_corruption",
         "lost_durable_request_state_fails_closed_without_operational",
         "untrusted_fresh_filename_is_not_a_verified_baseline",
+        "all_families_require_matching_baseline_before_authority_writes",
         "unvalidated_context_is_not_promoted_in_git_only_activation",
         "final_retained_byte_validation_stops_damaged_target_before_publication",
         "failed_locator_publication_preserves_previous_locator_and_source",

@@ -12,6 +12,7 @@ from repo_catalog.adapters.sqlite import core_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.p1_core import CoreFailure
 from repo_catalog.domain.recovery import RecoveryBudget
+from tests.integration.p7.conftest import merge_preflight_input_bytes
 
 
 def usage(catalog):
@@ -23,11 +24,11 @@ def usage(catalog):
 @pytest.mark.parametrize("table", ["git_objects", "repositories"])
 @pytest.mark.parametrize("replay", [False, True])
 def test_nominal_metadata_cannot_bypass_single_unit_ceiling(
-    synthetic_catalog, tmp_path, repo_uuid, table, replay
+    restored_catalog, tmp_path, repo_uuid, table, replay
 ):
     import sqlite3
 
-    with sqlite3.connect(synthetic_catalog / "core.sqlite3") as conn:
+    with sqlite3.connect(restored_catalog / "core.sqlite3") as conn:
         if table == "git_objects":
             oid = (
                 conn.execute("SELECT object_oid FROM git_objects LIMIT 1").fetchone()[0]
@@ -50,15 +51,15 @@ def test_nominal_metadata_cannot_bypass_single_unit_ceiling(
     ]
     salvage.write_text("".join(json.dumps(row) + "\n" for row in rows))
     result = RecoveryService().merge_salvage(
-        synthetic_catalog,
+        restored_catalog,
         salvage,
-        budget=RecoveryBudget(max_work_units={"metadata_units": 1}),
+        budget=RecoveryBudget(max_work_units={"metadata_units": 2 + 1}),
     )
     assert result.admitted_units == (0 if replay else 1)
     assert result.replayed_units == (1 if replay else 0)
     assert result.unprocessed_units == 1
     assert result.rejected_units == 0
-    assert usage(synthetic_catalog)["metadata_units"] == 1
+    assert usage(restored_catalog)["metadata_units"] == 2 + 1
     assert not result.input_complete
 
 
@@ -104,7 +105,7 @@ def test_context_encoding_reserves_decoded_input_before_allocation():
 
 @pytest.mark.parametrize("ceiling", [1, 1000])
 def test_digest_rejection_still_meters_decoded_input(
-    synthetic_catalog, tmp_path, ceiling
+    restored_catalog, tmp_path, ceiling
 ):
     body = b"x" * 1000
     salvage = tmp_path / "digest-rejected.jsonl"
@@ -126,18 +127,25 @@ def test_digest_rejection_still_meters_decoded_input(
         + "\n"
     )
     result = RecoveryService().merge_salvage(
-        synthetic_catalog,
+        restored_catalog,
         salvage,
-        budget=RecoveryBudget(max_work_units={"input_bytes": ceiling}),
+        budget=RecoveryBudget(
+            max_work_units={
+                "input_bytes": merge_preflight_input_bytes(restored_catalog) + ceiling
+            }
+        ),
     )
     assert result.admitted_units == 0
     assert result.unprocessed_units == (1 if ceiling == 1 else 0)
     assert result.rejected_units == (0 if ceiling == 1 else 1)
-    assert usage(synthetic_catalog)["input_bytes"] == (0 if ceiling == 1 else len(body))
+    assert usage(restored_catalog)["input_bytes"] == (
+        merge_preflight_input_bytes(restored_catalog)
+        + (0 if ceiling == 1 else len(body))
+    )
 
 
 def test_rejected_nominal_candidate_still_consumes_metadata_work(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
     salvage = tmp_path / "bad-nominal.jsonl"
     rows = [
@@ -150,11 +158,11 @@ def test_rejected_nominal_candidate_still_consumes_metadata_work(
     ]
     salvage.write_text("".join(json.dumps(row) + "\n" for row in rows))
     receipt = RecoveryService().merge_salvage(
-        synthetic_catalog,
+        restored_catalog,
         salvage,
-        budget=RecoveryBudget(max_work_units={"metadata_units": 1}),
+        budget=RecoveryBudget(max_work_units={"metadata_units": 2 + 1}),
     )
     assert receipt.rejected_units == 1
     assert receipt.unprocessed_units == 1
     assert receipt.admitted_units == 0
-    assert usage(synthetic_catalog)["metadata_units"] == 1
+    assert usage(restored_catalog)["metadata_units"] == 2 + 1
