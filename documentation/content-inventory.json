@@ -9961,9 +9961,10 @@
       "source_heading": "# Current runtime reference: Schema 21 and opt-in boundaries",
       "cited_adrs": [
         "0014",
-        "0026",
         "0029",
-        "0036"
+        "0036",
+        "0037",
+        "0038"
       ],
       "baseline_git_object": null,
       "static_consumer_references": [
