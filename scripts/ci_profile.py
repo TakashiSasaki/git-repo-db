@@ -16,6 +16,7 @@ import tempfile
 import time
 import uuid
 import xml.etree.ElementTree as ET
+from contextlib import ExitStack, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -528,7 +529,116 @@ def markdown(record):
     return "\n".join(lines) + "\n"
 
 
+class InvocationTiming:
+    """Checkpoint timing in the existing invocation, even before a child exits.
+
+    An unfinished phase has no invented end or duration. SIGKILL/power loss can
+    only leave that checkpoint; ordinary exceptions retain the observed end.
+    """
+
+    def __init__(self, record, path):
+        self.record = record
+        self.path = path
+        self.start = time.perf_counter()
+        self.active = {}
+        record["timing"] = {
+            "version": 1,
+            "status": "running",
+            "task_id": os.environ.get("CI_TASK_ID"),
+            "session_id": os.environ.get("CI_SESSION_ID"),
+            "parent_invocation_id": os.environ.get("CI_PARENT_INVOCATION_ID"),
+            "kind": os.environ.get("CI_PHASE_KIND", "unclassified"),
+            "started_at": datetime.now(UTC).isoformat(),
+            "phases": [],
+        }
+        self.begin("preparation")
+
+    def save(self):
+        atomic_write_text(self.path, json.dumps(self.record, indent=2) + "\n")
+
+    def begin(self, name):
+        row = {"name": name, "started_at": datetime.now(UTC).isoformat()}
+        self.record["timing"]["phases"].append(row)
+        self.active[name] = (row, time.perf_counter())
+        self.save()
+
+    def end(self, name, exception=None):
+        row, start = self.active.pop(name)
+        row.update(
+            completed_at=datetime.now(UTC).isoformat(),
+            elapsed_seconds=time.perf_counter() - start,
+        )
+        if exception is not None:
+            row["exception_type"] = type(exception).__name__
+        self.save()
+
+    @contextmanager
+    def phase(self, name):
+        self.begin(name)
+        exception = None
+        try:
+            yield
+        except BaseException as exc:
+            exception = exc
+            raise
+        finally:
+            self.end(name, exception)
+
+    def finish(self, status, exception=None):
+        for name in list(self.active):
+            self.end(name, exception)
+        self.record["timing"].update(
+            status=status,
+            completed_at=datetime.now(UTC).isoformat(),
+            elapsed_seconds=time.perf_counter() - self.start,
+        )
+        if exception is not None:
+            self.record["timing"]["exception_type"] = type(exception).__name__
+        self.save()
+
+
 def run(args):
+    args.output.mkdir(parents=True, exist_ok=True)
+    invocation_id = (
+        getattr(args, "invocation_id", None)
+        or f"{args.name}-{int(time.time())}-{uuid.uuid4().hex[:8]}"
+    )
+    path = args.output / "invocations" / f"{args.name}-{invocation_id}.json"
+    record = dict(
+        profile_version=1,
+        invocation_id=invocation_id,
+        name=args.name,
+        command=list(args.command),
+        exit_code=None,
+    )
+    timing = InvocationTiming(record, path)
+    try:
+        result = _run(args, record, timing)
+    except BaseException as exc:
+        record.update(
+            exit_code=record.get("exit_code")
+            or (130 if isinstance(exc, KeyboardInterrupt) else 2),
+            verified=False,
+            verification_exit_code=2,
+            measurement_error=f"Runner exception: {type(exc).__name__}",
+        )
+        if isinstance(exc, KeyboardInterrupt):
+            record["interrupted"] = True
+        timing.finish(
+            "interrupted" if isinstance(exc, KeyboardInterrupt) else "error", exc
+        )
+        atomic_write_text(
+            args.output / (args.name + ".json"), json.dumps(record, indent=2) + "\n"
+        )
+        raise
+    timing.finish("interrupted" if record.get("interrupted") else "completed")
+    atomic_write_text(
+        args.output / (args.name + ".json"), json.dumps(record, indent=2) + "\n"
+    )
+    return result
+
+
+def _run(args, record, timing):
     command = list(args.command)
     if command[:1] == ["--"]:
         command = command[1:]
@@ -537,10 +647,7 @@ def run(args):
     args.output.mkdir(parents=True, exist_ok=True)
     meta = runtime()
     started_at = datetime.now(UTC).isoformat()
-    invocation_id = (
-        getattr(args, "invocation_id", None)
-        or f"{args.name}-{int(time.time())}-{uuid.uuid4().hex[:8]}"
-    )
+    invocation_id = record["invocation_id"]
 
     # Allocate unique immutable invocation paths BEFORE starting child process
     inv_dir = args.output / "invocations"
@@ -596,6 +703,19 @@ def run(args):
     quiet = getattr(args, "quiet", True)
     workers = getattr(args, "workers", 1)
     is_pytest = any("pytest" in str(c) for c in command)
+    record.update(
+        runtime=meta,
+        started_at=started_at,
+        mode=args.mode,
+        workers=workers,
+        command=command,
+    )
+    for key in ("selection", "acceptance_input_hash"):
+        value = getattr(args, key, None)
+        if value is not None:
+            record[key] = value
+    if is_pytest and "CI_PHASE_KIND" not in os.environ:
+        record["timing"]["kind"] = "test"
 
     start = time.perf_counter()
 
@@ -605,6 +725,7 @@ def run(args):
             with open(inv_log, "wb") as log_file:
                 completed = subprocess.run(
                     command,
+                    env={**os.environ, "CI_PARENT_INVOCATION_ID": invocation_id},
                     stdout=log_file,
                     stderr=subprocess.STDOUT,
                     check=False,
@@ -614,6 +735,7 @@ def run(args):
             with open(inv_log, "wb") as log_file:
                 proc = subprocess.Popen(
                     command,
+                    env={**os.environ, "CI_PARENT_INVOCATION_ID": invocation_id},
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                 )
@@ -626,25 +748,33 @@ def run(args):
                 exit_code = proc.returncode
 
     exit_code = 0
+    timing.end("preparation")
     if is_pytest and workers > 1:
         lock_file = getattr(args, "resource_lock", None)
-        with resource_scheduler.scoped_host_cpu_reservation(
-            workers, lock_path=lock_file
-        ) as granted:
+        with ExitStack() as resources:
+            with timing.phase("resource_wait"):
+                granted = resources.enter_context(
+                    resource_scheduler.scoped_host_cpu_reservation(
+                        workers, lock_path=lock_file
+                    )
+                )
             if granted != workers and not getattr(args, "explicit_workers", False):
                 workers = granted
                 if "-n" in command:
                     idx = command.index("-n")
                     if idx + 1 < len(command):
                         command[idx + 1] = str(granted)
-            _execute()
+            with timing.phase("command"):
+                _execute()
     else:
-        _execute()
+        with timing.phase("command"):
+            _execute()
 
     wall_seconds = time.perf_counter() - start
     completed_at = datetime.now(UTC).isoformat()
+    timing.begin("finalization")
 
-    record = dict(
+    record.update(
         profile_version=1,
         invocation_id=invocation_id,
         name=args.name,
@@ -819,7 +949,7 @@ def run(args):
     # Persist immutable invocation files in inv_dir
     fail_index_file.write_text(json.dumps(failure_index, indent=2) + "\n")
     summary_file.write_text(json.dumps(exec_summary, indent=2) + "\n")
-    inv_file.write_text(json.dumps(record, indent=2) + "\n")
+    atomic_write_text(inv_file, json.dumps(record, indent=2) + "\n")
 
     # Atomic publication of top-level pointer files
     atomic_write_text(

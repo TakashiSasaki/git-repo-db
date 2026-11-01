@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +20,152 @@ try:
 except ImportError:
     from ci_execute import extract_receipt_archive
     from ci_profile import terminal_excerpt
+
+
+def interval_union_seconds(intervals):
+    """Elapsed coverage, not summed concurrent invocation/worker time."""
+    if not intervals:
+        return None
+    total = 0.0
+    start, end = sorted(intervals)[0]
+    for left, right in sorted(intervals)[1:]:
+        if left > end:
+            total += (end - start).total_seconds()
+            start, end = left, right
+        else:
+            end = max(end, right)
+    return total + (end - start).total_seconds()
+
+
+def timing_report(paths):
+    """Read existing profiles, including failed/open checkpoints; never infer work."""
+    records = {}
+    for path in paths:
+        path = Path(path)
+        directory = path / "invocations"
+        candidates = (
+            [path]
+            if path.is_file()
+            else sorted((directory if directory.is_dir() else path).glob("*.json"))
+        )
+        if not candidates:
+            raise ValueError(f"No profile candidates at {path}")
+        for candidate in candidates:
+            data = json.loads(candidate.read_text())
+            if "profile_version" not in data or "invocation_id" not in data:
+                continue
+            key = data["invocation_id"]
+            if key in records and records[key] != data:
+                raise ValueError(f"Conflicting copies of invocation {key}")
+            records[key] = data
+    if not records:
+        raise ValueError("No invocation profiles found")
+
+    def seconds(value):
+        if value is None:
+            return None
+        if isinstance(value, bool) or not isinstance(value, (float, int)):
+            raise ValueError("Invalid elapsed duration")
+        if not math.isfinite(value) or value < 0:
+            raise ValueError("Invalid elapsed duration")
+        return value
+
+    def timestamp(value):
+        result = datetime.fromisoformat(value)
+        if result.tzinfo is None or result.utcoffset() is None:
+            raise ValueError("Timing requires timezone-aware timestamps")
+        return result
+
+    rows, intervals = [], []
+    for key, data in sorted(records.items()):
+        timing = data.get("timing", {})
+        phases = timing.get("phases", [])
+        command = [phase for phase in phases if phase["name"] == "command"]
+        if len(command) > 1:
+            raise ValueError(f"Duplicate command phase in {key}")
+        measured = command[0] if command else ({} if timing else data)
+        interval = None
+        if measured.get("started_at") and measured.get("completed_at"):
+            interval = tuple(
+                timestamp(measured[field]) for field in ("started_at", "completed_at")
+            )
+            if interval[1] < interval[0]:
+                raise ValueError(f"Wall clock reversed in {key}")
+            intervals.append(interval)
+        cumulative = None
+        if data.get("journal"):
+            # Old non-test command profiles used wall time as this fallback.
+            # Do not call that fallback measured test work.
+            cumulative = seconds(data.get("cumulative_test_seconds"))
+        elif data.get("junit", {}).get("tests"):
+            values = [seconds(test.get("seconds")) for test in data["junit"]["tests"]]
+            if all(value is not None for value in values):
+                cumulative = sum(values)
+        rows.append(
+            {
+                "invocation_id": key,
+                "name": data.get("name"),
+                "task_id": timing.get("task_id"),
+                "session_id": timing.get("session_id"),
+                "parent_invocation_id": timing.get("parent_invocation_id"),
+                "kind": timing.get("kind", "unclassified"),
+                "status": timing.get("status", "legacy"),
+                "exit_code": data.get("exit_code"),
+                "started_at": measured.get("started_at"),
+                "completed_at": measured.get("completed_at"),
+                "interval_scope": "command" if command else "legacy_command_and_wait",
+                "recorded_wall_seconds": seconds(data.get("wall_seconds")),
+                "command_seconds": seconds(command[0].get("elapsed_seconds"))
+                if command
+                else None,
+                "cumulative_test_seconds": cumulative,
+                "phases": phases,
+                "interval_available": interval is not None,
+            }
+        )
+
+    def known_sum(field):
+        values = [row[field] for row in rows if row[field] is not None]
+        return sum(values) if values else None
+
+    return {
+        "invocations": rows,
+        "invocation_count": len(rows),
+        "missing_interval_count": sum(not row["interval_available"] for row in rows),
+        "recorded_wall_seconds_sum": known_sum("recorded_wall_seconds"),
+        "command_seconds_sum": known_sum("command_seconds"),
+        "command_duration_missing_count": sum(
+            row["command_seconds"] is None for row in rows
+        ),
+        "cumulative_test_seconds_sum": known_sum("cumulative_test_seconds"),
+        "cumulative_test_duration_missing_count": sum(
+            row["cumulative_test_seconds"] is None for row in rows
+        ),
+        "interval_union_seconds": interval_union_seconds(intervals),
+        "observed_span_seconds": (
+            max(end for _, end in intervals) - min(start for start, _ in intervals)
+        ).total_seconds()
+        if intervals
+        else None,
+        "active_work_share": None,
+        "limitations": [
+            "Observed span includes idle gaps; task/session labels are associations, not active work windows.",
+            "Missing/open intervals and unprofiled commands have unknown cost, not zero cost.",
+            "Legacy intervals may include resource wait; new intervals cover only the child command.",
+            "Intervals use wall clocks; elapsed durations use monotonic clocks in new profiles. Compare only synchronized hosts without clock jumps.",
+            "Nested runner commands may include profiled children; do not add nested parent and child durations as independent work.",
+        ],
+    }
+
+
+def query_timing(args):
+    try:
+        result = timing_report(args.paths)
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(result, indent=2))
+    return 0
 
 
 def load_execution_summary(directory: Path) -> dict | None:
@@ -330,6 +478,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="action", required=True)
 
+    timing_p = sub.add_parser(
+        "timing",
+        help="Summarize all retained invocation timings without double-counting overlaps",
+    )
+    timing_p.add_argument("paths", type=Path, nargs="+")
+
     sum_p = sub.add_parser("summary", help="Print compact execution summary")
     sum_p.add_argument(
         "path", type=Path, nargs="?", default=Path("artifacts/ci-profile")
@@ -406,6 +560,8 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+    if args.action == "timing":
+        return query_timing(args)
     if args.action == "summary":
         return query_summary(args)
     if args.action == "failures":
