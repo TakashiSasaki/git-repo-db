@@ -195,7 +195,7 @@ def main(output):
     paired_raw = json.dumps(paired_manifest).encode()
     paired_manifest_path.write_bytes(paired_raw)
     (paired_artifact / "manifest.json.sha256").write_text(
-        hashlib.sha256(paired_raw).hexdigest() + "\n"
+        hashlib.sha256(paired_raw).hexdigest() + "  manifest.json\n"
     )
     paired_target = Path("paired-target").resolve()
     refuses(
