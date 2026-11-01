@@ -93,6 +93,46 @@ def test_current_guide_local_links_resolve():
         assert (guide.parent / unquote(parsed.path)).resolve().exists(), target
 
 
+def test_current_guide_product_links_match_declared_revision():
+    text = (ROOT / "documentation/current-runtime-reference.md").read_text()
+    revision, tree = re.search(
+        r"product baseline\s+`([0-9a-f]{40})` \(tree `([0-9a-f]{40})`\)", text
+    ).groups()
+    actual_tree = subprocess.check_output(
+        ["git", "rev-parse", f"{revision}^{{tree}}"], cwd=ROOT, text=True
+    ).strip()
+    assert actual_tree == tree
+    prefix = "https://github.com/TakashiSasaki/git-repo-db/blob/"
+    source_paths = set()
+    for target in re.findall(r"\]\(([^)]+)\)", text):
+        parsed = urlsplit(target)
+        assert not parsed.path.startswith(("../src/", "../packages/")), target
+        if target.startswith(prefix):
+            linked_revision, path = target[len(prefix) :].split("/", 1)
+            assert linked_revision == revision, target
+            source_paths.add(path)
+            subprocess.run(
+                ["git", "cat-file", "-e", f"{revision}:{path}"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            )
+    assert {
+        "src/repo_catalog/cli/main.py",
+        "packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py",
+        "packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py",
+        "pyproject.toml",
+    } <= source_paths
+
+
+def test_current_guide_citations_match_inventory():
+    text = (ROOT / "documentation/current-runtime-reference.md").read_text()
+    manifest = json.loads((ROOT / "documentation/content-inventory.json").read_text())
+    record = manifest["records"]["documentation/current-runtime-reference.md"]
+    assert set(record["cited_adrs"]) == set(re.findall(r"ADR\s+(\d{4})", text))
+    assert record["publication"] == "not staged"
+
+
 @pytest.mark.parametrize(
     "candidate",
     [

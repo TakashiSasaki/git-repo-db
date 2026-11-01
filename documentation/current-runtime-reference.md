@@ -1,40 +1,40 @@
 # Current runtime reference: Schema 21 and opt-in boundaries
 
 This guide describes the implemented checkout at product baseline
-`c38989a0c8c9e003f4e0d92790803a0f7ecf3490` (tree `511f5ccba627a58936a9e12197c77bcdaca834af`); source code is authoritative if a
-later checkout changes. It is separate from the accepted target in
+`8d5334c0a4d4236808e4ecb7a98352638cc97471` (tree `9a39cb9e65a54be71c4b464ad87ac7c559332532`); product source links below are pinned to that revision. A later checkout must be
+assessed separately; source code remains authoritative. It is separate from the accepted target in
 [ADR 0029](../docs/adr/0029-independent-access-store.md), which defines five responsibility
 boundaries: Core, Context, Access, Operational and Search. Acceptance of that
 architecture does not itself activate all five in the ordinary CLI.
 
 ## Ordinary catalog initialization
 
-The normal [`repo-catalog` parser and dispatcher](../src/repo_catalog/cli/main.py)
+The normal [`repo-catalog` parser and dispatcher](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/main.py)
 requires `init --profile`, `--cache-max-bytes` and `--min-free-bytes`; use
 `repo-catalog init --help` for current arguments. Global options such as
 `--state-dir` precede the subcommand. Initialization requires a new or empty state
-directory. [`MaintenanceService.init`](../src/repo_catalog/application/maintenance_service.py)
+directory. [`MaintenanceService.init`](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/application/maintenance_service.py)
 stages the configuration and directories and initializes one Core catalog before
 publication. No count is inferred for an existing user's files.
 
 The implemented composed formats are Core Schema 21, Operational Schema 1 and
-Search Schema 1, defined by [schema.py](../src/repo_catalog/adapters/sqlite/schema.py).
+Search Schema 1, defined by [schema.py](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/schema.py).
 Core holds the implemented catalog; Operational holds reconstructible job and
 execution state; Search holds rebuildable search projections. The
-[Store adapter](../src/repo_catalog/adapters/sqlite/store.py) opens Operational
+[Store adapter](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/store.py) opens Operational
 lazily when requested. Search creation is explicit, such as `index rebuild`;
 ordinary reads do not create it. These are runtime paths, not a claim that init
 opens three databases or that all deployments have a fixed file count.
 
 ## Optional implemented surfaces and accepted target
 
-The opt-in [P1 factory](../packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py) lists
+The opt-in [P1 factory](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py) lists
 four entries: Core, Context, Operational and Search. It is not the complete
 five-responsibility target and is not the normal CLI initializer. Independent
-Access has its own opt-in [schema](../src/repo_catalog/adapters/sqlite/access_schema.py)
-and [connections adapter](../src/repo_catalog/adapters/sqlite/access_connections.py).
-The standalone [Access workflow](../src/repo_catalog/cli/access_workflow.py) and
-[Access acquisition](../src/repo_catalog/cli/access_acquisition.py) CLI modules
+Access has its own opt-in [schema](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/access_schema.py)
+and [connections adapter](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/access_connections.py).
+The standalone [Access workflow](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/access_workflow.py) and
+[Access acquisition](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/access_acquisition.py) CLI modules
 use that adapter; ordinary catalog `init` does not activate them. See the scoped
 [Access A6 review](../docs/implementation/access-a6-independent-review.md) for evidence
 and outstanding limits; implementation does not by itself establish release
@@ -46,6 +46,24 @@ The [coordinated physical/wire/recovery cut](../docs/implementation/adr0036-lega
 retired the old Notes families after the input, Query and Search transition.
 This opt-in migration does not switch ordinary Schema 21 or activate P8; its DDL
 does not turn every proposed physical detail into an accepted final design.
+
+At this selected revision, the [distribution ownership contract](../docs/implementation/minimal-core-distribution.md)
+and [packaging metadata](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/pyproject.toml)
+describe `repo-catalog-contracts` (shared value contracts), `repo-catalog-core`
+(Core admission, Query and Git-only Recovery), and composed `repo-catalog`
+(normal Schema 21 and optional Context/Access/Operational/Search integration).
+[ADR 0037](../docs/adr/0037-operation-scoped-module-independence.md) defines the
+operation-specific installation target; the minimum Core distribution is implemented,
+while the remaining independent combinations are unfinished.
+
+Git-only Recovery under [ADR 0038](../docs/adr/0038-scoped-recovery-and-optional-initialization.md)
+is implemented in the [Core Recovery adapter](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py):
+fresh restore and validated merge precede activation without Operational/Search
+initialization. [PR #239](https://github.com/TakashiSasaki/git-repo-db/pull/239)
+added a common baseline/scope/identity check before merge candidate processing.
+Paired Recovery retains its Context validation and reconstruction obligations.
+This describes implementation at the selected revision, not newly executed tests
+or completion of every module-independence operation.
 
 ## Historical documents
 
@@ -60,7 +78,7 @@ source and exact-revision test evidence for present behavior.
 ## CLI and data model navigation at this milestone
 
 The normal CLI exposes source registration, discovery, synchronization, queries,
-maintenance and explicit index rebuild through its [parser and dispatcher](../src/repo_catalog/cli/main.py).
+maintenance and explicit index rebuild through its [parser and dispatcher](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/main.py).
 The [README initialization example](../README.md#初期化と収集) supplies an empty
 state directory and the three required settings. See `repo-catalog init --help`
 for arguments at the selected checkout; do not use a historical Schema 20 CLI
@@ -68,8 +86,8 @@ contract as a current command reference. The separate Access modules have their
 own help and explicit approval/selection steps; they are not subcommands activated
 by ordinary `init`.
 
-For the normal data model start with the composed [SQLite schema factory](../src/repo_catalog/adapters/sqlite/schema.py),
-[Store implementation](../src/repo_catalog/adapters/sqlite/store.py), and the
+For the normal data model start with the composed [SQLite schema factory](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/schema.py),
+[Store implementation](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/store.py), and the
 [public schema overview](schema/README.md). The normal implementation
 [schema viewer](https://git-repo-db.moukaeritai.work/schema/viewer/) covers
 Core/Operational/Search, not all opt-in schemas or the entire accepted architecture.
@@ -81,11 +99,13 @@ every manually written explanation has been checked against that revision.
 
 ## Status and limits
 
-Implementation is not release acceptance. The opt-in P1 and Access surfaces do not
+Implementation is not release acceptance. Formal release preparation is outside
+the current prototyping scope; see [the development-stage instruction](../AGENTS.md#current-development-phase). The opt-in P1 and Access surfaces do not
 activate P8 or establish that the five-responsibility target is complete. Accepted
-corruption recovery ([ADR 0038](../docs/adr/0038-scoped-recovery-and-optional-initialization.md))
+recovery policy ([ADR 0038](../docs/adr/0038-scoped-recovery-and-optional-initialization.md))
 and file-content retention ([ADR 0014](../docs/adr/0014-history-and-notes-catalog-without-file-archive.md))
-are target decisions; avoid presenting the historical quarantine lifecycle or
+govern their respective scopes; the scoped Recovery implementation is described
+above. Avoid presenting the historical quarantine lifecycle or
 ordinary file-body archive as the new target. The [decision index](../docs/adr/README.md)
 and [transition plan](../docs/architecture/git-core-context-transition-plan.md) distinguish
 accepted scope, remaining work and evidence. Existing Transfer-stage non-successes

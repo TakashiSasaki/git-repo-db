@@ -4,7 +4,18 @@ This guide applies repository-wide. Task specifications and agent handoffs are w
 
 ## Current development phase
 
-This is currently a single-user development project. Prefer simple solutions over
+This is currently a single-user project in active prototyping. **No formal release
+is planned for the foreseeable development period; release preparation is outside
+the current development scope.** Do not impose release-only qualification, tests
+or CI as development completion or merge gates, or run them unless the owner later
+explicitly requests release preparation. Existing release procedures remain dormant
+reference material. Preserve functional, consistency and safety tests/CI, focused regressions,
+artifact isolation and relevant packaging checks required by the particular change;
+these correctness checks are not release-only merely because releases also use them.
+This applies the development/release distinction in ADR 0001 and the owner's
+2026-11-01 project-stage instruction; it does not disable existing development CI.
+
+Prefer simple solutions over
 backward compatibility: old helper interfaces and workflows may change incompatibly
 when useful; document the changes. Zero-downtime documentation publication and
 simultaneous availability of every generated icon are not requirements. Revisit
@@ -75,7 +86,7 @@ and other product safeguards remain binding.
 
 ## Product and authorization
 
-**Latest shared owner decision: [ADR 0028](docs/adr/0028-classified-times-and-sha256-exchange.md).** SHA-256-only Exchange compares a declared canonical-data digest with receiver recomputation; no HMAC/signature/PKI or sender-authentication claim. Cursor SHA-256 is a checksum with independent content validation. Shared opt-in time/DDL/fingerprint corrections to P1–P4 are authorized by the current task; public Schema 21 stays default. Preserve historical evidence and independent P5/P6 sibling implementation dependencies.
+**Shared time and Exchange integrity contract: [ADR 0028](docs/adr/0028-classified-times-and-sha256-exchange.md).** SHA-256-only Exchange compares a declared canonical-data digest with receiver recomputation; no HMAC/signature/PKI or sender-authentication claim. Cursor SHA-256 is a checksum with independent content validation. The original task authorized shared opt-in time/DDL/fingerprint corrections to P1–P4; that historical authorization does not grant permission for later tasks. Public Schema 21 stays default. Preserve historical evidence and independent P5/P6 sibling implementation dependencies.
 
 **Accepted ref-observation origin policy: [ADR 0036](docs/adr/0036-ref-observations-and-shared-notes-mappings.md).** Preserve unauthenticated attributed reports without PKI; issuer identity does not prove authenticity or local verification.
 
