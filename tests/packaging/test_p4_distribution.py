@@ -25,7 +25,7 @@ def test_p4_installed_notes(p1_distributions, tmp_path, variant, fmt):  # noqa: 
             python,
             "--offline",
             "--no-deps",
-            wheels[variant],
+            *wheels[variant],
         ],
         outside,
         env,

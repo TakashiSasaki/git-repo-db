@@ -26,7 +26,7 @@ def test_installed_production_context(p1_distributions, tmp_path, variant):
             python,
             "--offline",
             "--no-deps",
-            wheels[variant],
+            *wheels[variant],
         ],
         outside,
         env,

@@ -187,12 +187,12 @@
     {
       "path": "src/repo_catalog/adapters/sqlite/recovery.py",
       "owner": "repo-catalog",
-      "sha256": "702de8f11eb19ff41cc5f38d1dfdec10a342e6f6ecf7aba54b8ee995e42fa20b"
+      "sha256": "9dcd5bc2c167fe738ff34e7c4993cd7636994f6f2115c50fc3e7d3ccccfbec15"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/recovery_budget.py",
       "owner": "repo-catalog",
-      "sha256": "92641c6d4bc584e171217ab1a51074237632dc1542e024bb7e2771396561d09e"
+      "sha256": "6b382364f92fd6cac3140189f5760b9b179ede3ebcc68a1f8b819a752266b586"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",

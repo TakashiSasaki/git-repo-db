@@ -26,11 +26,11 @@ if TYPE_CHECKING:
         ContextAdmissionService,
     )
 
+from repo_catalog.adapters.sqlite.core_coordination import _file_gate
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     NotesLimits,
-    _file_gate,
     catalog_completion,
     catalog_gate,
     persist_catalog_stop,
