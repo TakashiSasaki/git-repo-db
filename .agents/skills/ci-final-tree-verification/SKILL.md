@@ -752,6 +752,21 @@ actual sdist inventories can bind artifact sources to a later candidate, but do
 not relabel those profiles as fresh candidate-SHA executions. Use the committed
 candidate for final unresolved source-binding checks.
 
+When relocating tracked product files, stage the moves before a controlled
+build. The positive sdist inventory correctly refuses a still-tracked old path
+that is absent on disk; preserve that setup failure rather than weakening the
+inventory. Commit a coherent candidate before the installed run.
+
+Audit called helpers as well as import statements when separating a minimum
+distribution. Recovery's default `register_functions(db)` and `configure(db)`
+selected all stores and loaded Context even after its own imports were clean.
+Pass the actual store to both helpers, preserving strict validation for that
+store; paired paths must still select Context where required. A rich source
+environment masks this dependency. Reproduce the real boundary with the OP-02
+nodes in `tests/packaging/test_core_distribution.py`, using both dependency-resolved
+artifact paths and the outside-checkout driver. Source import inspection alone
+does not establish this behavior or full release acceptance.
+
 When configuring Ruff for the extra source roots, preserve the original `.` and
 `src` roots as well. Otherwise first-party scripts/tests are reclassified and
 unrelated import-order changes obscure the implementation diff. None of these

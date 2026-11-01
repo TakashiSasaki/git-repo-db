@@ -309,7 +309,7 @@ def test_backup_finite_budget_is_not_corruption(acquisition):
 
 
 def test_backup_verification_exhaustion_is_not_corruption(acquisition, monkeypatch):
-    from repo_catalog.adapters.sqlite import recovery as recovery_module
+    from repo_catalog.adapters.sqlite import core_recovery as recovery_module
 
     app, _, _, repository, origin, core_path, _ = acquisition
     _, target, _ = fixture_note(acquisition)
