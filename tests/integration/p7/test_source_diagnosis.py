@@ -5,10 +5,8 @@ import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.recovery import (
-    SQLiteRecoveryAdapter,
-    is_catalog_stopped,
-)
+from repo_catalog.adapters.sqlite.core_recovery import is_catalog_stopped
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import (
     BackupScope,

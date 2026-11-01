@@ -9,7 +9,7 @@ import tracemalloc
 
 import pytest
 
-from repo_catalog.adapters.sqlite import recovery
+from repo_catalog.adapters.sqlite import core_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import RecoveryBudget, SalvageError
 
@@ -314,7 +314,8 @@ def test_fifo_input_fails_in_separate_process_without_hanging(
     script = """
 import sys
 from pathlib import Path
-from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter, _copy_forensic_files
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite.core_recovery import _copy_forensic_files
 from repo_catalog.domain.recovery import RecoveryError
 try:
     if sys.argv[1] == 'merge':

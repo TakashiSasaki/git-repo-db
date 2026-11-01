@@ -14,6 +14,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.adapters.sqlite.core_recovery import _sha256_file, is_catalog_stopped
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_core import Core
 from repo_catalog.adapters.sqlite.p1_schema import (
@@ -22,10 +23,6 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 from repo_catalog.adapters.sqlite.p1_schema import (
     initialize,
     register_functions,
-)
-from repo_catalog.adapters.sqlite.recovery import (
-    _sha256_file,
-    is_catalog_stopped,
 )
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.p1_core import (

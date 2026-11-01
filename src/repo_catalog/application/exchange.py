@@ -2611,7 +2611,7 @@ class ExchangeService:
 
     def _preflight_ref_receiver(self, data, work, selection):
         """Reject immutable rebindings before either paired authority commits."""
-        from repo_catalog.application.ref_exchange import decode_ref_units
+        from repo_catalog.application.ref_reconstruction import decode_ref_units
         from repo_catalog.domain.ref_observation import RefObservationKey
 
         omissions = []

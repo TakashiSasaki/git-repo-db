@@ -4,15 +4,13 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
 from repo_catalog.adapters.sqlite.p1_schema import (
     expected_schema,
     register_functions,
     schema_rows,
 )
-from repo_catalog.adapters.sqlite.recovery import (
-    RecoveryWorkBudget,
-    SQLiteRecoveryAdapter,
-)
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.domain.p1_core import CoreFailure
 from repo_catalog.domain.recovery import CorruptionDetectedError, RecoveryBudget
 from tests.integration.p7.test_exact_replay import _authority, _candidate, _merge

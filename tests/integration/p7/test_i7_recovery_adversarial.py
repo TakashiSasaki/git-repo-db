@@ -14,11 +14,11 @@ import json
 
 import pytest
 
+from repo_catalog.adapters.sqlite.core_recovery import is_catalog_stopped
 from repo_catalog.adapters.sqlite.p1_schema import (
     connect as p1_connect,
 )
 from repo_catalog.adapters.sqlite.production_context import Context, ContextError
-from repo_catalog.adapters.sqlite.recovery import is_catalog_stopped
 from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_context_relations,
 )

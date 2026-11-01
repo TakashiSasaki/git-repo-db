@@ -153,7 +153,7 @@ def test_actual_p1_wal_candidates_and_process_writer_cut(
 
 COPY_CRASH = r"""
 import pathlib,sys
-from repo_catalog.adapters.sqlite import recovery
+from repo_catalog.adapters.sqlite import core_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 
 def pause():

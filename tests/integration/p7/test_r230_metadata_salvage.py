@@ -8,9 +8,10 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.adapters.sqlite.core_recovery import stop_catalog
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
-from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter, stop_catalog
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.recovery import BackupScope
@@ -72,7 +73,11 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
         }
         assert "core.sqlite3-wal" in preserved
         salvage = tmp_path / "metadata.jsonl"
-        extracted = adapter.extract_salvage(source, salvage)
+        extracted = adapter.extract_salvage(
+            source,
+            salvage,
+            scope=BackupScope.PAIRED if paired else BackupScope.GIT_ONLY,
+        )
         assert extracted.partial
         assert {
             p.name: p.read_bytes() for p in source.glob("*.sqlite3*") if p.is_file()

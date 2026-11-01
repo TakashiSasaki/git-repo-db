@@ -154,7 +154,7 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
         p.name: p.read_bytes() for p in path.parent.glob("core.sqlite3*") if p.is_file()
     }
     salvage = outside / "untrusted.jsonl"
-    extracted = adapter.extract_salvage(path.parent, salvage)
+    extracted = adapter.extract_salvage(path.parent, salvage, scope=scope)
     assert extracted.partial and extracted.candidate_count > 0
     assert {
         p.name: p.read_bytes() for p in path.parent.glob("core.sqlite3*") if p.is_file()
@@ -183,5 +183,12 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
             row[0]
             for row in core.sql("SELECT name FROM sqlite_schema WHERE type='table'")
         )
-    assert adapter.activate(restored, outside / "active").clean_operational
+    activated = adapter.activate(restored, outside / "active")
+    assert activated.clean_operational is (True if paired else None)
+    assert activated.reconstructed_stores == (
+        ["operational", "search"] if paired else []
+    )
+    if not paired:
+        assert not (restored / "operational.sqlite3").exists()
+        assert not (restored / "search.sqlite3").exists()
     assert (path.parent / "p1-recovery-stop.json").exists()

@@ -30,6 +30,17 @@ MAX_ELEMENTS = 200_000
 _WIRE_WORK = ContextVar("p5_wire_work", default=None)
 
 
+def _ref_input_work(amount):
+    """Charge shared codec work to Exchange's reserved aggregate allowance."""
+    measurement = _WIRE_WORK.get()
+    if measurement is not None:
+        if measurement["ref_decode_input_bytes"] + amount > 3 * MAX_PACKAGE_BYTES:
+            raise ExchangeError(
+                "INPUT_LIMIT", "ref-fields", "finite decoded input work"
+            )
+        measurement["ref_decode_input_bytes"] += amount
+
+
 def _quoted_size(value, remaining):
     """Bound escaped UTF-8 before building a whole canonical representation."""
     if len(value) > remaining:
@@ -874,8 +885,10 @@ def validate_package_envelope(package: ExchangePackage) -> None:
     from repo_catalog.domain.exchange_rows import (
         validate_rows,
     )
+    from repo_catalog.domain.ref_exchange import account_ref_input
 
-    validate_rows(package.core, package.context)
+    with account_ref_input(_ref_input_work):
+        validate_rows(package.core, package.context)
 
 
 def encode_package(package: ExchangePackage) -> str:

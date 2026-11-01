@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from repo_catalog.adapters.sqlite import recovery as module
+from repo_catalog.adapters.sqlite import core_recovery as module
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import (
     ActivationError,
@@ -206,7 +206,7 @@ def test_hard_kill_during_copy_preserves_evidence(backup, tmp_path, repo_uuid):
     script = """
 import os, signal, sys
 from pathlib import Path
-from repo_catalog.adapters.sqlite import recovery
+from repo_catalog.adapters.sqlite import core_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 def die(*args):
     os.kill(os.getpid(), signal.SIGKILL)
@@ -278,7 +278,7 @@ def test_post_rename_sync_failure_is_uncertain_publication(tmp_path, monkeypatch
 
 
 def _activation_paused(catalog, locator, entered, release):
-    original = module.SQLiteRecoveryAdapter._validate_and_summarize_core
+    original = module.CoreRecoveryAdapter._validate_and_summarize_core
 
     def validate(self, path):
         entered.set()
@@ -286,7 +286,7 @@ def _activation_paused(catalog, locator, entered, release):
             raise RuntimeError("test did not release validation")
         return original(self, path)
 
-    module.SQLiteRecoveryAdapter._validate_and_summarize_core = validate
+    module.CoreRecoveryAdapter._validate_and_summarize_core = validate
     RecoveryService().activate_catalog(Path(catalog), Path(locator))
 
 
