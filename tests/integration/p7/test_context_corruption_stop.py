@@ -20,15 +20,15 @@ from repo_catalog.domain.p1_core import CoreFailure
 from repo_catalog.domain.recovery import CorruptionDetectedError, RecoveryBudget
 
 
-def _text(synthetic_catalog):
-    with sqlite3.connect(synthetic_catalog / "context.sqlite3") as db:
+def _text(restored_catalog):
+    with sqlite3.connect(restored_catalog / "context.sqlite3") as db:
         return db.execute(
             "SELECT sha256,text_value FROM text_bodies LIMIT 1"
         ).fetchone()
 
 
-def _corrupt(synthetic_catalog, raw):
-    path = synthetic_catalog / "context.sqlite3"
+def _corrupt(restored_catalog, raw):
+    path = restored_catalog / "context.sqlite3"
     with sqlite3.connect(path) as db:
         register_functions(db)
         sql = db.execute(
@@ -61,19 +61,19 @@ def _candidate(tmp_path, digest, text):
     "corrupt_bytes", [b"damaged retained text", b"\x80invalid UTF-8"]
 )
 def test_existing_retained_text_damage_stops_destination_without_mutation(
-    synthetic_catalog, tmp_path, corrupt_bytes
+    restored_catalog, tmp_path, corrupt_bytes
 ):
-    digest, original = _text(synthetic_catalog)
-    _corrupt(synthetic_catalog, corrupt_bytes)
+    digest, original = _text(restored_catalog)
+    _corrupt(restored_catalog, corrupt_bytes)
     source = _candidate(tmp_path, digest, original)
-    with sqlite3.connect(synthetic_catalog / "context.sqlite3") as db:
+    with sqlite3.connect(restored_catalog / "context.sqlite3") as db:
         before = db.execute(
             "SELECT sha256, CAST(text_value AS BLOB) FROM text_bodies"
         ).fetchall()
     with pytest.raises(CorruptionDetectedError, match="destination Context corruption"):
-        SQLiteRecoveryAdapter().merge_salvage(synthetic_catalog, source)
-    assert (synthetic_catalog / "p1-recovery-stop.json").exists()
-    with sqlite3.connect(synthetic_catalog / "context.sqlite3") as db:
+        SQLiteRecoveryAdapter().merge_salvage(restored_catalog, source)
+    assert (restored_catalog / "p1-recovery-stop.json").exists()
+    with sqlite3.connect(restored_catalog / "context.sqlite3") as db:
         assert (
             db.execute(
                 "SELECT sha256, CAST(text_value AS BLOB) FROM text_bodies"
@@ -81,26 +81,24 @@ def test_existing_retained_text_damage_stops_destination_without_mutation(
             == before
         )
     with pytest.raises(CoreFailure) as stopped:
-        GitCore(synthetic_catalog / "core.sqlite3")
+        GitCore(restored_catalog / "core.sqlite3")
     assert stopped.value.code == "RECOVERY_STOP"
 
 
 def test_invalid_incoming_digest_does_not_stop_healthy_destination(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
-    _, original = _text(synthetic_catalog)
+    _, original = _text(restored_catalog)
     source = _candidate(tmp_path, "0" * 64, original)
-    receipt = SQLiteRecoveryAdapter().merge_salvage(synthetic_catalog, source)
+    receipt = SQLiteRecoveryAdapter().merge_salvage(restored_catalog, source)
     assert receipt.rejected_units == 1
-    assert not (synthetic_catalog / "p1-recovery-stop.json").exists()
+    assert not (restored_catalog / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("refusal", ["individual_size", "verification_budget"])
-def test_existing_text_refusal_precedes_byte_materialization(
-    synthetic_catalog, refusal
-):
-    digest, original = _text(synthetic_catalog)
-    with sqlite3.connect(synthetic_catalog / "context.sqlite3") as db:
+def test_existing_text_refusal_precedes_byte_materialization(restored_catalog, refusal):
+    digest, original = _text(restored_catalog)
+    with sqlite3.connect(restored_catalog / "context.sqlite3") as db:
         statements = []
         db.set_trace_callback(statements.append)
         budget = (
@@ -120,16 +118,16 @@ def test_existing_text_refusal_precedes_byte_materialization(
         assert not any(
             sql.startswith("SELECT CAST(text_value AS BLOB)") for sql in statements
         )
-    assert not (synthetic_catalog / "p1-recovery-stop.json").exists()
+    assert not (restored_catalog / "p1-recovery-stop.json").exists()
 
 
 def test_existing_replay_verification_cost_is_durably_accounted(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
-    digest, original = _text(synthetic_catalog)
+    digest, original = _text(restored_catalog)
     source = _candidate(tmp_path, digest, original)
     receipt = SQLiteRecoveryAdapter().merge_salvage(
-        synthetic_catalog,
+        restored_catalog,
         source,
         budget=RecoveryBudget(),
         request_id="context-verified-replay",
@@ -137,7 +135,7 @@ def test_existing_replay_verification_cost_is_durably_accounted(
     assert receipt.replayed_units == 1
     state = json.loads(
         (
-            synthetic_catalog / "p1-recovery-request-context-verified-replay.json"
+            restored_catalog / "p1-recovery-request-context-verified-replay.json"
         ).read_text()
     )
     # Incoming SHA, stored SHA and exact stored-byte comparison all cost work.

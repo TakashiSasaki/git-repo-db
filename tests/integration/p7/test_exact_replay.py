@@ -51,12 +51,12 @@ def _authority(catalog):
     "table",
     ["retained_metadata", "git_objects", "repositories"],
 )
-def test_exact_evidence_replays(synthetic_catalog, tmp_path, table):
-    before = _authority(synthetic_catalog)
-    receipt = _merge(synthetic_catalog, tmp_path, _candidate(synthetic_catalog, table))
+def test_exact_evidence_replays(restored_catalog, tmp_path, table):
+    before = _authority(restored_catalog)
+    receipt = _merge(restored_catalog, tmp_path, _candidate(restored_catalog, table))
     assert receipt.replayed_units == 1
     assert receipt.admitted_units == receipt.rejected_units == 0
-    assert _authority(synthetic_catalog) == before
+    assert _authority(restored_catalog) == before
 
 
 @pytest.mark.parametrize(
@@ -69,47 +69,47 @@ def test_exact_evidence_replays(synthetic_catalog, tmp_path, table):
     ],
 )
 def test_metadata_digest_match_does_not_bypass_native_identity(
-    synthetic_catalog, tmp_path, field, value
+    restored_catalog, tmp_path, field, value
 ):
-    candidate = _candidate(synthetic_catalog, "retained_metadata")
+    candidate = _candidate(restored_catalog, "retained_metadata")
     candidate["payload"][field] = value
-    before = _authority(synthetic_catalog)
-    receipt = _merge(synthetic_catalog, tmp_path, candidate)
+    before = _authority(restored_catalog)
+    receipt = _merge(restored_catalog, tmp_path, candidate)
     assert receipt.rejected_units == 1
     assert receipt.replayed_units == receipt.admitted_units == 0
-    assert _authority(synthetic_catalog) == before
+    assert _authority(restored_catalog) == before
 
 
 @pytest.mark.parametrize("table", ["retained_metadata"])
-def test_new_physical_copy_is_admission_not_replay(synthetic_catalog, tmp_path, table):
-    candidate = _candidate(synthetic_catalog, table)
+def test_new_physical_copy_is_admission_not_replay(restored_catalog, tmp_path, table):
+    candidate = _candidate(restored_catalog, table)
     candidate["payload"]["physical_copy_uuidv4"] = str(uuid4())
-    receipt = _merge(synthetic_catalog, tmp_path, candidate)
+    receipt = _merge(restored_catalog, tmp_path, candidate)
     assert receipt.admitted_units == 1
     assert receipt.replayed_units == receipt.rejected_units == 0
 
 
 @pytest.mark.parametrize("table", ["retained_metadata"])
 def test_missing_physical_identity_is_only_observation(
-    synthetic_catalog, tmp_path, table
+    restored_catalog, tmp_path, table
 ):
-    candidate = _candidate(synthetic_catalog, table)
+    candidate = _candidate(restored_catalog, table)
     del candidate["payload"]["physical_copy_uuidv4"]
-    before = _authority(synthetic_catalog)
-    receipt = _merge(synthetic_catalog, tmp_path, candidate)
+    before = _authority(restored_catalog)
+    receipt = _merge(restored_catalog, tmp_path, candidate)
     assert receipt.observation_units == 1
     assert (
         receipt.replayed_units == receipt.admitted_units == receipt.rejected_units == 0
     )
-    assert _authority(synthetic_catalog) == before
+    assert _authority(restored_catalog) == before
 
 
-def test_empty_metadata_body_is_admissible(synthetic_catalog, tmp_path):
+def test_empty_metadata_body_is_admissible(restored_catalog, tmp_path):
     import hashlib
 
     from repo_catalog.domain.p1_core import native_object_oid
 
-    candidate = _candidate(synthetic_catalog, "retained_metadata")
+    candidate = _candidate(restored_catalog, "retained_metadata")
     candidate["payload"].update(
         native_type="tree",
         object_oid=native_object_oid("sha1", "tree", b""),
@@ -118,12 +118,12 @@ def test_empty_metadata_body_is_admissible(synthetic_catalog, tmp_path):
         digest_sha256=hashlib.sha256(b"").hexdigest(),
         physical_copy_uuidv4=str(uuid4()),
     )
-    receipt = _merge(synthetic_catalog, tmp_path, candidate)
+    receipt = _merge(restored_catalog, tmp_path, candidate)
     assert receipt.admitted_units == 1
     assert receipt.rejected_units == 0
 
 
-def test_empty_context_text_admission_and_replay(synthetic_catalog, tmp_path):
+def test_empty_context_text_admission_and_replay(restored_catalog, tmp_path):
     import hashlib
 
     candidate = {
@@ -131,15 +131,15 @@ def test_empty_context_text_admission_and_replay(synthetic_catalog, tmp_path):
         "extraction_status": "clean",
         "payload": {"text_value": "", "sha256": hashlib.sha256(b"").hexdigest()},
     }
-    first = _merge(synthetic_catalog, tmp_path, candidate)
-    retry = _merge(synthetic_catalog, tmp_path, candidate)
+    first = _merge(restored_catalog, tmp_path, candidate)
+    retry = _merge(restored_catalog, tmp_path, candidate)
     assert first.admitted_units == 1
     assert retry.replayed_units == 1
     assert first.rejected_units == retry.rejected_units == 0
 
 
 def test_context_resources_are_explicit_observations_not_false_replays(
-    synthetic_catalog, tmp_path
+    restored_catalog, tmp_path
 ):
     candidate = {
         "candidate_type": "context_resource",
@@ -151,10 +151,10 @@ def test_context_resources_are_explicit_observations_not_false_replays(
             "object_oid": "f" * 40,
         },
     }
-    before = _authority(synthetic_catalog)
-    receipt = _merge(synthetic_catalog, tmp_path, candidate)
+    before = _authority(restored_catalog)
+    receipt = _merge(restored_catalog, tmp_path, candidate)
     assert receipt.observation_units == 1
     assert (
         receipt.admitted_units == receipt.replayed_units == receipt.rejected_units == 0
     )
-    assert _authority(synthetic_catalog) == before
+    assert _authority(restored_catalog) == before

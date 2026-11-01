@@ -206,3 +206,17 @@ def synthetic_catalog(tmp_path, _synthetic_catalog_template):
     dest = tmp_path / "catalog"
     shutil.copytree(_synthetic_catalog_template, dest)
     return dest
+
+
+@pytest.fixture
+def restored_catalog(synthetic_catalog, tmp_path, repo_uuid, recovery_service):
+    """Use the real verified-restore boundary before positive merge exercises."""
+    backup, destination = tmp_path / "merge-baseline", tmp_path / "merge-target"
+    recovery_service.create_consistent_backup(synthetic_catalog, backup)
+    recovery_service.restore_backup(backup, destination, repo_uuid)
+    return destination
+
+
+def merge_preflight_input_bytes(directory):
+    """Receipt bytes plus the two canonical UUIDs read before candidate work."""
+    return len((directory / "p1-restored-baseline.json").read_bytes()) + 72

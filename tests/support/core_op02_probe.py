@@ -425,7 +425,38 @@ def main(output):
     checks.append("lost_durable_request_state_fails_closed_without_operational")
 
     unbacked, _ = new_catalog("unbacked")
-    refuses(lambda: service.merge_salvage(unbacked, salvage), RecoveryError)
+    generic = [
+        {
+            "candidate_type": "git_metadata",
+            "extraction_provenance": {"scope": "git_only", "table": table},
+            "payload": payload,
+        }
+        for table, payload in (
+            ("repositories", {"repository_uuidv4": str(uuid4())}),
+            ("git_objects", {"object_format": "sha1", "object_oid": "f" * 40}),
+        )
+    ]
+    retained = [row for row in records if row["candidate_type"] == "retained_body"]
+    assert retained
+
+    def authority(directory):
+        with closing(sqlite3.connect(directory / "core.sqlite3")) as db:
+            schema.register_functions(db, "core")
+            tables = db.execute(
+                "SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name"
+            ).fetchall()
+            return {
+                name: db.execute(f'SELECT * FROM "{name}"').fetchall()
+                for (name,) in tables
+            }
+
+    unbacked_before = authority(unbacked)
+    for index, candidates in enumerate((generic, retained, [*generic, *records])):
+        supplied = Path(f"unbacked-{index}.jsonl")
+        supplied.write_text("".join(json.dumps(row) + "\n" for row in candidates))
+        refuses(lambda: service.merge_salvage(unbacked, supplied), RecoveryError)
+        assert authority(unbacked) == unbacked_before
+        assert not service.is_stopped(unbacked)
     refuses(
         lambda: service.activate_catalog(unbacked, Path("unbacked-active")),
         ActivationError,
@@ -434,6 +465,23 @@ def main(output):
     assert not service.is_stopped(unbacked)
     only_core(unbacked)
     checks.append("untrusted_fresh_filename_is_not_a_verified_baseline")
+
+    mismatched = Path("mismatched-target").resolve()
+    service.restore_backup(backup, mismatched, repository)
+    baseline_path = mismatched / "p1-restored-baseline.json"
+    baseline = json.loads(baseline_path.read_text())
+    baseline["catalog_instance_uuidv4"] = str(uuid4())
+    baseline_path.write_text(json.dumps(baseline))
+    supplied = Path("mismatched.jsonl")
+    supplied.write_text(
+        "".join(json.dumps(row) + "\n" for row in [*generic, *retained])
+    )
+    mismatched_before = authority(mismatched)
+    refuses(lambda: service.merge_salvage(mismatched, supplied), RecoveryError)
+    assert authority(mismatched) == mismatched_before
+    assert not service.is_stopped(mismatched)
+    assert evidence_files(source) == source_before
+    checks.append("all_families_require_matching_baseline_before_authority_writes")
 
     polluted = Path("polluted-target").resolve()
     service.restore_backup(backup, polluted, repository)

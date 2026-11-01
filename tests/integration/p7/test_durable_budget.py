@@ -17,7 +17,8 @@ import pytest
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.domain.p1_core import native_object_oid
-from repo_catalog.domain.recovery import RecoveryBudget, RecoveryError
+from repo_catalog.domain.recovery import BackupScope, RecoveryBudget, RecoveryError
+from tests.integration.p7.conftest import merge_preflight_input_bytes
 
 REPO = "11111111-1111-4111-8111-111111111111"
 INSTANCE = "22222222-2222-4222-8222-222222222222"
@@ -81,8 +82,13 @@ def _worker(directory, salvage, budget, stage, output=None, start=None):
 @pytest.fixture
 def catalog(tmp_path):
     destination = tmp_path / "fresh"
-    destination.mkdir()
-    initialize(destination / "core.sqlite3", "core", REPO, INSTANCE)
+    source = tmp_path / "source"
+    source.mkdir()
+    initialize(source / "core.sqlite3", "core", REPO, INSTANCE)
+    adapter = SQLiteRecoveryAdapter()
+    backup = tmp_path / "baseline"
+    adapter.create_consistent_backup(source, backup, BackupScope.GIT_ONLY)
+    adapter.restore_backup(backup, destination, REPO)
     return destination
 
 
@@ -128,7 +134,8 @@ def test_sigkill_keeps_reserved_expenditure_and_restart(catalog, tmp_path, stage
     path, body = _candidate(tmp_path)
     # One full candidate decodes the bytes and independently reprocesses them
     # at the production Core boundary; both expenditures must be available.
-    budget = RecoveryBudget(max_work_units={"input_bytes": 2 * len(body)})
+    allowance = merge_preflight_input_bytes(catalog) + 2 * len(body)
+    budget = RecoveryBudget(max_work_units={"input_bytes": allowance})
     process = multiprocessing.get_context("spawn").Process(
         target=_worker, args=(catalog, path, budget, stage)
     )
@@ -154,7 +161,7 @@ def test_sigkill_keeps_reserved_expenditure_and_restart(catalog, tmp_path, stage
         assert retry.exitcode == 0
     after = _state(catalog)["cumulative_usage"]
     assert all(after[key] >= value for key, value in before.items())
-    assert after["input_bytes"] <= 2 * len(body)
+    assert after["input_bytes"] <= allowance
     assert _count(catalog) <= 1
 
 
@@ -163,7 +170,8 @@ def test_two_processes_cannot_spend_same_allowance(catalog, tmp_path):
     path2, _ = _candidate(tmp_path, "two")
     # One full candidate decodes the bytes and independently reprocesses them
     # at the production Core boundary; both expenditures must be available.
-    budget = RecoveryBudget(max_work_units={"input_bytes": 2 * len(body)})
+    allowance = merge_preflight_input_bytes(catalog) + 2 * len(body)
+    budget = RecoveryBudget(max_work_units={"input_bytes": allowance})
     context = multiprocessing.get_context("spawn")
     start, output = context.Event(), context.Queue()
     processes = [
@@ -181,7 +189,7 @@ def test_two_processes_cannot_spend_same_allowance(catalog, tmp_path):
     results = [output.get(timeout=5), output.get(timeout=5)]
     assert sum(result[0] for result in results) == 1
     assert _count(catalog) == 1
-    assert _state(catalog)["cumulative_usage"]["input_bytes"] == 2 * len(body)
+    assert _state(catalog)["cumulative_usage"]["input_bytes"] == allowance
 
 
 @pytest.mark.parametrize(
