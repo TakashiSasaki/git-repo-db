@@ -179,7 +179,8 @@ Setup now preserves each attempt in `artifacts/local-python/invocations/` while
 `receipt.json` remains the current environment pointer. Failures, interruption
 and lock timeouts retain attempt timing; a timeout cannot replace another valid
 pointer. Include this directory in the timing query; do not add its nested setup
-duration again to the outer `run` duration. The query reports root command sums,
+duration again to the outer `run` duration. The query reports whole-runner elapsed
+and its union (including preparation/wait/finalization), root command sums,
 interval unions, declared active/pause windows, missing/open intervals, and the
 recorded command fraction clipped to matching task/session active windows.
 Concurrent agents' declared active seconds are a sum, not elapsed waiting time.

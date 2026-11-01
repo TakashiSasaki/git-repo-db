@@ -198,12 +198,19 @@ def timing_report(paths):
             raise ValueError("Timing requires timezone-aware timestamps")
         return result
 
-    rows, intervals, sessions, command_intervals = [], [], [], {}
+    rows, intervals, sessions, command_intervals, runner_intervals = [], [], [], {}, []
     for key, data in sorted(records.items()):
         if data.get("record_kind") == "session":
             sessions.append(data)
             continue
         timing = data.get("timing", {})
+        if timing.get("started_at") and timing.get("completed_at"):
+            boundary = (
+                timestamp(timing["started_at"]),
+                timestamp(timing["completed_at"]),
+            )
+            if boundary[1] >= boundary[0]:
+                runner_intervals.append(boundary)
         phases = timing.get("phases", [])
         command = [phase for phase in phases if phase["name"] == "command"]
         if len(command) > 1:
@@ -249,6 +256,7 @@ def timing_report(paths):
                 "completed_at": measured.get("completed_at"),
                 "interval_scope": "command" if command else "legacy_command_and_wait",
                 "recorded_wall_seconds": seconds(data.get("wall_seconds")),
+                "runner_elapsed_seconds": seconds(timing.get("elapsed_seconds")),
                 "command_seconds": seconds(command[0].get("elapsed_seconds"))
                 if command
                 else None,
@@ -282,11 +290,21 @@ def timing_report(paths):
     root_durations = [
         row["command_seconds"] for row in roots if row["command_seconds"] is not None
     ]
+    root_runner_durations = [
+        row["runner_elapsed_seconds"]
+        for row in roots
+        if row["runner_elapsed_seconds"] is not None
+    ]
     return {
         "invocations": rows,
         "invocation_count": len(rows),
         "missing_interval_count": sum(not row["interval_available"] for row in rows),
         "recorded_wall_seconds_sum": known_sum("recorded_wall_seconds"),
+        "runner_elapsed_seconds_sum": known_sum("runner_elapsed_seconds"),
+        "runner_interval_union_seconds": interval_union_seconds(runner_intervals),
+        "root_runner_elapsed_seconds_sum": sum(root_runner_durations)
+        if root_runner_durations
+        else None,
         "command_seconds_sum": known_sum("command_seconds"),
         "root_command_seconds_sum": sum(root_durations) if root_durations else None,
         "root_command_duration_missing_count": sum(

@@ -188,6 +188,13 @@ def test_external_bootstrap_wrapper_is_stdlib_only_and_non_acceptance(tmp_path):
     assert result["timing"]["status"] == "completed"
     assert result["measurement_only"] and not result["verified"]
     assert "runtime" not in result
+    report = ci_query.timing_report([path])
+    assert report["runner_elapsed_seconds_sum"] >= report["command_seconds_sum"] > 0
+    assert (
+        report["root_runner_elapsed_seconds_sum"]
+        == report["runner_elapsed_seconds_sum"]
+    )
+    assert report["runner_interval_union_seconds"] > 0
     with pytest.raises(ValueError):
         ci_execute.successful_profile(path, {}, {})
 
