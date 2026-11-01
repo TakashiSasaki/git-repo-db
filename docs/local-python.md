@@ -52,6 +52,19 @@ Any failed mandatory verification exits nonzero and the receipt says
 
 ## Normal use
 
+Every bootstrap attempt retains a unique timing/identity/step record under
+`artifacts/local-python/invocations/`, including failures and interruption.
+`receipt.json` remains the current environment pointer; a lock-timeout attempt
+does not overwrite another completed environment's pointer. Step durations use
+monotonic time with UTC start/end. An abruptly killed attempt can remain open.
+Use `python3 scripts/ci_timing.py run --name setup -- ./scripts/setup-local-python.sh`
+to include outer preparation before a verified environment exists; this
+stdlib-only timer does not perform product validation. Run the timing query over
+both its default `artifacts/local-timing/` and `artifacts/local-python/` to see
+parent/child intervals without adding the nested setup duration twice. Keep raw
+timing and command logs local; see the repository CI verification skill for
+explicit task/session start, pause/resume and end observations.
+
 ```bash
 scripts/local-run.sh pytest tests/unit/test_ci_plan.py -q
 scripts/local-run.sh ruff check src tests scripts

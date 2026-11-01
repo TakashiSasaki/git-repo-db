@@ -37,6 +37,128 @@ def interval_union_seconds(intervals):
     return total + (end - start).total_seconds()
 
 
+def session_report(records, command_rows, command_intervals, timestamp):
+    """Explicit declared activity, not CPU time or human/model effort."""
+    active, paused, covered, matched_intervals, session_intervals = [], [], [], [], []
+    result = []
+    for record in records:
+        timing = record["timing"]
+        local_active, local_paused = [], []
+        missing = errors = 0
+        reasons = {}
+        for phase in timing["phases"]:
+            if phase["name"] not in ("active", "pause"):
+                raise ValueError("Invalid session phase")
+            if not phase.get("completed_at"):
+                missing += 1
+                continue
+            start, end = (
+                timestamp(phase["started_at"]),
+                timestamp(phase["completed_at"]),
+            )
+            if end < start or phase.get("clock_error"):
+                errors += 1
+                continue
+            target = local_active if phase["name"] == "active" else local_paused
+            target.append((start, end))
+            if phase["name"] == "pause":
+                reason = phase["reason"]
+                reasons[reason] = reasons.get(reason, 0) + (end - start).total_seconds()
+        matching = [
+            row
+            for row in command_rows
+            if row["task_id"] == timing["task_id"]
+            and row["session_id"] == timing["session_id"]
+        ]
+        matching_intervals = [
+            command_intervals[row["invocation_id"]]
+            for row in matching
+            if row["invocation_id"] in command_intervals
+        ]
+        intersections = [
+            (max(a, c), min(b, d))
+            for a, b in local_active
+            for c, d in matching_intervals
+            if max(a, c) <= min(b, d)
+        ]
+        active.extend(local_active)
+        paused.extend(local_paused)
+        covered.extend(intersections)
+        matched_intervals.extend(matching_intervals)
+        complete = timing["status"] == "ended" and not missing and not errors
+        elapsed = None
+        if timing.get("completed_at") and not errors:
+            boundary = (
+                timestamp(timing["started_at"]),
+                timestamp(timing["completed_at"]),
+            )
+            if boundary[1] >= boundary[0]:
+                session_intervals.append(boundary)
+                elapsed = (boundary[1] - boundary[0]).total_seconds()
+        active_seconds = interval_union_seconds(local_active)
+        covered_seconds = interval_union_seconds(intersections)
+        result.append(
+            {
+                "invocation_id": record["invocation_id"],
+                "task_id": timing["task_id"],
+                "session_id": timing["session_id"],
+                "agent_id": timing.get("agent_id"),
+                "parent_invocation_id": timing.get("parent_invocation_id"),
+                "status": timing["status"],
+                "started_at": timing["started_at"],
+                "completed_at": timing.get("completed_at"),
+                "duration_clock": timing["duration_clock"],
+                "elapsed_seconds": elapsed,
+                "active_seconds": active_seconds,
+                "pause_seconds": interval_union_seconds(local_paused),
+                "pause_seconds_by_reason": reasons,
+                "open_phase_count": missing,
+                "clock_error_count": errors,
+                "complete": complete,
+                "matched_command_count": len(matching),
+                "missing_command_interval_count": sum(
+                    not row["interval_available"] for row in matching
+                ),
+                "recorded_command_in_active_seconds": covered_seconds,
+            }
+        )
+    active_union = interval_union_seconds(active)
+    covered_union = interval_union_seconds(covered)
+    complete = bool(result) and all(
+        row["complete"] and not row["missing_command_interval_count"] for row in result
+    )
+    return {
+        "records": result,
+        "count": len(result),
+        "incomplete_count": sum(not row["complete"] for row in result),
+        "closed_session_elapsed_seconds_sum": sum(
+            row["elapsed_seconds"]
+            for row in result
+            if row["elapsed_seconds"] is not None
+        )
+        if session_intervals
+        else None,
+        "session_interval_union_seconds": interval_union_seconds(session_intervals),
+        "active_seconds_sum": sum((b - a).total_seconds() for a, b in active)
+        if active
+        else None,
+        "active_interval_union_seconds": active_union,
+        "pause_seconds_sum": sum((b - a).total_seconds() for a, b in paused)
+        if paused
+        else None,
+        "pause_interval_union_seconds": interval_union_seconds(paused),
+        "matched_command_interval_union_seconds": interval_union_seconds(
+            matched_intervals
+        ),
+        "recorded_command_in_active_union_seconds": covered_union,
+        "recorded_command_fraction_of_observed_active_sessions": covered_union
+        / active_union
+        if complete and active_union and covered_union is not None
+        else None,
+        "coverage": "Recorded matching command intervals only; unrecorded work remains unknown.",
+    }
+
+
 def timing_report(paths):
     """Read existing profiles, including failed/open checkpoints; never infer work."""
     records = {}
@@ -76,22 +198,39 @@ def timing_report(paths):
             raise ValueError("Timing requires timezone-aware timestamps")
         return result
 
-    rows, intervals = [], []
+    rows, intervals, sessions, command_intervals, runner_intervals = [], [], [], {}, []
     for key, data in sorted(records.items()):
+        if data.get("record_kind") == "session":
+            sessions.append(data)
+            continue
         timing = data.get("timing", {})
+        if timing.get("started_at") and timing.get("completed_at"):
+            boundary = (
+                timestamp(timing["started_at"]),
+                timestamp(timing["completed_at"]),
+            )
+            if boundary[1] >= boundary[0]:
+                runner_intervals.append(boundary)
         phases = timing.get("phases", [])
         command = [phase for phase in phases if phase["name"] == "command"]
         if len(command) > 1:
             raise ValueError(f"Duplicate command phase in {key}")
         measured = command[0] if command else ({} if timing else data)
         interval = None
+        clock_error = None
         if measured.get("started_at") and measured.get("completed_at"):
             interval = tuple(
                 timestamp(measured[field]) for field in ("started_at", "completed_at")
             )
             if interval[1] < interval[0]:
-                raise ValueError(f"Wall clock reversed in {key}")
-            intervals.append(interval)
+                if command and command[0].get("elapsed_seconds") is not None:
+                    clock_error = "wall_clock_reversed"
+                    interval = None
+                else:
+                    raise ValueError(f"Wall clock reversed in {key}")
+            if interval is not None:
+                intervals.append(interval)
+                command_intervals[key] = interval
         cumulative = None
         if data.get("journal"):
             # Old non-test command profiles used wall time as this fallback.
@@ -107,7 +246,9 @@ def timing_report(paths):
                 "name": data.get("name"),
                 "task_id": timing.get("task_id"),
                 "session_id": timing.get("session_id"),
+                "agent_id": timing.get("agent_id"),
                 "parent_invocation_id": timing.get("parent_invocation_id"),
+                "record_kind": data.get("record_kind", "command"),
                 "kind": timing.get("kind", "unclassified"),
                 "status": timing.get("status", "legacy"),
                 "exit_code": data.get("exit_code"),
@@ -115,12 +256,14 @@ def timing_report(paths):
                 "completed_at": measured.get("completed_at"),
                 "interval_scope": "command" if command else "legacy_command_and_wait",
                 "recorded_wall_seconds": seconds(data.get("wall_seconds")),
+                "runner_elapsed_seconds": seconds(timing.get("elapsed_seconds")),
                 "command_seconds": seconds(command[0].get("elapsed_seconds"))
                 if command
                 else None,
                 "cumulative_test_seconds": cumulative,
                 "phases": phases,
                 "interval_available": interval is not None,
+                "clock_error": clock_error,
             }
         )
 
@@ -128,12 +271,45 @@ def timing_report(paths):
         values = [row[field] for row in rows if row[field] is not None]
         return sum(values) if values else None
 
+    command_ids = {row["invocation_id"] for row in rows}
+
+    def has_command_parent(row):
+        parent = row["parent_invocation_id"]
+        seen = {row["invocation_id"]}
+        nested = False
+        while parent in records:
+            if parent in seen:
+                raise ValueError("Cyclic invocation parent relationship")
+            seen.add(parent)
+            if parent in command_ids:
+                nested = True
+            parent = records[parent].get("timing", {}).get("parent_invocation_id")
+        return nested
+
+    roots = [row for row in rows if not has_command_parent(row)]
+    root_durations = [
+        row["command_seconds"] for row in roots if row["command_seconds"] is not None
+    ]
+    root_runner_durations = [
+        row["runner_elapsed_seconds"]
+        for row in roots
+        if row["runner_elapsed_seconds"] is not None
+    ]
     return {
         "invocations": rows,
         "invocation_count": len(rows),
         "missing_interval_count": sum(not row["interval_available"] for row in rows),
         "recorded_wall_seconds_sum": known_sum("recorded_wall_seconds"),
+        "runner_elapsed_seconds_sum": known_sum("runner_elapsed_seconds"),
+        "runner_interval_union_seconds": interval_union_seconds(runner_intervals),
+        "root_runner_elapsed_seconds_sum": sum(root_runner_durations)
+        if root_runner_durations
+        else None,
         "command_seconds_sum": known_sum("command_seconds"),
+        "root_command_seconds_sum": sum(root_durations) if root_durations else None,
+        "root_command_duration_missing_count": sum(
+            row["command_seconds"] is None for row in roots
+        ),
         "command_duration_missing_count": sum(
             row["command_seconds"] is None for row in rows
         ),
@@ -148,8 +324,10 @@ def timing_report(paths):
         if intervals
         else None,
         "active_work_share": None,
+        "sessions": session_report(sessions, rows, command_intervals, timestamp),
         "limitations": [
-            "Observed span includes idle gaps; task/session labels are associations, not active work windows.",
+            "Observed span includes unclassified gaps; only explicit session transitions define declared activity and pauses.",
+            "Declared active-session elapsed is not CPU time, thinking time or human/model effort; session transitions across processes use UTC and require synchronized clocks without jumps.",
             "Missing/open intervals and unprofiled commands have unknown cost, not zero cost.",
             "Legacy intervals may include resource wait; new intervals cover only the child command.",
             "Intervals use wall clocks; elapsed durations use monotonic clocks in new profiles. Compare only synchronized hosts without clock jumps.",

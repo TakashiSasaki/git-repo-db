@@ -18,12 +18,14 @@ import shutil
 import subprocess
 import sys
 import time
+from contextlib import ExitStack
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from scripts import ci_python_runtime, local_env  # noqa: E402
+from scripts.ci_timing import InvocationTiming, new_record  # noqa: E402
 
 RECEIPT_SCHEMA = "git-repo-db-local-python-receipt/1"
 RECEIPT_DIRECTORY = Path("artifacts/local-python")
@@ -103,23 +105,37 @@ class Recorder:
     def __init__(self):
         self.steps = {name: {"status": "not_run"} for name in STEPS}
         self.current = None
+        self.started = None
+        self.checkpoint = lambda: None
 
     def begin(self, name):
         self.current = name
-        self.steps[name] = {"status": "running", "started": time.time()}
+        self.started = time.perf_counter()
+        self.steps[name] = {
+            "status": "running",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+        }
+        self.checkpoint()
 
     def finish(self, **details):
         step = self.steps[self.current]
         step.update(
             details,
             status="passed",
-            seconds=round(time.time() - step.pop("started"), 3),
+            seconds=round(time.perf_counter() - self.started, 3),
+            completed_at=datetime.now(timezone.utc).isoformat(),
         )
+        self.checkpoint()
 
     def fail(self, message):
         step = self.steps[self.current]
-        step.update(status="failed", message=message)
-        step.pop("started", None)
+        step.update(
+            status="failed",
+            message=message,
+            seconds=round(time.perf_counter() - self.started, 3),
+            completed_at=datetime.now(timezone.utc).isoformat(),
+        )
+        self.checkpoint()
 
 
 def json_file(path):
@@ -405,44 +421,80 @@ def main(argv=None):
     args = parser.parse_args(argv)
     root = args.root.resolve()
     recorder = Recorder()
-    receipt = {
-        "schema": RECEIPT_SCHEMA,
-        "status": "failed",
-        "created": datetime.now(timezone.utc).isoformat(),
-        "repository_root": str(root),
-    }
+    receipt = new_record("setup", "setup")
+    receipt.update(
+        {
+            "schema": RECEIPT_SCHEMA,
+            "status": "failed",
+            "created": datetime.now(timezone.utc).isoformat(),
+            "repository_root": str(root),
+            "steps": recorder.steps,
+        }
+    )
+    attempt = (
+        root / RECEIPT_DIRECTORY / "invocations" / (receipt["invocation_id"] + ".json")
+    )
+    timing = InvocationTiming(receipt, attempt)
+    receipt["timing"]["kind"] = "preparation"
+    recorder.checkpoint = timing.save
+    timing.end("preparation")
     lock = root / RECEIPT_DIRECTORY / ".bootstrap.lock"
+    acquired = False
+
+    def failed(error, publish):
+        receipt["status"] = "failed"
+        receipt["exit_code"] = 130 if isinstance(error, KeyboardInterrupt) else 1
+        if recorder.current:
+            recorder.fail(str(error))
+        receipt["failure"] = {"step": recorder.current, "message": str(error)}
+        timing.finish(
+            "interrupted" if isinstance(error, KeyboardInterrupt) else "error", error
+        )
+        if publish:
+            write_receipt(root, receipt, recorder)
+
     try:
-        with CheckoutLock(lock, timeout=args.lock_timeout):
+        with ExitStack() as locks:
+            with timing.phase("resource_wait"):
+                locks.enter_context(CheckoutLock(lock, timeout=args.lock_timeout))
+                acquired = True
             try:
-                bootstrap(root, args, recorder, receipt)
-                receipt["status"] = "passed"
-                recorder.begin("final_verification")
+                with timing.phase("command"):
+                    bootstrap(root, args, recorder, receipt)
+                    receipt["status"] = "passed"
+                    recorder.begin("final_verification")
+                    write_receipt(root, receipt, recorder)
+                    local_env.verify_environment(root, deep=True)
+                    recorder.finish()
+                receipt["exit_code"] = 0
+                timing.finish("completed")
                 write_receipt(root, receipt, recorder)
-                local_env.verify_environment(root, deep=True)
-                recorder.finish()
-                write_receipt(root, receipt, recorder)
-            except (
-                SetupFailure,
-                local_env.EnvironmentRefused,
-                ci_python_runtime.UnsupportedPlatform,
-                RuntimeError,
-                ValueError,
-                OSError,
-                subprocess.SubprocessError,
-                KeyError,
-            ) as error:
-                receipt["status"] = "failed"
-                if recorder.current:
-                    recorder.fail(str(error))
-                receipt["failure"] = {"step": recorder.current, "message": str(error)}
-                write_receipt(root, receipt, recorder)
+            except BaseException as error:
+                failed(error, publish=True)
+                if not isinstance(
+                    error,
+                    (
+                        SetupFailure,
+                        local_env.EnvironmentRefused,
+                        ci_python_runtime.UnsupportedPlatform,
+                        RuntimeError,
+                        ValueError,
+                        OSError,
+                        subprocess.SubprocessError,
+                        KeyError,
+                    ),
+                ):
+                    raise
                 print(
                     f"Local Python bootstrap FAILED at {recorder.current}: {error}",
                     file=sys.stderr,
                 )
                 return 1
-    except TimeoutError as error:
+    except BaseException as error:
+        if not acquired:
+            failed(error, publish=False)
+        if not isinstance(error, TimeoutError):
+            raise
         print(
             f"Local Python bootstrap FAILED: {error}",
             file=sys.stderr,

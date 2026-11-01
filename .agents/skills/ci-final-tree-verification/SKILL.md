@@ -147,14 +147,53 @@ child durations as independent work. Compare interval unions only on synchronize
 hosts without clock jumps. The monotonic phase durations remain the elapsed
 measurement when wall clocks change.
 
-Task/session labels do not measure thinking or active work. Recover observable
-work windows, approval waits and idle gaps from the author session before
-calculating an active-work ratio. Without those boundaries, report the measured
-lower bound, end-to-end elapsed when known, and an unknown active-work ratio.
-PR creation/merge timestamps and first/last commits are not work boundaries.
-Unprofiled setup, probes, builds and review remain missing costs. Keep online
-GitHub jobs separate from local offline execution, and preserve skipped scopes
-as unexecuted. This analysis adds no test-selection or release gate.
+Record explicit observed work windows with the stdlib-only helper below. It runs
+on the bootstrap Python >=3.9 without importing product code or claiming runtime
+validation. Once the verified environment exists, continue using `local-run.sh`
+for all product checks. Choose unique nonsecret labels; never use transcript text,
+credentials or private names as IDs or command arguments.
+
+```sh
+export CI_TASK_ID=example-task CI_SESSION_ID=author-unique CI_AGENT_ID=author
+python3 scripts/ci_timing.py start
+python3 scripts/ci_timing.py run --name setup -- ./scripts/setup-local-python.sh
+python3 scripts/ci_timing.py pause --reason approval_wait
+python3 scripts/ci_timing.py resume
+python3 scripts/ci_timing.py end
+scripts/local-run.sh python scripts/ci_query.py timing artifacts/local-timing artifacts/local-python artifacts/ci-profile
+```
+
+Use `run --kind build_install` for external build/install preparation; its child
+output stays in the invocation log. Preserve supported writable Python-home/cache
+settings during setup. `pause` requires `approval_wait`, `environment_wait` or
+`deliberate_pause`; record only observed pauses, never infer them from gaps. End
+an abandoned session with `end --interrupted`. A missing end stays open in queries;
+queries do not extend it to the current time. Invalid/double transitions refuse
+without changing the previous checkpoint. Each agent uses its own session ID;
+`start --parent-id INVOCATION_ID` associates a separately launched child/reviewer.
+Child commands automatically inherit their parent invocation ID. Cross-process
+session phases use UTC, so clock changes or unsynchronized hosts limit their
+meaning; in-process command/setup elapsed uses monotonic clocks.
+
+Setup now preserves each attempt in `artifacts/local-python/invocations/` while
+`receipt.json` remains the current environment pointer. Failures, interruption
+and lock timeouts retain attempt timing; a timeout cannot replace another valid
+pointer. Include this directory in the timing query; do not add its nested setup
+duration again to the outer `run` duration. The query reports whole-runner elapsed
+and its union (including preparation/wait/finalization), root command sums,
+interval unions, declared active/pause windows, missing/open intervals, and the
+recorded command fraction clipped to matching task/session active windows.
+Concurrent agents' declared active seconds are a sum, not elapsed waiting time.
+
+Declared active-session elapsed is not CPU usage, thinking time or actual
+human/model effort. Unrecorded work and missing boundaries remain unknown, and
+the actual active-work share remains unknown. PR creation/merge timestamps,
+file mtimes and first/last commits are not work boundaries. Measurement-only
+session/preparation/setup records cannot satisfy product-validation consumers.
+Keep online GitHub jobs separate from local execution. Timing records and child
+logs stay local by default; do not upload raw task/session data or transcript
+metadata to GitHub. Publish only synthetic examples or explicitly approved
+aggregates. This procedure adds no test-selection or release gate.
 
 ## Development validation loop (ordinary PRs and stacked iterations)
 
