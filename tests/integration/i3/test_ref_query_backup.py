@@ -10,6 +10,9 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
+from repo_catalog.adapters.sqlite.core_recovery_validation import (
+    RefValidationBudgetError,
+)
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import (
     connect,
@@ -17,7 +20,6 @@ from repo_catalog.adapters.sqlite.p1_schema import (
     register_functions,
 )
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
-from repo_catalog.adapters.sqlite.recovery_validation import RefValidationBudgetError
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.p1_core import OID, CoreFailure
 from repo_catalog.domain.recovery import (
@@ -307,7 +309,7 @@ def test_backup_finite_budget_is_not_corruption(acquisition):
 
 
 def test_backup_verification_exhaustion_is_not_corruption(acquisition, monkeypatch):
-    from repo_catalog.adapters.sqlite import recovery as recovery_module
+    from repo_catalog.adapters.sqlite import core_recovery as recovery_module
 
     app, _, _, repository, origin, core_path, _ = acquisition
     _, target, _ = fixture_note(acquisition)

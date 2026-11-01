@@ -1,4 +1,4 @@
-"""Domain types, contracts, and invariants for P7 production recovery under ADR 0026."""
+"""Domain types, contracts, and invariants for P7 production recovery under ADR 0038."""
 
 from __future__ import annotations
 
@@ -37,6 +37,10 @@ class ExtractionStatus(str, enum.Enum):
 
 class RecoveryError(Exception):
     """Base error for all P7 recovery operations."""
+
+
+class RecoveryCapabilityError(RecoveryError):
+    """A requested scope requires unavailable validation or admission capabilities."""
 
 
 class CorruptionDetectedError(RecoveryError):
@@ -206,5 +210,5 @@ class ActivationReceipt:
     source_backup_id: str
     reconstructed_stores: list[str]
     timestamp_us: int
-    clean_operational: bool
-    search_derivative_state: str = "initialized_empty"
+    clean_operational: bool | None
+    search_derivative_state: str = "not_initialized"

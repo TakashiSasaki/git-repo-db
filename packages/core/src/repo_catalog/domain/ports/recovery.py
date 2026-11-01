@@ -1,4 +1,4 @@
-"""Domain ports for P7 recovery operations under ADR 0026."""
+"""Domain ports for P7 recovery operations under ADR 0038."""
 
 from __future__ import annotations
 
@@ -46,6 +46,8 @@ class SalvagePort(Protocol):
         max_bytes: int | None = None,
         budget: RecoveryBudget | None = None,
         request_id: str | None = None,
+        *,
+        scope: BackupScope | None = None,
     ) -> SalvageReceipt: ...
 
 

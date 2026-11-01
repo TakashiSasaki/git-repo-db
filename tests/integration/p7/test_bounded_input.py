@@ -9,7 +9,7 @@ import tracemalloc
 
 import pytest
 
-from repo_catalog.adapters.sqlite import recovery
+from repo_catalog.adapters.sqlite import core_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import RecoveryBudget, SalvageError
 
@@ -127,12 +127,63 @@ def test_base64_and_proof_hex_are_bounded_before_decoding(monkeypatch):
     monkeypatch.setattr(recovery.base64, "b64decode", decoder_must_not_run)
     with pytest.raises(ValueError, match="finite"):
         recovery._decode_bounded_base64("A" * 10_000, 10)
-    with pytest.raises(ValueError, match="finite"):
-        recovery._decode_proof_bundle(
-            json.dumps([["1" * 40, "tree", "aa" * 1024]]),
-            RecoveryBudget(max_payload_bytes=10),
-            "sha1",
-        )
+    from uuid import uuid4
+
+    from repo_catalog.domain import ref_exchange as codec
+    from repo_catalog.domain.p1_core import (
+        OID,
+        CoreFailure,
+        Provenance,
+        account_verification,
+        encode,
+    )
+    from repo_catalog.domain.ref_observation import (
+        NotesMapping,
+        RefObservationClaim,
+        RefObservationKey,
+        new_uuid7,
+    )
+
+    root = OID("sha1", "1" * 40)
+    key = RefObservationKey(str(uuid4()), new_uuid7())
+    provenance = Provenance("source", "read", "ref", "test", "1")
+    claim = RefObservationClaim(key, provenance, "present", root_object_oid=root)
+    mapping = NotesMapping(
+        root,
+        "git-notes",
+        "1",
+        "tree",
+        OID("sha1", "2" * 40),
+        OID("sha1", "3" * 40),
+        "path",
+    )
+    bundle = encode([[root.object_oid, "tree", "aa" * 1024]])
+    wire = {
+        **codec.mapping_to_wire(mapping),
+        "observation_origin_uuidv4": key.observation_origin_uuidv4,
+        "ref_observation_uuidv7": key.ref_observation_uuidv7,
+        "ref_claim_provenance_json": provenance.encoded,
+        "proof_bundle_json": bundle,
+        "verification_scope": "single-path",
+        "evidence_provenance_json": Provenance(
+            "receiver", "read", "path", "native-notes", "1", "receiver_intrinsic"
+        ).encoded,
+    }
+
+    class ForbiddenBytes:
+        @staticmethod
+        def fromhex(value):
+            pytest.fail("proof hex allocated before its input-work reservation")
+
+    monkeypatch.setattr(codec, "bytes", ForbiddenBytes, raising=False)
+    # Allow parsing the mapping path and proof JSON, then exhaust the allowance
+    # exactly before the canonical proof decoder attempts bytes.fromhex.
+    allowance = 2 * (len(wire["mapping_path_json"]) + len(bundle))
+    work = recovery.RecoveryWorkBudget(work_limits={"input_bytes": allowance})
+    with account_verification(work), pytest.raises(CoreFailure) as failure:
+        codec.mapping_evidence_from_wire(wire, claim)
+    assert failure.value.code == "BUDGET"
+    assert work.usage["input_bytes"] == allowance
 
 
 def test_jsonl_stops_at_huge_line_without_scanning_suffix():
@@ -314,7 +365,8 @@ def test_fifo_input_fails_in_separate_process_without_hanging(
     script = """
 import sys
 from pathlib import Path
-from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter, _copy_forensic_files
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite.core_recovery import _copy_forensic_files
 from repo_catalog.domain.recovery import RecoveryError
 try:
     if sys.argv[1] == 'merge':

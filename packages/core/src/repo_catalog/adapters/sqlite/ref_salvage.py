@@ -12,15 +12,15 @@ from contextlib import closing
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.p1_coordination import (
+from repo_catalog.adapters.sqlite.core_coordination import (
     catalog_completion,
     catalog_gate,
     persist_catalog_stop,
 )
+from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import connect
-from repo_catalog.application.ref_exchange import decode_ref_units
-from repo_catalog.application.ref_observations import encode_metered
+from repo_catalog.application.query_encoding import encode_metered
+from repo_catalog.application.ref_reconstruction import decode_ref_units
 from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_core import (
     OID,

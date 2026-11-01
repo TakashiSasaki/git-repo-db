@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite import recovery
+from repo_catalog.adapters.sqlite import core_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.p1_core import CoreFailure
 from repo_catalog.domain.recovery import RecoveryBudget

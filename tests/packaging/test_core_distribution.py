@@ -1,4 +1,4 @@
-"""Dependency-resolved OP-01 installations from both hardened build paths."""
+"""Dependency-resolved minimal Core installations from both hardened build paths."""
 
 from __future__ import annotations
 
@@ -37,8 +37,7 @@ def core_distributions(tmp_path_factory):
     return env, products
 
 
-@pytest.mark.parametrize("variant", ["wheel", "sdist_wheel"])
-def test_minimal_core_dependency_resolved_op01(core_distributions, tmp_path, variant):
+def _minimal_installation(core_distributions, tmp_path, variant):
     env, products = core_distributions
     wheel = products[variant]
     dependencies = dependency_wheels(products, variant=variant)
@@ -57,14 +56,25 @@ def test_minimal_core_dependency_resolved_op01(core_distributions, tmp_path, var
         "p1_context",
         "access_",
         "acquisition",
+        "operational",
         "search",
-        "exchange",
         "production_query.py",
     )
     for name in artifact_members:
         if name == "repo_catalog/cli/production_query.py":
             continue
         assert not any(part in name for part in forbidden), name
+
+    # Pure typed Ref codecs are Core-owned. Excluding high-level Exchange is
+    # established by exact ownership plus the probe's runtime closure checks,
+    # rather than banning an incidental filename substring.
+    for module in (
+        "application/exchange.py",
+        "application/ref_exchange.py",
+        "domain/exchange.py",
+        "adapters/sqlite/exchange.py",
+    ):
+        assert "repo_catalog/" + module not in artifact_members
 
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -96,18 +106,55 @@ def test_minimal_core_dependency_resolved_op01(core_distributions, tmp_path, var
     assert (
         sorted(p.relative_to(outside).as_posix() for p in outside.rglob("*")) == before
     )
-    driver = outside / "core_op01_probe.py"
-    shutil.copy2(ROOT / "tests/support/core_op01_probe.py", driver)
+    return outside, python, env
+
+
+def _run_probe(core_distributions, tmp_path, variant, probe):
+    outside, python, env = _minimal_installation(core_distributions, tmp_path, variant)
+    driver = outside / (probe + ".py")
+    shutil.copy2(ROOT / "tests/support" / (probe + ".py"), driver)
     shutil.copy2(
         ROOT / "tests/support/network_guard/sitecustomize.py",
         outside / "sitecustomize.py",
     )
-    receipt = outside / "op01.json"
-    run([python, "-I", driver, receipt], outside, env)
+    receipt = outside / (probe + ".json")
+    package_build_runner([python, "-I", driver, receipt], outside, env)
     evidence = json.loads(receipt.read_text())
     assert evidence["result"] == "passed"
     assert evidence["installed_distributions"] == [
         "repo-catalog-contracts",
         "repo-catalog-core",
     ]
+    return evidence
+
+
+@pytest.mark.parametrize("variant", ["wheel", "sdist_wheel"])
+def test_minimal_core_dependency_resolved_op01(core_distributions, tmp_path, variant):
+    evidence = _run_probe(core_distributions, tmp_path, variant, "core_op01_probe")
     assert len(evidence["checks"]) >= 19
+
+
+@pytest.mark.parametrize("variant", ["wheel", "sdist_wheel"])
+def test_minimal_core_dependency_resolved_op02(core_distributions, tmp_path, variant):
+    evidence = _run_probe(core_distributions, tmp_path, variant, "core_op02_probe")
+    assert set(evidence["checks"]) == {
+        "physical_absence_unique_owners_and_installed_origins",
+        "verified_git_only_backup_with_actual_metadata_bytes",
+        "paired_declared_artifact_is_not_downgraded_to_git_only",
+        "paired_capability_refused_without_false_corruption",
+        "persistent_source_stop_fences_normal_backup",
+        "opaque_context_and_sidecars_preserved_without_interpretation",
+        "source_bound_work_accumulates_across_output_paths_and_scope_refusal",
+        "fresh_restore_receiver_validated_typed_notes_merge_and_replay",
+        "supplied_paired_salvage_scope_refused_for_git_only_target",
+        "receiver_rejects_changed_note_bytes_while_independent_claims_survive",
+        "finite_merge_limit_without_authority_corruption",
+        "lost_durable_request_state_fails_closed_without_operational",
+        "untrusted_fresh_filename_is_not_a_verified_baseline",
+        "unvalidated_context_is_not_promoted_in_git_only_activation",
+        "final_retained_byte_validation_stops_damaged_target_before_publication",
+        "failed_locator_publication_preserves_previous_locator_and_source",
+        "safe_git_only_activation_truthful_receipt_without_optional_databases",
+        "complete_zero_retained_body_git_only_lifecycle",
+        "runtime_dependency_closure_stays_in_minimal_installed_owners",
+    }

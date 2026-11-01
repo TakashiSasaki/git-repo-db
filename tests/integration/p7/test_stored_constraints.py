@@ -4,9 +4,9 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.core_recovery import is_catalog_stopped
+from repo_catalog.adapters.sqlite.core_recovery_validation import _packaged_checks
 from repo_catalog.adapters.sqlite.p1_schema import expected_schema, schema_rows
-from repo_catalog.adapters.sqlite.recovery import is_catalog_stopped
-from repo_catalog.adapters.sqlite.recovery_validation import _packaged_checks
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import CorruptionDetectedError
 

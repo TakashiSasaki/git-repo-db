@@ -14,13 +14,10 @@ from uuid import uuid4
 
 import pytest
 
+from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget, stop_catalog
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
-from repo_catalog.adapters.sqlite.recovery import (
-    RecoveryWorkBudget,
-    SQLiteRecoveryAdapter,
-    stop_catalog,
-)
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.adapters.sqlite.ref_salvage import (
     admit_ref_unit,
     admit_ref_unit_atomic,
@@ -187,7 +184,10 @@ def test_full_fresh_restore_salvage_and_activation(acquisition, tmp_path):
         assert (
             body.available and body.verified and body.body_bytes == b"\0\xffbinary\r\n"
         )
-    assert adapter.activate(restored, outside / "active.json").clean_operational
+    activated = adapter.activate(restored, outside / "active.json")
+    assert activated.clean_operational is None
+    assert activated.reconstructed_stores == []
+    assert activated.search_derivative_state == "not_initialized"
 
 
 def test_missing_verified_baseline_cannot_merge_or_activate(acquisition, tmp_path):
@@ -2107,7 +2107,9 @@ def test_inventory_coverage_survives_full_recovery(
         assert projection.state == "complete" and projection.known_empty is empty
     finally:
         receiver.close()
-    assert adapter.activate(destination, outside / "active").clean_operational
+    activated = adapter.activate(destination, outside / "active")
+    assert activated.clean_operational is None
+    assert activated.reconstructed_stores == []
 
 
 def test_standalone_mapping_never_creates_evidence_or_body(p1_core_fixture, tmp_path):
@@ -2386,4 +2388,6 @@ def test_ref_merge_checks_paired_context_identity(acquisition, tmp_path, mismatc
         for mode, expected in (("auto", "paired"), ("core_only", "core_only")):
             query = ProductionQueryService(destination, mode=mode)
             assert query.detect_mode() == expected
-        assert adapter.activate(destination, outside / "active").clean_operational
+        activated = adapter.activate(destination, outside / "active")
+        assert activated.clean_operational is True
+        assert activated.reconstructed_stores == ["operational", "search"]

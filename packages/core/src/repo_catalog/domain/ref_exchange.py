@@ -1,4 +1,4 @@
-"""Lossless typed wire values for the opt-in ref-observation Exchange.
+"""Lossless typed Ref values shared by Recovery and optional Exchange.
 
 Wire records retain original observations and reports.  Local verification is
 repeated at admission; a serialized decoder label is never itself authority.
@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 from repo_catalog.domain.p1_core import (
     OID,
@@ -36,22 +38,27 @@ def _exact(value, keys):
         raise ValueError("exact typed ref wire fields required")
 
 
-def _input_work(amount):
-    # decode_package has already reserved a finite aggregate wire budget; make
-    # the repeated ref-field decoding visible to its actual-work settlement.
-    from repo_catalog.domain.exchange import (
-        _WIRE_WORK,
-        MAX_PACKAGE_BYTES,
-        ExchangeError,
-    )
+_ref_input_observer = ContextVar("ref_codec_input_observer", default=None)
 
-    measurement = _WIRE_WORK.get()
-    if measurement is not None:
-        if measurement["ref_decode_input_bytes"] + amount > 3 * MAX_PACKAGE_BYTES:
-            raise ExchangeError(
-                "INPUT_LIMIT", "ref-fields", "finite decoded input work"
-            )
-        measurement["ref_decode_input_bytes"] += amount
+
+@contextmanager
+def account_ref_input(observer):
+    """Attach a caller's cumulative input meter without importing its feature.
+
+    The caller owns reservations, ceilings and error classification. Actual Core
+    work is independently charged through account_verification in every scope.
+    """
+    token = _ref_input_observer.set(observer)
+    try:
+        yield
+    finally:
+        _ref_input_observer.reset(token)
+
+
+def _input_work(amount):
+    observer = _ref_input_observer.get()
+    if observer is not None:
+        observer(amount)
     _performed("input_bytes", amount)
 
 

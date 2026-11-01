@@ -5,16 +5,14 @@ import sqlite3
 
 import pytest
 
+from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import (
     expected_schema,
     register_functions,
     schema_rows,
 )
-from repo_catalog.adapters.sqlite.recovery import (
-    RecoveryWorkBudget,
-    SQLiteRecoveryAdapter,
-)
+from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.adapters.sqlite.recovery_validation import (
     verify_existing_context_text,
 )

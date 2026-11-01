@@ -1,8 +1,10 @@
-# Minimal Core distribution: A+B implementation boundary
+# Minimal Core distribution and scoped Recovery
 
-This implements the bounded OP-01 milestone under accepted ADR0037/0038.
-It does not complete M-01, Git-only Recovery (OP-02), the remaining minimal
-combinations, normal Schema 21 migration, or release qualification.
+The A+B milestone introduced the bounded OP-01 distribution under accepted
+ADR0037/0038. The C implementation extends the same distribution with Git-only
+Recovery. Executed acceptance and remaining gaps belong to revision-bound PR
+evidence; this contract alone proves neither OP-02 nor M-01. Other minimal
+combinations, normal Schema 21 migration and release qualification remain separate.
 
 ## Ownership and entry points
 
@@ -13,8 +15,8 @@ No distribution owns a namespace `__init__.py`; `_version.py` belongs to contrac
 | Distribution / source root | Owns | Runtime dependencies / public entry |
 | --- | --- | --- |
 | `repo-catalog-contracts` / `packages/contracts/src` | Nominal OID/provenance and their validation errors; time/Coverage values; snapshot/Query value contracts; shared Coverage DDL fragment; version | No dependencies; `domain.shared_values`, `domain.query_contracts` |
-| `repo-catalog-core` / `packages/core/src` | Typed Git/Notes admission and integrity; Core adapter/schema/UDF validation, Core DDL and fingerprint declarations; finite Query work helper; persistent stop/locking/completion and Core snapshots; Core Query API/port/CLI | Exact-version contracts; `p1_schema.initialize(..., "core", ...)`, `GitCore`, `CoreQueryService`, `repo-catalog-query` / existing `python -m repo_catalog.cli.production_query` |
-| `repo-catalog` / `src` | Existing normal Schema 21 product, Context/Access/Operational/Search, acquisition/Exchange/Recovery and explicit paired/optional Query composition | Exact-version Core/contracts plus `httpx`; existing `repo-catalog` / `python -m repo_catalog` |
+| `repo-catalog-core` / `packages/core/src` | Typed Git/Notes admission and integrity; Core adapter/schema/UDF validation, Core DDL and fingerprint declarations; finite Query work helper; persistent stop/locking/completion and Core snapshots; Core Query API/port/CLI; Git-only Recovery and its durable budget; typed Ref codecs/reconstruction and finite encoding | Exact-version contracts; `p1_schema.initialize(..., "core", ...)`, `GitCore`, `CoreQueryService`, `CoreRecoveryService`, `repo-catalog-query` / existing `python -m repo_catalog.cli.production_query` |
+| `repo-catalog` / `src` | Existing normal Schema 21 product, Context/Access/Operational/Search, acquisition/Exchange orchestration, Context/paired Recovery integration and explicit paired/optional Query composition | Exact-version Core/contracts plus `httpx`; existing `repo-catalog` / `python -m repo_catalog`; composed `RecoveryService` |
 
 Core-only operation uses the opt-in P1 format. The normal entry remains Schema 21.
 An explicit Core read opens only Core, including when an opaque Context DB exists.
@@ -61,7 +63,47 @@ focused Core/Query/coordination/resource and distribution-hardening regressions
 remain separate evidence. Executed results, input hashes and exact source binding
 belong to the PR/run artifacts; this document is an implementation rationale.
 
-Required complete Git-only Recovery ultimately belongs in this same Core basic
-installation. The current rich Recovery implementation is unchanged in this
-milestone; it is not a mandatory Recovery add-on design. OP-02 through OP-12
-installation guarantees and final combination evidence remain follow-up work.
+## Recovery ownership and scope
+
+`application.core_recovery.CoreRecoveryService` composes the Core-owned
+`adapters.sqlite.core_recovery.CoreRecoveryAdapter`. The existing
+`application.recovery.RecoveryService` explicitly composes the optional
+Context/paired integration. Composed backup keeps its paired default; Core's
+entry requires no optional implementation. Missing paired capability is a
+`RecoveryCapabilityError`, not a corruption diagnosis or permission to downgrade.
+Callers explicitly pass `BackupScope.GIT_ONLY` to Core backup and salvage.
+The inherited paired backup default is conservative and refuses in the minimum
+installation. Restore, merge and activation derive scope from the checked
+manifest/baseline rather than guessing from available modules.
+
+The canonical Recovery domain/ports and durable request accounting belong to
+Core. The typed wire definitions in `domain.ref_exchange` are codecs, not
+high-level Exchange orchestration; `application.ref_reconstruction` owns the
+shared reconstruction and `application.query_encoding` owns finite encoding.
+Exchange connects its aggregate measurement explicitly while Core always charges
+performed work. Selection, envelopes, package/request binding, reception and
+Operational accounting stay optional. There is no second model or codec copy.
+
+Backup scope is explicit. Salvage interprets only its effective supported scope;
+topology-based defaults never depend on which modules happen to be installed.
+The durable request binds scope and source/baseline identity in addition to its
+finite budget. Changing an output path cannot reset an explicit source-bound
+request. Retry, crash reservations and accounting-loss refusal keep the existing
+durable machinery; finite in-memory Query work is not a substitute.
+
+Git-only preservation copies coexisting Context authority and necessary sidecars
+as opaque evidence. It reports that scope as uninspected/unrecovered, never
+healthy. Paired manifests, baselines and supplied material cannot be silently
+reinterpreted. A fresh Git-only active destination contains no unvalidated Context.
+Git-only activation validates the trusted restored Core and publishes the locator
+under the existing completion fence without creating Operational/Search DBs.
+Its receipt reports no reconstructed stores, `clean_operational=None` and
+`search_derivative_state="not_initialized"`. Paired activation retains Context
+validation and Operational/Search reconstruction. Original source evidence and
+its persistent stop remain preserved in either scope.
+
+The external OP-02 driver reuses the direct/sdist-derived Core build and normal
+offline dependency resolution, separately from the rich paired P7 scenario.
+The OP-01 driver remains a regression. Full OP-02 evidence must cover the complete
+lifecycle and the applicable ADR0038 R6.1–R6.10 controls; existence of these tests
+alone is not execution evidence or release acceptance.
