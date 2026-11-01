@@ -143,3 +143,36 @@ def test_malformed_declared_scope_does_not_diagnose_corruption(
     with pytest.raises(RecoveryError, match="Unsupported declared salvage scope"):
         service.merge_salvage(synthetic_catalog, salvage)
     assert not service.is_stopped(synthetic_catalog)
+
+
+@pytest.mark.parametrize("binding", ["source", "target"])
+def test_request_binding_rejects_boolean_version_alias(
+    synthetic_catalog, tmp_path, binding
+):
+    service = RecoveryService()
+    if binding == "source":
+        service.stop_suspect_catalog(synthetic_catalog, "synthetic typed binding")
+        service.extract_salvage(
+            synthetic_catalog, tmp_path / "first.jsonl", scope=BackupScope.GIT_ONLY
+        )
+        path = next(synthetic_catalog.glob("p1-recovery-request-extract-*.source.json"))
+    else:
+        salvage = tmp_path / "empty.jsonl"
+        salvage.write_text("")
+        service.merge_salvage(synthetic_catalog, salvage)
+        path = synthetic_catalog / "p1-recovery-request-default.target.json"
+    value = json.loads(path.read_text())
+    value["version"] = True
+    path.write_text(json.dumps(value))
+    with pytest.raises(
+        RecoveryError, match="binding changed|scope or baseline changed"
+    ):
+        if binding == "source":
+            service.extract_salvage(
+                synthetic_catalog, tmp_path / "second.jsonl", scope=BackupScope.GIT_ONLY
+            )
+        else:
+            service.merge_salvage(synthetic_catalog, salvage)
+    assert not (tmp_path / "second.jsonl").exists()
+    if binding == "target":
+        assert not service.is_stopped(synthetic_catalog)

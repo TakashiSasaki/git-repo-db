@@ -88,10 +88,10 @@ def test_context_snapshot_failure_revalidates_context(
     original = adapter._snapshot_database
     diagnosed = []
 
-    def snapshot(source, target):
+    def snapshot(source, target, **kwargs):
         if source.name == "context.sqlite3":
             raise sqlite3.OperationalError("context busy")
-        original(source, target)
+        original(source, target, **kwargs)
 
     def diagnose(catalog, source, role, error):
         diagnosed.append((source.name, role))

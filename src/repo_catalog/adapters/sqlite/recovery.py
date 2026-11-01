@@ -119,12 +119,12 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
     def _validate_and_summarize_context(self, context_db: Path) -> RetainedByteSummary:
         conn = sqlite3.connect(f"file:{context_db.resolve()}?mode=ro", uri=True)
         try:
-            register_functions(conn)
+            register_functions(conn, "context")
             # Strict P1 schema validation
             try:
                 from repo_catalog.adapters.sqlite.p1_schema import configure
 
-                configure(conn)
+                configure(conn, "context")
                 p1_schema_validate(conn, "context")
             except Exception as e:
                 raise BackupValidationError(

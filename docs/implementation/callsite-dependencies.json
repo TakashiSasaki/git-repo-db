@@ -37,7 +37,7 @@
     {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py",
       "owner": "repo-catalog-core",
-      "sha256": "ea1d7d142a9a49d28d181638c5999e29a5c631f10b48c5ab97e3eae60875a019"
+      "sha256": "09f53cf01c0242e4b285e13e054978a3d18d81c88abb5289ec7708485594be38"
     },
     {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/core_recovery_validation.py",
@@ -237,7 +237,7 @@
     {
       "path": "src/repo_catalog/adapters/sqlite/recovery.py",
       "owner": "repo-catalog",
-      "sha256": "2d84d35bd30790b787f2e588160f4af87b327bc54d96609275c92c474cc09d2b"
+      "sha256": "78d5e8fd6c72eb390bde3443ad952c7a7f2a7e4a3a7b22b7b305ac634270049d"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/recovery_validation.py",

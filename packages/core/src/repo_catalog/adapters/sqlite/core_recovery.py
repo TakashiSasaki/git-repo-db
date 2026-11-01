@@ -58,6 +58,7 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 )
 from repo_catalog.adapters.sqlite.recovery_budget import (
     _invalid_constant,
+    _same_json,
     _unique_object,
     canonical_request_id,
     recovery_request,
@@ -1070,7 +1071,9 @@ class CoreRecoveryAdapter:
                     if scope == BackupScope.PAIRED:
                         staged_context = stores_dir / "context.sqlite3"
                         snapshot_source, snapshot_role = context_db_path, "context"
-                        self._snapshot_database(context_db_path, staged_context)
+                        self._snapshot_database(
+                            context_db_path, staged_context, store="context"
+                        )
 
                     # Execute cut callback while lock is actively held, if provided
                     if snapshot_cut_callback is not None:
@@ -1317,11 +1320,13 @@ class CoreRecoveryAdapter:
                 )
                 raise CorruptionDetectedError(reason) from source_error
 
-    def _snapshot_database(self, source_path: Path, target_path: Path) -> None:
+    def _snapshot_database(
+        self, source_path: Path, target_path: Path, *, store: str = "core"
+    ) -> None:
         source_uri = f"file:{source_path.resolve()}?mode=ro"
         src_conn = sqlite3.connect(source_uri, uri=True, timeout=1.0)
         try:
-            register_functions(src_conn)
+            register_functions(src_conn, store)
             dst_conn = sqlite3.connect(str(target_path))
             try:
                 deadline = time.monotonic() + 1.0
@@ -1351,7 +1356,7 @@ class CoreRecoveryAdapter:
     ) -> tuple[str, str]:
         conn = sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)
         try:
-            register_functions(conn)
+            register_functions(conn, store)
             row = conn.execute(
                 "SELECT repository_uuidv4, catalog_instance_uuidv4 FROM store_identity WHERE store_role=?",
                 (store,),
@@ -1372,11 +1377,11 @@ class CoreRecoveryAdapter:
     def _compute_schema_fingerprint(self, db_path: Path, store: str) -> str:
         conn = sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)
         try:
-            register_functions(conn)
+            register_functions(conn, store)
             try:
                 from repo_catalog.adapters.sqlite.p1_schema import configure
 
-                configure(conn)
+                configure(conn, store)
                 p1_schema_validate(conn, store)
             except Exception as e:
                 raise BackupValidationError(
@@ -1415,12 +1420,12 @@ class CoreRecoveryAdapter:
 
         conn.set_progress_handler(progress, 100)
         try:
-            register_functions(conn)
+            register_functions(conn, "core")
             # Strict P1 schema validation
             try:
                 from repo_catalog.adapters.sqlite.p1_schema import configure
 
-                configure(conn)
+                configure(conn, "core")
                 p1_schema_validate(conn, "core")
             except Exception as e:
                 raise BackupValidationError(f"Core physical schema invalid: {e}") from e
@@ -1646,7 +1651,7 @@ class CoreRecoveryAdapter:
                     "scope": scope.value,
                 }
                 if binding_path.exists() or binding_path.is_symlink():
-                    if _read_recovery_state(binding_path) != binding:
+                    if not _same_json(_read_recovery_state(binding_path), binding):
                         raise SalvageError("Recovery request source binding changed")
                 elif any(request.usage.values()):
                     raise SalvageError("Recovery request source binding missing")
@@ -1890,7 +1895,7 @@ class CoreRecoveryAdapter:
         try:
             try:
                 conn = sqlite3.connect(f"file:{db_path.resolve()}?mode=ro", uri=True)
-                register_functions(conn)
+                register_functions(conn, store_name)
                 remaining = work._max["input_bytes"] - work.usage["input_bytes"]
                 conn.setlimit(
                     sqlite3.SQLITE_LIMIT_LENGTH,
@@ -2875,7 +2880,7 @@ class CoreRecoveryAdapter:
                     "baseline": baseline,
                 }
                 if binding_path.exists() or binding_path.is_symlink():
-                    if _read_recovery_state(binding_path) != binding:
+                    if not _same_json(_read_recovery_state(binding_path), binding):
                         raise RecoveryError(
                             "Recovery request target scope or baseline changed"
                         )
