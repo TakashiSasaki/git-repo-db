@@ -699,6 +699,7 @@ def probe(output, reference=None):
         ROOT / "packages/access/src",
         ROOT / "packages/paired-query/src",
         ROOT / "packages/search/src",
+        ROOT / "packages/operational/src",
     ):
         if source.is_dir() and str(source) not in sys.path:
             sys.path.insert(0, str(source))

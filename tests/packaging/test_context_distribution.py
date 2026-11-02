@@ -345,7 +345,7 @@ from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 from repo_catalog.domain.search_query import SearchQuery
 installed = Path(sysconfig.get_path("purelib")).resolve()
 products = {d.metadata["Name"]: d for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
-assert set(products) == {"repo-catalog", "repo-catalog-search", "repo-catalog-paired-query", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
+assert set(products) == {"repo-catalog-operational", "repo-catalog", "repo-catalog-search", "repo-catalog-paired-query", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
 owners = {}
 for name, distribution in products.items():
     for member in distribution.files:

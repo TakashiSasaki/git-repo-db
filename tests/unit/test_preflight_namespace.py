@@ -20,6 +20,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
             "packages/access/src",
             "packages/paired-query/src",
             "packages/search/src",
+            "packages/operational/src",
             "packages/contracts/src",
         )
     ]
@@ -55,7 +56,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
 
 def test_exact_workspace_namespace_is_accepted(tmp_path):
     result = console_check(tmp_path)
-    assert len(result["namespace_roots"]) == 8
+    assert len(result["namespace_roots"]) == 9
     assert result["version"] == "0.2.0"
 
 

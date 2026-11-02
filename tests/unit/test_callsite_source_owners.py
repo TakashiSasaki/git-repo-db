@@ -22,6 +22,7 @@ def test_index_covers_every_python_owner_and_packaged_resource():
         "repo-catalog-access",
         "repo-catalog-paired-query",
         "repo-catalog-search",
+        "repo-catalog-operational",
     }
     baseline = {entry["path"]: entry for entry in report["modules"]}
     isolated = {entry["path"]: entry for entry in report["isolated_modules"]}

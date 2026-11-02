@@ -133,6 +133,7 @@ def check_console_script() -> dict[str, object]:
             "packages/access/src",
             "packages/paired-query/src",
             "packages/search/src",
+            "packages/operational/src",
         )
     }
     namespace_roots = {Path(path).resolve() for path in repo_catalog.__path__}

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+[project]
+name = "repo-catalog-operational"
+version = "0.2.0"
+description = "Durable finite accounting and continuation for opt-in catalog operations"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["repo-catalog-runtime==0.2.0", "repo-catalog-contracts==0.2.0"]
+[tool.hatch.build.targets.sdist]
+only-include = ["src/repo_catalog", "pyproject.toml", "README.md"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_catalog"]
+[tool.uv.sources]
+repo-catalog-runtime = { workspace = true }
+repo-catalog-contracts = { workspace = true }
