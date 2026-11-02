@@ -17,6 +17,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
             "packages/core/src",
             "packages/runtime/src",
             "packages/context/src",
+            "packages/access/src",
             "packages/contracts/src",
         )
     ]
@@ -52,7 +53,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
 
 def test_exact_workspace_namespace_is_accepted(tmp_path):
     result = console_check(tmp_path)
-    assert len(result["namespace_roots"]) == 5
+    assert len(result["namespace_roots"]) == 6
     assert result["version"] == "0.2.0"
 
 

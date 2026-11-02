@@ -8,9 +8,95 @@
     "packages/core/src": "repo-catalog-core",
     "packages/contracts/src": "repo-catalog-contracts",
     "packages/runtime/src": "repo-catalog-runtime",
-    "packages/context/src": "repo-catalog-context"
+    "packages/context/src": "repo-catalog-context",
+    "packages/access/src": "repo-catalog-access"
   },
   "isolated_modules": [
+    {
+      "path": "packages/access/src/repo_catalog/adapters/filesystem/access_executor.py",
+      "owner": "repo-catalog-access",
+      "sha256": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/adapters/sqlite/access_backup.py",
+      "owner": "repo-catalog-access",
+      "sha256": "b1df310e6d5a24ec48dd012f370b08c8179e6eee33e66f1304ee0a2ac64d5e08"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/adapters/sqlite/access_connections.py",
+      "owner": "repo-catalog-access",
+      "sha256": "9472274b9a5baff8894ef182fc6aaad4a81aecd433026cfb30b3441f3a1f861c"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/adapters/sqlite/access_registry.py",
+      "owner": "repo-catalog-access",
+      "sha256": "d5dc914d1d402e6d07efd128ae489ba86aeb3a365356a44cfab4ce80950f9820"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/adapters/sqlite/access_schema.py",
+      "owner": "repo-catalog-access",
+      "sha256": "08bf2aa601d00720b902dbf7f43bbc768d7810cb0c1007750b6a6e5af7c07d42"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/application/access_maintenance.py",
+      "owner": "repo-catalog-access",
+      "sha256": "0774ac6bef5109c08635116cfc1c53eb5f761724395d789ea8f93b2436533b73"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/application/access_workflow.py",
+      "owner": "repo-catalog-access",
+      "sha256": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/cli/access_maintenance.py",
+      "owner": "repo-catalog-access",
+      "sha256": "4dc3e6a2ee5370cf5e6503fa6fe913897f6d3560e6154bf7c0decb87e2762381"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/cli/access_workflow.py",
+      "owner": "repo-catalog-access",
+      "sha256": "45a88e89acd3833268eae49eb11c5ecc49c4d3e582546c988f873638d6a1d01c"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/access_backup.py",
+      "owner": "repo-catalog-access",
+      "sha256": "6fa8654f05b96b25ccd5341433a957d05b6f243b3bf56d4b8dc338dc3e06bf0b"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+      "owner": "repo-catalog-access",
+      "sha256": "3ccb3e5351fd21f72ab26475132a6b1ce1643415366ee11ffa9f9e2af3476718"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/access_registry.py",
+      "owner": "repo-catalog-access",
+      "sha256": "cce3062c59ba80c428afcbbb0d96508768fc97eda5f8ae46b7d5d5aab3288e49"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/access_workflow.py",
+      "owner": "repo-catalog-access",
+      "sha256": "5cdf947c7c01008736e8de86d33edbd85d8b711c8348ce0cc16bbee9f8c2a317"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/ports/access_backup.py",
+      "owner": "repo-catalog-access",
+      "sha256": "d027253db345fe10f07be86bb2dd95a9570a7c93be01bbce34632994f0440002"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/ports/access_connections.py",
+      "owner": "repo-catalog-access",
+      "sha256": "2a17c52281e3eb2a1f624b8f35d731f1fd6a865e158baa3a41026c96801c9a6f"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/ports/access_registry.py",
+      "owner": "repo-catalog-access",
+      "sha256": "a102ac0d89e427b1979854d2bd8242b9eec65c5e924d2555d810531a6a954430"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/domain/ports/access_workflow.py",
+      "owner": "repo-catalog-access",
+      "sha256": "f4cf66c6912d194fb960026af6c40f797586a9ed6c9c73435f301831cb38a58d"
+    },
     {
       "path": "packages/context/src/repo_catalog/adapters/sqlite/context_admission.py",
       "owner": "repo-catalog-context",
@@ -247,11 +333,6 @@
       "sha256": "c578892a3748790bc87822e0f21324b8b5ec7021f8bf91850a2eda733a6c5223"
     },
     {
-      "path": "src/repo_catalog/adapters/filesystem/access_executor.py",
-      "owner": "repo-catalog",
-      "sha256": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a"
-    },
-    {
       "path": "src/repo_catalog/adapters/git/access_native.py",
       "owner": "repo-catalog",
       "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f"
@@ -270,26 +351,6 @@
       "path": "src/repo_catalog/adapters/github/production_intake.py",
       "owner": "repo-catalog",
       "sha256": "271f084a284bb6491ac0f381f9d9588616a409d79f7ef89dd18297c798e423ad"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/access_backup.py",
-      "owner": "repo-catalog",
-      "sha256": "b1df310e6d5a24ec48dd012f370b08c8179e6eee33e66f1304ee0a2ac64d5e08"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/access_connections.py",
-      "owner": "repo-catalog",
-      "sha256": "9472274b9a5baff8894ef182fc6aaad4a81aecd433026cfb30b3441f3a1f861c"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/access_registry.py",
-      "owner": "repo-catalog",
-      "sha256": "d5dc914d1d402e6d07efd128ae489ba86aeb3a365356a44cfab4ce80950f9820"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/access_schema.py",
-      "owner": "repo-catalog",
-      "sha256": "08bf2aa601d00720b902dbf7f43bbc768d7810cb0c1007750b6a6e5af7c07d42"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/acquisition.py",
@@ -325,16 +386,6 @@
       "path": "src/repo_catalog/application/access_acquisition.py",
       "owner": "repo-catalog",
       "sha256": "de32ad18ec734d07554ee89f3ea6d6bd561c279af86665dcd54ea6be0f410c5e"
-    },
-    {
-      "path": "src/repo_catalog/application/access_maintenance.py",
-      "owner": "repo-catalog",
-      "sha256": "0774ac6bef5109c08635116cfc1c53eb5f761724395d789ea8f93b2436533b73"
-    },
-    {
-      "path": "src/repo_catalog/application/access_workflow.py",
-      "owner": "repo-catalog",
-      "sha256": "902ba4575f2db56fcd430bb0fed81733fd0534f2245bd9d8999abc35a7e4fe95"
     },
     {
       "path": "src/repo_catalog/application/acquisition.py",
@@ -377,39 +428,9 @@
       "sha256": "9ba04804f0434deb6f4e89e7ec5bf0d24aa1285953a9df9e57e0cf7702c7338c"
     },
     {
-      "path": "src/repo_catalog/cli/access_maintenance.py",
-      "owner": "repo-catalog",
-      "sha256": "4dc3e6a2ee5370cf5e6503fa6fe913897f6d3560e6154bf7c0decb87e2762381"
-    },
-    {
-      "path": "src/repo_catalog/cli/access_workflow.py",
-      "owner": "repo-catalog",
-      "sha256": "45a88e89acd3833268eae49eb11c5ecc49c4d3e582546c988f873638d6a1d01c"
-    },
-    {
       "path": "src/repo_catalog/cli/query_features.py",
       "owner": "repo-catalog",
       "sha256": "4383775328ddde9c37714dbdc14ef7f9b5dd82491371ceebf1f2a11ec020c545"
-    },
-    {
-      "path": "src/repo_catalog/domain/access_backup.py",
-      "owner": "repo-catalog",
-      "sha256": "6fa8654f05b96b25ccd5341433a957d05b6f243b3bf56d4b8dc338dc3e06bf0b"
-    },
-    {
-      "path": "src/repo_catalog/domain/access_connections.py",
-      "owner": "repo-catalog",
-      "sha256": "3ccb3e5351fd21f72ab26475132a6b1ce1643415366ee11ffa9f9e2af3476718"
-    },
-    {
-      "path": "src/repo_catalog/domain/access_registry.py",
-      "owner": "repo-catalog",
-      "sha256": "cce3062c59ba80c428afcbbb0d96508768fc97eda5f8ae46b7d5d5aab3288e49"
-    },
-    {
-      "path": "src/repo_catalog/domain/access_workflow.py",
-      "owner": "repo-catalog",
-      "sha256": "5cdf947c7c01008736e8de86d33edbd85d8b711c8348ce0cc16bbee9f8c2a317"
     },
     {
       "path": "src/repo_catalog/domain/acquisition.py",
@@ -440,26 +461,6 @@
       "path": "src/repo_catalog/domain/native_acquisition.py",
       "owner": "repo-catalog",
       "sha256": "9519d62f370efc9ce4151aed7caa433fe903fc9791495699b1526eb47e1af710"
-    },
-    {
-      "path": "src/repo_catalog/domain/ports/access_backup.py",
-      "owner": "repo-catalog",
-      "sha256": "d027253db345fe10f07be86bb2dd95a9570a7c93be01bbce34632994f0440002"
-    },
-    {
-      "path": "src/repo_catalog/domain/ports/access_connections.py",
-      "owner": "repo-catalog",
-      "sha256": "2a17c52281e3eb2a1f624b8f35d731f1fd6a865e158baa3a41026c96801c9a6f"
-    },
-    {
-      "path": "src/repo_catalog/domain/ports/access_registry.py",
-      "owner": "repo-catalog",
-      "sha256": "a102ac0d89e427b1979854d2bd8242b9eec65c5e924d2555d810531a6a954430"
-    },
-    {
-      "path": "src/repo_catalog/domain/ports/access_workflow.py",
-      "owner": "repo-catalog",
-      "sha256": "f4cf66c6912d194fb960026af6c40f797586a9ed6c9c73435f301831cb38a58d"
     },
     {
       "path": "src/repo_catalog/domain/ports/acquisition.py",
@@ -509,6 +510,16 @@
   ],
   "packaged_resources": [
     {
+      "path": "packages/access/src/repo_catalog/adapters/sqlite/access_ddl/connections.sql",
+      "owner": "repo-catalog-access",
+      "sha256": "e3bb8958706631a9038f48be99b3ad943b886682338d4d65fdb5a2172ac98fb0"
+    },
+    {
+      "path": "packages/access/src/repo_catalog/adapters/sqlite/access_ddl/registry.sql",
+      "owner": "repo-catalog-access",
+      "sha256": "4d949c13488df0e4792a337b6e864ca372e6c738ba0576b2dff3bccb72a5e7bc"
+    },
+    {
       "path": "packages/context/src/repo_catalog/adapters/sqlite/p1_ddl/context.sql",
       "owner": "repo-catalog-context",
       "sha256": "4c9e10c97c712f9cf0555337a758c3dc17dd8ce86f25350b70ce3891d099039c"
@@ -527,16 +538,6 @@
       "path": "packages/runtime/src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json",
       "owner": "repo-catalog-runtime",
       "sha256": "eaeed033ce0df1289e38dde382b683558dc17a679b4a0d310c4ba057d6d2cc7c"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/access_ddl/connections.sql",
-      "owner": "repo-catalog",
-      "sha256": "e3bb8958706631a9038f48be99b3ad943b886682338d4d65fdb5a2172ac98fb0"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/access_ddl/registry.sql",
-      "owner": "repo-catalog",
-      "sha256": "4d949c13488df0e4792a337b6e864ca372e6c738ba0576b2dff3bccb72a5e7bc"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql",

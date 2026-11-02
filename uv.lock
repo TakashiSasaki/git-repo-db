@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "repo-catalog",
+    "repo-catalog-access",
     "repo-catalog-context",
     "repo-catalog-contracts",
     "repo-catalog-core",
@@ -243,6 +244,7 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "repo-catalog-access" },
     { name = "repo-catalog-context" },
     { name = "repo-catalog-contracts" },
     { name = "repo-catalog-core" },
@@ -260,6 +262,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28,<1" },
+    { name = "repo-catalog-access", editable = "packages/access" },
     { name = "repo-catalog-context", editable = "packages/context" },
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
     { name = "repo-catalog-core", editable = "packages/core" },
@@ -273,6 +276,11 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "ruff", specifier = ">=0.14,<1" },
 ]
+
+[[package]]
+name = "repo-catalog-access"
+version = "0.2.0"
+source = { editable = "packages/access" }
 
 [[package]]
 name = "repo-catalog-context"

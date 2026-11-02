@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Ensure the three namespace distribution source roots are importable
+# Ensure all namespace distribution source roots are importable
 ROOT = Path(__file__).resolve().parents[1]
 for source in (
     ROOT / "src",
@@ -21,6 +21,7 @@ for source in (
     ROOT / "packages/contracts/src",
     ROOT / "packages/runtime/src",
     ROOT / "packages/context/src",
+    ROOT / "packages/access/src",
 ):
     if str(source) not in sys.path:
         sys.path.insert(0, str(source))
