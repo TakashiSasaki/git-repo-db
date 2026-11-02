@@ -271,6 +271,15 @@ the paired coordinator's outer transaction ownership. Never call a live-capabili
 checker after closing that capability. The native/Access cleanup tests and
 `_open_core` share this boundary.
 
+For Exchange, also challenge identity Core.close before any Operational request
+issuance, owned Operational.close after admission, and paired connection/lease
+cleanup. A final refusal alone does not prove that no new accounting was written
+after a known stop: inspect request rows and issuance witnesses in the identity
+cleanup counterexample. Fence successful completion after owned cleanup while
+preserving the original exceptional outcome. Use the focused Exchange completion
+boundary tests and positive parent-source controls; label source replay distinctly
+from an actual parent artifact installation.
+
 Instrument the real delegated input path and include a positive removed-defense
 control. GitNativeSource.metadata can delegate subprocess work through
 GitNotesSource, so patching only source._run once reported zero calls even while

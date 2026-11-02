@@ -525,6 +525,20 @@ faults; Prototype C's post-read charge is not production crash-gap evidence.
    Forward an already-selected custom request explicitly through Access/paired
    callers. `test_git_durable_boundary.py` covers these native entry boundaries;
    supplied typed metadata-admission helpers retain their separately scoped API.
+7. Apply effective canonical-budget checks to Exchange reception too, after
+   resolving supplied or default work. A NotesWorkBudget subclass overriding
+   require/charge/abandon admitted a fact with all durable limits and usage zero.
+   Require the canonical budget and WorkLedger, matching physical identity,
+   request and continuation; retain supported custom frozen scopes. Include a
+   canonical zero-limit refusal and a positive custom-scope control.
+8. Validate final continuation after the last Exchange summary callback, before
+   returning a receipt. File/inode/store identity alone misses loss of the live
+   checkpoint on the same inode. Delete only that checkpoint in a disposable
+   fault probe: deleting all continuation rows correctly hits the immutable
+   PackageKey binding guard and does not exercise the intended loss. Refuse the
+   lost continuation, preserve already committed Core facts, and do not classify
+   accounting loss as authority corruption. The focused
+   `tests/integration/p5/test_exchange_completion_boundary.py` checks both cases.
 
 Verification: `uv run --no-sync pytest tests/integration/p4 -q`, P1/P2/P3 and
 cross-domain regressions, installed wheel/sdist-wheel tests and the four required
