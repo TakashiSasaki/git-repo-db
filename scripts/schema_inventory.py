@@ -26,6 +26,7 @@ for source in (
     ROOT / "packages/search/src",
     ROOT / "packages/operational/src",
     ROOT / "packages/git-acquisition/src",
+    ROOT / "packages/exchange/src",
 ):
     if str(source) not in sys.path:
         sys.path.insert(0, str(source))

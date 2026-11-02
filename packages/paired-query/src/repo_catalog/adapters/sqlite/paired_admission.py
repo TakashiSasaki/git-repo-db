@@ -1,0 +1,271 @@
+"""Canonical paired admission and consistent backup coordination. No O or Search."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sqlite3
+from collections.abc import Callable
+from contextlib import ExitStack, closing
+from dataclasses import dataclass
+from pathlib import Path
+
+from repo_catalog.adapters.sqlite.catalog_runtime import (
+    SnapshotReadLimits,
+    _identity,
+    _json,
+    _sqlite_corruption,
+    catalog_completion,
+    catalog_gate,
+)
+from repo_catalog.adapters.sqlite.context_transaction import AdmissionTransaction
+from repo_catalog.adapters.sqlite.paired_coordination import (
+    PairSnapshotCoordinator,
+    validate_dependencies,
+)
+from repo_catalog.domain.p1_coordination import (
+    AdmissionFailure,
+    CoordinationError,
+    PairAdmission,
+    SnapshotToken,
+)
+
+
+@dataclass(frozen=True)
+class _ContextAdmissionBinding:
+    authorization: object
+    admission: object
+    leases: ExitStack
+    live_leases: list
+
+    def check_current(self):
+        self.authorization.validate_context(self.admission)
+        for lease in self.live_leases:
+            lease.check_current()
+
+
+class PairCoordinator(PairSnapshotCoordinator):
+    def __init__(
+        self,
+        directory: Path,
+        *,
+        read_limits: SnapshotReadLimits | None = None,
+        metadata_only: bool = False,
+        authorization=None,
+    ):
+        if authorization is not None:
+            from repo_catalog.domain.context_admission import (
+                AdmissionRefused,
+                ContextAdmissionService,
+            )
+
+            if not isinstance(authorization, ContextAdmissionService):
+                raise AdmissionRefused("PERMISSION_DENIED")
+        self._authorization = authorization
+        self.directory = Path(directory)
+        self.read_limits = read_limits
+        self.metadata_only = metadata_only
+        # Read-only instrumentation, never a freshness proof or domain fact.
+        self.last_read_costs_ns: dict[str, int] = {}
+
+    def admit(
+        self,
+        core_unit: Callable[[AdmissionTransaction], None],
+        context_unit: Callable[[AdmissionTransaction], None],
+        *,
+        cut: Callable[[str], None] = lambda point: None,
+        authorization=None,
+        admission=None,
+    ) -> PairAdmission:
+        from repo_catalog.domain.context_admission import (
+            AdmissionRefused,
+            ContextAdmissionService,
+            DependencySet,
+        )
+
+        # Authenticate the local handle before catalog or dependency lookups.
+        if authorization is not None and authorization is not self._authorization:
+            raise AdmissionRefused("PERMISSION_DENIED")
+        authorization = self._authorization
+        if authorization is not None or admission is not None:
+            if not isinstance(authorization, ContextAdmissionService):
+                raise AdmissionRefused("PERMISSION_DENIED")
+            authorization.validate_context(admission)
+            if admission.operation == "exchange_export":
+                raise AdmissionRefused("PERMISSION_DENIED")
+        self._check_running()
+        try:
+            with ExitStack() as leases:
+                binding = None
+                if authorization is not None:
+                    lease = leases.enter_context(
+                        authorization.authorize(admission, DependencySet())
+                    )
+                    binding = _ContextAdmissionBinding(
+                        authorization, admission, leases, [lease]
+                    )
+                outcome = self._admit(
+                    core_unit, context_unit, cut=cut, context_admission=binding
+                )
+            with catalog_completion(self.directory):
+                self._check_running()
+                return outcome
+        except AdmissionFailure as error:
+            if getattr(
+                error.cause, "code", None
+            ) == "AUTHORITATIVE_CORRUPTION" or _sqlite_corruption(error.cause):
+                self._record_corruption(error.cause, existing=False)
+            raise
+        except Exception as error:
+            # Opening/validating a damaged database can fail before a local
+            # admission transaction exists; the external stop still applies.
+            if _sqlite_corruption(error):
+                self._record_corruption(error)
+            raise
+
+    def _admit(
+        self, core_unit, context_unit, *, cut, context_admission=None
+    ) -> PairAdmission:
+        with catalog_gate(self.directory, exclusive=True), ExitStack() as stack:
+            self._check_running()
+            core = stack.enter_context(closing(self._open("core")))
+            context = stack.enter_context(closing(self._open("context")))
+            try:
+                if _identity(core, "core") != _identity(context, "context"):
+                    raise CoordinationError("PAIR_IDENTITY", "core+context")
+            except Exception as error:
+                self._record_corruption(error)
+                raise
+            core_committed, context_committed = False, False
+            core_capability = context_capability = None
+            try:
+                core.execute("BEGIN IMMEDIATE")
+                core_capability = AdmissionTransaction(core)
+                core_unit(core_capability)
+                core.set_authorizer(None)
+                cut("before_core_commit")
+                with catalog_completion(self.directory):
+                    core.commit()
+                core_committed = True
+                core_capability._expire()
+                cut("after_core_commit")
+                context.execute("BEGIN IMMEDIATE")
+                context_capability = AdmissionTransaction(
+                    context, _context_admission=context_admission
+                )
+                context_unit(context_capability)
+                context.set_authorizer(None)
+                cut("during_context")
+                validate_dependencies(core, context)
+                with catalog_completion(self.directory):
+                    if context_admission is not None:
+                        context_admission.check_current()
+                    context.commit()
+                context_committed = True
+                context_capability._expire()
+                cut("after_context_commit")
+                self._check_running()
+            except Exception as error:
+                self._record_corruption(error, existing=False)
+                core.set_authorizer(None)
+                context.set_authorizer(None)
+                core.rollback()
+                context.rollback()
+                raise AdmissionFailure(
+                    PairAdmission(core_committed, context_committed), error
+                ) from error
+            except BaseException:
+                core.set_authorizer(None)
+                context.set_authorizer(None)
+                core.rollback()
+                context.rollback()
+                raise
+            finally:
+                for capability in (core_capability, context_capability):
+                    if capability is not None:
+                        capability._expire()
+        with catalog_completion(self.directory):
+            self._check_running()
+            return PairAdmission(True, True)
+
+    def backup_candidate(
+        self,
+        destination: Path,
+        *,
+        cut: Callable[[str], None] = lambda point: None,
+    ) -> SnapshotToken:
+        self._check_running()
+        try:
+            return self._backup_candidate(destination, cut=cut)
+        except Exception as error:
+            if (
+                self.read_limits is not None
+                and getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT
+            ):
+                raise CoordinationError(
+                    "QUERY_BUDGET", "snapshot", "SQLite VM step limit"
+                ) from error
+            if getattr(error, "code", None) in (
+                "CORRUPTION",
+                "FOREIGN_KEY",
+                "MISSING_CORE_REFERENCE",
+            ) or _sqlite_corruption(error):
+                self._record_corruption(error)
+            raise
+
+    def _backup_candidate(self, destination: Path, *, cut) -> SnapshotToken:
+        """Conservative unpublished pair, certified only after candidate checks.
+
+        No overwrite, source mutation, restore or activation. The certificate is
+        local process-completion evidence. Full fsync/power-loss protocol is P7.
+        """
+        destination = Path(destination)
+        destination.mkdir()  # Never bless an interrupted/existing destination.
+        with catalog_gate(self.directory, exclusive=False):
+            self._check_running()
+            for role in ("core", "context"):
+                with (
+                    closing(self._open(role)) as source,
+                    closing(sqlite3.connect(destination / f"{role}.sqlite3")) as target,
+                ):
+                    try:
+                        source.backup(target)
+                    except Exception as error:
+                        self._record_corruption(error)
+                        raise
+                cut(f"after_{role}_backup")
+            try:
+                with PairCoordinator(destination).snapshots() as pair:
+                    token = pair.token
+            except Exception as error:
+                self._record_corruption(error)
+                raise
+            certificate = {
+                "scope": "core+context",
+                "token": token.__dict__,
+                "files": {
+                    f"{role}.sqlite3": hashlib.sha256(
+                        (destination / f"{role}.sqlite3").read_bytes()
+                    ).hexdigest()
+                    for role in ("core", "context")
+                },
+                "power_loss_safe": False,
+            }
+            cut("before_certificate")
+            with catalog_completion(self.directory):
+                (destination / "p1-pair-candidate.json").write_text(_json(certificate))
+            return token
+
+    @staticmethod
+    def validate_backup(destination: Path) -> SnapshotToken:
+        candidate = json.loads((destination / "p1-pair-candidate.json").read_text())
+        expected = {"core.sqlite3", "context.sqlite3"}
+        if candidate["scope"] != "core+context" or set(candidate["files"]) != expected:
+            raise CoordinationError("PAIR_CERTIFICATE", "backup")
+        for name, digest in candidate["files"].items():
+            if hashlib.sha256((destination / name).read_bytes()).hexdigest() != digest:
+                raise CoordinationError("PAIR_BYTES", "backup")
+        with PairCoordinator(destination).snapshots() as pair:
+            if pair.token.__dict__ != candidate["token"]:
+                raise CoordinationError("PAIR_CONTENT", "backup")
+            return pair.token

@@ -9,6 +9,7 @@ members = [
     "repo-catalog-context",
     "repo-catalog-contracts",
     "repo-catalog-core",
+    "repo-catalog-exchange",
     "repo-catalog-git-acquisition",
     "repo-catalog-operational",
     "repo-catalog-paired-query",
@@ -252,6 +253,7 @@ dependencies = [
     { name = "repo-catalog-context" },
     { name = "repo-catalog-contracts" },
     { name = "repo-catalog-core" },
+    { name = "repo-catalog-exchange" },
     { name = "repo-catalog-git-acquisition" },
     { name = "repo-catalog-operational" },
     { name = "repo-catalog-paired-query" },
@@ -274,6 +276,7 @@ requires-dist = [
     { name = "repo-catalog-context", editable = "packages/context" },
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
     { name = "repo-catalog-core", editable = "packages/core" },
+    { name = "repo-catalog-exchange", editable = "packages/exchange" },
     { name = "repo-catalog-git-acquisition", editable = "packages/git-acquisition" },
     { name = "repo-catalog-operational", editable = "packages/operational" },
     { name = "repo-catalog-paired-query", editable = "packages/paired-query" },
@@ -326,6 +329,23 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
+    { name = "repo-catalog-runtime", editable = "packages/runtime" },
+]
+
+[[package]]
+name = "repo-catalog-exchange"
+version = "0.2.0"
+source = { editable = "packages/exchange" }
+dependencies = [
+    { name = "repo-catalog-contracts" },
+    { name = "repo-catalog-core" },
+    { name = "repo-catalog-runtime" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "repo-catalog-contracts", editable = "packages/contracts" },
+    { name = "repo-catalog-core", editable = "packages/core" },
     { name = "repo-catalog-runtime", editable = "packages/runtime" },
 ]
 

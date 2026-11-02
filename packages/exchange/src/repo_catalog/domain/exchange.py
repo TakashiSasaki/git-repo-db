@@ -30,6 +30,14 @@ MAX_ELEMENTS = 200_000
 _WIRE_WORK = ContextVar("p5_wire_work", default=None)
 
 
+def require_context():
+    """Refuse unavailable validation; selection never removes this obligation."""
+    from importlib.util import find_spec
+
+    if find_spec("repo_catalog.domain.p1_context") is None:
+        raise ExchangeError("MISSING_CAPABILITY", "context")
+
+
 def _ref_input_work(amount):
     """Charge shared codec work to Exchange's reserved aggregate allowance."""
     measurement = _WIRE_WORK.get()
@@ -869,6 +877,7 @@ def validate_package_envelope(package: ExchangePackage) -> None:
                     "context section entry must be a list of dicts",
                 )
 
+        require_context()
         from repo_catalog.domain.context_registration import (
             RegistrationError,
             validate_exchange_registrations,

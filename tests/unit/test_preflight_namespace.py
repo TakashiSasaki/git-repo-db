@@ -22,6 +22,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
             "packages/search/src",
             "packages/operational/src",
             "packages/git-acquisition/src",
+            "packages/exchange/src",
             "packages/contracts/src",
         )
     ]
@@ -57,7 +58,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
 
 def test_exact_workspace_namespace_is_accepted(tmp_path):
     result = console_check(tmp_path)
-    assert len(result["namespace_roots"]) == 10
+    assert len(result["namespace_roots"]) == 11
     assert result["version"] == "0.2.0"
 
 

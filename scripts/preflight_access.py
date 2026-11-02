@@ -135,6 +135,7 @@ def check_console_script() -> dict[str, object]:
             "packages/search/src",
             "packages/operational/src",
             "packages/git-acquisition/src",
+            "packages/exchange/src",
         )
     }
     namespace_roots = {Path(path).resolve() for path in repo_catalog.__path__}

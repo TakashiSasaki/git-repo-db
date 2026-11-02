@@ -11485,6 +11485,23 @@
       "static_consumer_references": [
         "docs/architecture/module-independence-contract.md"
       ]
+    },
+    "docs/implementation/minimal-exchange-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements ADR0037 OP10/11 selective Exchange without changing accepted design.",
+      "source": "docs/implementation/minimal-exchange-distribution.md",
+      "producer": "OP10/11 Exchange independence implementation.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum selective Exchange distribution (OP-10/11)",
+      "cited_adrs": [
+        "0030",
+        "0036"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
     }
   }
 }
