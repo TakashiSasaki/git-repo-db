@@ -63,6 +63,10 @@ def _minimal_installation(core_distributions, tmp_path, variant):
     for name in artifact_members:
         if name == "repo_catalog/cli/production_query.py":
             continue
+        if name == "repo_catalog/domain/acquisition_errors.py":
+            # The shared nominal ValueError is not acquisition orchestration.
+            assert artifact_members[name].startswith("repo_catalog_contracts-")
+            continue
         assert not any(part in name for part in forbidden), name
 
     # Pure typed Ref codecs are Core-owned. Excluding high-level Exchange is
@@ -73,6 +77,11 @@ def _minimal_installation(core_distributions, tmp_path, variant):
         "application/ref_exchange.py",
         "domain/exchange.py",
         "adapters/sqlite/exchange.py",
+        "application/git_acquisition.py",
+        "domain/git_acquisition.py",
+        "application/notes.py",
+        "adapters/git/native.py",
+        "adapters/git/notes.py",
     ):
         assert "repo_catalog/" + module not in artifact_members
 

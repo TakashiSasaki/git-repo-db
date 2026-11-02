@@ -18,6 +18,7 @@ from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import unquote, urlsplit
 
 
 def refuses(callback, codes):
@@ -117,7 +118,12 @@ def main(output):
 
     def audit(event, args):
         if event == "sqlite3.connect" and str(args[0]) != ":memory:":
-            path = Path(str(args[0]))
+            value = str(args[0])
+            if value.startswith("file:"):
+                uri = urlsplit(value)
+                assert uri.netloc == "" and uri.query == "mode=rw", value
+                value = unquote(uri.path)
+            path = Path(value)
             assert path.name in {"core.sqlite3", "context.sqlite3"}, path
             opened.append(path.name)
 
