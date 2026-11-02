@@ -678,7 +678,7 @@ def test_application_has_no_adapter_imports():
 
     source = (
         Path(__file__).resolve().parents[3]
-        / "src/repo_catalog/application/access_workflow.py"
+        / "packages/access/src/repo_catalog/application/access_workflow.py"
     )
     for node in ast.walk(ast.parse(source.read_text())):
         if isinstance(node, ast.ImportFrom):

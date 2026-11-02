@@ -2,8 +2,8 @@
 
 > **Current navigation:** The audit and proposal below describe their dated S0/S1
 > checkpoints, not the present implementation status. ADR 0029 was accepted; the
-> separate opt-in Access implementation is in [access_schema.py](../../src/repo_catalog/adapters/sqlite/access_schema.py)
-> and [AccessConnections](../../src/repo_catalog/adapters/sqlite/access_connections.py).
+> separate opt-in Access implementation is in [access_schema.py](../../packages/access/src/repo_catalog/adapters/sqlite/access_schema.py)
+> and [AccessConnections](../../packages/access/src/repo_catalog/adapters/sqlite/access_connections.py).
 > The [A6 review](../implementation/access-a6-independent-review.md) records its
 > actual scoped evidence and remaining gates. Ordinary catalog initialization is
 > separate. The historical checkpoint in section 10 remains historical.

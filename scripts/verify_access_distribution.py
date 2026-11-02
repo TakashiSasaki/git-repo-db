@@ -42,7 +42,6 @@ namespace_roots = [str(Path(p).resolve()) for p in repo_catalog.__path__]
 assert namespace_roots and all(Path(p).is_relative_to(Path(sys.prefix).resolve()) for p in namespace_roots), namespace_roots
 assert module_origin.is_relative_to(Path(sys.prefix).resolve()), module_origin
 require_runtime()
-assert importlib.util.find_spec("httpx") is not None
 s = str(uuid4())
 with tempfile.TemporaryDirectory() as directory:
     path = Path(directory) / "access.sqlite3"

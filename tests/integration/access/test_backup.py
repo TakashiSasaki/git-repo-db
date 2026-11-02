@@ -764,7 +764,7 @@ def test_core_and_context_optional_no_default_activation():
         "application/access_maintenance.py",
         "cli/access_maintenance.py",
     ):
-        assert "src/repo_catalog/" + path in ISOLATED_TARGET_MODULES
+        assert "packages/access/src/repo_catalog/" + path in ISOLATED_TARGET_MODULES
 
 
 @pytest.mark.parametrize("event", ["stop", "replacement", "cancel"])

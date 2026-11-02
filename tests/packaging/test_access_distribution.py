@@ -143,7 +143,8 @@ def test_composed_access_acquisition(composed_access_distributions, tmp_path, va
     program = (
         ACCESS_SMOKE
         + """
-import importlib.metadata
+import importlib.metadata, importlib.util
+assert importlib.util.find_spec("httpx") is not None
 products = {d.metadata["Name"]: d for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
 assert set(products) == {"repo-catalog", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
 owners = {}
