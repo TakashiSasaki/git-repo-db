@@ -33,6 +33,10 @@ other authority's concrete implementation/models/schema are absent. No model,
 pager, Search engine, validator or generic plugin framework is duplicated.
 Search types/API/CLI and authority-scan fallback are absent from basic Core and
 Context. Shared runtime owns only the existing generic pager and Query mechanics.
+The existing finite in-memory `domain/query_work.py` budget moves from
+Core to runtime unchanged, because both authority combinations use it. It depends
+only on shared contracts, carries no store/ledger implementation and remains the
+single budget used by Core, paired Query and composed acquisition consumers.
 
 ## Correctness and refusal boundaries
 

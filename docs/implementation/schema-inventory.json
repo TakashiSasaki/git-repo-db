@@ -10025,166 +10025,6 @@
           ],
           "source_references": [
             {
-              "excerpt": "\"\"\"Extract searchable `context_text` documents and summaries from a pinned Context snapshot.",
-              "excerpt_truncated": false,
-              "line": 21,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
-              "scope": "extract_context_documents"
-            },
-            {
-              "excerpt": "documents: dict[str, str] = BoundedDocuments()",
-              "excerpt_truncated": false,
-              "line": 28,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
-              "scope": "extract_context_documents"
-            },
-            {
-              "excerpt": "documents[doc_key] = text_val",
-              "excerpt_truncated": false,
-              "line": 83,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
-              "scope": "extract_context_documents"
-            },
-            {
-              "excerpt": "documents[key] = \" \".join(",
-              "excerpt_truncated": false,
-              "line": 116,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
-              "scope": "extract_context_documents"
-            },
-            {
-              "excerpt": "documents[key] = \" \".join(",
-              "excerpt_truncated": false,
-              "line": 131,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
-              "scope": "extract_context_documents"
-            },
-            {
-              "excerpt": "return documents, summaries",
-              "excerpt_truncated": false,
-              "line": 142,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
-              "scope": "extract_context_documents"
-            },
-            {
-              "excerpt": "\"\"\"Extract searchable `git_metadata` documents and summaries from a pinned `GitCore`.",
-              "excerpt_truncated": false,
-              "line": 16,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "documents: dict[str, str] = BoundedDocuments()",
-              "excerpt_truncated": false,
-              "line": 22,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "documents[doc_key] = val[1]",
-              "excerpt_truncated": false,
-              "line": 83,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "documents[doc_key] = decoded_name",
-              "excerpt_truncated": false,
-              "line": 114,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "documents[doc_key] = searchable",
-              "excerpt_truncated": false,
-              "line": 159,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "return documents, summaries",
-              "excerpt_truncated": false,
-              "line": 169,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "documents = {}",
-              "excerpt_truncated": false,
-              "line": 43,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "context_documents"
-            },
-            {
-              "excerpt": "documents[_json(tuple(row[:7]))] = value",
-              "excerpt_truncated": false,
-              "line": 53,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "context_documents"
-            },
-            {
-              "excerpt": "return documents",
-              "excerpt_truncated": false,
-              "line": 54,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "context_documents"
-            },
-            {
-              "excerpt": "documents = {",
-              "excerpt_truncated": false,
-              "line": 62,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "rebuild_git_metadata"
-            },
-            {
-              "excerpt": "self._replace(\"git_metadata\", pair.token, documents)",
-              "excerpt_truncated": false,
-              "line": 68,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "rebuild_git_metadata"
-            },
-            {
-              "excerpt": "def _replace(self, kind: str, token: SnapshotToken, documents: dict[str, str]):",
-              "excerpt_truncated": false,
-              "line": 70,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "_replace"
-            },
-            {
-              "excerpt": "_replace_projection_rows(self.db, kind, token.encode(), documents)",
-              "excerpt_truncated": false,
-              "line": 73,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "_replace"
-            },
-            {
-              "excerpt": "documents: dict[str, str],",
-              "excerpt_truncated": false,
-              "line": 15,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/domain/ports/search_query.py",
-              "scope": "replace_projection"
-            },
-            {
               "excerpt": "(\"pr-documents\", True),",
               "excerpt_truncated": false,
               "line": 2825,
@@ -14457,54 +14297,6 @@
           ],
           "source_references": [
             {
-              "excerpt": "\"SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?\",",
-              "excerpt_truncated": false,
-              "line": 29,
-              "operation_hint": "read",
-              "path": "packages/paired-query/src/repo_catalog/adapters/sqlite/paired_coordination.py",
-              "scope": "validate_dependencies"
-            },
-            {
-              "excerpt": "\"SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?\",",
-              "excerpt_truncated": false,
-              "line": 66,
-              "operation_hint": "read",
-              "path": "packages/paired-query/src/repo_catalog/application/paired_query.py",
-              "scope": "resolve"
-            },
-            {
-              "excerpt": "\"SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?\",",
-              "excerpt_truncated": false,
-              "line": 232,
-              "operation_hint": "read",
-              "path": "packages/paired-query/src/repo_catalog/application/paired_query.py",
-              "scope": "check_in_core"
-            },
-            {
-              "excerpt": "# 1. Inspect git_objects and their scalar/relation claims",
-              "excerpt_truncated": false,
-              "line": 25,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "\"SELECT object_format,object_oid FROM git_objects ORDER BY object_format,object_oid\"",
-              "excerpt_truncated": false,
-              "line": 27,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
-            {
-              "excerpt": "\"SELECT object_format,object_oid FROM git_objects\"",
-              "excerpt_truncated": false,
-              "line": 65,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "rebuild_git_metadata"
-            },
-            {
               "excerpt": "if table == \"git_objects\" and items[\"verified\"] and not prior[\"verified\"]:",
               "excerpt_truncated": false,
               "line": 583,
@@ -17907,14 +17699,6 @@
             "raw_ref_name"
           ],
           "source_references": [
-            {
-              "excerpt": "\"SELECT observation_origin_uuidv4,ref_observation_uuidv7 FROM ref_observations ORDER BY 1,2 LIMIT 10001\"",
-              "excerpt_truncated": false,
-              "line": 22,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/application/core_search.py",
-              "scope": "_extract_ref_notes_documents"
-            },
             {
               "excerpt": "\"INSERT INTO ref_observations(repository_uuidv4,snapshot_id,raw_ref_name,kind,object_format,target_oid,peeled_oid,target_type) VALUES(?,?,?,?,?,?,?,?)\",",
               "excerpt_truncated": false,
@@ -24009,22 +23793,6 @@
           ],
           "source_references": [
             {
-              "excerpt": "def snapshots(self) -> Iterator[PairedSnapshot]:",
-              "excerpt_truncated": false,
-              "line": 170,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/paired-query/src/repo_catalog/adapters/sqlite/paired_coordination.py",
-              "scope": "snapshots"
-            },
-            {
-              "excerpt": "with coordinator.snapshots() as pair:",
-              "excerpt_truncated": false,
-              "line": 164,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/paired-query/src/repo_catalog/application/paired_query.py",
-              "scope": "_open_snapshot"
-            },
-            {
               "excerpt": "\"SELECT coalesce(max(generation), 0) FROM snapshots WHERE repository_uuidv4=?\",",
               "excerpt_truncated": false,
               "line": 85,
@@ -25582,46 +25350,6 @@
           ],
           "source_references": [
             {
-              "excerpt": "sources = {}",
-              "excerpt_truncated": false,
-              "line": 96,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/application/core_search.py",
-              "scope": "_extract_ref_notes_documents"
-            },
-            {
-              "excerpt": "sources.setdefault(identity, []).append(source)",
-              "excerpt_truncated": false,
-              "line": 112,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/application/core_search.py",
-              "scope": "remember"
-            },
-            {
-              "excerpt": "source_work = 8 * len(sources[identity])",
-              "excerpt_truncated": false,
-              "line": 196,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/application/core_search.py",
-              "scope": "_extract_ref_notes_documents"
-            },
-            {
-              "excerpt": "source_json = ref_projection_json(sources[identity])",
-              "excerpt_truncated": false,
-              "line": 198,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/application/core_search.py",
-              "scope": "_extract_ref_notes_documents"
-            },
-            {
-              "excerpt": "\"sources\": source_json,",
-              "excerpt_truncated": false,
-              "line": 205,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/application/core_search.py",
-              "scope": "_extract_ref_notes_documents"
-            },
-            {
               "excerpt": "self, acquisition, fmt, oid, target_type, peeled_oid, *, sources=None",
               "excerpt_truncated": false,
               "line": 826,
@@ -26935,14 +26663,6 @@
           ],
           "source_references": [
             {
-              "excerpt": "\"FROM field_candidates c LEFT JOIN text_bodies b ON c.text_body_sha256=b.sha256\"",
-              "excerpt_truncated": false,
-              "line": 47,
-              "operation_hint": "read",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
-              "scope": "context_documents"
-            },
-            {
               "excerpt": "from repo_catalog.adapters.sqlite.text_bodies import intern_text_body",
               "excerpt_truncated": false,
               "line": 20,
@@ -27959,14 +27679,6 @@
             "raw_name"
           ],
           "source_references": [
-            {
-              "excerpt": "tree_proj = core.relations(object_oid, \"tree_entries\")",
-              "excerpt_truncated": false,
-              "line": 95,
-              "operation_hint": "registry_or_reference",
-              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
-              "scope": "extract_git_metadata_documents"
-            },
             {
               "excerpt": "\"SELECT 1 FROM tree_entries WHERE tree_git_object_id=? AND raw_name=?\",",
               "excerpt_truncated": false,

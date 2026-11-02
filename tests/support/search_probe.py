@@ -14,7 +14,7 @@ import sqlite3
 import subprocess
 import sys
 import sysconfig
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
@@ -30,7 +30,7 @@ def refuses(callback, codes):
 
 
 def mutate(path, table, assignment):
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         triggers = db.execute(
             "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=?",
             (table,),
@@ -58,7 +58,7 @@ def main(output):
         SnapshotReadLimits,
         persist_catalog_stop,
     )
-    from repo_catalog.adapters.sqlite.p1_schema import connect
+    from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
     from repo_catalog.domain.search_query import SearchQuery
 
     installed = Path(sysconfig.get_path("purelib")).resolve()
@@ -94,6 +94,7 @@ def main(output):
     ):
         assert importlib.util.find_spec("repo_catalog." + suffix) is None, suffix
     assert importlib.util.find_spec("httpx") is None
+    assert "repo_catalog/adapters/sqlite/p1_ddl/" + other + ".sql" not in owners
     checks = ["resolved_four_owners_optional_concrete_absence"]
     catalog = root / "fixture"
     path = catalog / (role + ".sqlite3")
@@ -101,11 +102,25 @@ def main(output):
     query = SearchQuery("e", kinds, limit=1000)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     response = service.search(query)
-    assert response.to_dict() == spec["expected"]
+    assert json.loads(json.dumps(response.to_dict())) == spec["expected"]
     assert response.hits and response.backend == "authority_scan"
     assert not (catalog / "search.sqlite3").exists()
     assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
     checks.append("absent_index_authority_parity_no_creation")
+    empty = root / "empty"
+    empty.mkdir()
+    identity = service.snapshot_token()
+    initialize(
+        empty / path.name,
+        role,
+        identity.repository_uuidv4,
+        identity.catalog_instance_uuidv4,
+    )
+    empty_result = Service(empty, mode=mode).search(query)
+    assert not empty_result.hits and empty_result.total_count == 0
+    assert not empty_result.has_more and empty_result.next_cursor is None
+    assert not (empty / "search.sqlite3").exists()
+    checks.append("empty_authority_without_optional_initialization")
 
     def cli(*args, command="search", target=catalog, expected=0):
         result = subprocess.run(
@@ -128,10 +143,9 @@ def main(output):
         assert result.returncode == expected, result.stderr
         return json.loads(result.stdout if expected == 0 else result.stderr)
 
-    assert (
-        cli("--query", "e", "--kinds", ",".join(kinds), "--limit", "1000")
-        == response.to_dict()
-    )
+    assert cli(
+        "--query", "e", "--kinds", ",".join(kinds), "--limit", "1000"
+    ) == json.loads(json.dumps(response.to_dict()))
     help_output = subprocess.run(
         [sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "--help"],
         capture_output=True,
@@ -189,10 +203,9 @@ def main(output):
     assert (
         indexed.hits == response.hits and indexed.backend == "verified_projection_scan"
     )
-    assert (
-        cli("--query", "e", "--kinds", ",".join(kinds), "--limit", "1000")
-        == indexed.to_dict()
-    )
+    assert cli(
+        "--query", "e", "--kinds", ",".join(kinds), "--limit", "1000"
+    ) == json.loads(json.dumps(indexed.to_dict()))
     assert (
         cli("--kinds", ",".join(kinds), command="search-rebuild")["indexed_counts"]
         == counts
@@ -212,7 +225,7 @@ def main(output):
         if fault == "corrupt_file":
             search_path.write_bytes(b"synthetic corrupt derivative")
         else:
-            with connect(search_path, "search") as db:
+            with closing(connect(search_path, "search")) as db:
                 if fault == "stale":
                     db.execute("DELETE FROM search_documents")
                     db.execute("DELETE FROM search_projections")
@@ -226,7 +239,7 @@ def main(output):
                     )
                 elif fault == "wrong_key":
                     db.execute(
-                        "UPDATE search_documents SET document_key_json='[\"forged\"]' WHERE (projection_kind,snapshot_token_json,document_key_json) IN (SELECT projection_kind,snapshot_token_json,document_key_json FROM search_documents LIMIT 1)"
+                        "UPDATE search_documents SET document_key_json='[\"forged\"]' WHERE (projection_kind,snapshot_token_json,document_key_json) IN (SELECT projection_kind,snapshot_token_json,document_key_json FROM search_documents WHERE instr(searchable_text,'e')>0 LIMIT 1)"
                     )
                 else:
                     db.execute(
@@ -292,7 +305,7 @@ def main(output):
     old = changing.search(SearchQuery("e", kinds, limit=1))
 
     def write_change():
-        with connect(changed / path.name, role) as db:
+        with closing(connect(changed / path.name, role)) as db:
             if role == "context":
                 db.execute(
                     'UPDATE providers SET configuration_json=\'{"name":"changed"}\''
@@ -372,7 +385,7 @@ def main(output):
         resource = service.get_context_resource(
             ResourceKey(*spec["resource"]), include_text=True
         )
-        assert resource.repository_relations and resource.core_dependencies
+        assert resource.repository_roles and resource.core_dependencies
         assert all(
             not dependency.available for dependency in resource.core_dependencies
         )
