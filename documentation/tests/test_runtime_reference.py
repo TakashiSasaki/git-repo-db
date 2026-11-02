@@ -60,7 +60,7 @@ def test_runtime_entrypoints_and_disposable_initialization(tmp_path):
         assert not (state / "operational.sqlite3").exists()
         assert store.operational is not None
         assert (state / "operational.sqlite3").is_file()
-    assert (ROOT / "src/repo_catalog/cli/access_workflow.py").is_file()
+    assert (ROOT / "packages/access/src/repo_catalog/cli/access_workflow.py").is_file()
     assert (ROOT / "src/repo_catalog/cli/access_acquisition.py").is_file()
 
 

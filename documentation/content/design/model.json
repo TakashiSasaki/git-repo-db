@@ -1,7 +1,7 @@
 {
   "id": "accepted-design",
-  "source_revision": "88e7bef446ca638c69b9da604a30ae556d645320",
-  "source_tree": "ca7203821c879e93698a896cc84a023325600af1",
+  "source_revision": "92eaebd461186263a3412294ebe9ee6412539cfb",
+  "source_tree": "6708ae9ca88d62c6e70941aad22f6f1580eb33e2",
   "scope": "採択済み責務と意味構造の案内。概念の分割は物理テーブル数・確定 DDL・実装進捗を表さない。A=採択、I=継承、P=実装提案、U=本モデルで未確定。物理キーが未確定でも、意味上の完全等価性と複合参照は保持する。",
   "stores": [
     {

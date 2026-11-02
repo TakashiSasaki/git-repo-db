@@ -14,6 +14,7 @@ PRODUCT_SOURCE_ROOTS = (
     ROOT / "packages/contracts/src",
     ROOT / "packages/runtime/src",
     ROOT / "packages/context/src",
+    ROOT / "packages/access/src",
 )
 sys.path[:0] = [
     str(ROOT),
