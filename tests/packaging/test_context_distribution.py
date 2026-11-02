@@ -205,7 +205,7 @@ def test_composed_context_reader_artifact_parity(
             "--python",
             python,
             "--offline",
-            "--constraint",
+            "--requirements",
             products["requirements"],
             products[variant],
         ],
