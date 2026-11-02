@@ -96,6 +96,21 @@ class PinnedCatalogSnapshot(PinnedCoreSnapshot):
 class ProductionQueryService(ContextResourceReader, CoreQueryService):
     """Authoritative query, pagination, byte-verification, and Search service."""
 
+    def _context_core_resolver(self, snapshot):
+        """Paired Core schema access belongs to explicit rich composition."""
+        if snapshot.core is None:
+            return None
+
+        def resolve(object_format, object_oid):
+            return bool(
+                snapshot.core.sql(
+                    "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                    (object_format, object_oid),
+                )
+            )
+
+        return resolve
+
     def transfer_event_reports(self, *args, **kwargs):
         from repo_catalog.domain.resource_stage import UnsupportedResourceStage
 

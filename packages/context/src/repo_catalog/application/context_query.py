@@ -38,25 +38,16 @@ class ContextResourceReader:
     ) -> ContextResourceView:
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
-            validate_core = None
-            if snap.core is not None:
-                core_ref = snap.core
-
-                def _check_core(fmt: str, oid_hex: str) -> bool:
-                    return bool(
-                        core_ref.sql(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
-                            (fmt, oid_hex),
-                        )
-                    )
-
-                validate_core = _check_core
             return self._context_resource_in_snapshot(
                 snap.context,
                 resource_key,
                 include_text=include_text,
-                validate_core=validate_core,
+                validate_core=self._context_core_resolver(snap),
             )
+
+    def _context_core_resolver(self, snapshot):
+        """No Core facts can be resolved by the standalone Context reader."""
+        return None
 
     @_stored_view
     def _context_resource_in_snapshot(
