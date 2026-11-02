@@ -10,7 +10,8 @@
     "packages/runtime/src": "repo-catalog-runtime",
     "packages/context/src": "repo-catalog-context",
     "packages/access/src": "repo-catalog-access",
-    "packages/paired-query/src": "repo-catalog-paired-query"
+    "packages/paired-query/src": "repo-catalog-paired-query",
+    "packages/search/src": "repo-catalog-search"
   },
   "isolated_modules": [
     {
@@ -331,7 +332,12 @@
     {
       "path": "packages/runtime/src/repo_catalog/cli/production_query.py",
       "owner": "repo-catalog-runtime",
-      "sha256": "c1149f48fd378b098ed51d6a669c7596ad579d988d2c7c61f90ee288d8d6eb7e"
+      "sha256": "794b76a030f8b354f3a2d662189b0893f983b458292e3060a3c0259cb26f78fc"
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/production_search.py",
+      "owner": "repo-catalog-search",
+      "sha256": "82e7dfd08b4ae3030bcf12d7d439a8809e8b98274b9aa8b38c85853b5e44742a"
     },
     {
       "path": "src/repo_catalog/adapters/git/access_native.py",
@@ -366,12 +372,7 @@
     {
       "path": "src/repo_catalog/adapters/sqlite/p1_coordination.py",
       "owner": "repo-catalog",
-      "sha256": "9ae942c08c09388d3e953525f1c4150f65d29cbe1596558928451d677cbe3e53"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/production_search.py",
-      "owner": "repo-catalog",
-      "sha256": "14156e8aa222748f4a668cec90bfcd5d119f6cdb73639c684643da9b89727736"
+      "sha256": "c787255e5231182d4acceebfbbf32cb117dcd1f90d48da9fdddb3891f3aabfcb"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/recovery.py",
@@ -406,7 +407,7 @@
     {
       "path": "src/repo_catalog/application/production_query.py",
       "owner": "repo-catalog",
-      "sha256": "9db4debb6272fad12e7a8a457209b413bc791cd99e3ba0e65d10eb1fa2423c84"
+      "sha256": "b7206201fbf9a17bf90ec4af8cc08b4a6a8c366c575c221bee218cb197becf2d"
     },
     {
       "path": "src/repo_catalog/application/recovery.py",
@@ -431,7 +432,7 @@
     {
       "path": "src/repo_catalog/cli/query_features.py",
       "owner": "repo-catalog",
-      "sha256": "a10b39dbd068143418aaec065231fab6e6475961ce82d3e0707a494df6811fdd"
+      "sha256": "f76724ba315d520990b7b7d1ad8f7de9986cbea0587073e595835f06be3acd1c"
     },
     {
       "path": "src/repo_catalog/domain/acquisition.py",
@@ -496,12 +497,12 @@
     {
       "path": "src/repo_catalog/domain/ports/production_query.py",
       "owner": "repo-catalog",
-      "sha256": "3ac1112916a51adee54de9e348081c46f7262217c3618af10700aee56fba8675"
+      "sha256": "05ea4d4f48e01975db54df610109e518b60cf82bb944766cb96d1483a9443765"
     },
     {
       "path": "src/repo_catalog/domain/production_query.py",
       "owner": "repo-catalog",
-      "sha256": "73c1206f384e54fef82b9eecb81f6ea01347660bb500532e375b2c56e2d18588"
+      "sha256": "9b13ab9f21e34c2b6c23409e6cca2937454880501eb5989c35d36adcfabe4c73"
     },
     {
       "path": "src/repo_catalog/domain/selective_exchange.py",
@@ -541,14 +542,14 @@
       "sha256": "eaeed033ce0df1289e38dde382b683558dc17a679b4a0d310c4ba057d6d2cc7c"
     },
     {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/p1_ddl/search.sql",
+      "owner": "repo-catalog-search",
+      "sha256": "4224950692cf754d787c69a10cfca9b6e6a0f53b770ea947f0a8ef670f415d8d"
+    },
+    {
       "path": "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql",
       "owner": "repo-catalog",
       "sha256": "25c678b1584630c87ac643c81fc4f0fb83c210d0671d485d0a21794e54c84ef1"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/search.sql",
-      "owner": "repo-catalog",
-      "sha256": "4224950692cf754d787c69a10cfca9b6e6a0f53b770ea947f0a8ef670f415d8d"
     },
     {
       "path": "src/repo_catalog/resources/cas_integrity.sql",
@@ -921,6 +922,269 @@
           "name": "eligible",
           "line": 80,
           "end_line": 86
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
+      "owner": "repo-catalog-search",
+      "sha256": "26d9b70abc5ca25341058eb7fcb6aa2c1eaebe0f95e1a25c5c7465301b45ac4e",
+      "functions": [
+        {
+          "name": "extract_context_documents",
+          "line": 16,
+          "end_line": 142
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "owner": "repo-catalog-search",
+      "sha256": "dbb0245b3ef5683526d031affd310fa2702a7a911c1e8a2d0410feeb8ff90d1c",
+      "functions": [
+        {
+          "name": "extract_git_metadata_documents",
+          "line": 13,
+          "end_line": 169
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "owner": "repo-catalog-search",
+      "sha256": "f80f6b71e535fdd8e870dcb232514a5692de86227774a007a3ca76e2f5881ea9",
+      "functions": [
+        {
+          "name": "validate_pair",
+          "line": 21,
+          "end_line": 26
+        },
+        {
+          "name": "__init__",
+          "line": 36,
+          "end_line": 37
+        },
+        {
+          "name": "context_documents",
+          "line": 40,
+          "end_line": 54
+        },
+        {
+          "name": "rebuild_context",
+          "line": 56,
+          "end_line": 57
+        },
+        {
+          "name": "rebuild_git_metadata",
+          "line": 59,
+          "end_line": 68
+        },
+        {
+          "name": "_replace",
+          "line": 70,
+          "end_line": 73
+        },
+        {
+          "name": "candidates",
+          "line": 75,
+          "end_line": 87
+        },
+        {
+          "name": "read",
+          "line": 89,
+          "end_line": 111
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/context_search.py",
+      "owner": "repo-catalog-search",
+      "sha256": "5e677096b14005ede689f636a9aac0c5ffd1e2d258d5d8bcbc5e44959d868625",
+      "functions": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/core_search.py",
+      "owner": "repo-catalog-search",
+      "sha256": "d7ee77597a3990fc86a5d3c7f10de2614ecf3b4db9de9bbacf74760c3874f2dc",
+      "functions": [
+        {
+          "name": "_extract_ref_notes_documents",
+          "line": 15,
+          "end_line": 240
+        },
+        {
+          "name": "coordinate",
+          "line": 39,
+          "end_line": 43
+        },
+        {
+          "name": "remember",
+          "line": 99,
+          "end_line": 115
+        },
+        {
+          "name": "text",
+          "line": 156,
+          "end_line": 164
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/paired_search.py",
+      "owner": "repo-catalog-search",
+      "sha256": "67ff0eb226a77674cf999f32a0548b0285ccb13a40920000925ea97ba5f7a1c3",
+      "functions": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/search_query.py",
+      "owner": "repo-catalog-search",
+      "sha256": "334de7bb36e3cdae32df6bcbce55d405cfd6c366d55a14fbc8083b2bb2c6321c",
+      "functions": [
+        {
+          "name": "__init__",
+          "line": 37,
+          "end_line": 39
+        },
+        {
+          "name": "_search_mapping_filter",
+          "line": 41,
+          "end_line": 47
+        },
+        {
+          "name": "_search_filters",
+          "line": 51,
+          "end_line": 56
+        },
+        {
+          "name": "_checked_search_query",
+          "line": 58,
+          "end_line": 77
+        },
+        {
+          "name": "_index_call",
+          "line": 79,
+          "end_line": 103
+        },
+        {
+          "name": "search_adapter",
+          "line": 106,
+          "end_line": 113
+        },
+        {
+          "name": "search_adapter",
+          "line": 116,
+          "end_line": 117
+        },
+        {
+          "name": "_extract_documents",
+          "line": 120,
+          "end_line": 138
+        },
+        {
+          "name": "rebuild_search",
+          "line": 140,
+          "end_line": 152
+        },
+        {
+          "name": "_rebuild_search",
+          "line": 154,
+          "end_line": 188
+        },
+        {
+          "name": "search",
+          "line": 190,
+          "end_line": 203
+        },
+        {
+          "name": "_search",
+          "line": 205,
+          "end_line": 313
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/cli/search_query_features.py",
+      "owner": "repo-catalog-search",
+      "sha256": "792d89b1918ad682d8ecc41639dc258c57c21db52f98d43a2b545f46a8d449ba",
+      "functions": [
+        {
+          "name": "_available",
+          "line": 12,
+          "end_line": 13
+        },
+        {
+          "name": "_pair_available",
+          "line": 16,
+          "end_line": 17
+        },
+        {
+          "name": "add_commands",
+          "line": 20,
+          "end_line": 53
+        },
+        {
+          "name": "query_service",
+          "line": 56,
+          "end_line": 85
+        },
+        {
+          "name": "query_payload",
+          "line": 88,
+          "end_line": 123
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/domain/ports/search_query.py",
+      "owner": "repo-catalog-search",
+      "sha256": "dcfab6aa92079ffdfe1bf5f10925541243f224a277053368dfbd61c320400c35",
+      "functions": [
+        {
+          "name": "replace_projection",
+          "line": 11,
+          "end_line": 19
+        },
+        {
+          "name": "query_candidates",
+          "line": 21,
+          "end_line": 27
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/domain/search_query.py",
+      "owner": "repo-catalog-search",
+      "sha256": "8e287f53756c75109a3bd3848ed14b23df74a329d25f3f87095ba19d7b752f09",
+      "functions": [
+        {
+          "name": "canonical_projection_kinds",
+          "line": 19,
+          "end_line": 34
+        },
+        {
+          "name": "__post_init__",
+          "line": 47,
+          "end_line": 65
+        },
+        {
+          "name": "semantic_key",
+          "line": 79,
+          "end_line": 80
+        },
+        {
+          "name": "to_dict",
+          "line": 82,
+          "end_line": 89
+        },
+        {
+          "name": "to_dict",
+          "line": 104,
+          "end_line": 113
+        },
+        {
+          "name": "validate_cursor_key",
+          "line": 116,
+          "end_line": 133
         }
       ]
     },
@@ -4752,6 +5016,297 @@
       "sql_operations": [
         "SELECT"
       ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
+      "line": 21,
+      "function": "extract_context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
+      "line": 28,
+      "function": "extract_context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
+      "line": 83,
+      "function": "extract_context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
+      "line": 116,
+      "function": "extract_context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": [
+        "JOIN"
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
+      "line": 131,
+      "function": "extract_context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": [
+        "JOIN"
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
+      "line": 142,
+      "function": "extract_context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 16,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 22,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 25,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "git_objects"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 27,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "git_objects"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 83,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 95,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "tree_entries"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 114,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 159,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_core.py",
+      "line": 169,
+      "function": "extract_git_metadata_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 43,
+      "function": "context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 47,
+      "function": "context_documents",
+      "subjects": [
+        "text_bodies"
+      ],
+      "sql_operations": [
+        "JOIN"
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 53,
+      "function": "context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 54,
+      "function": "context_documents",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 62,
+      "function": "rebuild_git_metadata",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 65,
+      "function": "rebuild_git_metadata",
+      "subjects": [
+        "git_objects"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 68,
+      "function": "rebuild_git_metadata",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 70,
+      "function": "_replace",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
+      "line": 73,
+      "function": "_replace",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/core_search.py",
+      "line": 22,
+      "function": "_extract_ref_notes_documents",
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": [
+        "SELECT"
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/core_search.py",
+      "line": 96,
+      "function": "_extract_ref_notes_documents",
+      "subjects": [
+        "sources"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/core_search.py",
+      "line": 112,
+      "function": "remember",
+      "subjects": [
+        "sources"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/core_search.py",
+      "line": 196,
+      "function": "_extract_ref_notes_documents",
+      "subjects": [
+        "sources"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/core_search.py",
+      "line": 198,
+      "function": "_extract_ref_notes_documents",
+      "subjects": [
+        "sources"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/application/core_search.py",
+      "line": 205,
+      "function": "_extract_ref_notes_documents",
+      "subjects": [
+        "sources"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/domain/ports/search_query.py",
+      "line": 15,
+      "function": "replace_projection",
+      "subjects": [
+        "documents"
+      ],
+      "sql_operations": []
     },
     {
       "path": "src/repo_catalog/adapters/filesystem/cache.py",

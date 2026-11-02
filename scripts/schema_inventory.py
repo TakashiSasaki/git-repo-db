@@ -23,6 +23,7 @@ for source in (
     ROOT / "packages/context/src",
     ROOT / "packages/access/src",
     ROOT / "packages/paired-query/src",
+    ROOT / "packages/search/src",
 ):
     if str(source) not in sys.path:
         sys.path.insert(0, str(source))

@@ -1536,6 +1536,53 @@
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
       "status_in_source": "accepted"
     },
+    "docs/adr/0036-ref-observations-and-shared-notes-mappings.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Owner-accepted target; implementation and runtime activation require separate evidence.",
+      "source": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
+      "producer": "Owner decision and reviewed ADR governance source.",
+      "consumers": "ADR index, implementation stages and independent reviewers.",
+      "publication": "read-only current-decision staging; original source remains authoritative",
+      "source_heading": "# ADR 0036: Ref observations, immutable result claims, and shared Notes interpretation",
+      "status_in_source": "accepted"
+    },
+    "docs/adr/0037-operation-scoped-module-independence.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Owner-accepted complete record on 2026-10-31; implementation and runtime activation require separate evidence.",
+      "source": "docs/adr/0037-operation-scoped-module-independence.md",
+      "producer": "Owner acceptance after independent design review, recorded in PR #235.",
+      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
+      "publication": "read-only current-decision staging; original source remains authoritative",
+      "source_heading": "# ADR 0037: Operation-scoped module and installation independence",
+      "status_in_source": "accepted",
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/implementation/core-independence-contract-matrix.md",
+        "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
+        "docs/architecture/module-independence-contract.md"
+      ],
+      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
+    },
+    "docs/adr/0038-scoped-recovery-and-optional-initialization.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Owner-accepted complete record on 2026-10-31; implementation and runtime activation require separate evidence.",
+      "source": "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
+      "producer": "Owner acceptance after independent design review, recorded in PR #235.",
+      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
+      "publication": "read-only current-decision staging; original source remains authoritative",
+      "source_heading": "# ADR 0038: Scoped recovery completion and optional-store initialization",
+      "status_in_source": "accepted",
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/implementation/core-independence-contract-matrix.md",
+        "docs/adr/0037-operation-scoped-module-independence.md",
+        "docs/architecture/module-independence-contract.md"
+      ],
+      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
+    },
     "docs/adr/README.md": {
       "status": "adr-source-or-governance",
       "owner": "docs/adr/",
@@ -1849,6 +1896,23 @@
         "scripts/check_sqlite_validation_policy.py"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
+    },
+    "docs/architecture/module-independence-contract.md": {
+      "status": "scoped-design-contract",
+      "owner": "docs/architecture/",
+      "authority": "Accepted target obligations under ADR 0037 and complete recovery successor 0038; no implementation claim.",
+      "source": "docs/architecture/module-independence-contract.md",
+      "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
+      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
+      "publication": "not staged",
+      "source_heading": "# Operation-scoped module-independence contract",
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/implementation/core-independence-contract-matrix.md",
+        "docs/adr/0037-operation-scoped-module-independence.md",
+        "docs/adr/0038-scoped-recovery-and-optional-initialization.md"
+      ],
+      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
     },
     "docs/architecture/selective-exchange-contract.md": {
       "status": "scoped-design-contract",
@@ -3245,6 +3309,141 @@
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
+    "docs/implementation/adr0036-i1-core-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "I1 opt-in implementation scope and limitations; ADR 0036 controls target policy.",
+      "source": "docs/implementation/adr0036-i1-core-contract.md",
+      "producer": "I1 implementation and verification.",
+      "consumers": "Reviewers and I2/I3 implementation handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-i2-acquisition-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "I2 opt-in acquisition scope and limitations; ADR 0036 controls target policy.",
+      "source": "docs/implementation/adr0036-i2-acquisition-contract.md",
+      "producer": "I2 implementation and verification.",
+      "consumers": "Reviewers and I3 implementation handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-i3-exchange-query-backup-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "I3 opt-in Exchange, Query and backup scope and limitations; ADR 0036 controls target policy.",
+      "source": "docs/implementation/adr0036-i3-exchange-query-backup-contract.md",
+      "producer": "I3 implementation and verification.",
+      "consumers": "Reviewers and integration handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md",
+      "producer": "PR 226 dependent Query/CLI projection implementation.",
+      "consumers": "Independent reviewer and parent task handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/R226-FIXES.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "R226-01/R226-02 author repair evidence; independent FAIL remains historical and re-review is separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/R226-FIXES.md",
+      "producer": "PR 226 scoped remediation and clean-tree development profile.",
+      "consumers": "PR 226 independent re-review and parent handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/R227-FIXES.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped R227-01/02 author remediation evidence; original independent FAIL and re-review remain distinct.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/R227-FIXES.md",
+      "producer": "PR 227 minimal repair and selective regression.",
+      "consumers": "Independent re-review and parent handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/REPORT.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Dated author development evidence; no independent approval or release acceptance.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/REPORT.md",
+      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
+      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/SEARCH-TRANSITION.md": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Search transition evidence; independent review remains separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/SEARCH-TRANSITION.md",
+      "producer": "PR227 dependent Search implementation and selective verification.",
+      "consumers": "Independent review and parent handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/archive-index.json": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Dated author development evidence; no independent approval or release acceptance.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/archive-index.json",
+      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
+      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/local-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Dated author development evidence; no independent approval or release acceptance.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/local-profile.tar.gz",
+      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
+      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz",
+      "producer": "PR 226 dependent Query/CLI projection implementation.",
+      "consumers": "Independent reviewer and parent task handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/r226-fixes-local-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "R226-01/R226-02 author repair evidence; independent FAIL remains historical and re-review is separate.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/r226-fixes-local-profile.tar.gz",
+      "producer": "PR 226 scoped remediation and clean-tree development profile.",
+      "consumers": "PR 226 independent re-review and parent handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-inputs-evidence-20261030/r227-repair-profile.tar.gz": {
+      "status": "scoped-execution-evidence",
+      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
+      "authority": "Scoped R227-01/02 author remediation evidence; original independent FAIL and re-review remain distinct.",
+      "source": "docs/implementation/adr0036-inputs-evidence-20261030/r227-repair-profile.tar.gz",
+      "producer": "PR 227 minimal repair and selective regression.",
+      "consumers": "Independent re-review and parent handoff.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-legacy-consumers-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "Opt-in Notes consumer transition scope and limitations; ADR 0036 controls target policy.",
+      "source": "docs/implementation/adr0036-legacy-consumers-contract.md",
+      "producer": "Notes consumer transition implementation and verification.",
+      "consumers": "Reviewers and subsequent consumer migration handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/adr0036-typed-salvage-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "Opt-in typed salvage implementation scope and limitations; ADRs 0026 and 0036 control target policy.",
+      "source": "docs/implementation/adr0036-typed-salvage-contract.md",
+      "producer": "Typed salvage implementation and verification.",
+      "consumers": "Reviewers and recovery implementation handoffs.",
+      "publication": "not staged"
+    },
     "docs/implementation/audit-notes.md": {
       "status": "historical-stage-evidence",
       "owner": "docs/implementation/",
@@ -3447,6 +3646,15 @@
         "tests/unit/test_sqlite_validation_policy.py"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
+    },
+    "docs/implementation/core-independence-contract-matrix.md": {
+      "status": "implementation-handoff",
+      "owner": "docs/implementation/",
+      "authority": "Source and test map only; accepted decisions and current code remain authoritative.",
+      "source": "docs/implementation/core-independence-contract-matrix.md",
+      "producer": "Focused source and regression audit.",
+      "consumers": "Reviewers assessing opt-in Core independence boundaries.",
+      "publication": "not staged"
     },
     "docs/implementation/documentation-separation-ledger.json": {
       "status": "stage-reconciliation-record",
@@ -3741,6 +3949,49 @@
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
+    "docs/implementation/minimal-access-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements ADR0037 OP-07 without changing accepted decisions; executed evidence belongs to the PR.",
+      "source": "docs/implementation/minimal-access-distribution.md",
+      "producer": "OP-07 Access distribution implementation.",
+      "consumers": "Package authors, reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Independent Access distribution (OP-07)",
+      "cited_adrs": [
+        "0037",
+        "0038"
+      ],
+      "static_consumer_references": [
+        "docs/implementation/minimal-core-distribution.md"
+      ]
+    },
+    "docs/implementation/minimal-core-distribution.md": {
+      "status": "implementation-handoff",
+      "owner": "docs/implementation/",
+      "authority": "Bounded OP-01 engineering ownership/build rationale under accepted ADR0037/0038; implementation and executed evidence remain separate.",
+      "source": "docs/implementation/minimal-core-distribution.md",
+      "producer": "A+B source and distribution implementation.",
+      "consumers": "Implementers and independent reviewers of the minimal Core distribution boundary.",
+      "publication": "not staged"
+    },
+    "docs/implementation/minimal-paired-query-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements ADR0037 OP-04 without changing accepted decisions; revision-bound execution and review evidence belong to the PR.",
+      "source": "docs/implementation/minimal-paired-query-distribution.md",
+      "producer": "OP-04 paired Query distribution implementation.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum paired Query distribution (OP-04)",
+      "cited_adrs": [
+        "0037",
+        "0038"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
+    },
     "docs/implementation/minimal-sdist-design.md": {
       "status": "scoped-design-contract",
       "owner": "docs/implementation/",
@@ -3763,13 +4014,30 @@
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
-    "docs/implementation/core-independence-contract-matrix.md": {
-      "status": "implementation-handoff",
+    "docs/implementation/minimal-search-distribution.md": {
+      "status": "implementation-contract",
       "owner": "docs/implementation/",
-      "authority": "Source and test map only; accepted decisions and current code remain authoritative.",
-      "source": "docs/implementation/core-independence-contract-matrix.md",
-      "producer": "Focused source and regression audit.",
-      "consumers": "Reviewers assessing opt-in Core independence boundaries.",
+      "authority": "Implements ADR0037 OP-05/06 without changing accepted decisions; revision-bound execution and review evidence belong to the PR.",
+      "source": "docs/implementation/minimal-search-distribution.md",
+      "producer": "OP-05/06 Search distribution implementation.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum Search distributions (OP-05/06)",
+      "cited_adrs": [
+        "0037",
+        "0038"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
+    },
+    "docs/implementation/object-oid-naming-contract.md": {
+      "status": "active-scoped-contract",
+      "owner": "docs/implementation/",
+      "authority": "Owner-selected Git OID naming refinement of ADRs 0005/0017/0036; unchanged identity and trust semantics.",
+      "source": "docs/implementation/object-oid-naming-contract.md",
+      "producer": "Coordinated opt-in OID implementation.",
+      "consumers": "Product implementers and independent reviewers; canonical naming scope and format boundary.",
       "publication": "not staged"
     },
     "docs/implementation/p1-disposition.json": {
@@ -6146,6 +6414,42 @@
         "docs/implementation/execution-evidence.json"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
+    },
+    "docs/implementation/ref-observation-proposal/ref-observation-acceptance-scenarios.md": {
+      "status": "design-review-snapshot",
+      "owner": "docs/implementation/ref-observation-proposal/",
+      "authority": "Review scenarios for the accepted target; not proof that each scenario was executed.",
+      "source": "docs/implementation/ref-observation-proposal/ref-observation-acceptance-scenarios.md",
+      "producer": "Pre-adoption design preparation and review.",
+      "consumers": "ADR 0036 reviewers and stage handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/ref-observation-proposal/ref-observation-clause-map.md": {
+      "status": "design-review-snapshot",
+      "owner": "docs/implementation/ref-observation-proposal/",
+      "authority": "Design-review inheritance and retirement proposal snapshot; ADR 0036 is the accepted successor.",
+      "source": "docs/implementation/ref-observation-proposal/ref-observation-clause-map.md",
+      "producer": "Pre-adoption design preparation and review.",
+      "consumers": "ADR 0036 reviewers and stage handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/ref-observation-proposal/ref-observation-full-adr-draft.md": {
+      "status": "design-review-snapshot",
+      "owner": "docs/implementation/ref-observation-proposal/",
+      "authority": "Pre-allocation design-review snapshot; ADR 0036 is the accepted successor.",
+      "source": "docs/implementation/ref-observation-proposal/ref-observation-full-adr-draft.md",
+      "producer": "Pre-adoption design preparation and review.",
+      "consumers": "ADR 0036 reviewers and stage handoffs.",
+      "publication": "not staged"
+    },
+    "docs/implementation/ref-observation-proposal/ref-observation-implementation-boundaries.md": {
+      "status": "design-review-snapshot",
+      "owner": "docs/implementation/ref-observation-proposal/",
+      "authority": "Design-review implementation boundaries and stage plan; actual execution requires separate evidence.",
+      "source": "docs/implementation/ref-observation-proposal/ref-observation-implementation-boundaries.md",
+      "producer": "Pre-adoption design preparation and review.",
+      "consumers": "ADR 0036 reviewers and stage handoffs.",
+      "publication": "not staged"
     },
     "docs/implementation/schema-inventory.json": {
       "status": "machine-input-with-scoped-provenance",
@@ -9764,6 +10068,15 @@
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
+    "documentation/content/design/model.json": {
+      "status": "derived-design-model",
+      "owner": "documentation/content/design/",
+      "authority": "Cited semantic projection of accepted ADRs; proposals and unknowns explicitly labeled.",
+      "source": "documentation/content/design/model.json",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "embedded in design/index.html"
+    },
     "documentation/content/development/index.md": {
       "status": "site-source",
       "owner": "documentation/content/development/",
@@ -10578,6 +10891,15 @@
       "static_consumer_references": [],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
+    "documentation/tests/test_design_viz.py": {
+      "status": "documentation-test",
+      "owner": "documentation/tests/",
+      "authority": "Development regression tests, not release acceptance by themselves.",
+      "source": "documentation/tests/test_design_viz.py",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "not staged"
+    },
     "documentation/tests/test_destinations.py": {
       "status": "documentation-test",
       "owner": "documentation/tests/",
@@ -10825,6 +11147,15 @@
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
+    "documentation/tools/adr_publication.py": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Explicit owner-authorized current ADR publication selection and read-only staging.",
+      "source": "documentation/tools/adr_publication.py",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "not staged"
+    },
     "documentation/tools/build_docs_site.py": {
       "status": "documentation-tool",
       "owner": "documentation/tools/",
@@ -10856,6 +11187,24 @@
         "tests/unit/test_documentation_receipts.py"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
+    },
+    "documentation/tools/design_viewer.html": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Standalone presentation template; no design authority.",
+      "source": "documentation/tools/design_viewer.html",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "rendered as design/index.html"
+    },
+    "documentation/tools/design_viz.py": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Read-only semantic-model validation and rendering, no product DDL input.",
+      "source": "documentation/tools/design_viz.py",
+      "producer": "Authored independent documentation projection/tool/test.",
+      "consumers": "Documentation builder, focused tests and design-site visitors.",
+      "publication": "not staged"
     },
     "documentation/tools/generate_pwa_icons.js": {
       "status": "documentation-tool",
@@ -10985,6 +11334,15 @@
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
+    "documentation/tools/test_design_browser.mjs": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Optional real-browser checks of static documentation only.",
+      "source": "documentation/tools/test_design_browser.mjs",
+      "producer": "Authored browser regressions with disposable synthetic UI data.",
+      "consumers": "Documentation maintainers and independent reviewers.",
+      "publication": "not staged"
+    },
     "documentation/tools/verify_documentation.py": {
       "status": "documentation-tool",
       "owner": "documentation/tools/",
@@ -11090,347 +11448,6 @@
         "tests/unit/test_documentation_receipts.py"
       ],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
-    },
-    "docs/adr/0036-ref-observations-and-shared-notes-mappings.md": {
-      "status": "adr-source-or-governance",
-      "owner": "docs/adr/",
-      "authority": "Owner-accepted target; implementation and runtime activation require separate evidence.",
-      "source": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md",
-      "producer": "Owner decision and reviewed ADR governance source.",
-      "consumers": "ADR index, implementation stages and independent reviewers.",
-      "publication": "read-only current-decision staging; original source remains authoritative",
-      "source_heading": "# ADR 0036: Ref observations, immutable result claims, and shared Notes interpretation",
-      "status_in_source": "accepted"
-    },
-    "docs/implementation/adr0036-i2-acquisition-contract.md": {
-      "status": "active-scoped-contract",
-      "owner": "docs/implementation/",
-      "authority": "I2 opt-in acquisition scope and limitations; ADR 0036 controls target policy.",
-      "source": "docs/implementation/adr0036-i2-acquisition-contract.md",
-      "producer": "I2 implementation and verification.",
-      "consumers": "Reviewers and I3 implementation handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-i3-exchange-query-backup-contract.md": {
-      "status": "active-scoped-contract",
-      "owner": "docs/implementation/",
-      "authority": "I3 opt-in Exchange, Query and backup scope and limitations; ADR 0036 controls target policy.",
-      "source": "docs/implementation/adr0036-i3-exchange-query-backup-contract.md",
-      "producer": "I3 implementation and verification.",
-      "consumers": "Reviewers and integration handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-legacy-consumers-contract.md": {
-      "status": "active-scoped-contract",
-      "owner": "docs/implementation/",
-      "authority": "Opt-in Notes consumer transition scope and limitations; ADR 0036 controls target policy.",
-      "source": "docs/implementation/adr0036-legacy-consumers-contract.md",
-      "producer": "Notes consumer transition implementation and verification.",
-      "consumers": "Reviewers and subsequent consumer migration handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-typed-salvage-contract.md": {
-      "status": "active-scoped-contract",
-      "owner": "docs/implementation/",
-      "authority": "Opt-in typed salvage implementation scope and limitations; ADRs 0026 and 0036 control target policy.",
-      "source": "docs/implementation/adr0036-typed-salvage-contract.md",
-      "producer": "Typed salvage implementation and verification.",
-      "consumers": "Reviewers and recovery implementation handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-i1-core-contract.md": {
-      "status": "active-scoped-contract",
-      "owner": "docs/implementation/",
-      "authority": "I1 opt-in implementation scope and limitations; ADR 0036 controls target policy.",
-      "source": "docs/implementation/adr0036-i1-core-contract.md",
-      "producer": "I1 implementation and verification.",
-      "consumers": "Reviewers and I2/I3 implementation handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/ref-observation-proposal/ref-observation-acceptance-scenarios.md": {
-      "status": "design-review-snapshot",
-      "owner": "docs/implementation/ref-observation-proposal/",
-      "authority": "Review scenarios for the accepted target; not proof that each scenario was executed.",
-      "source": "docs/implementation/ref-observation-proposal/ref-observation-acceptance-scenarios.md",
-      "producer": "Pre-adoption design preparation and review.",
-      "consumers": "ADR 0036 reviewers and stage handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/ref-observation-proposal/ref-observation-clause-map.md": {
-      "status": "design-review-snapshot",
-      "owner": "docs/implementation/ref-observation-proposal/",
-      "authority": "Design-review inheritance and retirement proposal snapshot; ADR 0036 is the accepted successor.",
-      "source": "docs/implementation/ref-observation-proposal/ref-observation-clause-map.md",
-      "producer": "Pre-adoption design preparation and review.",
-      "consumers": "ADR 0036 reviewers and stage handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/ref-observation-proposal/ref-observation-full-adr-draft.md": {
-      "status": "design-review-snapshot",
-      "owner": "docs/implementation/ref-observation-proposal/",
-      "authority": "Pre-allocation design-review snapshot; ADR 0036 is the accepted successor.",
-      "source": "docs/implementation/ref-observation-proposal/ref-observation-full-adr-draft.md",
-      "producer": "Pre-adoption design preparation and review.",
-      "consumers": "ADR 0036 reviewers and stage handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/ref-observation-proposal/ref-observation-implementation-boundaries.md": {
-      "status": "design-review-snapshot",
-      "owner": "docs/implementation/ref-observation-proposal/",
-      "authority": "Design-review implementation boundaries and stage plan; actual execution requires separate evidence.",
-      "source": "docs/implementation/ref-observation-proposal/ref-observation-implementation-boundaries.md",
-      "producer": "Pre-adoption design preparation and review.",
-      "consumers": "ADR 0036 reviewers and stage handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/REPORT.md": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Dated author development evidence; no independent approval or release acceptance.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/REPORT.md",
-      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
-      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/archive-index.json": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Dated author development evidence; no independent approval or release acceptance.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/archive-index.json",
-      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
-      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/local-profile.tar.gz": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Dated author development evidence; no independent approval or release acceptance.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/local-profile.tar.gz",
-      "producer": "ADR 0036 input implementation and fixed-tree local validation.",
-      "consumers": "PR 226 independent review and acquisition/Query/Search handoffs.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/R226-FIXES.md": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "R226-01/R226-02 author repair evidence; independent FAIL remains historical and re-review is separate.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/R226-FIXES.md",
-      "producer": "PR 226 scoped remediation and clean-tree development profile.",
-      "consumers": "PR 226 independent re-review and parent handoff.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/r226-fixes-local-profile.tar.gz": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "R226-01/R226-02 author repair evidence; independent FAIL remains historical and re-review is separate.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/r226-fixes-local-profile.tar.gz",
-      "producer": "PR 226 scoped remediation and clean-tree development profile.",
-      "consumers": "PR 226 independent re-review and parent handoff.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/QUERY-PROJECTION.md",
-      "producer": "PR 226 dependent Query/CLI projection implementation.",
-      "consumers": "Independent reviewer and parent task handoff.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Scoped author Query projection evidence; independent review and release qualification remain separate.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/query-projection-profile.tar.gz",
-      "producer": "PR 226 dependent Query/CLI projection implementation.",
-      "consumers": "Independent reviewer and parent task handoff.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/R227-FIXES.md": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Scoped R227-01/02 author remediation evidence; original independent FAIL and re-review remain distinct.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/R227-FIXES.md",
-      "producer": "PR 227 minimal repair and selective regression.",
-      "consumers": "Independent re-review and parent handoff.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/r227-repair-profile.tar.gz": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Scoped R227-01/02 author remediation evidence; original independent FAIL and re-review remain distinct.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/r227-repair-profile.tar.gz",
-      "producer": "PR 227 minimal repair and selective regression.",
-      "consumers": "Independent re-review and parent handoff.",
-      "publication": "not staged"
-    },
-    "docs/implementation/adr0036-inputs-evidence-20261030/SEARCH-TRANSITION.md": {
-      "status": "scoped-execution-evidence",
-      "owner": "docs/implementation/adr0036-inputs-evidence-20261030/",
-      "authority": "Scoped author Search transition evidence; independent review remains separate.",
-      "source": "docs/implementation/adr0036-inputs-evidence-20261030/SEARCH-TRANSITION.md",
-      "producer": "PR227 dependent Search implementation and selective verification.",
-      "consumers": "Independent review and parent handoff.",
-      "publication": "not staged"
-    },
-    "documentation/tools/design_viz.py": {
-      "status": "documentation-tool",
-      "owner": "documentation/tools/",
-      "authority": "Read-only semantic-model validation and rendering, no product DDL input.",
-      "source": "documentation/tools/design_viz.py",
-      "producer": "Authored independent documentation projection/tool/test.",
-      "consumers": "Documentation builder, focused tests and design-site visitors.",
-      "publication": "not staged"
-    },
-    "documentation/tools/design_viewer.html": {
-      "status": "documentation-tool",
-      "owner": "documentation/tools/",
-      "authority": "Standalone presentation template; no design authority.",
-      "source": "documentation/tools/design_viewer.html",
-      "producer": "Authored independent documentation projection/tool/test.",
-      "consumers": "Documentation builder, focused tests and design-site visitors.",
-      "publication": "rendered as design/index.html"
-    },
-    "documentation/tools/adr_publication.py": {
-      "status": "documentation-tool",
-      "owner": "documentation/tools/",
-      "authority": "Explicit owner-authorized current ADR publication selection and read-only staging.",
-      "source": "documentation/tools/adr_publication.py",
-      "producer": "Authored independent documentation projection/tool/test.",
-      "consumers": "Documentation builder, focused tests and design-site visitors.",
-      "publication": "not staged"
-    },
-    "documentation/tests/test_design_viz.py": {
-      "status": "documentation-test",
-      "owner": "documentation/tests/",
-      "authority": "Development regression tests, not release acceptance by themselves.",
-      "source": "documentation/tests/test_design_viz.py",
-      "producer": "Authored independent documentation projection/tool/test.",
-      "consumers": "Documentation builder, focused tests and design-site visitors.",
-      "publication": "not staged"
-    },
-    "documentation/content/design/model.json": {
-      "status": "derived-design-model",
-      "owner": "documentation/content/design/",
-      "authority": "Cited semantic projection of accepted ADRs; proposals and unknowns explicitly labeled.",
-      "source": "documentation/content/design/model.json",
-      "producer": "Authored independent documentation projection/tool/test.",
-      "consumers": "Documentation builder, focused tests and design-site visitors.",
-      "publication": "embedded in design/index.html"
-    },
-    "documentation/tools/test_design_browser.mjs": {
-      "status": "documentation-tool",
-      "owner": "documentation/tools/",
-      "authority": "Optional real-browser checks of static documentation only.",
-      "source": "documentation/tools/test_design_browser.mjs",
-      "producer": "Authored browser regressions with disposable synthetic UI data.",
-      "consumers": "Documentation maintainers and independent reviewers.",
-      "publication": "not staged"
-    },
-    "docs/implementation/object-oid-naming-contract.md": {
-      "status": "active-scoped-contract",
-      "owner": "docs/implementation/",
-      "authority": "Owner-selected Git OID naming refinement of ADRs 0005/0017/0036; unchanged identity and trust semantics.",
-      "source": "docs/implementation/object-oid-naming-contract.md",
-      "producer": "Coordinated opt-in OID implementation.",
-      "consumers": "Product implementers and independent reviewers; canonical naming scope and format boundary.",
-      "publication": "not staged"
-    },
-    "docs/adr/0037-operation-scoped-module-independence.md": {
-      "status": "adr-source-or-governance",
-      "owner": "docs/adr/",
-      "authority": "Owner-accepted complete record on 2026-10-31; implementation and runtime activation require separate evidence.",
-      "source": "docs/adr/0037-operation-scoped-module-independence.md",
-      "producer": "Owner acceptance after independent design review, recorded in PR #235.",
-      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
-      "publication": "read-only current-decision staging; original source remains authoritative",
-      "source_heading": "# ADR 0037: Operation-scoped module and installation independence",
-      "status_in_source": "accepted",
-      "static_consumer_references": [
-        "docs/adr/README.md",
-        "docs/implementation/core-independence-contract-matrix.md",
-        "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
-        "docs/architecture/module-independence-contract.md"
-      ],
-      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
-    },
-    "docs/adr/0038-scoped-recovery-and-optional-initialization.md": {
-      "status": "adr-source-or-governance",
-      "owner": "docs/adr/",
-      "authority": "Owner-accepted complete record on 2026-10-31; implementation and runtime activation require separate evidence.",
-      "source": "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
-      "producer": "Owner acceptance after independent design review, recorded in PR #235.",
-      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
-      "publication": "read-only current-decision staging; original source remains authoritative",
-      "source_heading": "# ADR 0038: Scoped recovery completion and optional-store initialization",
-      "status_in_source": "accepted",
-      "static_consumer_references": [
-        "docs/adr/README.md",
-        "docs/implementation/core-independence-contract-matrix.md",
-        "docs/adr/0037-operation-scoped-module-independence.md",
-        "docs/architecture/module-independence-contract.md"
-      ],
-      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
-    },
-    "docs/architecture/module-independence-contract.md": {
-      "status": "scoped-design-contract",
-      "owner": "docs/architecture/",
-      "authority": "Accepted target obligations under ADR 0037 and complete recovery successor 0038; no implementation claim.",
-      "source": "docs/architecture/module-independence-contract.md",
-      "producer": "Design-only owner task, 2026-10-31; authored for focused review.",
-      "consumers": "ADR index, implementation map, future implementers and independent reviewers.",
-      "publication": "not staged",
-      "source_heading": "# Operation-scoped module-independence contract",
-      "static_consumer_references": [
-        "docs/adr/README.md",
-        "docs/implementation/core-independence-contract-matrix.md",
-        "docs/adr/0037-operation-scoped-module-independence.md",
-        "docs/adr/0038-scoped-recovery-and-optional-initialization.md"
-      ],
-      "consumer_scan": "Bounded literal basename scan of affected ADRs, contract, index and implementation map; dynamic references are not proven absent."
-    },
-    "docs/implementation/minimal-core-distribution.md": {
-      "status": "implementation-handoff",
-      "owner": "docs/implementation/",
-      "authority": "Bounded OP-01 engineering ownership/build rationale under accepted ADR0037/0038; implementation and executed evidence remain separate.",
-      "source": "docs/implementation/minimal-core-distribution.md",
-      "producer": "A+B source and distribution implementation.",
-      "consumers": "Implementers and independent reviewers of the minimal Core distribution boundary.",
-      "publication": "not staged"
-    },
-    "docs/implementation/minimal-access-distribution.md": {
-      "status": "implementation-contract",
-      "owner": "docs/implementation/",
-      "authority": "Implements ADR0037 OP-07 without changing accepted decisions; executed evidence belongs to the PR.",
-      "source": "docs/implementation/minimal-access-distribution.md",
-      "producer": "OP-07 Access distribution implementation.",
-      "consumers": "Package authors, reviewers and installed-artifact verification.",
-      "publication": "not staged",
-      "source_heading": "# Independent Access distribution (OP-07)",
-      "cited_adrs": [
-        "0037",
-        "0038"
-      ],
-      "static_consumer_references": [
-        "docs/implementation/minimal-core-distribution.md"
-      ]
-    },
-    "docs/implementation/minimal-paired-query-distribution.md": {
-      "status": "implementation-contract",
-      "owner": "docs/implementation/",
-      "authority": "Implements ADR0037 OP-04 without changing accepted decisions; revision-bound execution and review evidence belong to the PR.",
-      "source": "docs/implementation/minimal-paired-query-distribution.md",
-      "producer": "OP-04 paired Query distribution implementation.",
-      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
-      "publication": "not staged",
-      "source_heading": "# Minimum paired Query distribution (OP-04)",
-      "cited_adrs": [
-        "0037",
-        "0038"
-      ],
-      "static_consumer_references": [
-        "docs/architecture/module-independence-contract.md"
-      ]
     }
   }
 }

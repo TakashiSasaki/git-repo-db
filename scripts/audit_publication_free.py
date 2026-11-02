@@ -21,6 +21,7 @@ for source in (
     ROOT / "packages/context/src",
     ROOT / "packages/access/src",
     ROOT / "packages/paired-query/src",
+    ROOT / "packages/search/src",
 ):
     sys.path.insert(0, str(source))
 from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402

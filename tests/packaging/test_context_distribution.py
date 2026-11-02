@@ -13,6 +13,7 @@ import pytest
 
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.p1_context import CoverageScope
+from repo_catalog.domain.search_query import SearchQuery
 from tests.integration.p6.conftest import init_catalog, populate_rich_catalog
 from tests.support.context_metadata_fixture import prepare_metadata_fixture
 from tests.support.distributions import (
@@ -267,6 +268,12 @@ def test_composed_context_reader_artifact_parity(
                 .get_paired_resource(key, include_core_bytes=True)
                 .to_dict(),
                 "views": expected,
+                "search": {
+                    mode: ProductionQueryService(catalog, mode=mode)
+                    .search(SearchQuery("e", limit=1000))
+                    .to_dict()
+                    for mode in ("core_only", "context_only", "paired")
+                },
                 "metadata": {
                     mode: {
                         "providers": [
@@ -335,9 +342,10 @@ import importlib.metadata, json, subprocess, sys, sysconfig
 from pathlib import Path
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
+from repo_catalog.domain.search_query import SearchQuery
 installed = Path(sysconfig.get_path("purelib")).resolve()
 products = {d.metadata["Name"]: d for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
-assert set(products) == {"repo-catalog", "repo-catalog-paired-query", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
+assert set(products) == {"repo-catalog", "repo-catalog-search", "repo-catalog-paired-query", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
 owners = {}
 for name, distribution in products.items():
     for member in distribution.files:
@@ -346,6 +354,16 @@ for name, distribution in products.items():
             owners[str(member)] = name
 fixture = json.loads(Path("expected.json").read_text())
 key = ResourceKey(*fixture["key"])
+for mode, expected_search in fixture["search"].items():
+    reader = ProductionQueryService(Path("catalog"), mode=mode)
+    result = reader.search(SearchQuery("e", limit=1000))
+    assert json.loads(json.dumps(result.to_dict())) == expected_search
+    command = [sys.executable,"-I","-m","repo_catalog.cli.production_query","search","--catalog","catalog","--mode",mode,"--query","e","--limit","1000"]
+    searched = subprocess.run(command,capture_output=True,text=True,timeout=30)
+    assert searched.returncode == 0, searched.stderr
+    assert json.loads(searched.stdout) == expected_search
+    reader.rebuild_search()
+    assert reader.search(SearchQuery("e", limit=1000)).hits == result.hits
 for mode, expected in fixture["views"].items():
     view = ProductionQueryService(Path("catalog"), mode=mode).get_context_resource(key)
     assert json.loads(json.dumps(view.to_dict())) == expected

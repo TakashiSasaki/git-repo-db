@@ -213,6 +213,16 @@ For new Query methods accepting caller work, reuse `_QueryWorkBoundary` inside
 snapshot reads and unwrap only outside every Core/paired/application classifier.
 A caller's JSONDecodeError must not become a persisted catalog-corruption stop.
 Pair callback identity/no-stop tests with genuine stored-corruption stop tests.
+Apply this boundary to external derivative ports too: guard method lookup,
+invocation and returned-mapping normalization before using their values inside
+authority classifiers. Copy bounded plain key/value data rather than retaining
+custom comparison behavior. SearchIndexPort JSONDecodeError formerly produced a
+false persistent stop; `test_search_independence.py` pairs exact exception identity
+with subsequent valid reads. Keep actual authority extraction inside the stored
+classifier. Decode a cursor against the actual pinned token before verified body
+extraction, as well as validating its wire/filter shape before snapshot entry;
+the stale-cursor counterexample must observe zero extractor/body calls. These are
+caller/derivative boundaries, not exceptions to genuine authority-corruption stop.
 When discovering Notes associations, test Group-only reports: a whole Group can
 be valid without any standalone Mapping row. Discover bounded headers and let
 the checked exact-Claim reader validate members before attributing a target.

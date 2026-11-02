@@ -8,6 +8,7 @@ from typing import Protocol
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 from repo_catalog.domain.ports.core_query import CoreQueryPort
 from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ports.search_query import SearchIndexPort as SearchIndexPort
 from repo_catalog.domain.production_query import (
     ByteReadResult,
     ContextResourceView,
@@ -20,25 +21,6 @@ from repo_catalog.domain.production_query import (
     SearchResponse,
     SourceView,
 )
-
-
-class SearchIndexPort(Protocol):
-    """Port for disposable derivative Search projection storage and candidate lookup."""
-
-    def replace_projection(
-        self,
-        projection_kind: str,
-        snapshot_token: str,
-        documents: dict[str, str],
-    ) -> None: ...
-
-    def query_candidates(
-        self,
-        projection_kind: str,
-        snapshot_token: str,
-        query_text: str,
-        expected_doc_count: int | None = None,
-    ) -> dict[str, str] | None: ...
 
 
 class ProductionQueryPort(CoreQueryPort, Protocol):
