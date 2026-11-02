@@ -192,6 +192,15 @@ a value-only helper's hard bound alone does not establish request accounting.
 PR #226 findings R226-01/R226-02 and the scoped regression nodes document this
 procedure; do not reinterpret the author's green run as independent approval.
 
+When canonicalizing frozen caller dataclasses, rebuild from explicit named fields
+and use the new value afterward. Calling an instance's overridable `coordinates()`
+then discarding the validated copy leaves the original hostile/mutated value in
+snapshot comparisons. Also probe str subclasses whose equality raises a decoding
+error: require plain cursor/filter/token strings before stored-data classifiers.
+The Context enumeration regressions in `tests/integration/p6/test_context_reader.py`
+exercise both input rejection and no durable stop. Persisted-row reconstruction
+still needs independent real-corruption controls; do not suppress its classifier.
+
 For new Query methods accepting caller work, reuse `_QueryWorkBoundary` inside
 snapshot reads and unwrap only outside every Core/paired/application classifier.
 A caller's JSONDecodeError must not become a persisted catalog-corruption stop.

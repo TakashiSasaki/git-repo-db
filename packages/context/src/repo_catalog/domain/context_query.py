@@ -1,4 +1,4 @@
-"""Optional Context, paired, and Search query public types."""
+"""Context query public types and Context-owned cursor positions."""
 
 from __future__ import annotations
 
@@ -159,3 +159,14 @@ class ContextResourceView:
             "resource_kind": self.resource.resource_kind,
             "service_instance_uuidv4": self.resource.service_instance_uuidv4,
         }
+
+
+def validate_cursor_key(endpoint: str, key: tuple) -> None:
+    """Validate only Context Resource positions; paired/Search belong to composition."""
+    from repo_catalog.domain.p1_context import ResourceKey
+
+    if endpoint != "context_resources" or type(key) is not tuple or len(key) != 3:
+        raise ValueError("invalid Context cursor shape")
+    if any(type(value) is not str or not value or len(value) > 32768 for value in key):
+        raise ValueError("invalid Context cursor coordinates")
+    ResourceKey(*key)

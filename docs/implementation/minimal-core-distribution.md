@@ -144,7 +144,7 @@ certify absent concrete stores. Ordinary default/all-profile helpers continue to
 require all applicable capabilities; selected Context reads request Context only.
 
 The canonical CLI is runtime-owned. Rich commands require rich composition; the
-minimum Context adds only `context-resource` and status. Core commands appear only
+minimum Context adds `context-resource`, `context-resources` and status. Core commands appear only
 with Core installed. Missing paired/Core capability refuses explicitly, including
 `auto` with coexisting Core; explicit `context_only` never inspects that file.
 Existing catalog-wide stops and completion fences still apply. Coordination files
@@ -167,3 +167,25 @@ cost: two narrowly scoped distributions, explicit feature composition, moved
 canonical definitions and source-root/build ownership updates. No schema/model
 copy, Store registry or second timing/evidence ledger is introduced. Remaining
 full OP03 and later module combinations need their own bounded tasks.
+
+### Context Resource enumeration (OP-03B)
+
+The Context-owned reader now supplies `list_context_resources` to minimum and
+composed Query. Runtime owns the single bounded generic pager; concrete owners
+supply their endpoint key validators. Context Resource cursor semantics stay in
+Context, paired/Search semantics remain composed, and Core imports no Context.
+The existing signature, filters, exact counts and full semantic-key order remain.
+Caller page/filter/ResourceKey/cursor validation precedes stored reconstruction;
+actual snapshot equality is checked against the pinned token before enumeration.
+Only selected rows resolve and verify text after metadata selection. Qualified
+mapping alternatives and operation evidence remain part of filtering and cursor
+identity; they establish no unavailable Core facts. Parent remains explicitly
+unsupported, and Transfer activation remains excluded.
+
+Minimum direct/sdist-derived probes cover empty/populated pages, continuation,
+filters and mapping alternatives/dispositions, malformed and mismatched cursors,
+authority changes, opaque coexisting Core, budgets, actual stored corruption and
+prior/in-flight/post-cleanup stops. Composed artifact probes cover Context-only
+and paired list/CLI parity. Execution and independent findings are revision-bound
+in the PR; test existence is not a PASS. Provider/Source listings and Coverage
+are the next OP-03C scope; independent paired installation remains OP-04 work.

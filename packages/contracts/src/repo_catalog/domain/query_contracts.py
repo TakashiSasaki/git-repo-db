@@ -262,7 +262,7 @@ class PaginationCursor:
         *,
         expected_endpoint: str,
         expected_filter_digest: str,
-        current_snapshot_token: str,
+        current_snapshot_token: str | None,
         validate_key: Callable[[str, tuple], None],
     ) -> PaginationCursor:
         if not isinstance(raw, str) or not raw or len(raw) > 65536:
@@ -326,7 +326,10 @@ class PaginationCursor:
             raise QueryError(
                 "INVALID_CURSOR", "pagination", "invalid endpoint key"
             ) from error
-        if cursor_obj.snapshot_token != current_snapshot_token:
+        if (
+            current_snapshot_token is not None
+            and cursor_obj.snapshot_token != current_snapshot_token
+        ):
             raise QueryError(
                 "SNAPSHOT_MISMATCH",
                 "pagination",
