@@ -53,6 +53,9 @@ from repo_catalog.adapters.sqlite.paired_coordination import (
 from repo_catalog.adapters.sqlite.paired_coordination import (
     validate_pair as validate_pair,
 )
+from repo_catalog.adapters.sqlite.search_projection import (
+    SearchProjection as SearchProjection,
+)
 from repo_catalog.domain.p1_coordination import (
     AdmissionFailure,
     CoordinationError,

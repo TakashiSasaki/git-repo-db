@@ -199,6 +199,10 @@ failed counterexample and change only the patch owner; rerun the same behavioral
 assertions. The canonical validation-cancellation test is
 `tests/integration/p1/test_validation_stop.py`; successful ordinary reads alone do
 not replace its cancellation/no-corruption-stop control.
+Keep intended composition reexports explicit (`from owner import Name as Name`)
+when lint can remove otherwise-unused imports. Collect an existing consumer of
+the old public import path after extraction; SearchProjection's legacy derivative
+tests caught a missing reexport before its runtime assertions could execute.
 
 When canonicalizing frozen caller dataclasses, rebuild from explicit named fields
 and use the new value afterward. Calling an instance's overridable `coordinates()`

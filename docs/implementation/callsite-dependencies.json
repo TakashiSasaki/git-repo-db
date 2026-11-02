@@ -340,6 +340,11 @@
       "sha256": "6115a2ef30e064493c197d85a215f70b7dd172ee591b19fcac62f8dc54700ceb"
     },
     {
+      "path": "packages/runtime/src/repo_catalog/application/query_pagination.py",
+      "owner": "repo-catalog-runtime",
+      "sha256": "954edbeca3c8b6b037df27b2b8bcc315ed6d8699fc54792a5277c631762e7caa"
+    },
+    {
       "path": "packages/runtime/src/repo_catalog/application/query_runtime.py",
       "owner": "repo-catalog-runtime",
       "sha256": "5156a2faad75bd5cbdb49f64d89c63ad12a68f649171894f19676c94acf13c75"
@@ -357,7 +362,7 @@
     {
       "path": "packages/search/src/repo_catalog/adapters/sqlite/production_search.py",
       "owner": "repo-catalog-search",
-      "sha256": "82e7dfd08b4ae3030bcf12d7d439a8809e8b98274b9aa8b38c85853b5e44742a"
+      "sha256": "b23a11123217f8a4487e2fcecc806a7632418584f82d9cd1f002440cc0df6408"
     },
     {
       "path": "packages/search/src/repo_catalog/adapters/sqlite/search_context.py",
@@ -372,7 +377,7 @@
     {
       "path": "packages/search/src/repo_catalog/adapters/sqlite/search_projection.py",
       "owner": "repo-catalog-search",
-      "sha256": "f80f6b71e535fdd8e870dcb232514a5692de86227774a007a3ca76e2f5881ea9"
+      "sha256": "df7e9a7f618294dc9a4f7ea32bde5424340f7a1a17e31ca048d9f0842c74950e"
     },
     {
       "path": "packages/search/src/repo_catalog/application/context_search.py",
@@ -442,7 +447,7 @@
     {
       "path": "src/repo_catalog/adapters/sqlite/p1_coordination.py",
       "owner": "repo-catalog",
-      "sha256": "c787255e5231182d4acceebfbbf32cb117dcd1f90d48da9fdddb3891f3aabfcb"
+      "sha256": "d7ee03adf2703a00b0ff1b0ace243c264bddeea10909a11cbf608f966889e29f"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/recovery.py",
@@ -817,28 +822,6 @@
           "name": "unix_seconds_to_us",
           "line": 127,
           "end_line": 159
-        }
-      ]
-    },
-    {
-      "path": "packages/runtime/src/repo_catalog/application/query_pagination.py",
-      "owner": "repo-catalog-runtime",
-      "sha256": "954edbeca3c8b6b037df27b2b8bcc315ed6d8699fc54792a5277c631762e7caa",
-      "functions": [
-        {
-          "name": "validate_page_request",
-          "line": 20,
-          "end_line": 48
-        },
-        {
-          "name": "_paginate_items",
-          "line": 51,
-          "end_line": 114
-        },
-        {
-          "name": "eligible",
-          "line": 80,
-          "end_line": 86
         }
       ]
     },

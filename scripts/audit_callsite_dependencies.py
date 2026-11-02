@@ -169,6 +169,7 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "cli/paired_query_features.py",
         "application/core_query.py",
         "application/query_encoding.py",
+        "application/query_pagination.py",
         "domain/core_query.py",
         "domain/query_contracts.py",
         "domain/ports/core_query.py",

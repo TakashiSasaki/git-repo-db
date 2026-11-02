@@ -112,15 +112,18 @@ def _replace_projection_rows(db, projection_kind, snapshot_token, documents):
 
 
 def _query_candidate_rows(
-    db, projection_kind, snapshot_token, query_text, expected_doc_count=None
+    db,
+    projection_kind,
+    snapshot_token,
+    query_text,
+    expected_doc_count=None,
+    *,
+    expected_identity,
 ):
-    fence = SnapshotFenceToken.parse(snapshot_token)
     identities = db.execute(
         "SELECT repository_uuidv4,catalog_instance_uuidv4 FROM store_identity WHERE store_role='search'"
     ).fetchall()
-    if [tuple(row) for row in identities] != [
-        (fence.repository_uuidv4, fence.catalog_instance_uuidv4)
-    ]:
+    if [tuple(row) for row in identities] != [expected_identity]:
         return None
     oversize = db.execute(
         "SELECT 1 FROM search_documents WHERE "
@@ -237,6 +240,7 @@ class ProductionSearchAdapter:
         if not self.path.is_file():
             return None
         try:
+            fence = SnapshotFenceToken.parse(snapshot_token)
             with closing(_open_index_read(self.path)) as db:
                 db.execute("PRAGMA query_only=ON")
                 db.execute("BEGIN")
@@ -247,6 +251,10 @@ class ProductionSearchAdapter:
                         snapshot_token,
                         query_text,
                         expected_doc_count,
+                        expected_identity=(
+                            fence.repository_uuidv4,
+                            fence.catalog_instance_uuidv4,
+                        ),
                     )
                 finally:
                     if db.in_transaction:

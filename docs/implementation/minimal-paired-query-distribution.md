@@ -25,8 +25,8 @@ is introduced.
 | `domain/paired_query.py` | Paired Query: paired views and paired endpoint validator; ResourceKey meaning is validated by Context's canonical validator. |
 | `cli/paired_query_features.py` | Paired Query: existing paired commands, reusing the existing Context commands. |
 | `application/query_pagination.py` | Runtime: the unchanged single generic bounded pager. |
-| Rich `adapters/sqlite/p1_coordination.py` | Admission/backup orchestration, WorkLedger and SearchProjection remain rich. PairCoordinator inherits canonical paired reads and imports the same validation functions. |
-| Rich `application/production_query.py` and `domain/production_query.py` | Search extension and Search types; paired application/views are inherited/re-exported. Existing rich API paths remain available. |
+| Rich `adapters/sqlite/p1_coordination.py` | Admission/backup orchestration and WorkLedger remain rich. PairCoordinator inherits canonical paired reads and imports the same validation functions. After OP-05/06 it reexports the Search-owned SearchProjection facade. |
+| Rich `application/production_query.py` and `domain/production_query.py` | Search extension and types are composed/reexported from the optional [Search distribution](minimal-search-distribution.md); paired application/views remain inherited/reexported. Existing rich API paths remain available. |
 
 There is one owner for each packaged file and each moved model/algorithm.
 The minimum paired integration contains four product modules; it moves existing

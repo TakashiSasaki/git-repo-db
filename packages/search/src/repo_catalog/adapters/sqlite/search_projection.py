@@ -79,7 +79,16 @@ class SearchProjection:
             return None
         try:
             self.db.execute("BEGIN")
-            rows = _query_candidate_rows(self.db, kind, token.encode(), needle)
+            rows = _query_candidate_rows(
+                self.db,
+                kind,
+                token.encode(),
+                needle,
+                expected_identity=(
+                    token.repository_uuidv4,
+                    token.catalog_instance_uuidv4,
+                ),
+            )
             return set(rows) if rows is not None else None
         except (sqlite3.DatabaseError, ValueError, TypeError, RecursionError):
             return None
