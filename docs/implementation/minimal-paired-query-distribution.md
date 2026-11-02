@@ -3,7 +3,8 @@
 Baseline: reviewed Context read stack through PR #246 at
 `047f8800846dbe1e016b00e1700372e6050bb978`, tree
 `802da3f839120bb874e34cb5275a5268b63bda6c`.
-[ADR 0037](../adr/0037-operation-scoped-module-independence.md) and the
+[ADR 0037](../adr/0037-operation-scoped-module-independence.md),
+[ADR 0038](../adr/0038-scoped-recovery-and-optional-initialization.md) and the
 [operation contract](../architecture/module-independence-contract.md) govern the
 scope. Implementation, executed evidence and target guarantees remain distinct.
 
