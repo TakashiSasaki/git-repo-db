@@ -890,3 +890,11 @@ Query completion fence after snapshot cleanup, and challenge a stop introduced
 during SQLite progress or snapshot exit; an earlier method-level check alone
 cannot establish completion safety. This procedure does not qualify full OP03
 or authorize later feature extraction.
+
+Preserve reviewed artifacts before another pytest session: pytest can automatically
+remove older numbered temporary directories while hash-bound review receipts still
+exist. For a retained installed proof, create a dedicated parent directory outside
+the checkout and pass a fresh `--basetemp=PARENT/RUN` to the existing profile. Keep
+its sealed builds and consumer receipts alongside the review hashes; never reuse
+a nonempty basetemp whose evidence must survive (pytest clears it). Verify actual
+artifact hashes after copying, and keep private raw evidence untracked.
