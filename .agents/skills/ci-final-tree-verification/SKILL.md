@@ -199,6 +199,14 @@ aggregates. This procedure adds no test-selection or release gate.
 
 ### Choose and prepare the next run before executing it
 
+For package/source-owner moves, check both `audit_callsite_dependencies.py --check`
+and `audit_implementation_boundary.py --check`. The neutral
+`schema_inventory.py --check` validates SQL/fingerprints and can pass while the
+full source-reference inventory/table-disposition reports are stale. Regenerate
+those reports with their existing producer, inspect the lexical-reference delta
+and verify unchanged SQL/schema semantics; never weaken the strict byte check.
+A successful main test workflow does not replace the separate Access audit lane.
+
 At an ordinary development checkpoint, inspect all workflows triggered by the
 changed paths, not only `tests.yml`. Compare each workflow's selected work with
 `docs/change-aware-ci.md` and the common planner. A separate fixed broad cohort
