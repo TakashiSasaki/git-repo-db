@@ -11502,6 +11502,42 @@
       "static_consumer_references": [
         "docs/architecture/module-independence-contract.md"
       ]
+    },
+    "docs/implementation/minimal-paired-recovery-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements accepted OP12 paired Recovery distribution without changing ADR0038 obligations.",
+      "source": "docs/implementation/minimal-paired-recovery-distribution.md",
+      "producer": "OP12 and bounded module-independence closeout.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum paired Recovery distribution (OP-12)",
+      "cited_adrs": [
+        "0037",
+        "0038",
+        "0036"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
+    },
+    "docs/implementation/module-independence-operation-evidence.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Operation-scoped prototype evidence mapping and qualified reuse under ADR0037/0038; not release acceptance.",
+      "source": "docs/implementation/module-independence-operation-evidence.md",
+      "producer": "OP12 and bounded module-independence closeout.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Module independence operation evidence (prototype)",
+      "cited_adrs": [
+        "0037",
+        "0038",
+        "0036"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
     }
   }
 }

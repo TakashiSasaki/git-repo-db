@@ -5,6 +5,8 @@ on:
     paths:
       - 'packages/git-acquisition/**'
       - 'packages/exchange/**'
+      - 'packages/paired-recovery/**'
+      - 'packages/context/src/repo_catalog/domain/context_admission.py'
       - 'packages/runtime/src/repo_catalog/adapters/sqlite/admission_transaction.py'
       - 'packages/paired-query/src/repo_catalog/adapters/sqlite/paired_admission.py'
       - 'packages/operational/**'

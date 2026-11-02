@@ -25,6 +25,7 @@ for source in (
     ROOT / "packages/operational/src",
     ROOT / "packages/git-acquisition/src",
     ROOT / "packages/exchange/src",
+    ROOT / "packages/paired-recovery/src",
 ):
     sys.path.insert(0, str(source))
 from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402

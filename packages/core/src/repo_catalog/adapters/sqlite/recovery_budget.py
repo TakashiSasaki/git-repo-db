@@ -102,6 +102,17 @@ def _write(path: Path, data: dict) -> None:
     _sync_dir(path.parent)
 
 
+def _registry_requests(registry):
+    if (
+        set(registry) != {"version", "requests"}
+        or type(registry["version"]) is not int
+        or registry["version"] != 1
+        or not isinstance(registry["requests"], dict)
+    ):
+        raise RecoveryError("Invalid recovery request registry")
+    return registry["requests"]
+
+
 class DurableRecoveryRequest:
     def __init__(self, path: Path, state: dict):
         self.path, self.state = path, state
@@ -149,6 +160,32 @@ class DurableRecoveryRequest:
         _write(self.reservation_path, dict(updated, budget_exhausted=False))
         self.state = updated
         self.failed = False
+
+    def validate_current(self) -> None:
+        """Completion checks persisted accounting; missing state is never repaired."""
+        if self.failed:
+            raise RecoveryError("Recovery accounting persistence previously failed")
+        directory = self.path.parent
+        with _file_gate(directory / "p1-recovery-requests.lock", exclusive=True):
+            if not _same_json(
+                _read(directory / "p1-recovery-requests.initialized"), {"version": 1}
+            ):
+                raise RecoveryError("Invalid recovery registry marker")
+            requests = _registry_requests(
+                _read(directory / "p1-recovery-requests.json")
+            )
+            if not _same_json(
+                requests.get(self.state["request_id"]), self.state["contract"]
+            ):
+                raise RecoveryError(
+                    "Recovery request registration unavailable at completion"
+                )
+            if not _same_json(_read(self.path), self.state):
+                raise RecoveryError("Recovery accounting changed before completion")
+            if not _same_json(
+                _read(self.reservation_path), dict(self.state, budget_exhausted=False)
+            ):
+                raise RecoveryError("Recovery reservation changed before completion")
 
     def mark_exhausted(self, exhausted: bool) -> None:
         updated = dict(self.state, budget_exhausted=bool(exhausted))
@@ -217,14 +254,7 @@ def recovery_request(
                 registry = {"version": 1, "requests": {}}
                 _write(registry_path, registry)
                 _write(marker, {"version": 1})
-            if (
-                set(registry) != {"version", "requests"}
-                or type(registry["version"]) is not int
-                or registry["version"] != 1
-                or not isinstance(registry["requests"], dict)
-            ):
-                raise RecoveryError("Invalid recovery request registry")
-            requests = registry["requests"]
+            requests = _registry_requests(registry)
             if req_id not in requests:
                 if path.exists() or path.is_symlink():
                     # An initial state published before registration can only
@@ -309,4 +339,6 @@ def recovery_request(
             if usage != reserved_usage:
                 state = dict(state, cumulative_usage=reserved_usage)
                 _write(path, state)
-        yield DurableRecoveryRequest(path, state)
+        request = DurableRecoveryRequest(path, state)
+        yield request
+        request.validate_current()
