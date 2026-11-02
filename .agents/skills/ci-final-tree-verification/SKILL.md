@@ -872,3 +872,21 @@ inventory compact instead of duplicating its full function index. The focused
 modules and duplicate ownership; documentation fixtures exercise fresh-process
 imports across the same roots. Update current machine input labels when a scanner's
 scope changes, without rewriting historical schema facts or frozen evidence.
+
+## Validate caller values before stored-data classifiers
+
+When extracting a reader, pass malformed caller values through the real installed
+API as well as checking stored corruption. `get_context_resource(object())` and a
+frozen ResourceKey whose identity TEXT is mutated must refuse without persisting
+a catalog stop; the next valid read must still succeed. Revalidate/reconstruct
+nominal caller coordinates before entering snapshot or `_stored_view` exception
+classification. Keep retained-text loss and malformed stored provenance controls
+that still require a persistent stop without changing authority bytes.
+
+The bounded Context pilot's `tests/integration/p6/test_context_reader.py` covers
+both standalone and rich readers; `tests/support/context_reader_probe.py` exercises
+the same distinction in real direct/sdist-derived minimum installations. Put the
+Query completion fence after snapshot cleanup, and challenge a stop introduced
+during SQLite progress or snapshot exit; an earlier method-level check alone
+cannot establish completion safety. This procedure does not qualify full OP03
+or authorize later feature extraction.

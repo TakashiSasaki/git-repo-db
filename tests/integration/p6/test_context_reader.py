@@ -19,15 +19,17 @@ def test_invalid_context_read_input_does_not_stop_authority(tmp_path, reader, in
     key = data["pr_key"]
     service = reader(tmp_path, mode="context_only")
     bad = replace(key)
-    if invalid == "wrong_type":
-        operation = lambda: service.get_context_resource(object())
-    elif invalid == "mutated_key":
-        object.__setattr__(bad, "provider_resource_id", "[")
-        operation = lambda: service.get_context_resource(bad)
-    elif invalid == "include_text":
-        operation = lambda: service.get_context_resource(key, include_text=object())
-    else:
-        operation = lambda: service.read_context_text(object())
+
+    def operation():
+        if invalid == "wrong_type":
+            return service.get_context_resource(object())
+        if invalid == "mutated_key":
+            object.__setattr__(bad, "provider_resource_id", "[")
+            return service.get_context_resource(bad)
+        if invalid == "include_text":
+            return service.get_context_resource(key, include_text=object())
+        return service.read_context_text(object())
+
     with pytest.raises(QueryError) as caught:
         operation()
     assert caught.value.code == "INVALID_INPUT"
