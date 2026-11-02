@@ -898,3 +898,18 @@ the checkout and pass a fresh `--basetemp=PARENT/RUN` to the existing profile. K
 its sealed builds and consumer receipts alongside the review hashes; never reuse
 a nonempty basetemp whose evidence must survive (pytest clears it). Verify actual
 artifact hashes after copying, and keep private raw evidence untracked.
+
+## Check extracted smoke programs as shared interfaces
+
+Before changing a standalone verifier's embedded smoke string, search for both
+normal imports and AST extraction of that variable. I4/I5 installed verification
+extracts `SMOKE` from `verify_access_distribution.py`; those controlled consumers
+intentionally install a different dependency set. Replacing an HTTP-library
+absence assertion with a presence assertion for a new composed test breaks those
+consumers even when the new test passes. Keep dependency-set assertions at the
+specific installation boundary, and retain shared smoke behavior compatible with
+all established callers. Check `verify_i4_distribution.py` and
+`verify_i5_distribution.py` alongside the source string; run affected minimum and
+composed nodes in `tests/packaging/test_access_distribution.py`. This does not
+justify expanding an Access extraction into unrelated Exchange qualification or
+weakening either consumer's integrity checks.
