@@ -1,4 +1,4 @@
-"""Bounded Context Resource/exact-text reader without concrete Core or paired code."""
+"""Authoritative Context reads without concrete Core or paired code."""
 
 from __future__ import annotations
 
@@ -15,11 +15,17 @@ from repo_catalog.application.query_pagination import (
     validate_page_request,
 )
 from repo_catalog.application.query_runtime import QueryReader, _stored_view
-from repo_catalog.domain.context_query import ContextResourceView, validate_cursor_key
-from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.context_query import (
+    ContextResourceView,
+    ProviderView,
+    SourceView,
+    validate_cursor_key,
+)
+from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 from repo_catalog.domain.production_context import ResourceRelation
 from repo_catalog.domain.query_contracts import (
     ByteReadResult,
+    CoverageView,
     PageRequest,
     PageResult,
     QueryError,
@@ -36,7 +42,138 @@ class PinnedContextSnapshot:
     core: object = None
 
 
-class ContextResourceReader:
+class ContextReader:
+    def list_providers(self) -> tuple[ProviderView, ...]:
+        with self.open_snapshot(required_store="context") as snap:
+            return self._providers_in_snapshot(snap.context)
+
+    @_stored_view
+    def _providers_in_snapshot(self, context: Context) -> tuple[ProviderView, ...]:
+        rows = context.db.execute(
+            "SELECT service_instance_uuidv4,provider_kind,configuration_json "
+            "FROM providers ORDER BY service_instance_uuidv4"
+        ).fetchall()
+        views = []
+        for service, kind, configuration in rows:
+            uuid4_value(service)
+            if type(kind) is not str or not kind:
+                raise ValueError("stored Provider kind must be a nonempty string")
+            views.append(
+                ProviderView(
+                    service,
+                    kind,
+                    context.registration_metadata("provider", configuration),
+                )
+            )
+        return tuple(views)
+
+    def list_source_views(
+        self, service_instance_uuidv4: str | None = None
+    ) -> tuple[SourceView, ...]:
+        if service_instance_uuidv4 is not None:
+            try:
+                if type(service_instance_uuidv4) is not str:
+                    raise ValueError("canonical UUIDv4 string required")
+                uuid4_value(service_instance_uuidv4)
+            except (ValueError, TypeError, AttributeError) as error:
+                raise QueryError(
+                    "INVALID_INPUT", "context-sources", str(error)
+                ) from error
+        with self.open_snapshot(required_store="context") as snap:
+            return self._sources_in_snapshot(snap.context, service_instance_uuidv4)
+
+    @_stored_view
+    def _sources_in_snapshot(
+        self, context: Context, service: str | None
+    ) -> tuple[SourceView, ...]:
+        from repo_catalog.domain.production_context import SourceInventory
+
+        rows = context.db.execute(
+            "SELECT source_registration_uuidv4,service_instance_uuidv4,configuration_json "
+            "FROM sources WHERE (? IS NULL OR service_instance_uuidv4=?) "
+            "ORDER BY source_registration_uuidv4",
+            (service, service),
+        ).fetchall()
+        views = []
+        for source, provider, configuration in rows:
+            uuid4_value(source)
+            uuid4_value(provider)
+            repositories = context.source_repositories(source)
+            for repository in repositories:
+                uuid4_value(repository)
+            inventories = []
+            for (
+                scope,
+                observed,
+                state,
+                terminal,
+                members_json,
+                provenance,
+            ) in context.db.execute(
+                "SELECT scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json "
+                "FROM source_inventory_evidence WHERE source_registration_uuidv4=? "
+                "ORDER BY observed_at_us,scope_json,provenance_json",
+                (source,),
+            ).fetchall():
+                members = json.loads(members_json)
+                if (
+                    type(members) is not list
+                    or type(terminal) is not int
+                    or terminal not in (0, 1)
+                ):
+                    raise ValueError("invalid stored Source inventory shape")
+                for member in members:
+                    uuid4_value(member)
+                inventories.append(
+                    SourceInventory(
+                        source,
+                        scope,
+                        observed,
+                        state,
+                        bool(terminal),
+                        tuple(members),
+                        provenance,
+                    )
+                )
+            views.append(
+                SourceView(
+                    source,
+                    provider,
+                    context.registration_metadata("source", configuration),
+                    repositories,
+                    tuple(inventories),
+                )
+            )
+        return tuple(views)
+
+    def get_context_coverage(self, scope: CoverageScope) -> CoverageView:
+        # Rebuild typed caller values before any Context stored-row classifier.
+        try:
+            if (
+                type(scope) is not CoverageScope
+                or type(scope.owner_kind) is not str
+                or type(scope.coordinates) is not tuple
+            ):
+                raise ValueError("CoverageScope with tuple coordinates required")
+            scope = CoverageScope(scope.owner_kind, scope.coordinates)
+        except (ValueError, TypeError, AttributeError, RecursionError) as error:
+            raise QueryError("INVALID_INPUT", "context-coverage", str(error)) from error
+        with self.open_snapshot(required_store="context") as snap:
+            return self._coverage_in_snapshot(snap.context, scope)
+
+    @_stored_view
+    def _coverage_in_snapshot(
+        self, context: Context, scope: CoverageScope
+    ) -> CoverageView:
+        projection = context.coverage(scope)
+        return CoverageView(
+            scope,
+            projection.state,
+            projection.known_empty,
+            projection.observed_at_us,
+            projection.claims,
+        )
+
     def _mapping_filter(self) -> dict[str, object]:
         from repo_catalog.domain.p1_context import MappingOperationEvidence
 
@@ -385,7 +522,7 @@ class ContextResourceReader:
             )
 
 
-class ContextQueryService(ContextResourceReader, QueryReader):
+class ContextQueryService(ContextReader, QueryReader):
     """Pilot: Context Resource/text reads only; paired/Core/Search APIs are absent."""
 
     def __init__(self, *args, mapping_evidence=None, **kwargs):

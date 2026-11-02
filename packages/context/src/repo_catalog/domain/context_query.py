@@ -28,6 +28,7 @@ if TYPE_CHECKING:
         CollectionObservation,
         CoreDependency,
         ResourceRelation,
+        SourceInventory,
     )
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
@@ -47,6 +48,53 @@ def repository_relation_summary(
     relation: ResolvedRepositoryRelation,
 ) -> dict[str, object]:
     return asdict(relation)
+
+
+@dataclass(frozen=True)
+class ProviderView:
+    """Authoritative Context Provider registration view."""
+
+    service_instance_uuidv4: str
+    provider_kind: str
+    configuration: dict[str, object]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "configuration": self.configuration,
+            "provider_kind": self.provider_kind,
+            "service_instance_uuidv4": self.service_instance_uuidv4,
+        }
+
+
+@dataclass(frozen=True)
+class SourceView:
+    """Authoritative Context Source registration, positive repositories, and inventories."""
+
+    source_registration_uuidv4: str
+    service_instance_uuidv4: str
+    configuration: dict[str, object]
+    repositories: tuple[str, ...]
+    inventories: tuple[SourceInventory, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "configuration": self.configuration,
+            "inventories": [
+                {
+                    "observed_at_us": inv.observed_at_us,
+                    "provenance": json.loads(inv.provenance_json),
+                    "repositories": list(inv.repositories),
+                    "scope": json.loads(inv.scope_json),
+                    "source_registration_uuidv4": inv.source_registration_uuidv4,
+                    "state": inv.state,
+                    "terminal": inv.terminal,
+                }
+                for inv in self.inventories
+            ],
+            "repositories": list(self.repositories),
+            "service_instance_uuidv4": self.service_instance_uuidv4,
+            "source_registration_uuidv4": self.source_registration_uuidv4,
+        }
 
 
 @dataclass(frozen=True)

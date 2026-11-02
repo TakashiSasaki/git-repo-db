@@ -219,6 +219,16 @@ the setup command; obtain the effective default with
 `scripts/local-run.sh uv cache dir`, never assume a machine-specific path.
 Dependency setup is not test execution and does not change the selected SQLite.
 
+Use a unique explicit `--basetemp` under the existing git-ignored artifact
+location when an installed-distribution run must retain wheels, source/build
+bindings and consumer receipts for a later reviewer. Pytest's default numbered
+temporary directories are retention-limited: later successful runs can remove
+earlier supporting artifacts even though invocation/JUnit records remain. If
+that happens, preserve the surviving records, rebuild from the frozen source
+inputs and rerun only the missing artifact lane; explain the retention reason
+instead of relabeling the new run as the original. Never reuse one basetemp for
+concurrent or still-needed runs, because pytest clears it at startup.
+
 For a newly created external probe module or complex fixture, check collection
 and a representative executable node in the intended checkout before expanding
 to its parameterized cohort. Apply this when import/fixture setup is new, not as

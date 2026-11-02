@@ -698,6 +698,11 @@ def main(output):
         "enumeration_qualified_mapping_alternatives_missing_null_unresolved_evidence_bound_cursor"
     )
 
+    metadata_probe = runpy.run_path(str(root / "context_metadata_probe.py"))
+    checks.extend(
+        metadata_probe["exercise_metadata"](root, data["metadata"], fresh, refuses)
+    )
+
     origins = {}
     for name, module in list(sys.modules.items()):
         if name.startswith("repo_catalog.") and getattr(module, "__file__", None):
