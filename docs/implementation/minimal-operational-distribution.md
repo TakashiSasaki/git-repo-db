@@ -57,6 +57,7 @@ checkpoint-loss controls. These checks do not prove host-power-loss durability.
 
 Execution and independent source/artifact review bind exact candidates in the PR;
 failures and original input bindings remain local. The next dependent increment
-is Git-only and Access-approved orchestration with C+G+O and A+C+G+O, physically
-without Context/Search. Full OP-08/09, Exchange OP-10/11 and independent paired
-Recovery remain separate until those real consumers are demonstrated.
+is the [Git-only/Access-approved integration](minimal-git-acquisition-distribution.md)
+with C+G+O and A+C+G+O, physically without Context/Search. Its native-operation
+evidence is separate from this O-only proof. Exchange OP-10/11 and independent
+paired Recovery remain further installation boundaries.

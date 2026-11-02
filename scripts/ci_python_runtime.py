@@ -700,6 +700,7 @@ def probe(output, reference=None):
         ROOT / "packages/paired-query/src",
         ROOT / "packages/search/src",
         ROOT / "packages/operational/src",
+        ROOT / "packages/git-acquisition/src",
     ):
         if source.is_dir() and str(source) not in sys.path:
             sys.path.insert(0, str(source))

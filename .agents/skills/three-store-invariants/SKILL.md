@@ -517,6 +517,14 @@ faults; Prototype C's post-read charge is not production crash-gap evidence.
    conventions permitted charging a foreign catalog's request. Preserve external
    Capture attribution separately; local mirror checking does not authenticate
    or rename the original capture issuer/source.
+6. Validate the effective native-input work/progress pair after resolving defaults
+   and constructor overrides. A nominal NotesWorkBudget around a fake ledger,
+   volatile progress beside durable work, or another catalog/request's capability
+   cannot establish durable acquisition. Reuse WorkLedger identity/checkpoint/
+   original-scope checks and require progress to use the same canonical budget.
+   Forward an already-selected custom request explicitly through Access/paired
+   callers. `test_git_durable_boundary.py` covers these native entry boundaries;
+   supplied typed metadata-admission helpers retain their separately scoped API.
 
 Verification: `uv run --no-sync pytest tests/integration/p4 -q`, P1/P2/P3 and
 cross-domain regressions, installed wheel/sdist-wheel tests and the four required

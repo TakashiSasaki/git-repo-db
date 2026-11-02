@@ -11466,6 +11466,25 @@
       "static_consumer_references": [
         "docs/architecture/module-independence-contract.md"
       ]
+    },
+    "docs/implementation/minimal-git-acquisition-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements ADR0037 OP08/09 local and Access-approved native acquisition without changing accepted design.",
+      "source": "docs/implementation/minimal-git-acquisition-distribution.md",
+      "producer": "OP08/09 Git acquisition independence implementation.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum local Git acquisition distributions (OP-08/09)",
+      "cited_adrs": [
+        "0029",
+        "0036",
+        "0024",
+        "0025"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
     }
   }
 }

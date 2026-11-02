@@ -27,6 +27,7 @@
       "packages/paired-query/src/**/*.py lexical references",
       "packages/search/src/**/*.py lexical references",
       "packages/operational/src/**/*.py lexical references",
+      "packages/git-acquisition/src/**/*.py lexical references",
       "docs/implementation/table-disposition.json explicit authored dispositions"
     ],
     "limits": [

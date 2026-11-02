@@ -12,7 +12,8 @@
     "packages/access/src": "repo-catalog-access",
     "packages/paired-query/src": "repo-catalog-paired-query",
     "packages/search/src": "repo-catalog-search",
-    "packages/operational/src": "repo-catalog-operational"
+    "packages/operational/src": "repo-catalog-operational",
+    "packages/git-acquisition/src": "repo-catalog-git-acquisition"
   },
   "isolated_modules": [
     {
@@ -176,6 +177,11 @@
       "sha256": "149ff2fa8ae6bfbf8827429ce443215294fd2d35a662390eef6d286806fc006f"
     },
     {
+      "path": "packages/contracts/src/repo_catalog/domain/acquisition_errors.py",
+      "owner": "repo-catalog-contracts",
+      "sha256": "bd18ac14e5545175f4aebe35adce34ea9f867a3f6401c3c478ac7219dd5af110"
+    },
+    {
       "path": "packages/contracts/src/repo_catalog/domain/p1_coordination.py",
       "owner": "repo-catalog-contracts",
       "sha256": "c15eba1b6c9e91d38a8adfdf4077007d85bd5318418336b2ff17695fa88e939b"
@@ -316,6 +322,61 @@
       "sha256": "3eeed3dd46007062ec5c0c2c05d8168015897e1eace05e5b42cce4c9b4ce8cdf"
     },
     {
+      "path": "packages/git-acquisition/src/repo_catalog/adapters/git/access_native.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/adapters/git/native.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "d061f0926e2867f5f517fc86afcf31c5d39d9e23fb8b2dcc6bedabfdc67bd09c"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/adapters/git/notes.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "d478505d9258b4a50aa32bbdf62e1a13f32cb3492f204762c7f2f48b8fcb4529"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/application/access_acquisition.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "6603ea437163ea4f44b93e0995704fe23e34ed20a661c6125f9b2297d7ded890"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/application/git_acquisition.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "e22284fbe54acc55583a172a5310d7da088fd09babf040182e058158a7b96584"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/application/notes.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "b7c4ec960f935e339c4e20fb8ad47676013fa5988d53e851af1b3966de3b3e95"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/application/ref_observations.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "8ff9b7e98e2ee6f7d20eb9bde2b436f546ac823bbecc852d83a3a2d4f5b25370"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/cli/access_acquisition.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "aa4a094761619af0907fe1ba09882d4764aba67c233bdbf6aca2a9f027d085e5"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/domain/git_acquisition.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "0f964adf857366df96ffe2fb5a9d4c641794d686d13ebc0dc3a3b1f48258c540"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/domain/native_acquisition.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "f1165f3233ae86d5338d8191b4ea7eb05d4e889f751fbdf930087d0de81b8028"
+    },
+    {
+      "path": "packages/git-acquisition/src/repo_catalog/domain/ports/notes.py",
+      "owner": "repo-catalog-git-acquisition",
+      "sha256": "a74fc51b8fdb6cc5070dcdc059a430d6f014f5630b6452ac0e557dfc943c8389"
+    },
+    {
       "path": "packages/operational/src/repo_catalog/adapters/sqlite/acquisition.py",
       "owner": "repo-catalog-operational",
       "sha256": "1a646c6a193f152235876c009c0ac77cf0b0bfd9de5ba67bf3a069bcedf6dd59"
@@ -436,21 +497,6 @@
       "sha256": "8e287f53756c75109a3bd3848ed14b23df74a329d25f3f87095ba19d7b752f09"
     },
     {
-      "path": "src/repo_catalog/adapters/git/access_native.py",
-      "owner": "repo-catalog",
-      "sha256": "fc38b78a5113b4ede7321995932c8397b4ffa30e589d50892673c0322f106d5f"
-    },
-    {
-      "path": "src/repo_catalog/adapters/git/native.py",
-      "owner": "repo-catalog",
-      "sha256": "d061f0926e2867f5f517fc86afcf31c5d39d9e23fb8b2dcc6bedabfdc67bd09c"
-    },
-    {
-      "path": "src/repo_catalog/adapters/git/notes.py",
-      "owner": "repo-catalog",
-      "sha256": "d478505d9258b4a50aa32bbdf62e1a13f32cb3492f204762c7f2f48b8fcb4529"
-    },
-    {
       "path": "src/repo_catalog/adapters/github/production_intake.py",
       "owner": "repo-catalog",
       "sha256": "271f084a284bb6491ac0f381f9d9588616a409d79f7ef89dd18297c798e423ad"
@@ -471,24 +517,14 @@
       "sha256": "c1b67ae01f238be56aa4e34831f60e1e9db2c4f9b5d29a6dd42a4225ae1a204b"
     },
     {
-      "path": "src/repo_catalog/application/access_acquisition.py",
-      "owner": "repo-catalog",
-      "sha256": "de32ad18ec734d07554ee89f3ea6d6bd561c279af86665dcd54ea6be0f410c5e"
-    },
-    {
       "path": "src/repo_catalog/application/acquisition.py",
       "owner": "repo-catalog",
-      "sha256": "791013fd17ec46f5e94e292d6f405fafcc5b313b93340f7142fdf347e91c4e32"
+      "sha256": "33de452a0c5af22e5f5457be8aa1d55a33c501187d9336fae499e51b9c16279c"
     },
     {
       "path": "src/repo_catalog/application/exchange.py",
       "owner": "repo-catalog",
       "sha256": "fdde9cabf3cd61138063d8b5119ab3f79ee5a789627feca840f9b2677c6b9b42"
-    },
-    {
-      "path": "src/repo_catalog/application/notes.py",
-      "owner": "repo-catalog",
-      "sha256": "b7c4ec960f935e339c4e20fb8ad47676013fa5988d53e851af1b3966de3b3e95"
     },
     {
       "path": "src/repo_catalog/application/production_query.py",
@@ -506,16 +542,6 @@
       "sha256": "afa68927fa425893d6d9360ed74aa87476f92174843a41791085598b3e712f88"
     },
     {
-      "path": "src/repo_catalog/application/ref_observations.py",
-      "owner": "repo-catalog",
-      "sha256": "8ff9b7e98e2ee6f7d20eb9bde2b436f546ac823bbecc852d83a3a2d4f5b25370"
-    },
-    {
-      "path": "src/repo_catalog/cli/access_acquisition.py",
-      "owner": "repo-catalog",
-      "sha256": "9ba04804f0434deb6f4e89e7ec5bf0d24aa1285953a9df9e57e0cf7702c7338c"
-    },
-    {
       "path": "src/repo_catalog/cli/query_features.py",
       "owner": "repo-catalog",
       "sha256": "f76724ba315d520990b7b7d1ad8f7de9986cbea0587073e595835f06be3acd1c"
@@ -523,7 +549,7 @@
     {
       "path": "src/repo_catalog/domain/acquisition.py",
       "owner": "repo-catalog",
-      "sha256": "fb9a116e7d4047f580c4d96c8636035d717f0533a65bde756e7b92f4a1d3494a"
+      "sha256": "f62bd643baf78ed7696a596d147013f76405f0fcb4c436240645dcfc70c3e50e"
     },
     {
       "path": "src/repo_catalog/domain/context_dependencies.py",
@@ -546,11 +572,6 @@
       "sha256": "4bcac1bdaa9f866c72e906fad546e69516ab7a1fd37bbf44d657c15b75f0a6d0"
     },
     {
-      "path": "src/repo_catalog/domain/native_acquisition.py",
-      "owner": "repo-catalog",
-      "sha256": "9519d62f370efc9ce4151aed7caa433fe903fc9791495699b1526eb47e1af710"
-    },
-    {
       "path": "src/repo_catalog/domain/ports/acquisition.py",
       "owner": "repo-catalog",
       "sha256": "3a560838a8e55c25fea86a3a91688a83c2ba1b32e251326274c5e9d27ae6dc65"
@@ -559,11 +580,6 @@
       "path": "src/repo_catalog/domain/ports/context_authorization.py",
       "owner": "repo-catalog",
       "sha256": "073fbd676a55ef86820eec5db60241b9e4545b0be54e2022680d3238e16b2e29"
-    },
-    {
-      "path": "src/repo_catalog/domain/ports/notes.py",
-      "owner": "repo-catalog",
-      "sha256": "a74fc51b8fdb6cc5070dcdc059a430d6f014f5630b6452ac0e557dfc943c8389"
     },
     {
       "path": "src/repo_catalog/domain/ports/p1_context.py",
