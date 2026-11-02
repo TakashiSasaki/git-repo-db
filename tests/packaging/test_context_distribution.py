@@ -89,7 +89,14 @@ def test_context_resource_reader_without_concrete_core(
 
     outside = tmp_path / "consumer"
     outside.mkdir()
-    shutil.copytree(producer, outside / "fixture")
+    fixture = outside / "fixture"
+    fixture.mkdir()
+    # Producer construction has richer optional DBs. Transfer only the closed
+    # Context authority and any necessary SQLite sidecars, never their code/DBs.
+    for name in ("context.sqlite3", "context.sqlite3-wal", "context.sqlite3-shm"):
+        path = producer / name
+        if path.exists():
+            shutil.copy2(path, fixture / name)
     manifest = {
         "resource": list(key.coordinates()),
         "expected": expected,
