@@ -21,6 +21,8 @@
       "src/**/*.py lexical references",
       "packages/core/src/**/*.py lexical references",
       "packages/contracts/src/**/*.py lexical references",
+      "packages/runtime/src/**/*.py lexical references",
+      "packages/context/src/**/*.py lexical references",
       "docs/implementation/table-disposition.json explicit authored dispositions"
     ],
     "limits": [
