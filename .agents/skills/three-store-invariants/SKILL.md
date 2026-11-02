@@ -539,6 +539,16 @@ faults; Prototype C's post-read charge is not production crash-gap evidence.
    lost continuation, preserve already committed Core facts, and do not classify
    accounting loss as authority corruption. The focused
    `tests/integration/p5/test_exchange_completion_boundary.py` checks both cases.
+9. For external Recovery accounting, revalidate the existing request registry,
+   marker, report and reservation against its active known state after final
+   owned cleanup, before returning a normal receipt. Removing either report or
+   reservation at Core.close once allowed a complete merge receipt even though
+   the next retry correctly refused. Do not recreate missing files from cached
+   counters. Preserve committed independent facts and distinguish accounting
+   loss from authority corruption. The existing recovery_request context owns
+   this check; add no second ledger or reconstructible O dependency. Use
+   `tests/integration/p7/test_recovery_completion_boundaries.py` for both Git-only
+   and paired scopes, including registry/marker loss.
 
 Verification: `uv run --no-sync pytest tests/integration/p4 -q`, P1/P2/P3 and
 cross-domain regressions, installed wheel/sdist-wheel tests and the four required

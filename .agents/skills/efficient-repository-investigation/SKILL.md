@@ -280,6 +280,21 @@ preserving the original exceptional outcome. Use the focused Exchange completion
 boundary tests and positive parent-source controls; label source replay distinctly
 from an actual parent artifact installation.
 
+For paired Recovery completion, also close the catalog and locator descriptors
+before the final named-directory identity check and stop fence. Capture the
+validated device/inode while its descriptor is live; never query a closed
+descriptor as the capability. A late stop can follow committed locator publication:
+refuse the success receipt and retain the stopped target rather than claiming
+that every failed activation leaves the locator unchanged. Preserve the existing
+rollback checks for publication faults and path substitution.
+
+When comparing a parent Recovery implementation after changing accounting,
+replay its exact recovery_budget module as well as its Core and paired adapters.
+Otherwise the parent can accidentally use the new completion check, erasing the
+positive counterexample. Keep that source replay distinct from installed parent
+artifacts. The focused Recovery completion tests and independently repeated
+parent/current controls establish these procedures.
+
 Instrument the real delegated input path and include a positive removed-defense
 control. GitNativeSource.metadata can delegate subprocess work through
 GitNotesSource, so patching only source._run once reported zero calls even while

@@ -36,21 +36,28 @@ POSIX/process-crash contract. It does not imply host power-loss qualification.
 
 | Operation | Actual required installation | Technical verdict / evidence | Maintenance verdict |
 | --- | --- | --- | --- |
-| OP-01 initialize/read Core | C + runtime/contracts (3) | Current direct/derived Core consumer delta required; typed API/CLI, optional absence, persistent/completion stop | Canonical C factory, admission and Query; no new feature dependency |
-| OP-02 Git-only complete Recovery | C + runtime/contracts (3) | Current direct/derived lifecycle delta required after shared cleanup/accounting fixes; refuses paired input, preserves opaque coexisting evidence, no O/S initialization | Recovery stays in C; shared lifecycle and external accounting have one owner |
-| OP-03 Context-only reads | T + runtime/contracts (3) | Current direct/derived reader delta required; Resource/text/relations, enumeration, Provider/Source/Coverage; no concrete C | T owns snapshots and qualifications; no mirrored C fact authority |
-| OP-04 paired Query | C+T+paired Query + runtime/contracts (5) | Current direct/derived delta required for changed loaded T/runtime inputs; identities, references, snapshots and CLI | One explicit pair integration; no O/S/G/X requirement |
-| OP-05 Core Search | C+S + runtime/contracts (4) | Current direct/derived delta required: older Search receipt loaded pre-249 p1_schema; authority scan/index verification remain required | S owns search and C adapter; basic C has no search engine |
-| OP-06 Context Search | T+S + runtime/contracts (4) | Current direct/derived delta required for changed T/runtime inputs; no concrete C | S owns T adapter; no invented unavailable Core verification |
-| OP-07 Access management/backup | A (1) | Current A-only direct/derived delta required to make final evidence locally inspectable; no implementation changes | Single self-contained owner, no shared-product runtime dependency |
+| OP-01 initialize/read Core | C + runtime/contracts (3) | Demonstrated: current direct/derived Core consumer delta passed; typed API/CLI, optional absence, persistent/completion stop | Canonical C factory, admission and Query; no new feature dependency |
+| OP-02 Git-only complete Recovery | C + runtime/contracts (3) | Demonstrated: current direct/derived lifecycle delta passed after shared cleanup/accounting fixes; refuses paired input, preserves opaque coexisting evidence, no O/S initialization | Recovery stays in C; shared lifecycle and external accounting have one owner |
+| OP-03 Context-only reads | T + runtime/contracts (3) | Demonstrated: current direct/derived reader delta passed; Resource/text/relations, enumeration, Provider/Source/Coverage; no concrete C | T owns snapshots and qualifications; no mirrored C fact authority |
+| OP-04 paired Query | C+T+paired Query + runtime/contracts (5) | Demonstrated: current direct/derived delta passed for changed loaded T/runtime inputs; identities, references, snapshots and CLI | One explicit pair integration; no O/S/G/X requirement |
+| OP-05 Core Search | C+S + runtime/contracts (4) | Demonstrated: current direct/derived delta passed; older Search receipt loaded pre-249 p1_schema; authority scan/index verification remain required | S owns search and C adapter; basic C has no search engine |
+| OP-06 Context Search | T+S + runtime/contracts (4) | Demonstrated: current direct/derived delta passed for changed T/runtime inputs; no concrete C | S owns T adapter; no invented unavailable Core verification |
+| OP-07 Access management/backup | A (1) | Demonstrated: current A-only direct/derived delta passed; no implementation changes | Single self-contained owner, no shared-product runtime dependency |
 | OP-08 explicit local Git | C+G+O + runtime/contracts (5) | Demonstrated by reviewed #250 direct/derived artifacts; current audit verifies every loaded origin against retained wheel and current source, unchanged G/O and dependency edges | One G orchestrator and durable O; no T/A/S requirement |
 | OP-09 Access-approved Git | A+C+G+O + runtime/contracts (6) | Same qualified #250 reuse, including exact Access scope, frozen intent, revocation/ABA and CLI; not a fresh final-head execution | A stays optional to G and dependency-free itself |
 | OP-10 Core export | C+X + runtime/contracts (4) | Demonstrated by reviewed #251 direct/derived minima; every loaded origin still byte-equal; no O/T/A/S/G/pair implementation | One X owner; O is a lazy reception capability |
 | OP-11 Core reception | C+O+X + runtime/contracts (5) | Same qualified #251 reuse, including all-supplied/coexisting Context capability refusal, work/resend/conflict/checkpoint/loss; not a fresh final-head execution | X reuses canonical C/O and optional T/pair composition |
 | OP-12 paired Recovery | C+T+O+S+paired Recovery + runtime/contracts (7) | Current direct/derived minima passed: 10 groups each, real WAL preservation, exact-Claim Notes, typed merge/replay, final accounting, truthful O/S activation | Three canonical paired files over C lifecycle; no A/G/X/rich or paired Query dependency |
 
-Final current-delta execution and terminal CI remain pending until the closeout
-commit records their outcomes. Initial OP-12 source cohort passed 133 nodes,
+The current operation delta passed 16/16 cases in244.24seconds on local
+`7b8c5dc93b728dfb20b7f13e96b72775bba1ae89`, tree
+`7f4d0dfd8daae5215e9712f0ac980887e088c126`: Core4, Context/composed4,
+paired Query2, Search4 and Access2. These are manually selected actual results;
+ALL_PASSED_UNVERIFIED_SELECTION is not relabeled as automated selection proof.
+The published product commit `a7f473756eff9a04a06ac763bb7ffbe395c5e339` has
+exactly that tree and base681fbc55; API-generated commit metadata differs from the
+local execution identity. Terminal latest-head CI is recorded separately in the
+PR. The initial OP-12 source cohort passed 133 nodes,
 including durable crash/loss/concurrency, all-family baseline preflight,
 capability refusal, owned-cleanup fences and paired activation. Pre-commit
 profiles retain their actual `681fbc55` plus dirty marker; frozen wheel/sdist
@@ -106,13 +113,23 @@ build outputs, not issuer authenticity or authorization to release them.
 - CLI GitHub authentication later returned HTTP401. The independently connected
   GitHub app confirmed repository push authority; no token was read/replaced,
   interactive login started, or denied private artifact retried. Source execution
-  remains in the selected environment. If API publication produces a different
-  commit metadata identity, exact tree equality and both identities are recorded.
+  remains in the selected environment. API publication produced a different
+  commit metadata identity; exact tree equality and both identities are recorded.
 - Review source replay of parent modules is labeled separately from an actual
   parent artifact installation. Earlier failed records and source bindings remain
   intact. No full test suite, release acceptance, extra SQLite/CPU matrix, live
   acquisition, real catalog, merge, approval or deployment is inferred.
 
-Once the scoped delta, independent candidate/artifact review and terminal CI are
-closed, implementation stops for owner review. Remaining unsupported surfaces are
+The scoped delta and independent candidate/artifact review are closed. The PR
+records final documentation and terminal CI closeout, after which implementation
+stops for owner review. Remaining unsupported surfaces are
 listed rather than expanded into new Provider/Transfer/Context-only campaigns.
+
+Independent closeout: eight strict source comparisons retain parent positive
+controls; fourteen installed challenges cover both seven-product Recovery sets.
+The artifact audit verifies78unique files/96loaded origins/seven sdists and
+unchanged four-store DDL. G/X reuse independently verifies all eight original
+sets and316loaded files. The existing source ownership audit enumerates the full
+namespace, while metadata traversal rejects dependency cycles and duplicate owners.
+The root composed consumer resolves twelve products and preserves its existing
+API/CLI. No approval or merge follows from those checks.
