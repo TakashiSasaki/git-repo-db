@@ -17,6 +17,8 @@ for source in (
     ROOT / "src",
     ROOT / "packages/core/src",
     ROOT / "packages/contracts/src",
+    ROOT / "packages/runtime/src",
+    ROOT / "packages/context/src",
 ):
     sys.path.insert(0, str(source))
 from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402

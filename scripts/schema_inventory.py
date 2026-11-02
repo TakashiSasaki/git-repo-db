@@ -19,6 +19,8 @@ for source in (
     ROOT / "src",
     ROOT / "packages/core/src",
     ROOT / "packages/contracts/src",
+    ROOT / "packages/runtime/src",
+    ROOT / "packages/context/src",
 ):
     if str(source) not in sys.path:
         sys.path.insert(0, str(source))

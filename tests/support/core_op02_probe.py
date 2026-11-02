@@ -84,7 +84,11 @@ def main(output):
         for item in importlib.metadata.distributions()
         if item.metadata["Name"].startswith("repo-catalog")
     }
-    assert set(distributions) == {"repo-catalog-core", "repo-catalog-contracts"}
+    assert set(distributions) == {
+        "repo-catalog-core",
+        "repo-catalog-contracts",
+        "repo-catalog-runtime",
+    }
     owners = {}
     for name, distribution in distributions.items():
         for member in distribution.files:

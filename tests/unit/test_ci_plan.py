@@ -752,6 +752,13 @@ def test_unknown_changed_input_does_not_trigger_full_hosted_testing_during_devel
         ("packages/core/src/repo_catalog/domain/core_query.py", "shared"),
         ("packages/contracts/src/repo_catalog/domain/shared_values.py", "shared"),
         ("packages/core/pyproject.toml", "shared"),
+        ("packages/context/src/repo_catalog/application/context_query.py", "shared"),
+        (
+            "packages/runtime/src/repo_catalog/adapters/sqlite/catalog_runtime.py",
+            "shared",
+        ),
+        ("packages/context/pyproject.toml", "shared"),
+        ("packages/runtime/pyproject.toml", "shared"),
         ("packages/contracts/pyproject.toml", "shared"),
         ("tests/packaging/test_distribution.py", "leaf"),
         ("tests/packaging/test_sdist_hardening.py", "leaf"),

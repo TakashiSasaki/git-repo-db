@@ -64,7 +64,7 @@ def _dependencies(name, values):
         if key.endswith("provenance_json") and value is not None:
             result |= DependencySet(sources=extract_provenance_sources(value))
     if name == "link_core":
-        from repo_catalog.domain.p1_core import OID
+        from repo_catalog.domain.shared_values import OID
 
         result |= DependencySet(
             object_oids={OID(values["object_format"], values["object_oid"])}
@@ -229,7 +229,9 @@ class AdmissionTransactions:
         self._admission_owner = None
         # Only the exact coordinator capability and its exact facade wrapper
         # carry trusted commit ownership. Caller duck types never supply it.
-        from repo_catalog.adapters.sqlite.p1_coordination import AdmissionTransaction
+        from repo_catalog.adapters.sqlite.context_transaction import (
+            AdmissionTransaction,
+        )
         from repo_catalog.adapters.sqlite.production_context import _GuardedConnection
 
         connection = self.db
@@ -343,7 +345,7 @@ class AdmissionTransactions:
     def _storage_gate(self):
         from pathlib import Path
 
-        from repo_catalog.adapters.sqlite.p1_coordination import catalog_gate
+        from repo_catalog.adapters.sqlite.catalog_runtime import catalog_gate
         from repo_catalog.adapters.sqlite.p1_schema import (
             expected_schema,
             schema_rows,

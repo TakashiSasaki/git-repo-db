@@ -15,8 +15,10 @@ No distribution owns a namespace `__init__.py`; `_version.py` belongs to contrac
 | Distribution / source root | Owns | Runtime dependencies / public entry |
 | --- | --- | --- |
 | `repo-catalog-contracts` / `packages/contracts/src` | Nominal OID/provenance and their validation errors; time/Coverage values; snapshot/Query value contracts; shared Coverage DDL fragment; version | No dependencies; `domain.shared_values`, `domain.query_contracts` |
-| `repo-catalog-core` / `packages/core/src` | Typed Git/Notes admission and integrity; Core adapter/schema/UDF validation, Core DDL and fingerprint declarations; finite Query work helper; persistent stop/locking/completion and Core snapshots; Core Query API/port/CLI; Git-only Recovery and its durable budget; typed Ref codecs/reconstruction and finite encoding | Exact-version contracts; `p1_schema.initialize(..., "core", ...)`, `GitCore`, `CoreQueryService`, `CoreRecoveryService`, `repo-catalog-query` / existing `python -m repo_catalog.cli.production_query` |
-| `repo-catalog` / `src` | Existing normal Schema 21 product, Context/Access/Operational/Search, acquisition/Exchange orchestration, Context/paired Recovery integration and explicit paired/optional Query composition | Exact-version Core/contracts plus `httpx`; existing `repo-catalog` / `python -m repo_catalog`; composed `RecoveryService` |
+| `repo-catalog-runtime` / `packages/runtime/src` | Existing selective SQLite factory, declared fingerprints, catalog locks/stop/completion, read snapshot guards, Query input/stored-error helpers and canonical Query CLI | Exact-version contracts; no concrete store dependency |
+| `repo-catalog-context` / `packages/context/src` | Canonical Context adapter, schema/UDF/admission/domain validation, Context transaction guard and Resource/exact-text reader | Exact-version contracts/runtime; `ContextQueryService`, existing `context-resource` CLI |
+| `repo-catalog-core` / `packages/core/src` | Typed Git/Notes admission and integrity; Core adapter/schema/UDF validation and Core DDL; finite Query work helper; Core-specific snapshots using shared runtime; Core Query API/port/CLI; Git-only Recovery and its durable budget; typed Ref codecs/reconstruction and finite encoding | Exact-version contracts/runtime; `p1_schema.initialize(..., "core", ...)`, `GitCore`, `CoreQueryService`, `CoreRecoveryService`, `repo-catalog-query` / existing `python -m repo_catalog.cli.production_query` |
+| `repo-catalog` / `src` | Existing normal Schema 21 product, Access/Operational/Search, acquisition/Exchange orchestration, Context/paired Recovery integration and explicit paired/optional Query composition | Exact-version Core/Context/contracts plus `httpx`; existing `repo-catalog` / `python -m repo_catalog`; composed `RecoveryService` |
 
 Core-only operation uses the opt-in P1 format. The normal entry remains Schema 21.
 An explicit Core read opens only Core, including when an opaque Context DB exists.
@@ -36,11 +38,10 @@ its common algorithms are inherited from the single Core coordination definition
 ## Resources and validation
 
 The exact existing composed DDL, UDF predicates, physical schema expectations,
-INSERT-only and retained-byte checks remain. Core owns the complete fingerprint
+INSERT-only and retained-byte checks remain. The shared runtime owns the complete fingerprint
 declaration (four store names/hashes are declarations, not feature code), and
 selective Core verification still strictly checks inventory, format and Core's
-DDL/physical fingerprint. Context/Operational/Search DDL is owned by the rich
-distribution and is absent from the minimum. The shared Coverage fragment has one
+DDL/physical fingerprint. Context DDL is Context-owned; Operational/Search DDL is rich-owned and is absent from the minimum. The shared Coverage fragment has one
 contracts owner. All-store validation still requires the full installation.
 
 ## Build and evidence inputs
@@ -107,3 +108,61 @@ offline dependency resolution, separately from the rich paired P7 scenario.
 The OP-01 driver remains a regression. Full OP-02 evidence must cover the complete
 lifecycle and the applicable ADR0038 R6.1–R6.10 controls; existence of these tests
 alone is not execution evidence or release acceptance.
+
+## Bounded Context reader pilot (2026-11-02)
+
+Planning and actual implementation base: main
+`502762f725753c706946a426ad05df56fe2663ff`, tree
+`69c1a414688f8e4e33a46250b331c942a2abb64b`; fetched main and open PRs
+were checked before implementation (no open PRs). The supplied older analysis
+used `e967dcda`; only timing/guidance changed between those snapshots. PR239's
+restored-baseline preflight is fixed, not an open modularization defect. Normal
+Schema21 remains unchanged and P1 remains opt-in.
+
+Hypothesis: a meaningful existing Context Resource/text read can run with concrete
+Core/Access/Operational/Search physically absent, without changing persisted
+meaning, format, admission or recovery policy. This is a pilot of OP03, not its
+completion: `get_context_resource(..., include_text=True)`, `read_context_text()`
+and existing `python -m repo_catalog.cli.production_query context-resource` are
+the selected slice. The minimum public service is `ContextQueryService`. Other
+Context lists/Coverage/Provider/Source APIs, paired resolution, Search, acquisition,
+Exchange, Access extraction, Context-only recovery and normal runtime activation
+are excluded. The composed `ProductionQueryService` retains its supported surface.
+
+Before: Context read -> Core Query inheritance, Core-owned factory/fences,
+combined pair/ledger/Search coordination and Core-owned CLI. After: both concrete
+readers -> one runtime + contracts; Context's selected read implementation/view
+is composed directly into rich Query, while Core and pair implementations remain
+in their owners. The existing selective factory is relocated, not replaced by a
+universal Store/plugin abstraction. Core UDF predicates and initial repository
+admission remain Core-owned and are loaded only for the explicitly selected Core
+profile. Context still owns its complete stored-value/schema/UDF checks. Runtime
+ships no Core DDL/typed admission, pair coordinator, WorkLedger or Search engine.
+The shared fingerprint declarations identify formats; they cannot initialize or
+certify absent concrete stores. Ordinary default/all-profile helpers continue to
+require all applicable capabilities; selected Context reads request Context only.
+
+The canonical CLI is runtime-owned. Rich commands require rich composition; the
+minimum Context adds only `context-resource` and status. Core commands appear only
+with Core installed. Missing paired/Core capability refuses explicitly, including
+`auto` with coexisting Core; explicit `context_only` never inspects that file.
+Existing catalog-wide stops and completion fences still apply. Coordination files
+are permitted; implicit C/A/O/S database creation is not.
+
+Acceptance: both direct and sdist-derived dependency-resolved installations outside
+the checkout, unique wheel ownership and installed origins, existing API/CLI parity,
+exact verified text, original qualified unresolved Core references, opaque
+coexisting Core isolation, prior/in-flight/final completion stop, stored text and
+required-value corruption without writing the authority, and distinct input,
+unavailable text, budget and missing-capability failures. The richer producer
+constructs synthetic state through current typed admission and supplies a hashed
+closed fixture plus expected composed results; none of its code enters consumers.
+The affected minimum Core OP01/OP02 and baseline guard are regressions because
+factory, fence and CLI ownership changed. Tests and independent review results
+bind actual artifacts/source revisions separately; this contract is not a PASS.
+
+Maintenance judgment must distinguish successful dependency closure from its
+cost: two narrowly scoped distributions, explicit feature composition, moved
+canonical definitions and source-root/build ownership updates. No schema/model
+copy, Store registry or second timing/evidence ledger is introduced. Remaining
+full OP03 and later module combinations need their own bounded tasks.

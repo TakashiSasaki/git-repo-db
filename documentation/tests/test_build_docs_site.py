@@ -317,7 +317,7 @@ def test_pages_trigger_paths_decision_matrix():
             "Selected producer source includes opt-in P1-P7 target schema DDL not yet visualized on site",
         ),
         (
-            ["packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py"],
+            ["packages/runtime/src/repo_catalog/adapters/sqlite/p1_schema.py"],
             True,
             "Selected producer source includes opt-in P1-P7 target schema code not yet visualized on site",
         ),
@@ -337,7 +337,7 @@ def test_pages_trigger_covers_executed_schema_dependencies(product_source_env):
 import json, runpy, sys
 from pathlib import Path
 root = Path.cwd()
-source_roots = [root / 'src/repo_catalog', root / 'packages/core/src/repo_catalog', root / 'packages/contracts/src/repo_catalog']
+source_roots = [root / 'src/repo_catalog', root / 'packages/core/src/repo_catalog', root / 'packages/contracts/src/repo_catalog', root / 'packages/runtime/src/repo_catalog', root / 'packages/context/src/repo_catalog']
 sys.argv = ['scripts/schema_inventory.py', '--check']
 try:
     runpy.run_path('scripts/schema_inventory.py', run_name='__main__')

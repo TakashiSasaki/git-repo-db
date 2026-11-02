@@ -8,7 +8,7 @@ from repo_catalog.adapters.sqlite.p1_schema import expected_ddl_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = (
-    ROOT / "packages/core/src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json"
+    ROOT / "packages/runtime/src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json"
 )
 
 

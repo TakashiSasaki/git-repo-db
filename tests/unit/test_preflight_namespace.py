@@ -12,7 +12,13 @@ from scripts import preflight_access
 def console_check(tmp_path, namespace_extra=None, version_extra=False):
     roots = [
         tmp_path / name / "repo_catalog"
-        for name in ("src", "packages/core/src", "packages/contracts/src")
+        for name in (
+            "src",
+            "packages/core/src",
+            "packages/runtime/src",
+            "packages/context/src",
+            "packages/contracts/src",
+        )
     ]
     for root in roots:
         root.mkdir(parents=True)
@@ -46,7 +52,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
 
 def test_exact_workspace_namespace_is_accepted(tmp_path):
     result = console_check(tmp_path)
-    assert len(result["namespace_roots"]) == 3
+    assert len(result["namespace_roots"]) == 5
     assert result["version"] == "0.2.0"
 
 

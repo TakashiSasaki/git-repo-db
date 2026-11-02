@@ -41,7 +41,7 @@ def _minimal_installation(core_distributions, tmp_path, variant):
     env, products = core_distributions
     wheel = products[variant]
     dependencies = dependency_wheels(products, variant=variant)
-    assert len(dependencies) == 1
+    assert len(dependencies) == 2
     artifact_members = {}
     for artifact in (wheel, *dependencies):
         with zipfile.ZipFile(artifact) as archive:
@@ -124,6 +124,7 @@ def _run_probe(core_distributions, tmp_path, variant, probe):
     assert evidence["installed_distributions"] == [
         "repo-catalog-contracts",
         "repo-catalog-core",
+        "repo-catalog-runtime",
     ]
     return evidence
 

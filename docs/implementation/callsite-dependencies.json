@@ -6,9 +6,86 @@
   "source_roots": {
     "src": "repo-catalog",
     "packages/core/src": "repo-catalog-core",
-    "packages/contracts/src": "repo-catalog-contracts"
+    "packages/contracts/src": "repo-catalog-contracts",
+    "packages/runtime/src": "repo-catalog-runtime",
+    "packages/context/src": "repo-catalog-context"
   },
   "isolated_modules": [
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_admission.py",
+      "owner": "repo-catalog-context",
+      "sha256": "6d918a15440330716226e91d8ccac4fdd66f6c9be29e22f7011e29f49987af6d"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_transaction.py",
+      "owner": "repo-catalog-context",
+      "sha256": "0e36e666578718c787ef257e9395fb675177a7531d65ff468979004680e8b11f"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/p1_context.py",
+      "owner": "repo-catalog-context",
+      "sha256": "93cb1bfe46be0eb37e8ef72670a926d786abcef5d7ed4cdac9a85851f7775a9f"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/production_context.py",
+      "owner": "repo-catalog-context",
+      "sha256": "0229927d6f434d4146bb73e72dd711df5dd113a8ad42d4a0445bee58dba6eb11"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/application/context_query.py",
+      "owner": "repo-catalog-context",
+      "sha256": "966d78733c88430766957065f2c201b7949c7a3ffd82daecd19b30d1fa1f9f67"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/cli/context_query_features.py",
+      "owner": "repo-catalog-context",
+      "sha256": "0709a15c316eb3c7fb82452224d7c1d117906022c8228dae9d37bdce310034b7"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/context_admission.py",
+      "owner": "repo-catalog-context",
+      "sha256": "58c97a84f60c999c0af4a5321371b1c62f31e42c805497d7e375988c54fff542"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/context_query.py",
+      "owner": "repo-catalog-context",
+      "sha256": "5801ecae5875a234bd00e1051db7a894df4fcfc72452bb5af79f1e1f85083b21"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/context_registration.py",
+      "owner": "repo-catalog-context",
+      "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/p1_context.py",
+      "owner": "repo-catalog-context",
+      "sha256": "e29ff5fa3972f10d5298b472cfba20b706ae8381ef94026e4ab874128c274e1e"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/parent_report.py",
+      "owner": "repo-catalog-context",
+      "sha256": "26e63919d9edb337ebfbb6e2ffa663a764dc589ec51dd46e0279acecfeff9926"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/production_context.py",
+      "owner": "repo-catalog-context",
+      "sha256": "b768a4a6f6421073a415966c2baaa0d045c216cb5e13a689c51f202c3ddf7f8f"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/resource_identification.py",
+      "owner": "repo-catalog-context",
+      "sha256": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/resource_stage.py",
+      "owner": "repo-catalog-context",
+      "sha256": "ba6720038e1e3fb318b152998f6bbe7d7418bc53b615628a6396d0bf6198b862"
+    },
+    {
+      "path": "packages/context/src/repo_catalog/domain/transfer_sql.py",
+      "owner": "repo-catalog-context",
+      "sha256": "149ff2fa8ae6bfbf8827429ce443215294fd2d35a662390eef6d286806fc006f"
+    },
     {
       "path": "packages/contracts/src/repo_catalog/domain/p1_coordination.py",
       "owner": "repo-catalog-contracts",
@@ -32,7 +109,7 @@
     {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/core_coordination.py",
       "owner": "repo-catalog-core",
-      "sha256": "4935bafdcac77189ca556d9a647fc76f80e979b9fd106fe6cdef28f2894b48b4"
+      "sha256": "93e35afd30ff1c4322706fe48318f71e4860d514c675a72a4f6f97bd050c78a1"
     },
     {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py",
@@ -45,6 +122,11 @@
       "sha256": "755903a090725f1fd93c11ead8515d2bd1009411f9075d4224d59695da2a1432"
     },
     {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_schema_functions.py",
+      "owner": "repo-catalog-core",
+      "sha256": "8c02d3c395ca1d3eccbed0ec80ea8bc9ebc332fddf4452e7aff7212557784199"
+    },
+    {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/git_core.py",
       "owner": "repo-catalog-core",
       "sha256": "29ce9e2e7aabaebb51e19a385a4fc2ec4752bdd7322aab2b91d1474ab2c32d8b"
@@ -53,11 +135,6 @@
       "path": "packages/core/src/repo_catalog/adapters/sqlite/p1_core.py",
       "owner": "repo-catalog-core",
       "sha256": "c9925729c2ff3ce1f0dec12f0a4836d85a9e0f3e6626febc1d036ae2b90872d7"
-    },
-    {
-      "path": "packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py",
-      "owner": "repo-catalog-core",
-      "sha256": "fff3456d1ddf7f709ca323be62a90b7f9646e1ae824edc7fc5d841f0de09b22e"
     },
     {
       "path": "packages/core/src/repo_catalog/adapters/sqlite/recovery_budget.py",
@@ -72,7 +149,7 @@
     {
       "path": "packages/core/src/repo_catalog/application/core_query.py",
       "owner": "repo-catalog-core",
-      "sha256": "2ba45a0116b99f77890919853a62b3494e99ff5ebf11176103112cf60872ffd9"
+      "sha256": "cb36bac55126ff479bf0a4eff7068a895963bb93a80e593cdb0e05772c11aa35"
     },
     {
       "path": "packages/core/src/repo_catalog/application/core_recovery.py",
@@ -88,11 +165,6 @@
       "path": "packages/core/src/repo_catalog/application/ref_reconstruction.py",
       "owner": "repo-catalog-core",
       "sha256": "334ca8668b47ba2efacb449cd852cff4571adb8f647918f74c23ec824f2f6f2e"
-    },
-    {
-      "path": "packages/core/src/repo_catalog/cli/production_query.py",
-      "owner": "repo-catalog-core",
-      "sha256": "844ced6a6a4adfd8a35d2f13367593b0fc9978491dafabffdeed888aa260e101"
     },
     {
       "path": "packages/core/src/repo_catalog/domain/core_query.py",
@@ -155,6 +227,26 @@
       "sha256": "3eeed3dd46007062ec5c0c2c05d8168015897e1eace05e5b42cce4c9b4ce8cdf"
     },
     {
+      "path": "packages/runtime/src/repo_catalog/adapters/sqlite/catalog_runtime.py",
+      "owner": "repo-catalog-runtime",
+      "sha256": "048d4a8a542e12219343ae8e540beb9cde0d2b7e66885a3ad38d9b542dbd29ba"
+    },
+    {
+      "path": "packages/runtime/src/repo_catalog/adapters/sqlite/p1_schema.py",
+      "owner": "repo-catalog-runtime",
+      "sha256": "6115a2ef30e064493c197d85a215f70b7dd172ee591b19fcac62f8dc54700ceb"
+    },
+    {
+      "path": "packages/runtime/src/repo_catalog/application/query_runtime.py",
+      "owner": "repo-catalog-runtime",
+      "sha256": "5156a2faad75bd5cbdb49f64d89c63ad12a68f649171894f19676c94acf13c75"
+    },
+    {
+      "path": "packages/runtime/src/repo_catalog/cli/production_query.py",
+      "owner": "repo-catalog-runtime",
+      "sha256": "c578892a3748790bc87822e0f21324b8b5ec7021f8bf91850a2eda733a6c5223"
+    },
+    {
       "path": "src/repo_catalog/adapters/filesystem/access_executor.py",
       "owner": "repo-catalog",
       "sha256": "ee8bc62d087fad23a1a3539263651102f1edac6dc9434c24e0f4f63b27eabf6a"
@@ -205,29 +297,14 @@
       "sha256": "af151258aea7b64b469caf9a08970e33908064561ddbe1e8bac0676a16dc19d8"
     },
     {
-      "path": "src/repo_catalog/adapters/sqlite/context_admission.py",
-      "owner": "repo-catalog",
-      "sha256": "83d6f66595f6f5d026962c2c7bad29f18de91d2c5ada31ec87915d63f973820c"
-    },
-    {
       "path": "src/repo_catalog/adapters/sqlite/notes.py",
       "owner": "repo-catalog",
       "sha256": "b1f26f5014351f2af16c437b92695db266cbe234ab1a9e2fcdc366bf3ec05cb8"
     },
     {
-      "path": "src/repo_catalog/adapters/sqlite/p1_context.py",
-      "owner": "repo-catalog",
-      "sha256": "93cb1bfe46be0eb37e8ef72670a926d786abcef5d7ed4cdac9a85851f7775a9f"
-    },
-    {
       "path": "src/repo_catalog/adapters/sqlite/p1_coordination.py",
       "owner": "repo-catalog",
-      "sha256": "2f39407231f7c4696c4798e535fe7a4da3e5f870ceba836232823a2960f77577"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/production_context.py",
-      "owner": "repo-catalog",
-      "sha256": "c48a8b772365f16bac54be0a95622f014265775748d9d3aec2ca5e07812a4de6"
+      "sha256": "c29c62929fa50cbca1b16327bdc423c7f18b938258c3d85b2f2e44da91368ee9"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/production_search.py",
@@ -277,7 +354,7 @@
     {
       "path": "src/repo_catalog/application/production_query.py",
       "owner": "repo-catalog",
-      "sha256": "de9fd8ea46c294c86f19d8ca652855bb550d32318992af787962711173c0214c"
+      "sha256": "b7ba41fb546075374c5c1b332c6362881d50d80037678ccdd515b865a05e5892"
     },
     {
       "path": "src/repo_catalog/application/recovery.py",
@@ -340,19 +417,9 @@
       "sha256": "fb9a116e7d4047f580c4d96c8636035d717f0533a65bde756e7b92f4a1d3494a"
     },
     {
-      "path": "src/repo_catalog/domain/context_admission.py",
-      "owner": "repo-catalog",
-      "sha256": "13c8d5c5f903cbe9bf5526cc437f198142ac2bedaa7338fdb87cebee421f691e"
-    },
-    {
       "path": "src/repo_catalog/domain/context_dependencies.py",
       "owner": "repo-catalog",
       "sha256": "a1026f3a1109c8b8f4d7aaec28f33fe3e0a594372da6afafa8835b9dd559801d"
-    },
-    {
-      "path": "src/repo_catalog/domain/context_registration.py",
-      "owner": "repo-catalog",
-      "sha256": "e29012935442aa6e9ba05d74956aa5e04c91f03f027758a3b9d399bb7de004cc"
     },
     {
       "path": "src/repo_catalog/domain/context_wire.py",
@@ -373,16 +440,6 @@
       "path": "src/repo_catalog/domain/native_acquisition.py",
       "owner": "repo-catalog",
       "sha256": "9519d62f370efc9ce4151aed7caa433fe903fc9791495699b1526eb47e1af710"
-    },
-    {
-      "path": "src/repo_catalog/domain/p1_context.py",
-      "owner": "repo-catalog",
-      "sha256": "e29ff5fa3972f10d5298b472cfba20b706ae8381ef94026e4ab874128c274e1e"
-    },
-    {
-      "path": "src/repo_catalog/domain/parent_report.py",
-      "owner": "repo-catalog",
-      "sha256": "26e63919d9edb337ebfbb6e2ffa663a764dc589ec51dd46e0279acecfeff9926"
     },
     {
       "path": "src/repo_catalog/domain/ports/access_backup.py",
@@ -440,37 +497,22 @@
       "sha256": "3ac1112916a51adee54de9e348081c46f7262217c3618af10700aee56fba8675"
     },
     {
-      "path": "src/repo_catalog/domain/production_context.py",
-      "owner": "repo-catalog",
-      "sha256": "b768a4a6f6421073a415966c2baaa0d045c216cb5e13a689c51f202c3ddf7f8f"
-    },
-    {
       "path": "src/repo_catalog/domain/production_query.py",
       "owner": "repo-catalog",
-      "sha256": "7c868c56b5038cb1dd99a6cf3e23f47b4003445f2e315bd3e4594323f2d2f234"
-    },
-    {
-      "path": "src/repo_catalog/domain/resource_identification.py",
-      "owner": "repo-catalog",
-      "sha256": "3e7c02193be40b16f48c66ebad5c2f1dab8108241eb1e1794d8ed94ce86107d1"
-    },
-    {
-      "path": "src/repo_catalog/domain/resource_stage.py",
-      "owner": "repo-catalog",
-      "sha256": "ba6720038e1e3fb318b152998f6bbe7d7418bc53b615628a6396d0bf6198b862"
+      "sha256": "4bd6c7ac421b5045380dc6213cd846d462850f92bdc9a37c34a69f3f4f642c56"
     },
     {
       "path": "src/repo_catalog/domain/selective_exchange.py",
       "owner": "repo-catalog",
       "sha256": "78b9bad5b850807fad89f11ae4054bc1b84b3d5e76b1460f2ae99d518453264b"
-    },
-    {
-      "path": "src/repo_catalog/domain/transfer_sql.py",
-      "owner": "repo-catalog",
-      "sha256": "149ff2fa8ae6bfbf8827429ce443215294fd2d35a662390eef6d286806fc006f"
     }
   ],
   "packaged_resources": [
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/p1_ddl/context.sql",
+      "owner": "repo-catalog-context",
+      "sha256": "4c9e10c97c712f9cf0555337a758c3dc17dd8ce86f25350b70ce3891d099039c"
+    },
     {
       "path": "packages/contracts/src/repo_catalog/adapters/sqlite/p1_ddl/coverage.sql",
       "owner": "repo-catalog-contracts",
@@ -482,8 +524,8 @@
       "sha256": "893a945f92bd9547a8fb2fd81caeea19d5861e26f77b2c7fb339f2c72815a0a5"
     },
     {
-      "path": "packages/core/src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json",
-      "owner": "repo-catalog-core",
+      "path": "packages/runtime/src/repo_catalog/adapters/sqlite/p1_ddl/fingerprints.json",
+      "owner": "repo-catalog-runtime",
       "sha256": "eaeed033ce0df1289e38dde382b683558dc17a679b4a0d310c4ba057d6d2cc7c"
     },
     {
@@ -495,11 +537,6 @@
       "path": "src/repo_catalog/adapters/sqlite/access_ddl/registry.sql",
       "owner": "repo-catalog",
       "sha256": "4d949c13488df0e4792a337b6e864ca372e6c738ba0576b2dff3bccb72a5e7bc"
-    },
-    {
-      "path": "src/repo_catalog/adapters/sqlite/p1_ddl/context.sql",
-      "owner": "repo-catalog",
-      "sha256": "4c9e10c97c712f9cf0555337a758c3dc17dd8ce86f25350b70ce3891d099039c"
     },
     {
       "path": "src/repo_catalog/adapters/sqlite/p1_ddl/operational.sql",
@@ -593,6 +630,38 @@
     "No runtime tracing, live collection, production catalog reads or real-data migration performed."
   ],
   "modules": [
+    {
+      "path": "packages/context/src/repo_catalog/domain/resource_identity.py",
+      "owner": "repo-catalog-context",
+      "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
+      "functions": [
+        {
+          "name": "_validate_native",
+          "line": 29,
+          "end_line": 78
+        },
+        {
+          "name": "encode_identity",
+          "line": 81,
+          "end_line": 89
+        },
+        {
+          "name": "_scan_string",
+          "line": 92,
+          "end_line": 115
+        },
+        {
+          "name": "_prescan",
+          "line": 118,
+          "end_line": 162
+        },
+        {
+          "name": "parse_identity",
+          "line": 165,
+          "end_line": 184
+        }
+      ]
+    },
     {
       "path": "packages/contracts/src/repo_catalog/_version.py",
       "owner": "repo-catalog-contracts",
@@ -4273,38 +4342,6 @@
           "name": "document_scope_includes",
           "line": 14,
           "end_line": 15
-        }
-      ]
-    },
-    {
-      "path": "src/repo_catalog/domain/resource_identity.py",
-      "owner": "repo-catalog",
-      "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
-      "functions": [
-        {
-          "name": "_validate_native",
-          "line": 29,
-          "end_line": 78
-        },
-        {
-          "name": "encode_identity",
-          "line": 81,
-          "end_line": 89
-        },
-        {
-          "name": "_scan_string",
-          "line": 92,
-          "end_line": 115
-        },
-        {
-          "name": "_prescan",
-          "line": 118,
-          "end_line": 162
-        },
-        {
-          "name": "parse_identity",
-          "line": 165,
-          "end_line": 184
         }
       ]
     },
