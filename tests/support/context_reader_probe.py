@@ -103,7 +103,9 @@ def main(output):
     catalog = fresh("ordinary")
     service = ContextQueryService(catalog, mode="context_only")
     assert (
-        service.get_context_resource(key, include_text=True).to_dict()
+        json.loads(
+            json.dumps(service.get_context_resource(key, include_text=True).to_dict())
+        )
         == data["expected"]
     )
     assert all(
@@ -156,9 +158,13 @@ def main(output):
     core.write_bytes(b"opaque-not-a-sqlite-database")
     core.chmod(0)
     assert (
-        ContextQueryService(opaque, mode="context_only")
-        .get_context_resource(key)
-        .to_dict()
+        json.loads(
+            json.dumps(
+                ContextQueryService(opaque, mode="context_only")
+                .get_context_resource(key)
+                .to_dict()
+            )
+        )
         == data["expected"]
     )
     assert cli(opaque).returncode == 0
@@ -270,6 +276,13 @@ def main(output):
         {"QUERY_BUDGET"},
     )
     assert not (catalog / "p1-recovery-stop.json").exists()
+    refuses(lambda: service.get_context_resource(object()), {"INVALID_INPUT"})
+    bad_key = ResourceKey(*data["resource"])
+    object.__setattr__(bad_key, "provider_resource_id", "[")
+    refuses(lambda: service.get_context_resource(bad_key), {"INVALID_INPUT"})
+    refuses(lambda: service.read_context_text(object()), {"INVALID_INPUT"})
+    assert not (catalog / "p1-recovery-stop.json").exists()
+    assert service.get_context_resource(key).resource == key
     checks.append("unavailable_input_budget_capability_not_corruption")
 
     for fault in ("text", "provenance"):

@@ -36,6 +36,20 @@ class ContextResourceReader:
         *,
         include_text: bool = True,
     ) -> ContextResourceView:
+        # Caller values must be checked outside stored-data classifiers. Rebuild
+        # the canonical value so instance overrides cannot become stored faults.
+        if type(resource_key) is not ResourceKey or type(include_text) is not bool:
+            raise QueryError(
+                "INVALID_INPUT", "context-resource", "ResourceKey and bool required"
+            )
+        try:
+            resource_key = ResourceKey(
+                resource_key.service_instance_uuidv4,
+                resource_key.resource_kind,
+                resource_key.provider_resource_id,
+            )
+        except (ValueError, TypeError, AttributeError, RecursionError) as error:
+            raise QueryError("INVALID_INPUT", "context-resource", str(error)) from error
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             return self._context_resource_in_snapshot(
@@ -194,6 +208,14 @@ class ContextResourceReader:
         )
 
     def read_context_text(self, text_sha256: str) -> ByteReadResult:
+        if (
+            type(text_sha256) is not str
+            or len(text_sha256) != 64
+            or any(c not in "0123456789abcdef" for c in text_sha256)
+        ):
+            raise QueryError(
+                "INVALID_INPUT", "context-text", "lowercase SHA256 required"
+            )
         from repo_catalog.domain.production_context import ContextError
 
         with self.open_snapshot(required_store="context") as snap:

@@ -12,6 +12,7 @@ from typing import Literal
 
 from repo_catalog.adapters.sqlite.catalog_runtime import (
     SnapshotReadLimits,
+    catalog_completion,
     persist_catalog_stop,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
@@ -128,6 +129,8 @@ class QueryReader:
             with self._open_snapshot(required_store=required_store) as snapshot:
                 self.last_costs_ns["snapshot_total"] = time.perf_counter_ns() - started
                 yield snapshot
+            with catalog_completion(self.directory):
+                self._check_stop()
         except (json.JSONDecodeError, UnicodeDecodeError, RecursionError) as error:
             persist_catalog_stop(
                 self.directory, "stored typed data decoding: " + str(error)

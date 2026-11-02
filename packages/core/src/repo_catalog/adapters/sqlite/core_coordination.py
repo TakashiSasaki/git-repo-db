@@ -20,6 +20,9 @@ from repo_catalog.adapters.sqlite.catalog_runtime import (
     _digest as _digest,
 )
 from repo_catalog.adapters.sqlite.catalog_runtime import (
+    _file_gate as _file_gate,
+)
+from repo_catalog.adapters.sqlite.catalog_runtime import (
     _identity as _identity,
 )
 from repo_catalog.adapters.sqlite.catalog_runtime import (
