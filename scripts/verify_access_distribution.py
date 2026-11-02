@@ -1,8 +1,8 @@
 """Build wheel and sdist-derived wheel; smoke each outside checkout on real SQLite.
 
 Uses the locked environment's hatchling. No runtime-version override, no credentials,
-no real catalog, no activation. Temporary virtualenvs intentionally contain only
-this wheel: the isolated Access registry must not need Provider/HTTP dependencies.
+no real catalog, no activation. Temporary virtualenvs contain the composed product with normally resolved
+dependencies; minimum Access-only acceptance lives in test_access_distribution.py.
 """
 
 from __future__ import annotations
@@ -42,7 +42,6 @@ namespace_roots = [str(Path(p).resolve()) for p in repo_catalog.__path__]
 assert namespace_roots and all(Path(p).is_relative_to(Path(sys.prefix).resolve()) for p in namespace_roots), namespace_roots
 assert module_origin.is_relative_to(Path(sys.prefix).resolve()), module_origin
 require_runtime()
-assert importlib.util.find_spec("httpx") is None
 s = str(uuid4())
 with tempfile.TemporaryDirectory() as directory:
     path = Path(directory) / "access.sqlite3"
@@ -376,6 +375,12 @@ print(json.dumps({"sqlite": sqlite3.sqlite_version, "sqlite_source_id": sqlite3.
 """
 
 
+# Bounded Access regression without the unrelated Context Exchange/I2/I4 experiment.
+ACCESS_SMOKE = SMOKE.split(
+    "# Installed A3 policy, SQLite constraints and typed Exchange round-trip."
+)[0]
+
+
 def run(*args: str, cwd: Path, env: dict[str, str]) -> str:
     try:
         result = subprocess.run(
@@ -452,12 +457,18 @@ def main() -> None:
                             local_artifacts[variant].append(path)
                         if not local_artifacts[variant]:
                             raise ValueError("missing local product dependencies")
-                    if direct and swheel and archive:
+                    if (
+                        direct
+                        and swheel
+                        and archive
+                        and (dist_path / "product-build/requirements.txt").is_file()
+                    ):
                         reusable = True
                 except (json.JSONDecodeError, KeyError, OSError, ValueError):
                     pass
 
         if reusable:
+            products = {"requirements": dist_path / "product-build/requirements.txt"}
             print(f"Reusing pre-built distributions from {dist_path}")
             contract_file = dist_path / "sdist-contract.json"
             if contract_file.is_file():
@@ -495,16 +506,33 @@ def main() -> None:
             target = base / label
             venv.EnvBuilder(with_pip=False).create(target)
             python = target / "bin/python"
-            # Pure Python wheel only; verify all archive members before extracting.
-            with zipfile.ZipFile(wheel) as package:
-                assert any(
-                    name.endswith("access_ddl/registry.sql")
-                    for name in package.namelist()
+            variant = "wheel" if label == "wheel" else "sdist_wheel"
+            artifacts = (wheel, *local_artifacts[variant])
+            links = base / (label + "-artifacts")
+            links.mkdir()
+            requirements = base / (label + "-third-party.txt")
+            requirements.write_text(
+                "".join(
+                    line
+                    for line in products["requirements"]
+                    .read_text()
+                    .splitlines(keepends=True)
+                    if not line.startswith("file:")
                 )
-                for name in package.namelist():
-                    parts = Path(name).parts
-                    if Path(name).is_absolute() or ".." in parts:
-                        raise ValueError("unsafe wheel member")
+            )
+            owners = {}
+            for artifact in artifacts:
+                shutil.copy2(artifact, links / artifact.name)
+                with zipfile.ZipFile(artifact) as package:
+                    for name in package.namelist():
+                        parts = Path(name).parts
+                        if Path(name).is_absolute() or ".." in parts:
+                            raise ValueError("unsafe wheel member")
+                        if name.startswith("repo_catalog/") and not name.endswith("/"):
+                            if name in owners:
+                                raise ValueError("overlapping product file: " + name)
+                            owners[name] = artifact.name
+            assert "repo_catalog/adapters/sqlite/access_ddl/registry.sql" in owners
             print(
                 run(
                     "uv",
@@ -512,12 +540,12 @@ def main() -> None:
                     "install",
                     "--python",
                     str(python),
-                    "--no-deps",
-                    str(wheel),
-                    *map(
-                        str,
-                        local_artifacts["wheel" if label == "wheel" else "sdist_wheel"],
-                    ),
+                    "--offline",
+                    "--requirements",
+                    str(requirements),
+                    "--find-links",
+                    str(links),
+                    "repo-catalog==0.2.0",
                     cwd=base,
                     env=env,
                 )

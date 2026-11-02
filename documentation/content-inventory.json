@@ -11397,6 +11397,23 @@
       "producer": "A+B source and distribution implementation.",
       "consumers": "Implementers and independent reviewers of the minimal Core distribution boundary.",
       "publication": "not staged"
+    },
+    "docs/implementation/minimal-access-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements ADR0037 OP-07 without changing accepted decisions; executed evidence belongs to the PR.",
+      "source": "docs/implementation/minimal-access-distribution.md",
+      "producer": "OP-07 Access distribution implementation.",
+      "consumers": "Package authors, reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Independent Access distribution (OP-07)",
+      "cited_adrs": [
+        "0037",
+        "0038"
+      ],
+      "static_consumer_references": [
+        "docs/implementation/minimal-core-distribution.md"
+      ]
     }
   }
 }
