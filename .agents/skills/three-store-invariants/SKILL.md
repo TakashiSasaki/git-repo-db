@@ -324,7 +324,7 @@ writing the manifest and probes the OS lock at the precise between-copy cut.
 Reproduce the executable evidence from the repository root:
 
 ```bash
-uv run --no-sync pytest tests/integration/architecture_spikes/test_consistency.py -q
+scripts/local-run.sh pytest tests/integration/architecture_spikes/test_consistency.py -q -n 2
 ```
 
 Use exact-tree receipts for results; do not copy a test count or claim these

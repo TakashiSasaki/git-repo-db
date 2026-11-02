@@ -5,7 +5,7 @@ from contextlib import closing
 
 import pytest
 
-from repo_catalog.adapters.sqlite import p1_coordination
+from repo_catalog.adapters.sqlite import paired_coordination as p1_coordination
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     PairCoordinator,

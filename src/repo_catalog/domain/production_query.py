@@ -22,6 +22,10 @@ from repo_catalog.domain.core_query import GitObservationView as GitObservationV
 from repo_catalog.domain.core_query import GitRepositoryView as GitRepositoryView
 from repo_catalog.domain.core_query import RefNotesTargetView as RefNotesTargetView
 from repo_catalog.domain.core_query import ref_projection_json as ref_projection_json
+from repo_catalog.domain.paired_query import (
+    PairedCoreResolution as PairedCoreResolution,
+)
+from repo_catalog.domain.paired_query import PairedResourceView as PairedResourceView
 from repo_catalog.domain.query_contracts import ByteReadResult as ByteReadResult
 from repo_catalog.domain.query_contracts import CatalogReadMode as CatalogReadMode
 from repo_catalog.domain.query_contracts import CoverageView as CoverageView
@@ -34,12 +38,7 @@ from repo_catalog.domain.query_contracts import canonical_json as canonical_json
 from repo_catalog.domain.query_contracts import filter_digest as filter_digest
 
 if TYPE_CHECKING:
-    from repo_catalog.domain.p1_context import (
-        ResourceKey,
-    )
-    from repo_catalog.domain.production_context import (
-        CoreReference,
-    )
+    pass
 
 SearchProjectionKind = Literal["git_metadata", "notes", "context_text"]
 SEARCH_PROJECTION_KINDS: tuple[SearchProjectionKind, ...] = (
@@ -47,50 +46,6 @@ SEARCH_PROJECTION_KINDS: tuple[SearchProjectionKind, ...] = (
     "notes",
     "context_text",
 )
-
-
-@dataclass(frozen=True)
-class PairedCoreResolution:
-    """Resolution of a Context CoreReference against pinned Git Core authority."""
-
-    reference: CoreReference
-    available_in_core: bool
-    core_required: bool
-    object_view: GitObjectView | None = None
-    ref_notes_targets: tuple[RefNotesTargetView, ...] = ()
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "available_in_core": self.available_in_core,
-            "core_required": self.core_required,
-            "ref_notes_targets": [n.to_dict() for n in self.ref_notes_targets],
-            "object_view": (
-                self.object_view.to_dict() if self.object_view is not None else None
-            ),
-            "object_oid": list(self.reference.object_oid.key),
-            "provenance": json.loads(self.reference.provenance_json),
-            "role": self.reference.role,
-        }
-
-
-@dataclass(frozen=True)
-class PairedResourceView:
-    """Paired Context + Core view joining a ContextResourceView with pinned Core objects/notes."""
-
-    context_resource: ContextResourceView
-    core_resolutions: tuple[PairedCoreResolution, ...]
-    snapshot_token: str
-
-    @property
-    def resource(self) -> ResourceKey:
-        return self.context_resource.resource
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "context_resource": self.context_resource.to_dict(),
-            "core_resolutions": [res.to_dict() for res in self.core_resolutions],
-            "snapshot_token": self.snapshot_token,
-        }
 
 
 @dataclass(frozen=True)
@@ -187,19 +142,20 @@ def validate_cursor_key(endpoint: str, key: tuple) -> None:
         )
 
         return validate_context_key(endpoint, key)
-    widths = {"paired_resources": 3, "search": 2}
+    if endpoint == "paired_resources":
+        from repo_catalog.domain.paired_query import (
+            validate_cursor_key as validate_paired_key,
+        )
+
+        return validate_paired_key(endpoint, key)
     if (
-        endpoint not in widths
-        or not isinstance(key, tuple)
-        or len(key) != widths[endpoint]
+        endpoint != "search"
+        or type(key) is not tuple
+        or len(key) != 2
         or any(type(v) is not str or not v or len(v) > 32768 for v in key)
     ):
         raise ValueError("invalid key shape or type")
-    if endpoint in ("context_resources", "paired_resources"):
-        from repo_catalog.domain.p1_context import ResourceKey
-
-        ResourceKey(*key)
-    elif endpoint == "search":
+    if endpoint == "search":
         if key[0] not in SEARCH_PROJECTION_KINDS:
             raise ValueError("invalid projection")
         document = json.loads(key[1])

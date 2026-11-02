@@ -192,6 +192,14 @@ a value-only helper's hard bound alone does not establish request accounting.
 PR #226 findings R226-01/R226-02 and the scoped regression nodes document this
 procedure; do not reinterpret the author's green run as independent approval.
 
+When relocating a function or inherited snapshot method, instrument its defining
+module in monkeypatch tests. Replacing a re-export in a compatibility/composition
+module does not change the relocated function's global bindings. Preserve the
+failed counterexample and change only the patch owner; rerun the same behavioral
+assertions. The canonical validation-cancellation test is
+`tests/integration/p1/test_validation_stop.py`; successful ordinary reads alone do
+not replace its cancellation/no-corruption-stop control.
+
 When canonicalizing frozen caller dataclasses, rebuild from explicit named fields
 and use the new value afterward. Calling an instance's overridable `coordinates()`
 then discarding the validated copy leaves the original hostile/mutated value in
