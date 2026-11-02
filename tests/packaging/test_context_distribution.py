@@ -151,3 +151,98 @@ def test_context_resource_reader_without_concrete_core(
         for artifact in artifacts
     }
     receipt.write_text(json.dumps(evidence, indent=2) + "\n")
+
+
+@pytest.fixture(scope="module")
+def composed_distributions(tmp_path_factory):
+    base = tmp_path_factory.getbasetemp()
+    while base.name.startswith("popen-gw"):
+        base = base.parent
+    env = package_build_environment()
+    products = build_once(
+        base / "composed-package-distributions",
+        lambda work: make_package_distributions(work, ROOT, env),
+        inputs=lambda: package_build_inputs(ROOT, env),
+    )
+    return env, products
+
+
+@pytest.mark.parametrize("variant", ["wheel", "sdist_wheel"])
+def test_composed_context_reader_artifact_parity(
+    composed_distributions, tmp_path, variant
+):
+    """Changed root dependency metadata must compose the same Resource API/CLI."""
+    env, products = composed_distributions
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    catalog = outside / "catalog"
+    fixture = populate_rich_catalog(catalog, include_core=True, include_context=True)
+    key = fixture["pr_key"]
+    expected = {
+        mode: ProductionQueryService(catalog, mode=mode)
+        .get_context_resource(key)
+        .to_dict()
+        for mode in ("context_only", "paired")
+    }
+    assert any(d["available"] for d in expected["paired"]["core_dependencies"])
+    assert not any(
+        d["available"] for d in expected["context_only"]["core_dependencies"]
+    )
+    (outside / "expected.json").write_text(
+        json.dumps({"key": key.coordinates(), "views": expected})
+    )
+    venv = tmp_path / "venv"
+    run = package_build_runner
+    run(["uv", "venv", venv, "--python", sys.executable, "--offline"], outside, env)
+    python = venv / "bin/python"
+    # Ordinary offline dependency resolution uses the prepared, hash-bound local
+    # sibling requirements and locked third-party artifacts already in uv cache.
+    run(
+        [
+            "uv",
+            "pip",
+            "install",
+            "--python",
+            python,
+            "--offline",
+            "--constraint",
+            products["requirements"],
+            products[variant],
+        ],
+        outside,
+        env,
+    )
+    program = """
+import importlib.metadata, json, subprocess, sys, sysconfig
+from pathlib import Path
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.p1_context import ResourceKey
+installed = Path(sysconfig.get_path("purelib")).resolve()
+products = {d.metadata["Name"]: d for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
+assert set(products) == {"repo-catalog", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
+owners = {}
+for name, distribution in products.items():
+    for member in distribution.files:
+        if str(member).startswith("repo_catalog/"):
+            assert str(member) not in owners, str(member)
+            owners[str(member)] = name
+fixture = json.loads(Path("expected.json").read_text())
+key = ResourceKey(*fixture["key"])
+for mode, expected in fixture["views"].items():
+    view = ProductionQueryService(Path("catalog"), mode=mode).get_context_resource(key)
+    assert json.loads(json.dumps(view.to_dict())) == expected
+    response = subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "context-resource", "--catalog", "catalog", "--mode", mode, "--service", key.service_instance_uuidv4, "--kind", key.resource_kind, "--id", key.provider_resource_id], capture_output=True, text=True, timeout=30)
+    assert response.returncode == 0, response.stderr
+    assert json.loads(response.stdout) == expected
+for name, module in tuple(sys.modules.items()):
+    if name.startswith("repo_catalog.") and getattr(module, "__file__", None):
+        assert Path(module.__file__).resolve().is_relative_to(installed), name
+print(json.dumps({"result": "passed", "modes": list(fixture["views"]), "installed_distributions": sorted(products), "unique_product_files": len(owners)}))
+"""
+    evidence = json.loads(run([python, "-I", "-c", program], outside, env))
+    assert evidence["result"] == "passed"
+    evidence["artifacts"] = {
+        p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in (products[variant], *dependency_wheels(products, variant=variant))
+    }
+    (outside / "composed-result.json").write_text(json.dumps(evidence, indent=2) + "\n")
