@@ -119,7 +119,7 @@ def test_current_guide_product_links_match_declared_revision():
             )
     assert {
         "src/repo_catalog/cli/main.py",
-        "packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py",
+        "packages/runtime/src/repo_catalog/adapters/sqlite/p1_schema.py",
         "packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py",
         "pyproject.toml",
     } <= source_paths

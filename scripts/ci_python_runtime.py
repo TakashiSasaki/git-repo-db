@@ -694,6 +694,8 @@ def probe(output, reference=None):
         ROOT / "src",
         ROOT / "packages/core/src",
         ROOT / "packages/contracts/src",
+        ROOT / "packages/runtime/src",
+        ROOT / "packages/context/src",
     ):
         if source.is_dir() and str(source) not in sys.path:
             sys.path.insert(0, str(source))

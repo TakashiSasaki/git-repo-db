@@ -124,7 +124,13 @@ def check_console_script() -> dict[str, object]:
 
     expected_roots = {
         (ROOT / directory / "repo_catalog").resolve()
-        for directory in ("src", "packages/core/src", "packages/contracts/src")
+        for directory in (
+            "src",
+            "packages/core/src",
+            "packages/contracts/src",
+            "packages/runtime/src",
+            "packages/context/src",
+        )
     }
     namespace_roots = {Path(path).resolve() for path in repo_catalog.__path__}
     if namespace_roots != expected_roots:

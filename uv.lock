@@ -5,8 +5,10 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "repo-catalog",
+    "repo-catalog-context",
     "repo-catalog-contracts",
     "repo-catalog-core",
+    "repo-catalog-runtime",
 ]
 
 [[package]]
@@ -241,6 +243,7 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "repo-catalog-context" },
     { name = "repo-catalog-contracts" },
     { name = "repo-catalog-core" },
 ]
@@ -257,6 +260,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28,<1" },
+    { name = "repo-catalog-context", editable = "packages/context" },
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
     { name = "repo-catalog-core", editable = "packages/core" },
 ]
@@ -271,6 +275,21 @@ dev = [
 ]
 
 [[package]]
+name = "repo-catalog-context"
+version = "0.2.0"
+source = { editable = "packages/context" }
+dependencies = [
+    { name = "repo-catalog-contracts" },
+    { name = "repo-catalog-runtime" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "repo-catalog-contracts", editable = "packages/contracts" },
+    { name = "repo-catalog-runtime", editable = "packages/runtime" },
+]
+
+[[package]]
 name = "repo-catalog-contracts"
 version = "0.2.0"
 source = { editable = "packages/contracts" }
@@ -279,6 +298,21 @@ source = { editable = "packages/contracts" }
 name = "repo-catalog-core"
 version = "0.2.0"
 source = { editable = "packages/core" }
+dependencies = [
+    { name = "repo-catalog-contracts" },
+    { name = "repo-catalog-runtime" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "repo-catalog-contracts", editable = "packages/contracts" },
+    { name = "repo-catalog-runtime", editable = "packages/runtime" },
+]
+
+[[package]]
+name = "repo-catalog-runtime"
+version = "0.2.0"
+source = { editable = "packages/runtime" }
 dependencies = [
     { name = "repo-catalog-contracts" },
 ]

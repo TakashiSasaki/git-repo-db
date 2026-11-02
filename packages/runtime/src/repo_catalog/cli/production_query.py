@@ -13,26 +13,46 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from repo_catalog.application.core_query import CoreQueryService
-from repo_catalog.domain.core_query import ref_projection_json
 from repo_catalog.domain.p1_coordination import CoordinationError
-from repo_catalog.domain.p1_core import OID, CoreFailure
 from repo_catalog.domain.query_contracts import (
     PageRequest,
     QueryError,
     canonical_json,
 )
+from repo_catalog.domain.shared_values import OID, CoreFailure
 
 
 def _features():
     """Load the explicit optional composition only when its code is installed."""
-    name = "repo_catalog.cli.query_features"
-    try:
-        return importlib.import_module(name)
-    except ModuleNotFoundError as error:
-        if error.name != name:
-            raise
-        return None
+    for name in (
+        "repo_catalog.cli.query_features",
+        "repo_catalog.cli.context_query_features",
+    ):
+        try:
+            return importlib.import_module(name)
+        except ModuleNotFoundError as error:
+            if error.name != name:
+                raise
+    return None
+
+
+def _core_available():
+    return importlib.util.find_spec("repo_catalog.application.core_query") is not None
+
+
+def _query_service(args, features):
+    if features is not None and (
+        features.__name__.endswith(".query_features")
+        or args.mode == "context_only"
+        or args.command == "context-resource"
+        or not _core_available()
+    ):
+        return features.query_service(args.catalog, mode=args.mode)
+    if not _core_available():
+        raise QueryError("MISSING_CAPABILITY", "query", "No Query reader is installed")
+    from repo_catalog.application.core_query import CoreQueryService
+
+    return CoreQueryService(args.catalog, mode=args.mode)
 
 
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -71,34 +91,36 @@ def build_parser() -> argparse.ArgumentParser:
     p_status = sub.add_parser("status", help="Inspect catalog mode and snapshot token")
     _add_common_args(p_status)
 
-    # git-object
-    p_gobj = sub.add_parser("git-object", help="Query a single Git object by OID")
-    _add_common_args(p_gobj)
-    p_gobj.add_argument("--format", required=True, choices=("sha1", "sha256"))
-    p_gobj.add_argument("--object-oid", required=True)
-    p_gobj.add_argument("--include-bytes", action="store_true")
+    if _core_available():
+        # git-object
+        p_gobj = sub.add_parser("git-object", help="Query a single Git object by OID")
+        _add_common_args(p_gobj)
+        p_gobj.add_argument("--format", required=True, choices=("sha1", "sha256"))
+        p_gobj.add_argument("--object-oid", required=True)
+        p_gobj.add_argument("--include-bytes", action="store_true")
 
-    # git-objects
-    p_gobjs = sub.add_parser("git-objects", help="List Git objects with pagination")
-    _add_common_args(p_gobjs)
-    p_gobjs.add_argument("--format", default=None, choices=("sha1", "sha256"))
-    p_gobjs.add_argument("--native-type", default=None)
-    _add_page_args(p_gobjs)
+        # git-objects
+        p_gobjs = sub.add_parser("git-objects", help="List Git objects with pagination")
+        _add_common_args(p_gobjs)
+        p_gobjs.add_argument("--format", default=None, choices=("sha1", "sha256"))
+        p_gobjs.add_argument("--native-type", default=None)
+        _add_page_args(p_gobjs)
 
-    # git-observations
-    p_gobs = sub.add_parser(
-        "git-observations", help="List Git observations with pagination"
-    )
-    _add_common_args(p_gobs)
-    p_gobs.add_argument("--kind", default=None)
-    p_gobs.add_argument("--ref-prefix", default=None)
-    _add_page_args(p_gobs)
+        # git-observations
+        p_gobs = sub.add_parser(
+            "git-observations", help="List Git observations with pagination"
+        )
+        _add_common_args(p_gobs)
+        p_gobs.add_argument("--kind", default=None)
+        p_gobs.add_argument("--ref-prefix", default=None)
+        _add_page_args(p_gobs)
 
-    p_refobs = sub.add_parser(
-        "ref-observations", help="Page original ref observations and all result Claims"
-    )
-    _add_common_args(p_refobs)
-    _add_page_args(p_refobs)
+        p_refobs = sub.add_parser(
+            "ref-observations",
+            help="Page original ref observations and all result Claims",
+        )
+        _add_common_args(p_refobs)
+        _add_page_args(p_refobs)
 
     features = _features()
     if features is not None:
@@ -120,11 +142,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         features = _features()
-        service = (
-            CoreQueryService(args.catalog, mode=args.mode)
-            if features is None
-            else features.query_service(args.catalog, mode=args.mode)
-        )
+        service = _query_service(args, features)
         cmd = args.command
 
         if cmd == "status":
@@ -139,6 +157,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "snapshot_token": token.encode(),
             }
         elif cmd == "ref-observations":
+            from repo_catalog.domain.core_query import ref_projection_json
+
             page = service.list_ref_observations(_page_from_args(args))
             payload = {
                 "items": [ref_projection_json(item) for item in page.items],

@@ -74,7 +74,7 @@ class DependencySet:
             MappingDispositionKey,
             ResourceKey,
         )
-        from repo_catalog.domain.p1_core import OID
+        from repo_catalog.domain.shared_values import OID
 
         for name in _DIMENSIONS:
             object.__setattr__(self, name, frozenset(getattr(self, name)))
@@ -654,8 +654,8 @@ def dependencies(unit):
         MappingSupport,
         ResourceKey,
     )
-    from repo_catalog.domain.p1_core import OID
     from repo_catalog.domain.parent_report import ParentReportKey
+    from repo_catalog.domain.shared_values import OID
 
     values = {name: set() for name in _DIMENSIONS}
     pending = [(unit, 0)]

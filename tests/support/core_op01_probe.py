@@ -81,7 +81,11 @@ def main(output):
     from repo_catalog.domain.shared_values import OID, CoreFailure, Provenance
 
     installed = Path(sysconfig.get_path("purelib")).resolve()
-    expected_names = {"repo-catalog-core", "repo-catalog-contracts"}
+    expected_names = {
+        "repo-catalog-core",
+        "repo-catalog-contracts",
+        "repo-catalog-runtime",
+    }
     distributions = {
         d.metadata["Name"]: d
         for d in importlib.metadata.distributions()

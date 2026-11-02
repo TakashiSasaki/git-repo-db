@@ -15,13 +15,13 @@ from contextlib import ExitStack, closing, contextmanager
 from functools import wraps
 from pathlib import Path
 
-from repo_catalog.adapters.sqlite.context_admission import admission_checked
-from repo_catalog.adapters.sqlite.p1_context import ContextStore
-from repo_catalog.adapters.sqlite.p1_coordination import (
+from repo_catalog.adapters.sqlite.catalog_runtime import (
     catalog_completion,
     catalog_gate,
     persist_catalog_stop,
 )
+from repo_catalog.adapters.sqlite.context_admission import admission_checked
+from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.p1_context import (
@@ -48,7 +48,6 @@ from repo_catalog.domain.p1_context import (
     validate_relation_resource_kind,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError
-from repo_catalog.domain.p1_core import OID, uuid4_value
 from repo_catalog.domain.parent_report import validate_parent_report
 from repo_catalog.domain.production_context import (
     CollectionObservation,
@@ -72,6 +71,7 @@ from repo_catalog.domain.resource_stage import (
     refuse_transfer,
     validate_stage_storage,
 )
+from repo_catalog.domain.shared_values import OID, uuid4_value
 
 _EXPORT_CONTEXT_ROWS = {
     "providers": (
@@ -425,7 +425,9 @@ class Context(ContextStore):
         cls, db, directory: Path, *, authorization=None, admission=None
     ) -> Iterator[Context]:
         """Inherit an explicit coordinator binding without ending its lease scope."""
-        from repo_catalog.adapters.sqlite.p1_coordination import AdmissionTransaction
+        from repo_catalog.adapters.sqlite.context_transaction import (
+            AdmissionTransaction,
+        )
         from repo_catalog.domain.context_admission import AdmissionRefused
 
         if authorization is not None or admission is not None:
@@ -453,7 +455,7 @@ class Context(ContextStore):
     def for_snapshot(
         cls, db, directory: Path, *, validation_work=None
     ) -> Iterator[Context]:
-        from repo_catalog.adapters.sqlite.p1_coordination import ReadSnapshot
+        from repo_catalog.adapters.sqlite.catalog_runtime import ReadSnapshot
 
         if (
             isinstance(db, ReadSnapshot)
@@ -569,7 +571,7 @@ class Context(ContextStore):
                     identity = db.execute("SELECT * FROM store_identity").fetchall()
                     if _identity_sink is not None:
                         _identity_sink(identity)
-                    from repo_catalog.adapters.sqlite.p1_coordination import (
+                    from repo_catalog.adapters.sqlite.catalog_runtime import (
                         apply_snapshot_read_limits,
                     )
 
@@ -588,14 +590,14 @@ class Context(ContextStore):
     def snapshot_identity(self):
         """Return the checked identity of this live Context capability."""
         self._check()
-        from repo_catalog.adapters.sqlite.p1_coordination import _identity
+        from repo_catalog.adapters.sqlite.catalog_runtime import _identity
 
         return _identity(self.db, "context")
 
     def snapshot_fingerprint(self):
         """Metadata fence; retained text bytes remain typed-read verified."""
         self._check()
-        from repo_catalog.adapters.sqlite.p1_coordination import _digest
+        from repo_catalog.adapters.sqlite.catalog_runtime import _digest
 
         return _digest(self.db, metadata_only=True)
 
@@ -626,9 +628,11 @@ class Context(ContextStore):
             raise ContextError("AUTHORITATIVE_CORRUPTION", scope) from error
 
     def _validate_schema(self):
-        from repo_catalog.adapters.sqlite.p1_coordination import (
-            AdmissionTransaction,
+        from repo_catalog.adapters.sqlite.catalog_runtime import (
             ReadSnapshot,
+        )
+        from repo_catalog.adapters.sqlite.context_transaction import (
+            AdmissionTransaction,
         )
         from repo_catalog.adapters.sqlite.p1_schema import (
             SchemaError,
