@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
@@ -46,6 +47,8 @@ from repo_catalog.domain.p1_context import (
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.resource_identification import ResourceIdentification
+from repo_catalog.domain.resource_identity import encode_identity
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 from tests.support.context_admission import (
     AuthorizedExchangeService as ExchangeService,
@@ -479,3 +482,150 @@ def test_exchange_evaluates_core_dependencies_against_receiver_core(
         assert len(deps) >= 1
         # None of the dependencies should be required in receiver until OID is actually in Core
         assert all(not d.required for d in deps)
+
+
+@pytest.mark.parametrize(
+    "kind,valid_ns_kind,invalid_ns_kind,subtype",
+    [
+        ("review", "pull_request", "issue", "review"),
+        ("thread", "pull_request", "issue", "thread"),
+        ("comment", "pull_request", "commit", "discussion"),
+        ("document", "pull_request", "issue", "specification"),
+    ],
+)
+def test_unselected_context_malformed_identification_refuses_before_core_effects(
+    tmp_path: Path, kind: str, valid_ns_kind: str, invalid_ns_kind: str, subtype: str
+) -> None:
+    repo_uuid = str(uuid4())
+    cat_src = tmp_path / "cat_src"
+    oids = _setup_source_catalog(cat_src, repo_uuid, fmt="sha1")
+    svc_src = ExchangeService(cat_src)
+    pkg = svc_src.export_package(selection=ExchangeSelectionScope(all_selected=True))
+
+    service_uuid = pkg.context["providers"][0]["service_instance_uuidv4"]
+    ns_raw_id = encode_identity("PR_42")
+    parent_key = ResourceKey(service_uuid, valid_ns_kind, ns_raw_id)
+    child_key = ResourceKey(
+        service_uuid,
+        kind,
+        encode_identity([valid_ns_kind, ns_raw_id, subtype, "child_1"]),
+    )
+    valid_ident = ResourceIdentification.scoped(
+        child_key, parent_key, subtype, "child_1"
+    )
+    malformed_row = valid_ident.to_wire()
+    # Invalidate namespace kind: e.g. review scoped to 'issue'
+    malformed_row["identifier_namespace_kind"] = invalid_ns_kind
+
+    cat_dst = tmp_path / "cat_dst"
+    init_catalog_stores(
+        cat_dst, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
+    )
+    svc_dst = ExchangeService(cat_dst)
+
+    # Construct hostile raw wire dict with malformed context row
+    hostile_dict = json.loads(encode_package(pkg))
+    hostile_dict["package_id"] = str(uuid4())
+    hostile_dict["context"]["resources"].append(malformed_row)
+    # Recompute package digest so digest check passes, exercising semantic validation
+    content = {k: v for k, v in hostile_dict.items() if k != "digest_sha256"}
+    hostile_dict["digest_sha256"] = hashlib.sha256(
+        json.dumps(
+            content, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+    ).hexdigest()
+
+    selection = ExchangeSelectionScope(
+        all_selected=True,
+        include_core=True,
+        include_context=False,
+    )
+    with pytest.raises(ExchangeError) as exc_info:
+        svc_dst.import_package(
+            hostile_dict,
+            selection=selection,
+            new_request=True,
+            permitted_repository_uuidv4s=(repo_uuid,),
+        )
+    assert exc_info.value.code == "INVALID_IDENTIFICATION"
+
+    # Core authority must remain completely unchanged (0 objects admitted)
+    core_dst = GitCore(cat_dst / "core.sqlite3")
+    try:
+        with pytest.raises(CoreFailure):
+            core_dst.read_metadata(oids["commit2"])
+    finally:
+        core_dst.close()
+    with sqlite3.connect(cat_dst / "core.sqlite3") as core_db:
+        assert (
+            core_db.execute("SELECT count(*) FROM retained_metadata").fetchone()[0] == 0
+        )
+
+
+@pytest.mark.parametrize(
+    "kind,ns_kind,subtype",
+    [
+        ("review", "pull_request", "review"),
+        ("thread", "pull_request", "thread"),
+        ("comment", "pull_request", "discussion"),
+        ("document", "pull_request", "specification"),
+    ],
+)
+def test_unselected_context_valid_identification_admits_core(
+    tmp_path: Path, kind: str, ns_kind: str, subtype: str
+) -> None:
+    repo_uuid = str(uuid4())
+    cat_src = tmp_path / "cat_src"
+    oids = _setup_source_catalog(cat_src, repo_uuid, fmt="sha1")
+    svc_src = ExchangeService(cat_src)
+    pkg = svc_src.export_package(selection=ExchangeSelectionScope(all_selected=True))
+
+    service_uuid = pkg.context["providers"][0]["service_instance_uuidv4"]
+    ns_raw_id = encode_identity("PR_42")
+    parent_key = ResourceKey(service_uuid, ns_kind, ns_raw_id)
+    child_key = ResourceKey(
+        service_uuid,
+        kind,
+        encode_identity([ns_kind, ns_raw_id, subtype, "child_1"]),
+    )
+    valid_ident = ResourceIdentification.scoped(
+        child_key, parent_key, subtype, "child_1"
+    )
+    valid_row = valid_ident.to_wire()
+
+    cat_dst = tmp_path / "cat_dst"
+    init_catalog_stores(
+        cat_dst, repository_uuidv4=repo_uuid, stores=("core", "context", "operational")
+    )
+    svc_dst = ExchangeService(cat_dst)
+
+    valid_dict = json.loads(encode_package(pkg))
+    valid_dict["package_id"] = str(uuid4())
+    valid_dict["context"]["resources"].append(valid_row)
+    content = {k: v for k, v in valid_dict.items() if k != "digest_sha256"}
+    valid_dict["digest_sha256"] = hashlib.sha256(
+        json.dumps(
+            content, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+    ).hexdigest()
+
+    selection = ExchangeSelectionScope(
+        all_selected=True,
+        include_core=True,
+        include_context=False,
+    )
+    rep = svc_dst.import_package(
+        valid_dict,
+        selection=selection,
+        new_request=True,
+        permitted_repository_uuidv4s=(repo_uuid,),
+    )
+    assert rep.admitted_core_objects >= 1
+    core_dst = GitCore(cat_dst / "core.sqlite3")
+    try:
+        assert core_dst.read_metadata(oids["commit2"]) is not None
+    finally:
+        core_dst.close()
+    # Context remains completely unadmitted
+    with Context.snapshot(cat_dst) as ctx:
+        assert ctx.resources() == ()

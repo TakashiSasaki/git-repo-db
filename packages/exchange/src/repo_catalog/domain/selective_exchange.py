@@ -969,7 +969,15 @@ def validate_context(data):
             "thread",
             "comment",
             "document",
-        }:
+        } or any(
+            row.get(k) is not None
+            for k in (
+                "identifier_namespace_kind",
+                "identifier_namespace_id",
+                "document_kind",
+                "provider_document_id",
+            )
+        ):
             ResourceIdentification.from_wire(row)
     for row in data["field_candidates"]:
         candidate = FieldCandidate(
@@ -1066,10 +1074,19 @@ def validate_context_bindings(data, source_services):
     identifications = {}
     for row in data["resources"]:
         if row.get("resource_kind") in {"review", "thread", "comment", "document"}:
-            try:
-                identifications[resource(row)] = ResourceIdentification.from_wire(row)
-            except (ValueError, TypeError):
+            is_staged = all(
+                row.get(k) is None
+                for k in (
+                    "identifier_namespace_kind",
+                    "identifier_namespace_id",
+                    "document_kind",
+                    "provider_document_id",
+                )
+            )
+            if is_staged:
                 pass
+            else:
+                identifications[resource(row)] = ResourceIdentification.from_wire(row)
         else:
             identifications[resource(row)] = ResourceIdentification.from_wire(row)
     from repo_catalog.domain.context_admission import extract_provenance_sources
