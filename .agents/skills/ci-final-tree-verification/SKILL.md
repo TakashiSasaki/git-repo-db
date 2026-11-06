@@ -899,6 +899,23 @@ its sealed builds and consumer receipts alongside the review hashes; never reuse
 a nonempty basetemp whose evidence must survive (pytest clears it). Verify actual
 artifact hashes after copying, and keep private raw evidence untracked.
 
+## Check platform assumptions in called extraction helpers
+
+A Windows bootstrap passed Linux inspection but its called archive extractor used
+`os.O_NOFOLLOW`, which is unavailable on Windows. Audit the entire called helper
+chain for platform-specific constants and system calls, not just the entry point.
+Do not replace a missing no-follow flag with zero without equivalent safeguards:
+the local-catalog extractor uses a fresh private destination, validates the archive
+before writing, rejects links and reparse parents, and creates files exclusively.
+Keep the existing POSIX extractor's no-follow checks intact.
+
+Reproduce the portability boundary and refusal controls with
+`scripts/local-run.sh pytest -q -n 2 tests/unit/test_local_catalog_runtime.py -k windows_extract`.
+The regression simulates the missing constant on Linux; it does not establish native
+Windows behavior. Run the native Windows workflow separately when available. This
+procedure concerns the standalone local-catalog bootstrap, not a general permission
+to weaken archive extraction or change other runtime installers.
+
 ## Bind standalone SQLite restores to the bytes actually activated
 
 The local-catalog review found two concrete counterexamples: checking a source
