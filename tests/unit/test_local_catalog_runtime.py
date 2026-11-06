@@ -3,6 +3,7 @@
 import copy
 import io
 import json
+import os
 import tarfile
 from unittest.mock import patch
 
@@ -99,6 +100,63 @@ def test_windows_archive_accepts_regular_distribution_paths(tmp_path):
     )
 
 
+def test_windows_extract_works_without_posix_nofollow(tmp_path, monkeypatch):
+    source = archive(tmp_path, ["python/python.exe", "python/DLLs/_sqlite3.pyd"])
+    destination = tmp_path / "fresh"
+    destination.mkdir(mode=0o700)
+    monkeypatch.delattr(runtime.os, "O_NOFOLLOW", raising=False)
+    with patch.object(
+        runtime.runtime,
+        "safe_extract",
+        side_effect=AssertionError("POSIX extractor used"),
+    ):
+        runtime.extract_windows(source, destination)
+    assert (destination / "python/python.exe").read_bytes() == b"x"
+    assert (destination / "python/DLLs/_sqlite3.pyd").read_bytes() == b"x"
+
+
+def test_windows_extract_requires_empty_destination(tmp_path):
+    source = archive(tmp_path, ["python/python.exe"])
+    destination = tmp_path / "existing"
+    destination.mkdir()
+    (destination / "preserved").write_bytes(b"existing data")
+    with pytest.raises(ValueError, match="empty private destination"):
+        runtime.extract_windows(source, destination)
+    assert (destination / "preserved").read_bytes() == b"existing data"
+    assert not (destination / "python").exists()
+
+
+@pytest.mark.skipif(
+    os.name != "posix", reason="symlink creation needs no Windows privilege"
+)
+def test_windows_extract_refuses_link_destination(tmp_path):
+    source = archive(tmp_path, ["python/python.exe"])
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    destination = tmp_path / "linked"
+    destination.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match="link or reparse"):
+        runtime.extract_windows(source, destination)
+    assert list(outside.iterdir()) == []
+
+
+def test_windows_extract_refuses_archive_links_before_writes(tmp_path):
+    source = tmp_path / "linked.tar.gz"
+    with tarfile.open(source, "w:gz") as output:
+        ordinary = tarfile.TarInfo("python/python.exe")
+        ordinary.size = 1
+        output.addfile(ordinary, io.BytesIO(b"x"))
+        linked = tarfile.TarInfo("python/DLLs")
+        linked.type = tarfile.SYMTYPE
+        linked.linkname = "../outside"
+        output.addfile(linked)
+    destination = tmp_path / "fresh"
+    destination.mkdir()
+    with pytest.raises(ValueError, match="archive links"):
+        runtime.extract_windows(source, destination)
+    assert list(destination.iterdir()) == []
+
+
 def test_changed_runtime_reference_refuses_even_when_python_version_matches():
     measured = {
         key: "unchanged"
@@ -151,7 +209,7 @@ def test_installation_digest_failure_retains_failure_without_extracting(
             "download_verified",
             side_effect=ValueError("digest mismatch"),
         ),
-        patch.object(runtime.runtime, "safe_extract") as extract,
+        patch.object(runtime, "extract_windows") as extract,
         pytest.raises(ValueError, match="digest mismatch"),
     ):
         runtime.install(destination, receipt)

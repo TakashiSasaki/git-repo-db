@@ -15,6 +15,7 @@ import os
 import platform
 import re
 import sqlite3
+import stat
 import sys
 import tarfile
 import tempfile
@@ -60,28 +61,124 @@ def windows_distribution(manifest):
     }
 
 
-def check_windows_archive(archive):
-    """Add native path checks before using the existing bounded safe extractor."""
+def _windows_members(source):
+    """Validate the complete bounded inventory before creating archive entries."""
     reserved = re.compile(r"(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\..*)?", re.I)
     names = set()
+    members = []
+    unpacked = 0
+    for member in source:
+        name = runtime._contained(member.name)
+        if name != member.name.rstrip("/"):
+            raise ValueError(f"Non-normal Windows archive path: {member.name!r}")
+        if not (member.isreg() or member.isdir()):
+            raise ValueError("Windows distribution cannot contain archive links")
+        parts = name.split("/")
+        if any(
+            any(character in '<>:"|?*' or ord(character) < 32 for character in part)
+            or part.endswith((" ", "."))
+            or reserved.fullmatch(part)
+            for part in parts
+        ):
+            raise ValueError(f"Unsafe Windows archive path: {member.name!r}")
+        # Windows extraction must not silently overwrite differently cased names.
+        folded = name.casefold()
+        if folded in names:
+            raise ValueError(f"Duplicate Windows archive path: {member.name!r}")
+        names.add(folded)
+        members.append(member)
+        unpacked += member.size
+        if member.size < 0 or len(members) > runtime.MAX_MEMBERS:
+            raise ValueError("Unexpected Windows archive member count or size")
+        if unpacked > runtime.MAX_UNPACKED_BYTES:
+            raise ValueError("Windows archive expands beyond the permitted size")
+    if not members:
+        raise ValueError("Empty Windows distribution archive")
+    return members
+
+
+def check_windows_archive(archive):
     with tarfile.open(archive) as source:
-        for member in source:
-            name = runtime._contained(member.name)
-            if not (member.isreg() or member.isdir()):
-                raise ValueError("Windows distribution cannot contain archive links")
-            parts = name.split("/")
-            if any(
-                any(character in '<>:"|?*' or ord(character) < 32 for character in part)
-                or part.endswith((" ", "."))
-                or reserved.fullmatch(part)
-                for part in parts
+        _windows_members(source)
+
+
+def _plain_directory(path):
+    metadata = path.lstat()
+    if (
+        not stat.S_ISDIR(metadata.st_mode)
+        or stat.S_ISLNK(metadata.st_mode)
+        or getattr(metadata, "st_file_attributes", 0) & 1024
+    ):
+        raise ValueError(
+            f"Extraction directory must not be a link or reparse point: {path}"
+        )
+
+
+def _make_directories(path, root):
+    current = root
+    _plain_directory(current)
+    for part in path.relative_to(root).parts:
+        current /= part
+        try:
+            current.mkdir(mode=0o700)
+        except FileExistsError:
+            pass
+        _plain_directory(current)
+
+
+def extract_windows(archive, destination):
+    """Extract into a fresh private tree without requiring POSIX O_NOFOLLOW.
+
+    Archive links and special members are forbidden. Every parent is checked for
+    native reparse points and files use exclusive creation, which also refuses an
+    existing final symlink on platforms without O_NOFOLLOW. No archive permissions
+    or ownership are installed. The Linux extractor and its stronger POSIX flags
+    remain unchanged.
+    """
+    root = Path(destination).absolute()
+    _plain_directory(root)
+    if any(root.iterdir()):
+        raise ValueError("Windows extraction requires an empty private destination")
+    with tarfile.open(archive) as source:
+        members = _windows_members(source)
+        for member in members:
+            target = root / member.name
+            if member.isdir():
+                _make_directories(target, root)
+                continue
+            _make_directories(target.parent, root)
+            flags = (
+                os.O_WRONLY
+                | os.O_CREAT
+                | os.O_EXCL
+                | getattr(os, "O_BINARY", 0)
+                | getattr(os, "O_NOFOLLOW", 0)
+            )
+            descriptor = os.open(target, flags, 0o600)
+            with (
+                os.fdopen(descriptor, "wb") as output,
+                source.extractfile(member) as content,
             ):
-                raise ValueError(f"Unsafe Windows archive path: {member.name!r}")
-            # Windows extraction must not silently overwrite differently cased names.
-            folded = name.casefold()
-            if folded in names:
-                raise ValueError(f"Duplicate Windows archive path: {member.name!r}")
-            names.add(folded)
+                remaining = member.size
+                while remaining:
+                    chunk = content.read(min(1024 * 1024, remaining))
+                    if not chunk:
+                        raise ValueError("Truncated Windows distribution member")
+                    output.write(chunk)
+                    remaining -= len(chunk)
+        for directory, subdirectories, files in os.walk(root, followlinks=False):
+            _plain_directory(Path(directory))
+            for name in subdirectories:
+                _plain_directory(Path(directory) / name)
+            for name in files:
+                metadata = (Path(directory) / name).lstat()
+                if (
+                    not stat.S_ISREG(metadata.st_mode)
+                    or getattr(metadata, "st_file_attributes", 0) & 1024
+                ):
+                    raise ValueError(
+                        "Extracted Windows member is not a plain regular file"
+                    )
 
 
 def write_json(path, value):
@@ -93,13 +190,12 @@ def write_json(path, value):
 def install(destination, receipt):
     selection = windows_distribution(json.loads(runtime.MANIFEST.read_text()))
     destination = Path(destination).resolve()
-    destination.mkdir(parents=True, exist_ok=False)
+    destination.mkdir(mode=0o700, parents=True, exist_ok=False)
     result = {"schema": SCHEMA, "status": "failed", "selection": selection}
     try:
         with tempfile.TemporaryDirectory() as temporary:
             archive = runtime.download_verified(selection, temporary)
-            check_windows_archive(archive)
-            runtime.safe_extract(archive, destination)
+            extract_windows(archive, destination)
         distribution = destination / "python"
         executable = distribution / "python.exe"
         identity = runtime.smoke(executable)
