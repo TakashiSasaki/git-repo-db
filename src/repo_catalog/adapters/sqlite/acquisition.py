@@ -21,7 +21,10 @@ from typing import Any
 from uuid import uuid4
 
 from repo_catalog.adapters.sqlite.notes import NotesProgress
-from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
+from repo_catalog.adapters.sqlite.operational_coordination import (
+    NotesWorkBudget,
+    WorkLedger,
+)
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.p1_coordination import (
     CoordinationError,

@@ -899,6 +899,28 @@ its sealed builds and consumer receipts alongside the review hashes; never reuse
 a nonempty basetemp whose evidence must survive (pytest clears it). Verify actual
 artifact hashes after copying, and keep private raw evidence untracked.
 
+## Bind standalone SQLite restores to the bytes actually activated
+
+The local-catalog review found two concrete counterexamples: checking a source
+pathname's SHA-256 before a later SQLite open admits replacement bytes, and a
+read-only SQLite open can consume WAL bytes absent from the checked main file.
+Use a private staged copy, hash the exact bytes copied from a pinned regular-file
+descriptor, reject unsupported source sidecars, validate the staged schema/domain
+and namespace, then install only that verified copy into a fresh destination.
+Close SQLite connections explicitly; their context managers commit/rollback but
+do not close handles. Compare the copied identity with the manifest identity,
+including when the live source handle has cached earlier identity metadata.
+
+Exercise both sides of the race: replacement before copying must be refused;
+changes to the original after staging cannot alter the restored result. Check
+destination noncreation on refusal and source preservation, not just the raised
+exception. Reproduce the verified controls with
+`scripts/local-run.sh pytest -q -n 2 tests/worktrees/test_worktrees.py -k restore`
+and `tests/filesystem/test_filesystem.py -k 'backup or identity'` using the same
+runner prefix. These are standalone ADR0039 safeguards; do not substitute them
+for existing Core–Context paired recovery, stop fencing or complete WAL/journal
+preservation. Native Windows execution remains separately required.
+
 ## Check extracted smoke programs as shared interfaces
 
 Before changing a standalone verifier's embedded smoke string, search for both

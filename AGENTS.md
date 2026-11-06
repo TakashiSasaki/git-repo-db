@@ -33,6 +33,15 @@ offline CI work. Apply the [efficient agent execution policy](#efficient-agent-e
 
 ## Architecture orientation
 
+- [ADR 0039](docs/adr/0039-independent-filesystem-and-worktree-catalogs.md) adds
+  independent filesystem and worktree authorities and an optional DB-free local
+  composition package. They are outside the existing P1 store/pair factory.
+  Follow their [operation contract](docs/architecture/local-catalog-contract.md):
+  metadata/digests only, qualified optional links, full fresh hashing, honest
+  partial scan history and offline EFU export. Native Windows verification for
+  these packages uses the scoped path in `docs/local-python.md`; this does not
+  port or relax the existing rich runtime's platform/runtime requirements.
+
 - [ADR 0037](docs/adr/0037-operation-scoped-module-independence.md) and its
   [operation contract](docs/architecture/module-independence-contract.md) are the
   accepted module/install target. [ADR 0038](docs/adr/0038-scoped-recovery-and-optional-initialization.md)

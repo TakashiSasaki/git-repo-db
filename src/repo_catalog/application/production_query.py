@@ -827,12 +827,12 @@ class ProductionQueryService(ContextResourceReader, CoreQueryService):
 
     @_stored_view
     def _extract_documents(self, snapshot, kind, work=None):
-        from repo_catalog.adapters.sqlite.production_search import (
-            ProductionSearchAdapter,
-        )
-
         if kind == "git_metadata":
-            return ProductionSearchAdapter.extract_git_metadata_documents(snapshot.core)
+            from repo_catalog.adapters.sqlite.search_core import (
+                extract_git_metadata_documents,
+            )
+
+            return extract_git_metadata_documents(snapshot.core)
         if kind == "notes":
             try:
                 return self._extract_ref_notes_documents(snapshot.core, work)
@@ -842,7 +842,11 @@ class ProductionQueryService(ContextResourceReader, CoreQueryService):
                         "QUERY_BUDGET", "ref-notes-search", str(error)
                     ) from error
                 raise
-        return ProductionSearchAdapter.extract_context_documents(
+        from repo_catalog.adapters.sqlite.search_context import (
+            extract_context_documents,
+        )
+
+        return extract_context_documents(
             snapshot.context, evidence=self.mapping_evidence
         )
 

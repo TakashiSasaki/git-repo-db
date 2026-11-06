@@ -16,6 +16,18 @@ environment exists. Ubuntu 24.04's SQLite 3.45.1 is below the product floor.
 
 ## Prerequisites
 
+The Linux instructions below remain the full product development environment.
+The independent local catalog packages also have a scoped native Windows path:
+`scripts/local_catalog_runtime.py install --destination PATH --receipt RECEIPT`
+selects the checksum-bound Windows build from `scripts/ci_python_runtime.json`.
+Run `probe --installation RECEIPT --output OUTPUT` with its installed Python,
+then repeat with `--reference OUTPUT --factories` after installing the filesystem,
+worktrees and local packages. The executable is `PATH/python/python.exe`.
+The focused `.github/workflows/local-catalogs.yml` records this flow and runs only
+the standalone packages/tests, keeping Core, Context, Access and the POSIX runtime
+physically absent. It is not a Windows port of the existing rich product. Its
+native execution result must be reported separately from Linux verification.
+
 - Linux `x86_64` or `aarch64` (glibc). Other hosts are refused with a clear message;
   no other Python or SQLite is substituted. Adding a platform means adding its
   SHA-256 to the manifest through review.
