@@ -337,7 +337,7 @@ def test_pages_trigger_covers_executed_schema_dependencies(product_source_env):
 import json, runpy, sys
 from pathlib import Path
 root = Path.cwd()
-source_roots = [root / 'src/repo_catalog', root / 'packages/core/src/repo_catalog', root / 'packages/contracts/src/repo_catalog', root / 'packages/runtime/src/repo_catalog', root / 'packages/context/src/repo_catalog', root / 'packages/access/src/repo_catalog', root / 'packages/paired-query/src/repo_catalog', root / 'packages/search/src/repo_catalog', root / 'packages/operational/src/repo_catalog', root / 'packages/git-acquisition/src/repo_catalog']
+source_roots = [root / 'src/repo_catalog', root / 'packages/core/src/repo_catalog', root / 'packages/contracts/src/repo_catalog', root / 'packages/runtime/src/repo_catalog', root / 'packages/context/src/repo_catalog', root / 'packages/access/src/repo_catalog', root / 'packages/paired-query/src/repo_catalog', root / 'packages/search/src/repo_catalog', root / 'packages/operational/src/repo_catalog', root / 'packages/git-acquisition/src/repo_catalog', root / 'packages/exchange/src/repo_catalog']
 sys.argv = ['scripts/schema_inventory.py', '--check']
 try:
     runpy.run_path('scripts/schema_inventory.py', run_name='__main__')

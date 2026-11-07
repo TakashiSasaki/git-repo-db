@@ -25,11 +25,11 @@ targets=(
   tests/unit/test_native_acquisition_values.py
   packages/context/src/repo_catalog/domain/context_registration.py
   src/repo_catalog/domain/acquisition.py
-  src/repo_catalog/domain/exchange.py
+  packages/exchange/src/repo_catalog/domain/exchange.py
   packages/context/src/repo_catalog/adapters/sqlite/p1_context.py
   packages/context/src/repo_catalog/adapters/sqlite/production_context.py
   src/repo_catalog/application/acquisition.py
-  src/repo_catalog/application/exchange.py
+  packages/exchange/src/repo_catalog/application/exchange.py
   src/repo_catalog/application/production_query.py
   tests/unit/test_context_registration_values.py
   tests/integration/p1/test_context_relations.py

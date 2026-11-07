@@ -7,8 +7,8 @@ from uuid import uuid4
 
 import pytest
 
+from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
 from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import ExchangeSelectionScope
@@ -150,7 +150,7 @@ def test_core_receive_stop_before_commit_rolls_back_without_context(tmp_path):
         """
 from pathlib import Path
 from repo_catalog.application.exchange import ExchangeService
-from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
+from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
 from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.adapters.sqlite.p1_schema import connect

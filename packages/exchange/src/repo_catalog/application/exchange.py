@@ -24,15 +24,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator
 from uuid import uuid4
 
-from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
-from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.p1_coordination import (
-    AdmissionTransaction,
-    PairCoordinator,
+from repo_catalog.adapters.sqlite.admission_transaction import AdmissionTransaction
+from repo_catalog.adapters.sqlite.catalog_runtime import (
     SnapshotReadLimits,
     catalog_completion,
     catalog_gate,
 )
+from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.exchange import (
     ExchangeError,
@@ -42,6 +40,7 @@ from repo_catalog.domain.exchange import (
     decode_package,
     empty_context_section,
     empty_core_section,
+    require_context,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
 from repo_catalog.domain.p1_coordination import (
@@ -90,6 +89,7 @@ from repo_catalog.domain.selective_exchange import (
 )
 
 if TYPE_CHECKING:
+    from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
     from repo_catalog.adapters.sqlite.production_context import Context
 
 
@@ -245,6 +245,7 @@ class ExchangeService:
     """Selective verification-aware export and untrusted package import service."""
 
     def export_transfer_events(self, *args, **kwargs):
+        require_context()
         from repo_catalog.domain.resource_stage import UnsupportedResourceStage
 
         raise UnsupportedResourceStage("export_transfer_events")
@@ -275,7 +276,7 @@ class ExchangeService:
             raise CoordinationError("RECOVERY_REQUIRED", "catalog")
 
     def _read_limits(self):
-        from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
+        from repo_catalog.adapters.sqlite.catalog_runtime import SnapshotReadLimits
 
         if hasattr(self, "_export_scope"):
             return SnapshotReadLimits(
@@ -300,11 +301,14 @@ class ExchangeService:
                 core_identity = core.catalog_identity()
             finally:
                 core.close()
+            with catalog_completion(self.directory):
+                self._check_stop()
         if not self._has_context():
             if core_identity is not None:
                 return core_identity
             raise CoordinationError("AUTHORITY_UNAVAILABLE", "catalog")
         if self._has_context():
+            require_context()
             from repo_catalog.adapters.sqlite.production_context import Context
 
             identity = []
@@ -362,6 +366,14 @@ class ExchangeService:
     def _open_operational(
         self, repo_uuid: str, instance_uuid: str
     ) -> Iterator[OperationalAcquisitionLedger | None]:
+        from importlib.util import find_spec
+
+        if find_spec("repo_catalog.adapters.sqlite.acquisition") is None:
+            raise CoordinationError("MISSING_CAPABILITY", "operational")
+        from repo_catalog.adapters.sqlite.acquisition import (
+            OperationalAcquisitionLedger,
+        )
+
         if isinstance(self.operational, OperationalAcquisitionLedger):
             if self.operational.work_ledger.store_identity() != (
                 repo_uuid,
@@ -369,6 +381,9 @@ class ExchangeService:
             ):
                 raise CoordinationError("STORE_IDENTITY", "operational")
             yield self.operational
+            self.operational.work_ledger.store_identity()
+            with catalog_completion(self.directory):
+                self._check_stop()
             return
         op_path = (
             Path(self.operational)
@@ -387,8 +402,11 @@ class ExchangeService:
         )
         try:
             yield ledger
+            ledger.work_ledger.store_identity()
         finally:
             ledger.close()
+        with catalog_completion(self.directory):
+            self._check_stop()
 
     def export_package(
         self,
@@ -1062,7 +1080,7 @@ class ExchangeService:
                         }
                     )
 
-                from repo_catalog.application.ref_observations import encode_metered
+                from repo_catalog.application.query_encoding import encode_metered
                 from repo_catalog.domain.ref_coverage import (
                     REF_NOTES_INVENTORY,
                     serialize_structures,
@@ -1235,7 +1253,7 @@ class ExchangeService:
             None if scope.source_uuidv4s is None else set(scope.source_uuidv4s)
         )
 
-        from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
+        from repo_catalog.adapters.sqlite.catalog_runtime import SnapshotReadLimits
 
         with Context.snapshot(
             self.directory,
@@ -1963,16 +1981,6 @@ class ExchangeService:
                     "exchange",
                     "explicit Operational initialization required",
                 )
-            if work is not None:
-                from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget
-
-                if (
-                    not isinstance(work, NotesWorkBudget)
-                    or work.request != request
-                    or work.ledger._path != ledger.work_ledger._path
-                ):
-                    raise ExchangeError("DURABLE_BUDGET_REQUIRED", "request")
-                work.ledger.validate_continuation(request, work.attempt_uuidv4)
             if work is None:
                 if ledger is None:
                     raise CoordinationError(
@@ -1986,6 +1994,21 @@ class ExchangeService:
                     new_request=new_request,
                     work_limits={"metadata_units": 10_000_000},
                 )
+            from repo_catalog.adapters.sqlite.operational_coordination import (
+                NotesWorkBudget,
+                WorkLedger,
+            )
+
+            if (
+                type(work) is not NotesWorkBudget
+                or type(work.ledger) is not WorkLedger
+                or work.request != request
+                or work.ledger._path != ledger.work_ledger._path
+            ):
+                raise ExchangeError("DURABLE_BUDGET_REQUIRED", "request")
+            if work.ledger.store_identity() != (repo_uuid, instance_uuid):
+                raise CoordinationError("STORE_IDENTITY", "operational")
+            work.ledger.validate_continuation(request, work.attempt_uuidv4)
             if selection is not None:
                 explicit_scope(selection)
                 work = _ReceiveWork(work, selection.max_work)
@@ -2080,7 +2103,7 @@ class ExchangeService:
             )
             if saved != request_binding:
                 raise ExchangeError("REQUEST_SCOPE", "exchange")
-            return self._import_package(
+            report = self._import_package(
                 package,
                 work=work,
                 ledger=ledger,
@@ -2092,6 +2115,8 @@ class ExchangeService:
                 admission=admission,
                 grants=grants,
             )
+            work.ledger.validate_continuation(request, work.attempt_uuidv4)
+            return report
 
     @staticmethod
     def _extract_context_dependencies(
@@ -2444,6 +2469,12 @@ class ExchangeService:
                         selection=admit_selection,
                     )
                 self._validate_receiver_authority(auth, adm, context_data)
+            from importlib.util import find_spec
+
+            if find_spec("repo_catalog.adapters.sqlite.paired_admission") is None:
+                raise CoordinationError("MISSING_CAPABILITY", "paired_exchange")
+            from repo_catalog.adapters.sqlite.paired_admission import PairCoordinator
+
             coordinator = PairCoordinator(self.directory, authorization=auth)
 
             def _core_unit(core_tx: AdmissionTransaction) -> None:

@@ -163,6 +163,14 @@ zombie process, progress dots, a partial XML case count or another run's badge.
 See the [I5 merge preparation](../../../docs/implementation/adr0030-i5-merge-plan.md)
 and its independently retained execution receipts.
 
+For source-owner moves, stage the intended additions and deletions before invoking
+artifact producers whose source inventory uses `git ls-files`. An unstaged removal
+still appears in that inventory and correctly fails as a missing source input,
+even when runtime imports already resolve to the new owner. Reconcile the index,
+check the staged diff and rerun only the unexecuted artifact lanes; do not relax
+the source-completeness check. Source archives that use `git archive HEAD` require
+the intended tree to be committed as well; index-only changes cannot enter them.
+
 ## Measure verification time without inventing work time
 
 Use the existing invocation profiles, including failed attempts, rather than

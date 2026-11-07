@@ -19,6 +19,7 @@ PRODUCT_SOURCE_ROOTS = (
     ROOT / "packages/search/src",
     ROOT / "packages/operational/src",
     ROOT / "packages/git-acquisition/src",
+    ROOT / "packages/exchange/src",
 )
 sys.path[:0] = [
     str(ROOT),

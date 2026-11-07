@@ -22,6 +22,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
         "search",
         "operational",
         "git-acquisition",
+        "exchange",
         "contracts",
     ]
     (tmp_path / "pyproject.toml").write_text(
@@ -65,7 +66,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
 
 def test_exact_workspace_namespace_is_accepted(tmp_path):
     result = console_check(tmp_path)
-    assert len(result["namespace_roots"]) == 13
+    assert len(result["namespace_roots"]) == 14
     assert result["version"] == "0.2.0"
 
 

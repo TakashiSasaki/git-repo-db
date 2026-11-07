@@ -24,6 +24,7 @@ def test_index_covers_every_python_owner_and_packaged_resource():
         "repo-catalog-search",
         "repo-catalog-operational",
         "repo-catalog-git-acquisition",
+        "repo-catalog-exchange",
         "repo-catalog-filesystem",
         "repo-catalog-worktrees",
         "repo-catalog-local",

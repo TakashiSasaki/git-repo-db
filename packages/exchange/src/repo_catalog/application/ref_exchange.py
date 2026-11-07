@@ -557,7 +557,6 @@ def import_ref_coverage(core, section, claims, work, receiver_instance):
     """Recompute complete inventories; sender completeness flags grant no proof."""
     import json
 
-    from repo_catalog.application.ref_observations import encode_metered
     from repo_catalog.domain.p1_core import CoreCoverageScope
     from repo_catalog.domain.p1_coverage import CoverageClaim
     from repo_catalog.domain.ref_coverage import (
