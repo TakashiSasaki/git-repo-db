@@ -384,12 +384,26 @@ def validate_rows(core, context):
                         "MALFORMED_ROW", [store, section], "exact v8 keys required"
                     )
                 if store == "context" and section == "resources":
-                    if core is not None and row.get("resource_kind") in (
-                        "review",
-                        "thread",
-                        "comment",
-                        "document",
-                    ):
+                    is_staged_paired = (
+                        core is not None
+                        and row.get("resource_kind")
+                        in (
+                            "review",
+                            "thread",
+                            "comment",
+                            "document",
+                        )
+                        and all(
+                            row.get(k) is None
+                            for k in (
+                                "identifier_namespace_kind",
+                                "identifier_namespace_id",
+                                "document_kind",
+                                "provider_document_id",
+                            )
+                        )
+                    )
+                    if is_staged_paired:
                         # Staged identification for paired packages is deferred to
                         # preflight_i2_resources so Core-only selection succeeds.
                         pass

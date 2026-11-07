@@ -344,12 +344,12 @@
     {
       "path": "packages/exchange/src/repo_catalog/domain/exchange_rows.py",
       "owner": "repo-catalog-exchange",
-      "sha256": "4bcac1bdaa9f866c72e906fad546e69516ab7a1fd37bbf44d657c15b75f0a6d0"
+      "sha256": "8dea8c4d629e4971b94430354a2337c450252e0fc47ddcf39efa499337a37be1"
     },
     {
       "path": "packages/exchange/src/repo_catalog/domain/selective_exchange.py",
       "owner": "repo-catalog-exchange",
-      "sha256": "78b9bad5b850807fad89f11ae4054bc1b84b3d5e76b1460f2ae99d518453264b"
+      "sha256": "8d1b7d011c6f5373d684a8ccfb39b16d8c45cc5a07ad6a807ff53a94cd60d035"
     },
     {
       "path": "packages/filesystem/src/repo_catalog/filesystem/__init__.py",
