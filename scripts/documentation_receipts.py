@@ -191,7 +191,7 @@ def checked_receipt(path, context, product, ir_hash, root):
             raise DocumentationGap("Documentation execution scope changed")
     if (
         commands[2][1:5] != ["-m", "pytest", "-q", "documentation/tests"]
-        or len(commands[2]) != 6
+        or commands[2][5:-1] not in ([], ["-n", "2", "--dist", "worksteal"])
         or not commands[2][-1].startswith("--junitxml=")
         or Path(commands[2][-1].split("=", 1)[1]).name != "tests.xml"
     ):
