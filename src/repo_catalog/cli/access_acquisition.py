@@ -20,7 +20,7 @@ from repo_catalog.domain.access_registry import (
     ScopeLocatorRegistration,
 )
 from repo_catalog.domain.access_workflow import AccessSelection
-from repo_catalog.domain.acquisition import (
+from repo_catalog.domain.git_acquisition import (
     AcquisitionError,
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,

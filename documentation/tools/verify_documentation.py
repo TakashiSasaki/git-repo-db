@@ -28,6 +28,10 @@ def main() -> int:
         help="Placeholder diagrams; never complete release evidence",
     )
     args = parser.parse_args()
+    workers = os.environ.get("DOCS_PYTEST_WORKERS", "1")
+    if workers not in ("1", "2"):
+        raise ValueError("DOCS_PYTEST_WORKERS must be 1 or 2")
+    parallel_args = ["-n", "2", "--dist", "worksteal"] if workers == "2" else []
     verify_documentation_checkout(args.documentation_source)
     inputs = ROOT / "documentation/.build/inputs"
     record = input_record(
@@ -72,6 +76,7 @@ def main() -> int:
             "pytest",
             "-q",
             "documentation/tests",
+            *parallel_args,
             "--junitxml=" + str(output / "tests.xml"),
         ],
         [

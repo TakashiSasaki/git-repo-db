@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repo-catalog-local"
+version = "0.2.0"
+description = "Optional composition of independent filesystem and Git worktree catalogs"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["repo-catalog-filesystem==0.2.0", "repo-catalog-worktrees==0.2.0"]
+
+[project.scripts]
+repo-catalog-local = "repo_catalog.local.cli:main"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/repo_catalog", "pyproject.toml", "README.md"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_catalog"]
+
+[tool.uv.sources]
+repo-catalog-filesystem = { workspace = true }
+repo-catalog-worktrees = { workspace = true }

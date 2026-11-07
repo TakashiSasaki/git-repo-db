@@ -24,6 +24,9 @@
       "packages/runtime/src/**/*.py lexical references",
       "packages/context/src/**/*.py lexical references",
       "packages/access/src/**/*.py lexical references",
+      "packages/filesystem/src/**/*.py lexical references",
+      "packages/worktrees/src/**/*.py lexical references",
+      "packages/local/src/**/*.py lexical references",
       "docs/implementation/table-disposition.json explicit authored dispositions"
     ],
     "limits": [

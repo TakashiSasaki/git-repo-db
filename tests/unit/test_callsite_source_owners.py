@@ -20,6 +20,9 @@ def test_index_covers_every_python_owner_and_packaged_resource():
         "repo-catalog-runtime",
         "repo-catalog-context",
         "repo-catalog-access",
+        "repo-catalog-filesystem",
+        "repo-catalog-worktrees",
+        "repo-catalog-local",
     }
     baseline = {entry["path"]: entry for entry in report["modules"]}
     isolated = {entry["path"]: entry for entry in report["isolated_modules"]}
@@ -34,6 +37,13 @@ def test_index_covers_every_python_owner_and_packaged_resource():
         == hashlib.sha256((audit.ROOT / core["path"]).read_bytes()).hexdigest()
     )
     assert "functions" not in core
+    for package, module in (
+        ("filesystem", "store"),
+        ("worktrees", "catalog"),
+        ("local", "service"),
+    ):
+        path = f"packages/{package}/src/repo_catalog/{package}/{module}.py"
+        assert isolated[path]["owner"] == f"repo-catalog-{package}"
     assert {entry["path"] for entry in report["packaged_resources"]} == {
         path.relative_to(audit.ROOT).as_posix()
         for path in audit.source_files((".sql", ".json", ".graphql"))
