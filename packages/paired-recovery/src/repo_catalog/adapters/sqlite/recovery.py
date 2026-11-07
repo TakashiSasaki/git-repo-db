@@ -22,6 +22,7 @@ from repo_catalog.adapters.sqlite.core_recovery_validation import (
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import (
     SchemaError,
+    compose,
     expected_schema,
     register_functions,
     schema_rows,
@@ -46,6 +47,7 @@ from repo_catalog.domain.recovery import (
     BackupValidationError,
     CandidateType,
     CorruptionDetectedError,
+    RecoveryCapabilityError,
     RecoveryError,
     RetainedByteSummary,
 )
@@ -96,6 +98,14 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
     def _require_scope(self, scope):
         if not isinstance(scope, BackupScope):
             raise RecoveryError("A supported Recovery scope is required")
+        if scope == BackupScope.PAIRED:
+            for role in ("core", "context", "operational", "search"):
+                try:
+                    compose(role)
+                except (FileNotFoundError, ModuleNotFoundError) as error:
+                    raise RecoveryCapabilityError(
+                        f"Paired Recovery requires the {role} schema capability"
+                    ) from error
 
     def _allow_generated_source(self, store_name):
         return store_name == "context"

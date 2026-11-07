@@ -702,6 +702,7 @@ def probe(output, reference=None):
         ROOT / "packages/operational/src",
         ROOT / "packages/git-acquisition/src",
         ROOT / "packages/exchange/src",
+        ROOT / "packages/paired-recovery/src",
     ):
         if source.is_dir() and str(source) not in sys.path:
             sys.path.insert(0, str(source))

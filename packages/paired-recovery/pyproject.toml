@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+[project]
+name = "repo-catalog-paired-recovery"
+version = "0.2.0"
+description = "Paired Recovery integration with required Operational and Search reconstruction"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["repo-catalog-context==0.2.0", "repo-catalog-operational==0.2.0", "repo-catalog-search==0.2.0", "repo-catalog-core==0.2.0", "repo-catalog-runtime==0.2.0", "repo-catalog-contracts==0.2.0"]
+[tool.hatch.build.targets.sdist]
+only-include = ["src/repo_catalog", "pyproject.toml", "README.md"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_catalog"]
+[tool.uv.sources]
+repo-catalog-core = { workspace = true }
+repo-catalog-runtime = { workspace = true }
+repo-catalog-contracts = { workspace = true }
+repo-catalog-context = { workspace = true }
+repo-catalog-operational = { workspace = true }
+repo-catalog-search = { workspace = true }

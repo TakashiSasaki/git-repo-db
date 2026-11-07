@@ -171,10 +171,14 @@ class AdmissionSelection:
 
     @classmethod
     def from_scope(cls, scope):
-        from repo_catalog.domain.exchange import ExchangeSelectionScope
-
         if type(scope) is cls:
             return scope
+        from importlib.util import find_spec
+
+        if find_spec("repo_catalog.domain.exchange") is None:
+            raise AdmissionRefused("INVALID_SELECTION")
+        from repo_catalog.domain.exchange import ExchangeSelectionScope
+
         if type(scope) is not ExchangeSelectionScope:
             raise AdmissionRefused("INVALID_SELECTION")
         return cls(

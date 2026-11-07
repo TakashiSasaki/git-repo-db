@@ -3,6 +3,7 @@ name: Access registry focused verification
 on:
   pull_request:
     paths:
+      - 'packages/paired-recovery/**'
       - 'tests/integration/i2/**'
       - 'tests/integration/i3/**'
       - 'tests/integration/i23/**'

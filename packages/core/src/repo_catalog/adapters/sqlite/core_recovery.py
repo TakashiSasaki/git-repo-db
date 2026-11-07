@@ -158,14 +158,20 @@ def _open_directory_nofollow(path: Path, *, create: bool = False) -> int:
 
 
 def _assert_directory_identity(
-    path: Path, expected_fd: int, *, label: str = "Validated catalog"
+    path: Path,
+    expected_fd: int | None = None,
+    *,
+    label: str = "Validated catalog",
+    expected_identity: tuple[int, int] | None = None,
 ) -> None:
     try:
         named_fd = _open_directory_nofollow(path)
         try:
             named = os.fstat(named_fd)
-            pinned = os.fstat(expected_fd)
-            if (named.st_dev, named.st_ino) != (pinned.st_dev, pinned.st_ino):
+            if expected_identity is None:
+                pinned = os.fstat(expected_fd)
+                expected_identity = (pinned.st_dev, pinned.st_ino)
+            if (named.st_dev, named.st_ino) != expected_identity:
                 raise ActivationError(f"{label} directory identity changed")
         finally:
             os.close(named_fd)
@@ -2833,6 +2839,8 @@ class CoreRecoveryAdapter:
             input_scan_bytes=b.max_input_bytes, input_records=b.max_input_records
         )
         directory_fd = _open_directory_nofollow(fresh_destination_dir)
+        info = os.fstat(directory_fd)
+        completion_identity = (info.st_dev, info.st_ino)
         try:
             for name in ("core.sqlite3", "context.sqlite3"):
                 try:
@@ -2895,9 +2903,17 @@ class CoreRecoveryAdapter:
             _assert_directory_identity(
                 fresh_destination_dir, directory_fd, label="Recovery destination"
             )
-            return replace(result, destination_path=str(fresh_destination_dir))
+            result = replace(result, destination_path=str(fresh_destination_dir))
         finally:
             os.close(directory_fd)
+        _assert_directory_identity(
+            fresh_destination_dir, expected_identity=completion_identity
+        )
+        with catalog_completion(fresh_destination_dir):
+            _assert_directory_identity(
+                fresh_destination_dir, expected_identity=completion_identity
+            )
+            return result
 
     def _merge_salvage_request(
         self,
@@ -3624,24 +3640,27 @@ class CoreRecoveryAdapter:
             try:
                 _save_budget_state()
             finally:
-                if ctx_conn:
-                    ctx_conn.close()
-                core.close()
+                try:
+                    if ctx_conn:
+                        ctx_conn.close()
+                finally:
+                    core.close()
 
-        return MergeReceipt(
-            destination_path=str(fresh_destination_dir),
-            candidates_processed=processed,
-            admitted_units=admitted,
-            rejected_units=rejected,
-            replayed_units=replayed,
-            observation_units=observation,
-            deferred_units=deferred,
-            unprocessed_units=unprocessed,
-            input_complete=not budget_exhausted and processed < b.max_input_records,
-            unprocessed_count_exact=not budget_exhausted
-            and processed < b.max_input_records,
-            rejections=rejections,
-        )
+        with catalog_completion(fresh_destination_dir):
+            return MergeReceipt(
+                destination_path=str(fresh_destination_dir),
+                candidates_processed=processed,
+                admitted_units=admitted,
+                rejected_units=rejected,
+                replayed_units=replayed,
+                observation_units=observation,
+                deferred_units=deferred,
+                unprocessed_units=unprocessed,
+                input_complete=not budget_exhausted and processed < b.max_input_records,
+                unprocessed_count_exact=not budget_exhausted
+                and processed < b.max_input_records,
+                rejections=rejections,
+            )
 
     def activate(
         self,
@@ -3666,6 +3685,8 @@ class CoreRecoveryAdapter:
         advertised_catalog_dir = fresh_catalog_dir
         with ExitStack() as handles:
             directory_fd = _open_directory_nofollow(advertised_catalog_dir)
+            info = os.fstat(directory_fd)
+            completion_identity = (info.st_dev, info.st_ino)
             handles.callback(os.close, directory_fd)
             # Keep validation, derivative I/O and both permanent gate inodes on
             # the directory actually opened, even across pathname substitution.
@@ -3871,7 +3892,7 @@ class CoreRecoveryAdapter:
                     pass
                 os.close(parent_fd)
 
-            return ActivationReceipt(
+            receipt = ActivationReceipt(
                 activated_catalog_path=activated_catalog_path,
                 source_backup_id=baseline["backup_id"],
                 reconstructed_stores=reconstructed_stores,
@@ -3879,3 +3900,12 @@ class CoreRecoveryAdapter:
                 clean_operational=clean_operational,
                 search_derivative_state=search_derivative_state,
             )
+
+        _assert_directory_identity(
+            advertised_catalog_dir, expected_identity=completion_identity
+        )
+        with catalog_completion(advertised_catalog_dir):
+            _assert_directory_identity(
+                advertised_catalog_dir, expected_identity=completion_identity
+            )
+            return receipt

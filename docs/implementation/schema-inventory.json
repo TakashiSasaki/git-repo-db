@@ -29,6 +29,7 @@
       "packages/operational/src/**/*.py lexical references",
       "packages/git-acquisition/src/**/*.py lexical references",
       "packages/exchange/src/**/*.py lexical references",
+      "packages/paired-recovery/src/**/*.py lexical references",
       "packages/filesystem/src/**/*.py lexical references",
       "packages/worktrees/src/**/*.py lexical references",
       "packages/local/src/**/*.py lexical references",

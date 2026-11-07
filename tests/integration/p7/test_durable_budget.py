@@ -291,7 +291,7 @@ def _settlement_worker(directory, crash_during_settlement):
 
     import repo_catalog.adapters.sqlite.recovery_budget as module
     from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
-    from repo_catalog.adapters.sqlite.p1_coordination import NotesLimits
+    from repo_catalog.domain.p1_coordination import NotesLimits
 
     budget = RecoveryBudget(max_work_units={"input_bytes": 10})
     limits = dict(NotesLimits.work_limits(), input_bytes=10)
@@ -325,9 +325,8 @@ def _settlement_worker(directory, crash_during_settlement):
 @pytest.mark.parametrize("during", [False, True])
 def test_live_settlement_order_is_conservative_after_sigkill(catalog, during):
     from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
-    from repo_catalog.adapters.sqlite.p1_coordination import NotesLimits
     from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
-    from repo_catalog.domain.p1_coordination import CoordinationError
+    from repo_catalog.domain.p1_coordination import CoordinationError, NotesLimits
 
     process = multiprocessing.get_context("spawn").Process(
         target=_settlement_worker, args=(catalog, during)
