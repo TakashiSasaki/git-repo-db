@@ -90,7 +90,9 @@ exceptions require explicit owner approval.
 
 ## Proposed Records
 
-None.
+| Record | Proposed scope | Status |
+| --- | --- | --- |
+| [0040](0040-scoped-machine-readable-model-validation.md) | Source-bound semantic models, optional references, scoped validation evidence and bounded operation models | Proposed; inventory foundation in #256 is independently implemented. No new semantic CI gate or product guarantee adopted. |
 
 **2026-10-31 acceptance/retirement:** the owner accepted complete 0037/0038 and
 0026 carry-forward/retirement after independent design reviews, then separately
@@ -100,7 +102,7 @@ acceptance-delta and CI evidence. Retired 0026 remains in [pinned history](https
 not as a contradictory accepted file. Acceptance does not implement installation
 guarantees or authorize product implementation, migration or release.
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0039** (includes accepted 0032–0039; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0039 allocation checked reachable history, live remote branches and open PRs #245–253 on 2026-11-06; none allocated a later ADR.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0040** (includes proposed 0040; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0040 allocation checked the index, fetched reachable history, live remote branches and open PRs on 2026-11-07; no later design allocation was found. Its proposal is not acceptance.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 
