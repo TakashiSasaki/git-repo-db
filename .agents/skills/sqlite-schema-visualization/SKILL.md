@@ -1,19 +1,24 @@
 ---
 name: sqlite-schema-visualization
-description: Introspect, validate, and generate non-destructive database visualizations (Mermaid ER diagrams, DBML exports, and standalone HTML workbenches) for the implemented multi-store SQLite schema, while distinguishing accepted five-store target contracts. Use when extracting composite foreign keys, filtering FTS shadow tables, handling generated columns, or validating schema documentation freshness.
+description: Introspect implemented SQLite formats and generate non-destructive schema visualizations. Distinguish responsibility domains, composition, source ownership and operation requirements. Use for composite keys, all-format inventory, FTS/generated-column classification, provenance or diagram freshness.
 ---
 
 # SQLite Schema Introspection and Visualization Invariants
 
 Read the [ADR index](../../../docs/adr/README.md) before interpreting ownership.
-The production visualization commands below introspect the implemented Schema 21
-Core / Operational 1 / Search 1 baseline. [ADR 0029](../../../docs/adr/0029-independent-access-store.md)
-now owns the five-store target, including independent Context and Access;
+The visualization commands below consume the normal Schema 21 / Operational 1 /
+Search 1 baseline. The explicit all-format diagnostic profile also inventories
+P1, Access, Filesystem and Worktrees; see section 8. These schema definitions are
+not a count of required databases or logical authorities.
+[ADR 0029](../../../docs/adr/0029-independent-access-store.md)
+owns the five existing responsibility domains, including independent Context and Access;
 [ADR 0030](../../../docs/adr/0030-context-repository-relations-and-selective-exchange.md)
 selects two additional Context relations (19 composed tables as a target, not an
 implemented count), without mapping Witness storage. These and the
-metadata/notes/key/recovery decisions are accepted targets, not already
-implemented merely because a diagram can be generated. Legacy table names and
+metadata/notes/key/recovery decisions do not become implemented merely because a
+diagram can be generated. [ADR 0039](../../../docs/adr/0039-independent-filesystem-and-worktree-catalogs.md)
+adds independent Filesystem and Worktrees, with DB-free Local composition.
+Legacy table names and
 IDs below are introspection examples, not approved target DDL. In particular,
 ADR 0017 requires semantic PKs/FKs; a visualization must expose storage-only
 surrogates and cross-domain tables rather than silently validating them. Target
@@ -137,3 +142,38 @@ uv run --project documentation --no-sync python documentation/tools/schema_viz.p
 uv run --project documentation --no-sync pytest documentation/tests/test_schema_viz.py
 ```
 Outputs must be byte-for-byte reproducible with deterministic sorting, UTF-8 encoding, and no runtime timestamps.
+
+## 8. Separate format coverage, ownership and semantic guarantees
+
+**Observed traps:** a normal-CLI inventory omits opt-in formats; same-named tables
+from different factories appear to be one entity; a composed schema has Runtime,
+domain and Contracts contributors even though each installed source file has one
+owner. Inferring one package per schema gives false ownership violations. Some
+formats expose only an opaque format ID, others only an integer schema version.
+
+1. Use `scripts/local-run.sh python scripts/schema_inventory.py --check --profile all`
+   for the registered complete format inventory. Keep the default normal renderer
+   input separate; do not feed an all-format graph into a three-store renderer.
+2. Qualify entity IDs by revision/profile/format before combining graphs. Separate
+   responsibility domains, composition entry points, contributing files, package
+   dependencies and operation prerequisites. Verify installed namespace path
+   ownership across all workspace distributions, not only Git conflict paths.
+3. Register the real UDFs before applying DDL in memory. Retain SQL and observed
+   connection/function metadata, but label them structural evidence. Do not claim
+   trigger behavior, CHECK/NULL equivalence, persistent-DB configuration or recovery
+   correctness from successful schema creation. Preserve absent version fields.
+4. Require expected format/object/column targets and test removed-target examples.
+   A missing schema in a declared complete profile is an extraction failure; an
+   unavailable instance behind an optional domain reference is unresolved. These
+   are different scopes and need different outcomes.
+5. Export only from committed, byte-matched producer inputs. The input digest closure
+   is broader than the human-readable contributing-file annotation. Stage/commit
+   new scripts before producing evidence; never bind dirty new code to old HEAD.
+6. Check `test_schema_catalog.py` counterexamples and the existing normal inventory
+   tests together. Run product extraction with verified product Python and rendering
+   with the separate documentation environment. Avoid adding reasoner packages to
+   product dependencies for an optional analysis workflow.
+
+See [the inventory guide](../../../documentation/schema-model-inventory.md).
+These checks are useful preparation for RDF/SHACL; they do not constitute ontology
+satisfiability, instance-data validation or a proof of implementation conformance.
