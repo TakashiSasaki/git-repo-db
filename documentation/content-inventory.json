@@ -5,6 +5,29 @@
     "docs/phase2/reviews/": "0ec5f25e7cd48b7f4dcccec69dc55154b6b030eb"
   },
   "records": {
+    "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Owner accepted the proposed plan and explicitly requested implementation on 2026-11-06; execution evidence is separate.",
+      "source": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md",
+      "producer": "Owner-directed implementation task.",
+      "consumers": "ADR index, local catalog operation contract, implementers and reviewers.",
+      "publication": "read-only current-decision staging; original source remains authoritative",
+      "source_heading": "# ADR 0039: Independent filesystem and worktree catalogs",
+      "status_in_source": "accepted",
+      "static_consumer_references": ["docs/adr/README.md", "docs/architecture/local-catalog-contract.md"]
+    },
+    "docs/architecture/local-catalog-contract.md": {
+      "status": "implementation-contract",
+      "owner": "docs/architecture/",
+      "authority": "Scoped local catalog behavior under accepted ADR 0039; tests and executed evidence remain separate.",
+      "source": "docs/architecture/local-catalog-contract.md",
+      "producer": "Owner-directed filesystem/worktree implementation.",
+      "consumers": "Local catalog implementation, package guides, tests and independent reviewers.",
+      "publication": "not staged",
+      "source_heading": "# Independent local catalog operation contract",
+      "static_consumer_references": ["docs/adr/README.md", "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "README.md"]
+    },
     ".agents/skills/adr-workflow/SKILL.md": {
       "status": "agent-procedure",
       "owner": ".agents/skills/adr-workflow/",

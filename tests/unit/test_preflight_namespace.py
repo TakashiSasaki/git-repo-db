@@ -10,21 +10,29 @@ from scripts import preflight_access
 
 
 def console_check(tmp_path, namespace_extra=None, version_extra=False):
+    members = [
+        "core",
+        "runtime",
+        "context",
+        "access",
+        "filesystem",
+        "worktrees",
+        "local",
+        "paired-query",
+        "search",
+        "operational",
+        "git-acquisition",
+        "exchange",
+        "contracts",
+    ]
+    (tmp_path / "pyproject.toml").write_text(
+        "[tool.uv.workspace]\nmembers = "
+        + repr(["packages/" + name for name in members])
+        + "\n"
+    )
     roots = [
         tmp_path / name / "repo_catalog"
-        for name in (
-            "src",
-            "packages/core/src",
-            "packages/runtime/src",
-            "packages/context/src",
-            "packages/access/src",
-            "packages/paired-query/src",
-            "packages/search/src",
-            "packages/operational/src",
-            "packages/git-acquisition/src",
-            "packages/exchange/src",
-            "packages/contracts/src",
-        )
+        for name in ("src", *("packages/" + name + "/src" for name in members))
     ]
     for root in roots:
         root.mkdir(parents=True)
@@ -58,7 +66,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
 
 def test_exact_workspace_namespace_is_accepted(tmp_path):
     result = console_check(tmp_path)
-    assert len(result["namespace_roots"]) == 11
+    assert len(result["namespace_roots"]) == 14
     assert result["version"] == "0.2.0"
 
 

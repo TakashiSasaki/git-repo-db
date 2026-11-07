@@ -3,11 +3,6 @@ name: Access registry focused verification
 on:
   pull_request:
     paths:
-      - 'packages/git-acquisition/**'
-      - 'packages/exchange/**'
-      - 'packages/runtime/src/repo_catalog/adapters/sqlite/admission_transaction.py'
-      - 'packages/paired-query/src/repo_catalog/adapters/sqlite/paired_admission.py'
-      - 'packages/operational/**'
       - 'tests/integration/i2/**'
       - 'tests/integration/i3/**'
       - 'tests/integration/i23/**'
@@ -63,6 +58,8 @@ on:
       - 'tests/integration/p6/**'
       - 'tests/integration/p7/**'
       - 'scripts/audit_context_registration.py'
+      - 'scripts/access_ci_format_targets.sh'
+      - 'tests/unit/test_access_ci_reproduction.py'
       - 'docs/implementation/access-a3-routing.json'
       - 'docs/implementation/p1-disposition.json'
       - 'pyproject.toml'
@@ -205,7 +202,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          targets=(packages/git-acquisition/src/repo_catalog/domain/git_acquisition.py packages/git-acquisition/src/repo_catalog/application/git_acquisition.py packages/contracts/src/repo_catalog/domain/acquisition_errors.py scripts/preflight_access.py scripts/compare_access_regressions.py scripts/audit_access_acceptance.py packages/core/src/repo_catalog/adapters/sqlite/git_core.py packages/access/src/repo_catalog/domain/access_backup.py packages/access/src/repo_catalog/domain/ports/access_backup.py packages/access/src/repo_catalog/adapters/sqlite/access_backup.py packages/access/src/repo_catalog/application/access_maintenance.py packages/access/src/repo_catalog/cli/access_maintenance.py packages/git-acquisition/src/repo_catalog/domain/native_acquisition.py packages/git-acquisition/src/repo_catalog/adapters/git/access_native.py packages/git-acquisition/src/repo_catalog/application/access_acquisition.py packages/git-acquisition/src/repo_catalog/cli/access_acquisition.py packages/git-acquisition/src/repo_catalog/adapters/git/native.py packages/git-acquisition/src/repo_catalog/adapters/git/notes.py packages/git-acquisition/src/repo_catalog/application/notes.py packages/operational/src/repo_catalog/adapters/sqlite/notes.py packages/operational/src/repo_catalog/adapters/sqlite/acquisition.py packages/operational/src/repo_catalog/adapters/sqlite/operational_coordination.py packages/contracts/src/repo_catalog/domain/request_scope.py packages/git-acquisition/src/repo_catalog/domain/ports/notes.py tests/unit/test_native_acquisition_values.py packages/context/src/repo_catalog/domain/context_registration.py src/repo_catalog/domain/acquisition.py packages/exchange/src/repo_catalog/domain/exchange.py packages/context/src/repo_catalog/adapters/sqlite/p1_context.py packages/context/src/repo_catalog/adapters/sqlite/production_context.py src/repo_catalog/application/acquisition.py packages/exchange/src/repo_catalog/application/exchange.py src/repo_catalog/application/production_query.py tests/unit/test_context_registration_values.py tests/integration/p1/test_context_relations.py tests/integration/p3/test_production_context.py tests/integration/p5/test_provider_acquisition.py tests/integration/p6/conftest.py scripts/audit_context_registration.py packages/access/src/repo_catalog/domain/access_workflow.py packages/access/src/repo_catalog/domain/ports/access_workflow.py packages/access/src/repo_catalog/application/access_workflow.py packages/access/src/repo_catalog/adapters/filesystem/access_executor.py packages/access/src/repo_catalog/cli/access_workflow.py packages/access/src/repo_catalog/domain/access_connections.py packages/access/src/repo_catalog/domain/ports/access_connections.py packages/access/src/repo_catalog/adapters/sqlite/access_connections.py packages/access/src/repo_catalog/domain/access_registry.py packages/access/src/repo_catalog/domain/ports/access_registry.py packages/access/src/repo_catalog/adapters/sqlite/access_registry.py packages/access/src/repo_catalog/adapters/sqlite/access_schema.py tests/unit/test_access*_values.py tests/integration/access scripts/verify_access_distribution.py)
+          source scripts/access_ci_format_targets.sh
           lint=0
           formatting=0
           uv run --no-sync ruff check "${targets[@]}" || lint=$?
@@ -216,22 +213,51 @@ jobs:
             cat artifacts/access-registry/lint.diff artifacts/access-registry/format.diff
             exit 1
           fi
-      - name: Save exact source and locked formatter for offline reproduction
+      - name: Save scoped source and locked formatter for offline reproduction
         if: always()
+        env:
+          ACCESS_CI_JOB_STATUS: ${{ job.status }}
+          ACCESS_CI_MODE: ${{ github.event.inputs.mode || 'development' }}
+          ACCESS_CI_STATIC: ${{ steps.plan.outputs.static }}
+          ACCESS_CI_TESTS: ${{ steps.plan.outputs.tests }}
+          ACCESS_CI_PACKAGING: ${{ steps.plan.outputs.packaging }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p artifacts/access-registry
-          git archive --format=tar.gz HEAD -o artifacts/access-registry/source.tar.gz
+          export ACCESS_CI_SOURCE_SCOPE=full
+          if [[ -r scripts/access_ci_format_targets.sh && -x .venv/bin/ruff ]]; then
+            source scripts/access_ci_format_targets.sh
+            if access_ci_formatter_only "$ACCESS_CI_JOB_STATUS" "$ACCESS_CI_MODE" \
+                 "$ACCESS_CI_STATIC" "$ACCESS_CI_TESTS" "$ACCESS_CI_PACKAGING"; then
+              archive_access_formatter_source artifacts/access-registry/source.tar.gz
+              export ACCESS_CI_SOURCE_SCOPE=formatter
+            fi
+          fi
+          if [[ "$ACCESS_CI_SOURCE_SCOPE" == full ]]; then
+            git archive --format=tar.gz HEAD -o artifacts/access-registry/source.tar.gz
+          fi
           if [[ -x .venv/bin/ruff ]]; then
             cp .venv/bin/ruff artifacts/access-registry/ruff
           fi
           python - <<'PYMETA'
-          import json, os, subprocess
+          import hashlib, json, os, subprocess
           from pathlib import Path
           def revision(name):
               return subprocess.check_output(["git", "rev-parse", name], text=True).strip()
-          result = {"checked_out_commit": revision("HEAD"), "effective_tree": revision("HEAD^{tree}"), "event_commit": os.environ["GITHUB_SHA"]}
+          archive = Path("artifacts/access-registry/source.tar.gz")
+          size = archive.stat().st_size
+          scope = os.environ["ACCESS_CI_SOURCE_SCOPE"]
+          if scope == "formatter" and size > 2 * 1024 * 1024:
+              raise SystemExit("Formatter reproduction archive exceeds 2 MiB")
+          def digest(path):
+              result = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                      result.update(chunk)
+              return result.hexdigest()
+          formatter = Path("artifacts/access-registry/ruff")
+          result = {"checked_out_commit": revision("HEAD"), "effective_tree": revision("HEAD^{tree}"), "event_commit": os.environ["GITHUB_SHA"], "source_archive_scope": scope, "source_archive_bytes": size, "source_archive_sha256": digest(archive), "formatter_sha256": digest(formatter) if formatter.is_file() else None}
           Path("artifacts/access-registry/source-revision.json").write_text(json.dumps(result, indent=2) + "\n")
           PYMETA
       - name: Audit final dependency runtime identity
