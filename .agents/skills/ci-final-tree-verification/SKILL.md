@@ -45,6 +45,46 @@ both are prose. Preserve each lesson and choose a noncompeting section location;
 verify the merged text and runtime input equality. Do not silently edit or rewrite
 the reviewed branch to accommodate the documentation follow-up.
 
+### Reconcile diverged package-extraction stacks by installed module ownership
+
+When main splits a module while a pending stack extracts the same implementation
+into a separate distribution, a textual merge can retain both source owners.
+An observed trial integration had no duplicate installed paths in either input,
+but eight in the combined tree; seven were absent from Git's conflict-path list.
+Git compares repository paths, whereas two different source roots can ship the
+same `repo_catalog/...` path. A clean conflict list alone cannot prove isolation.
+
+1. Pin live main and each PR head/base; order the stack by actual ancestry, not
+   PR numbers or old green badges. A child's mergeability describes its current
+   parent branch, not the updated main. Keep independent CI-only work separate
+   from the product dependency chain when choosing an integration order.
+2. Save `git merge-tree --write-tree --name-only --no-messages TARGET FEATURE`
+   output and exit status. Distinguish generated-report conflicts from product,
+   build and workflow conflicts. A nonzero merge's tree contains unresolved
+   state; use it for diagnosis only, never as an executable acceptance candidate.
+3. List paths with `git ls-tree -r --name-only TREE`. Map each actual distribution
+   source root to its installed relative paths and group by that path. In this
+   workspace, strip `src/` or `packages/NAME/src/` before `repo_catalog/`.
+   Compare both input inventories with the combined inventory. Reconcile new
+   split files as well as renamed/deleted files; preserve behavior in one owner
+   and use deliberate reexports where needed. Account for build exclusions or
+   other layouts instead of treating this source-path projection as wheel proof.
+4. Update workspace membership, dependencies, lock inputs, namespace/preflight
+   inventories and CI formatter targets together. Regenerate generated reports
+   from the resolved source with their existing producers. When the CI-only
+   branch centralizes targets in a helper, incorporate moved paths into that
+   helper rather than restoring an older inline target list.
+5. Verify the resolved candidate with the existing ownership audits and affected
+   direct/sdist-derived isolated-install checks, outside the checkout. Source
+   path analysis and historical branch tests do not establish final wheel
+   ownership, optional-package absence or final combined behavior. Include
+   dependent defect-fix PRs in the plan, with their focused regressions.
+
+Use this for overlapping refactors and namespace-package distribution splits;
+ordinary unrelated prose changes need no artifact rebuild. It adds neither a
+release gate nor merge authorization. See the [module operation contract](../../../docs/architecture/module-independence-contract.md)
+and [ADR 0039 integration constraint](../../../docs/adr/0039-independent-filesystem-and-worktree-catalogs.md).
+
 ## Normalize collection files and preserve unique evidence targets
 
 A historical file named `p7-node-ids.txt` also contained a blank line and pytest's
