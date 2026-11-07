@@ -1,7 +1,5 @@
 """Typed input failure shared by acquisition integrations."""
 
-from __future__ import annotations
-
 
 class AcquisitionError(ValueError):
     """Typed acquisition domain or input validation error."""

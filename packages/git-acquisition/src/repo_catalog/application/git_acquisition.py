@@ -12,7 +12,13 @@ from uuid import uuid4
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.git.notes import GitNotesSource
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
+from repo_catalog.adapters.sqlite.catalog_runtime import catalog_completion
 from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.notes import NotesProgress
+from repo_catalog.adapters.sqlite.operational_coordination import (
+    NotesWorkBudget,
+    WorkLedger,
+)
 from repo_catalog.application.notes import (
     Discovery,
     NotesAcquisition,
@@ -255,8 +261,10 @@ def _defer_ref_work(report, spec, source):
 def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
     if isinstance(target, (GitCore, _PreparedCore)):
         yield target
+        owner = target.core if isinstance(target, _PreparedCore) else target
+        owner._complete_read(None)
         return
-    path = Path(target)
+    path = Path(target).resolve()
     if path.is_dir():
         path = path / "core.sqlite3"
     core = GitCore(path)
@@ -264,6 +272,10 @@ def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
         yield core
     finally:
         core.close()
+    # The normal result must remain fenced after every owned cleanup, including
+    # a stop published by connection close. Exceptional exits retain their error.
+    with catalog_completion(path.parent):
+        pass
 
 
 @contextmanager
@@ -311,6 +323,33 @@ class GitAcquisition:
         self.operational = operational
         self.work = work
         self.progress = progress
+
+    @staticmethod
+    def _validate_native_accounting(core, work, progress, scope, request):
+        # Native input must never substitute a volatile or unrelated request.
+        # Reuse the canonical durable capability and its existing identity,
+        # inode/checkpoint and frozen-scope validation before any source work.
+        if (
+            type(work) is not NotesWorkBudget
+            or type(progress) is not NotesProgress
+            or progress.work is not work
+            or type(work.ledger) is not WorkLedger
+        ):
+            raise CoordinationError(
+                "CONTINUATION_UNAVAILABLE",
+                "request",
+                "matching durable work/progress required",
+            )
+        ledger = work.ledger
+        if ledger.store_identity() != core.catalog_identity():
+            raise CoordinationError("STORE_IDENTITY", "operational")
+        if work.request != request:
+            raise CoordinationError("REQUEST_SCOPE", "request")
+        ledger.validate_continuation(
+            work.request,
+            work.attempt_uuidv4,
+            scope=scope if isinstance(scope, str) else encode(scope),
+        )
 
     @contextmanager
     def _resolve_budget_and_progress(
@@ -612,6 +651,24 @@ class GitAcquisition:
                     new_request=new_request,
                     request_identity=request_identity,
                 )
+            )
+
+            self._validate_native_accounting(
+                core_cap,
+                active_work,
+                active_progress,
+                notes_scope
+                if notes_scope is not None
+                else [
+                    "p5-git-native",
+                    request.repository_uuidv4,
+                    request.capture_origin_uuidv4,
+                    request.capture_uuidv4,
+                ],
+                request_identity
+                or RequestIdentity(
+                    request.capture_origin_uuidv4, request.capture_uuidv4
+                ),
             )
 
             semantic_intent = (

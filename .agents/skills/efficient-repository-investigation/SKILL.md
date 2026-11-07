@@ -262,3 +262,19 @@ Context reader probe preserves its Context-only restriction after normalization;
 the O-only probe independently removes O just before open and asserts no file is
 recreated. These are local SQLite connection controls, not a filesystem sandbox
 or permission to create optional authorities.
+
+For acquisition completion, challenge a stop published by actual Core.close after
+the body returned. Fence after every owned Core/O cleanup, including outer Access
+ownership; a method-level pre-close check misses that window. Reuse the canonical
+live Core completion mechanism for borrowed/prepared capabilities and preserve
+the paired coordinator's outer transaction ownership. Never call a live-capability
+checker after closing that capability. The native/Access cleanup tests and
+`_open_core` share this boundary.
+
+Instrument the real delegated input path and include a positive removed-defense
+control. GitNativeSource.metadata can delegate subprocess work through
+GitNotesSource, so patching only source._run once reported zero calls even while
+the old implementation acquired real data. Observe source.metadata or the trusted
+subprocess boundary; require the positive control to register work before claiming
+the corrected refusal happens before input. Preserve incorrect instrumentation
+results as test-harness failures rather than treating zero as verified absence.

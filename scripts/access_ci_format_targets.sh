@@ -1,5 +1,6 @@
 # Shared by Access Ruff checks and its scoped offline reproducer.
 targets=(
+  packages/contracts/src/repo_catalog/domain/acquisition_errors.py
   packages/operational/src/repo_catalog/adapters/sqlite/operational_coordination.py
   packages/contracts/src/repo_catalog/domain/request_scope.py
   scripts/preflight_access.py
@@ -11,16 +12,16 @@ targets=(
   packages/access/src/repo_catalog/adapters/sqlite/access_backup.py
   packages/access/src/repo_catalog/application/access_maintenance.py
   packages/access/src/repo_catalog/cli/access_maintenance.py
-  src/repo_catalog/domain/native_acquisition.py
-  src/repo_catalog/adapters/git/access_native.py
-  src/repo_catalog/application/access_acquisition.py
-  src/repo_catalog/cli/access_acquisition.py
-  src/repo_catalog/adapters/git/native.py
-  src/repo_catalog/adapters/git/notes.py
-  src/repo_catalog/application/notes.py
+  packages/git-acquisition/src/repo_catalog/domain/native_acquisition.py
+  packages/git-acquisition/src/repo_catalog/adapters/git/access_native.py
+  packages/git-acquisition/src/repo_catalog/application/access_acquisition.py
+  packages/git-acquisition/src/repo_catalog/cli/access_acquisition.py
+  packages/git-acquisition/src/repo_catalog/adapters/git/native.py
+  packages/git-acquisition/src/repo_catalog/adapters/git/notes.py
+  packages/git-acquisition/src/repo_catalog/application/notes.py
   packages/operational/src/repo_catalog/adapters/sqlite/notes.py
   packages/operational/src/repo_catalog/adapters/sqlite/acquisition.py
-  src/repo_catalog/domain/ports/notes.py
+  packages/git-acquisition/src/repo_catalog/domain/ports/notes.py
   tests/unit/test_native_acquisition_values.py
   packages/context/src/repo_catalog/domain/context_registration.py
   src/repo_catalog/domain/acquisition.py

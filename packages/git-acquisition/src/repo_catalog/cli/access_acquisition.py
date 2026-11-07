@@ -8,18 +8,10 @@ The operator must first approve the Access plan using cli.access_workflow approv
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 
-from repo_catalog.adapters.sqlite.access_connections import AccessConnections
-from repo_catalog.application.access_acquisition import AccessGitAcquisition
-from repo_catalog.cli.access_workflow import _confirm
-from repo_catalog.domain.access_connections import AssignmentKey
-from repo_catalog.domain.access_registry import (
-    AccessRegistryError,
-    ScopeLocatorRegistration,
-)
-from repo_catalog.domain.access_workflow import AccessSelection
 from repo_catalog.domain.git_acquisition import (
     AcquisitionError,
     GitNativeAcquisitionRequest,
@@ -70,6 +62,25 @@ def parser():
 def main(argv: list[str] | None = None) -> int:
     arguments = parser()
     args = arguments.parse_args(argv)
+    if (
+        importlib.util.find_spec("repo_catalog.adapters.sqlite.access_connections")
+        is None
+    ):
+        print(
+            json.dumps({"status": "error", "code": "MISSING_CAPABILITY"}),
+            file=sys.stderr,
+        )
+        return 2
+    from repo_catalog.adapters.sqlite.access_connections import AccessConnections
+    from repo_catalog.application.access_acquisition import AccessGitAcquisition
+    from repo_catalog.cli.access_workflow import _confirm
+    from repo_catalog.domain.access_connections import AssignmentKey
+    from repo_catalog.domain.access_registry import (
+        AccessRegistryError,
+        ScopeLocatorRegistration,
+    )
+    from repo_catalog.domain.access_workflow import AccessSelection
+
     for left, right in (
         (args.locator, args.profile),
         (args.scope_uri, args.registered_at_us),

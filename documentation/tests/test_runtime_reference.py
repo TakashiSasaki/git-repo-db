@@ -61,7 +61,9 @@ def test_runtime_entrypoints_and_disposable_initialization(tmp_path):
         assert store.operational is not None
         assert (state / "operational.sqlite3").is_file()
     assert (ROOT / "packages/access/src/repo_catalog/cli/access_workflow.py").is_file()
-    assert (ROOT / "src/repo_catalog/cli/access_acquisition.py").is_file()
+    assert (
+        ROOT / "packages/git-acquisition/src/repo_catalog/cli/access_acquisition.py"
+    ).is_file()
 
 
 @pytest.mark.parametrize(
@@ -69,7 +71,8 @@ def test_runtime_entrypoints_and_disposable_initialization(tmp_path):
     [
         ("repo_catalog.cli.main", False),
         ("repo_catalog.cli.access_workflow", True),
-        ("repo_catalog.cli.access_acquisition", True),
+        # G keeps Access optional and loads its concrete implementation in main.
+        ("repo_catalog.cli.access_acquisition", False),
     ],
 )
 def test_cli_import_boundary_in_fresh_process(module, expected, product_source_env):

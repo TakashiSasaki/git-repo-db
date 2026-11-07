@@ -18,8 +18,7 @@ from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.access_connections import AccessConnections
 from repo_catalog.adapters.sqlite.access_schema import initialize as initialize_access
 from repo_catalog.adapters.sqlite.acquisition import (
-    InMemoryNotesProgress,
-    UnlimitedWorkBudget,
+    OperationalAcquisitionLedger,
 )
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
@@ -45,7 +44,7 @@ from repo_catalog.domain.acquisition import (
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,
 )
-from repo_catalog.domain.p1_coordination import CoordinationError
+from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
 from repo_catalog.domain.p1_core import (
     OID,
     CoreFailure,
@@ -332,6 +331,20 @@ def test_cancelled_before_source_input(setup, monkeypatch):
     assert usage(setup) == 0
 
 
+def test_access_owned_core_cleanup_stop_prevents_completion(setup, monkeypatch):
+    original = GitCore.close
+
+    def stopped(core):
+        original(core)
+        persist_catalog_stop(setup["cat"], "synthetic Access cleanup stop")
+
+    monkeypatch.setattr(GitCore, "close", stopped)
+    with pytest.raises(CoordinationError) as failure:
+        acquire(setup, new_request=True)
+    assert failure.value.code == "RECOVERY_REQUIRED"
+    assert (setup["cat"] / "p1-recovery-stop.json").exists()
+
+
 def test_zero_budget_never_starts_git(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("unbudgeted Git")
@@ -477,17 +490,29 @@ def test_path_config_and_trace_environment_cannot_redirect_input(setup, monkeypa
 def test_plain_p5_native_scope_cannot_replay_under_another_repository(setup):
     # Shared request identity with explicit cumulative progress must still bind target.
     source = GitNativeSource(setup["repo"])
-    work = UnlimitedWorkBudget()
-    progress = InMemoryNotesProgress()
     app = GitAcquisition(setup["cat"])
-    app.acquire_from_native(source, setup["unit"], work=work, progress=progress)
-    with pytest.raises(CoreFailure, match="request intent changed"):
-        app.acquire_from_native(
-            source,
-            replace(setup["unit"], repository_uuidv4=setup["seed"]),
-            work=work,
-            progress=progress,
+    with OperationalAcquisitionLedger(setup["cat"] / "operational.sqlite3") as ledger:
+        _, _, work, progress = ledger.create_budget(
+            scope=[
+                "p5-git-native",
+                setup["target"],
+                setup["unit"].capture_origin_uuidv4,
+                setup["unit"].capture_uuidv4,
+            ],
+            request=RequestIdentity(
+                setup["unit"].capture_origin_uuidv4, setup["unit"].capture_uuidv4
+            ),
+            new_request=True,
         )
+        app.acquire_from_native(source, setup["unit"], work=work, progress=progress)
+        with pytest.raises(CoordinationError) as failure:
+            app.acquire_from_native(
+                source,
+                replace(setup["unit"], repository_uuidv4=setup["seed"]),
+                work=work,
+                progress=progress,
+            )
+        assert failure.value.code == "REQUEST_SCOPE"
 
 
 def test_reviewed_request_cannot_be_mutated_by_confirmation_callback(setup):

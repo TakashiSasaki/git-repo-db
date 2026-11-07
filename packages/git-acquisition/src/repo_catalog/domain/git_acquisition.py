@@ -11,7 +11,7 @@ from repo_catalog.application.notes import (
     RefNotesInventory,
     RefNotesInventoryVerification,
 )
-from repo_catalog.domain.acquisition_errors import AcquisitionError
+from repo_catalog.domain.acquisition_errors import AcquisitionError as AcquisitionError
 from repo_catalog.domain.p1_core import (
     OID,
     CoreCoverageScope,
