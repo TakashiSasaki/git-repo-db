@@ -33,7 +33,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import (
     SnapshotReadLimits,
     catalog_completion,
 )
-from repo_catalog.application.context_query import ContextResourceReader
+from repo_catalog.application.context_query import ContextReader
 from repo_catalog.application.core_query import (
     CoreQueryService,
     PinnedCoreSnapshot,
@@ -50,19 +50,16 @@ from repo_catalog.domain.p1_core import (
 from repo_catalog.domain.production_query import (
     SEARCH_PROJECTION_KINDS,
     CatalogReadMode,
-    CoverageView,
     GitObjectView,
     PageRequest,
     PageResult,
     PairedCoreResolution,
     PairedResourceView,
-    ProviderView,
     QueryError,
     SearchHit,
     SearchQuery,
     SearchResponse,
     SnapshotFenceToken,
-    SourceView,
     ref_projection_json,
     validate_cursor_key,
 )
@@ -72,7 +69,6 @@ from repo_catalog.domain.ref_observation import NotesMapping, RefObservationKey
 if TYPE_CHECKING:
     from repo_catalog.adapters.sqlite.production_context import Context
     from repo_catalog.domain.p1_context import (
-        CoverageScope,
         MappingOperationEvidence,
         ResourceKey,
     )
@@ -92,7 +88,7 @@ class PinnedCatalogSnapshot(PinnedCoreSnapshot):
     pair: PairedSnapshot | None = None
 
 
-class ProductionQueryService(ContextResourceReader, CoreQueryService):
+class ProductionQueryService(ContextReader, CoreQueryService):
     """Authoritative query, pagination, byte-verification, and Search service."""
 
     def _context_core_resolver(self, snapshot):
@@ -275,81 +271,6 @@ class ProductionQueryService(ContextResourceReader, CoreQueryService):
     # ------------------------------------------------------------------
     # Context Authoritative Queries
     # ------------------------------------------------------------------
-
-    def list_providers(self) -> tuple[ProviderView, ...]:
-        with self.open_snapshot(required_store="context") as snap:
-            assert snap.context is not None
-            rows = snap.context.db.execute(
-                "SELECT service_instance_uuidv4,provider_kind,configuration_json "
-                "FROM providers ORDER BY service_instance_uuidv4"
-            ).fetchall()
-            return tuple(
-                ProviderView(
-                    service_instance_uuidv4=r[0],
-                    provider_kind=r[1],
-                    configuration=snap.context.registration_metadata("provider", r[2]),
-                )
-                for r in rows
-            )
-
-    def list_source_views(
-        self, service_instance_uuidv4: str | None = None
-    ) -> tuple[SourceView, ...]:
-        from repo_catalog.domain.production_context import SourceInventory
-
-        with self.open_snapshot(required_store="context") as snap:
-            assert snap.context is not None
-            rows = snap.context.db.execute(
-                "SELECT source_registration_uuidv4,service_instance_uuidv4,configuration_json "
-                "FROM sources WHERE (? IS NULL OR service_instance_uuidv4=?) "
-                "ORDER BY source_registration_uuidv4",
-                (service_instance_uuidv4, service_instance_uuidv4),
-            ).fetchall()
-            views: list[SourceView] = []
-            for s_id, svc_id, cfg_json in rows:
-                repos = snap.context.source_repositories(s_id)
-                inv_rows = snap.context.db.execute(
-                    "SELECT scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json "
-                    "FROM source_inventory_evidence WHERE source_registration_uuidv4=? "
-                    "ORDER BY observed_at_us,scope_json,provenance_json",
-                    (s_id,),
-                ).fetchall()
-                inventories = tuple(
-                    SourceInventory(
-                        source_registration_uuidv4=s_id,
-                        scope_json=ir[0],
-                        observed_at_us=ir[1],
-                        state=ir[2],
-                        terminal=bool(ir[3]),
-                        repositories=tuple(json.loads(ir[4])),
-                        provenance_json=ir[5],
-                    )
-                    for ir in inv_rows
-                )
-                views.append(
-                    SourceView(
-                        source_registration_uuidv4=s_id,
-                        service_instance_uuidv4=svc_id,
-                        configuration=snap.context.registration_metadata(
-                            "source", cfg_json
-                        ),
-                        repositories=repos,
-                        inventories=inventories,
-                    )
-                )
-            return tuple(views)
-
-    def get_context_coverage(self, scope: CoverageScope) -> CoverageView:
-        with self.open_snapshot(required_store="context") as snap:
-            assert snap.context is not None
-            proj = snap.context.coverage(scope)
-            return CoverageView(
-                scope=scope,
-                state=proj.state,
-                known_empty=proj.known_empty,
-                latest_observed_at_us=proj.observed_at_us,
-                claims=proj.claims,
-            )
 
     # ------------------------------------------------------------------
     # Paired Cross-Store Queries

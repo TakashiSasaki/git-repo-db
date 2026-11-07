@@ -189,3 +189,32 @@ prior/in-flight/post-cleanup stops. Composed artifact probes cover Context-only
 and paired list/CLI parity. Execution and independent findings are revision-bound
 in the PR; test existence is not a PASS. Provider/Source listings and Coverage
 are the next OP-03C scope; independent paired installation remains OP-04 work.
+
+### Remaining Context metadata reads (OP-03C)
+
+The existing public Context read surface is now owned by `ContextReader` and
+available through `ContextQueryService`: Resource/exact-text and Resource lists,
+plus `list_providers`, `list_source_views` and `get_context_coverage`.
+`ProviderView` and `SourceView` live in Context; composed imports re-export the
+same definitions. The existing CLI has no dedicated Provider/Source/Coverage
+commands, so this extraction creates none. Resource/list/status commands retain
+their established semantics and capability discovery.
+
+Provider/Source registration metadata retains its finite domain vocabulary and
+original provenance. Source inventories remain attributed observations and
+positive memberships survive partial inventories. Source membership certifies no
+Core fact. Coverage delegates the existing latest-observation candidate/proof
+projection: no fallback to an older complete report; unknown does not displace a
+determinate report, conflicting determinate reports stay conflict, and explicit
+empty completion differs from no observation. No extra claim or history owner,
+Context mutation/recovery minimum or Transfer activation is added.
+
+Caller Source filters and reconstructed Coverage scopes are checked before
+stored-row classifiers. Stored identities, inventory structure and values are
+checked on reconstruction, with real corruption persisting catalog stop. All
+three operations retain in-flight and post-cleanup completion fences, finite
+read budgets, pinned Context-only tokens and no optional DB creation. Real
+minimum direct/sdist-derived and composed installations, adversarial probes and
+independent review remain revision-bound evidence; the contract alone is no
+execution claim. OP-04 independent paired installation, Search combinations,
+acquisition and Exchange remain separate module-independence increments.

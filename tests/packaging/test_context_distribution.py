@@ -12,7 +12,9 @@ from pathlib import Path
 import pytest
 
 from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.domain.p1_context import CoverageScope
 from tests.integration.p6.conftest import init_catalog, populate_rich_catalog
+from tests.support.context_metadata_fixture import prepare_metadata_fixture
 from tests.support.distributions import (
     build_once,
     dependency_wheels,
@@ -77,6 +79,7 @@ def test_context_resource_reader_without_concrete_core(
     # Rich producer uses current typed admission, and closes all capabilities.
     producer = tmp_path / "producer"
     data = populate_rich_catalog(producer, include_core=False, include_context=True)
+    metadata = prepare_metadata_fixture(producer, data)
     key = data["pr_key"]
     service = ProductionQueryService(producer, mode="context_only")
     expected = service.get_context_resource(key, include_text=True).to_dict()
@@ -98,6 +101,7 @@ def test_context_resource_reader_without_concrete_core(
         if path.exists():
             shutil.copy2(path, fixture / name)
     manifest = {
+        "metadata": metadata,
         "resource": list(key.coordinates()),
         "expected": expected,
         "digest": digest,
@@ -204,11 +208,15 @@ def test_context_resource_reader_without_concrete_core(
         ROOT / "tests/support/network_guard/sitecustomize.py",
         outside / "sitecustomize.py",
     )
+    shutil.copy2(
+        ROOT / "tests/support/context_metadata_probe.py",
+        outside / "context_metadata_probe.py",
+    )
     receipt = outside / "result.json"
     run([python, "-I", driver, receipt], outside, env)
     evidence = json.loads(receipt.read_text())
     assert evidence["result"] == "passed"
-    assert len(evidence["checks"]) == 22
+    assert len(evidence["checks"]) == 31
     evidence["artifacts"] = {
         artifact.name: hashlib.sha256(artifact.read_bytes()).hexdigest()
         for artifact in artifacts
@@ -256,6 +264,33 @@ def test_composed_context_reader_artifact_parity(
             {
                 "key": key.coordinates(),
                 "views": expected,
+                "metadata": {
+                    mode: {
+                        "providers": [
+                            v.to_dict()
+                            for v in ProductionQueryService(
+                                catalog, mode=mode
+                            ).list_providers()
+                        ],
+                        "sources": [
+                            v.to_dict()
+                            for v in ProductionQueryService(
+                                catalog, mode=mode
+                            ).list_source_views()
+                        ],
+                        "coverage": ProductionQueryService(catalog, mode=mode)
+                        .get_context_coverage(
+                            CoverageScope.collection(
+                                fixture["issue_key"],
+                                "comments",
+                                fixture["ctx_prov_2"],
+                                "comments",
+                            )
+                        )
+                        .to_dict(),
+                    }
+                    for mode in expected
+                },
                 "listings": {
                     mode: [
                         v.to_dict()
@@ -296,7 +331,7 @@ def test_composed_context_reader_artifact_parity(
 import importlib.metadata, json, subprocess, sys, sysconfig
 from pathlib import Path
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_context import ResourceKey
+from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 installed = Path(sysconfig.get_path("purelib")).resolve()
 products = {d.metadata["Name"]: d for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
 assert set(products) == {"repo-catalog", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
@@ -311,7 +346,12 @@ key = ResourceKey(*fixture["key"])
 for mode, expected in fixture["views"].items():
     view = ProductionQueryService(Path("catalog"), mode=mode).get_context_resource(key)
     assert json.loads(json.dumps(view.to_dict())) == expected
-    listing = ProductionQueryService(Path("catalog"), mode=mode).list_context_resources()
+    reader = ProductionQueryService(Path("catalog"), mode=mode)
+    assert [v.to_dict() for v in reader.list_providers()] == fixture["metadata"][mode]["providers"]
+    assert [v.to_dict() for v in reader.list_source_views()] == fixture["metadata"][mode]["sources"]
+    coverage = fixture["metadata"][mode]["coverage"]
+    assert reader.get_context_coverage(CoverageScope(coverage["owner_kind"], tuple(coverage["owner_coordinates"]))).to_dict() == coverage
+    listing = reader.list_context_resources()
     assert json.loads(json.dumps([v.to_dict() for v in listing.items])) == fixture["listings"][mode]
     assert listing.total_count == len(listing.items)
     enumerated = subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "context-resources", "--catalog", "catalog", "--mode", mode, "--limit", "1"], capture_output=True, text=True, timeout=30)

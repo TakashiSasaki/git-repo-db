@@ -123,7 +123,7 @@
     {
       "path": "packages/context/src/repo_catalog/application/context_query.py",
       "owner": "repo-catalog-context",
-      "sha256": "5b70e16802e5f19f42ca6a1ca98f9347c4770262de1721144f6c5bef0f0bd810"
+      "sha256": "ce0429d6e62e9ec17e42249a17df4908e4058bc6a99037ffb3e2698a83a6ffd4"
     },
     {
       "path": "packages/context/src/repo_catalog/cli/context_query_features.py",
@@ -138,7 +138,7 @@
     {
       "path": "packages/context/src/repo_catalog/domain/context_query.py",
       "owner": "repo-catalog-context",
-      "sha256": "4d7ed0e0e7c976a7b55462c762ea5c1cf5417dfd191bebbc3c308e3ebfaf7b05"
+      "sha256": "86f35914e7e6216385706a7a0616b3e1e523603dac14df61ab7c9a2defda5974"
     },
     {
       "path": "packages/context/src/repo_catalog/domain/context_registration.py",
@@ -503,7 +503,7 @@
     {
       "path": "src/repo_catalog/application/production_query.py",
       "owner": "repo-catalog",
-      "sha256": "3e30cb2f1d3176ebe4df0026fea6fe76d78d54ee8f1a3e87e3a435979bba105d"
+      "sha256": "5bd493d1350c5e7cfafea5429601d50d8c67c0dbcfac692e73f02ea50214ec9f"
     },
     {
       "path": "src/repo_catalog/application/provider_acquisition.py",
@@ -618,7 +618,7 @@
     {
       "path": "src/repo_catalog/domain/production_query.py",
       "owner": "repo-catalog",
-      "sha256": "400365189311987b378333b9d0a6d16262f1e7abcbb49886282e6dfc4d669363"
+      "sha256": "2ed58440dc121fe1e8e20985b83de61cfc1819a67bc175570d987e9dafccbce2"
     },
     {
       "path": "src/repo_catalog/domain/provider_acquisition.py",
