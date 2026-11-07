@@ -917,6 +917,25 @@ the owner explicitly requests it. This
 procedure concerns the standalone local-catalog bootstrap, not a general permission
 to weaken archive extraction or change other runtime installers.
 
+## Preserve import-classification context in scoped Ruff reproducers
+
+An Access CI formatter artifact once included only the explicitly checked files;
+rerunning Ruff after extraction produced false `I001` failures because other
+first-party modules and `tests/integration/__init__.py` were missing. Include the
+package roots, config, test package initializers and supporting source context,
+then run both real Ruff checks in a fresh extracted directory. Verify the archive
+comes from the selected Git commit and record its scope, bytes and SHA-256 along
+with the formatter hash. A formatter-scoped archive is not a complete offline test
+reproducer. Preserve the full source artifact for failure, release or selected
+test/packaging workflows; do not discard historical evidence from Git.
+
+The bounded controls are `scripts/local-run.sh pytest -q -n 2
+tests/unit/test_access_ci_reproduction.py`. A 2026-11-07 local measurement at
+`bde21124` compared sequential archive creation: the complete archive was
+208,098,527 bytes in 11.95 seconds; the formatter scope was 1,577,415 bytes in
+0.33 seconds. These are single observations on one Linux host, not hosted CI or
+end-to-end speed guarantees. See `docs/ci-performance.md` for test scope and limits.
+
 ## Bind standalone SQLite restores to the bytes actually activated
 
 The local-catalog review found two concrete counterexamples: checking a source
