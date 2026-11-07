@@ -137,6 +137,14 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "adapters/git/notes.py",
         "adapters/sqlite/notes.py",
         "domain/acquisition.py",
+        "adapters/sqlite/operational_coordination.py",
+        "application/paired_acquisition.py",
+        "application/provider_acquisition.py",
+        "application/git_acquisition.py",
+        "domain/paired_acquisition.py",
+        "domain/provider_acquisition.py",
+        "domain/git_acquisition.py",
+        "domain/acquisition_errors.py",
         "domain/exchange.py",
         "domain/ref_exchange.py",
         "domain/selective_exchange.py",
@@ -211,7 +219,31 @@ ISOLATED_NEXT_STAGE_MODULES = frozenset(
         "adapters/sqlite/access_registry.py",
     )
 )
-ISOLATED_TARGET_MODULES = ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES
+# Independent local catalog entrypoints remain opt-in, outside Schema 21 startup.
+# Keep concrete members explicit so a future startup integration is never hidden
+# by a package-name or filename-prefix exemption.
+ISOLATED_LOCAL_MODULES = frozenset(
+    owned_source(relative)
+    for relative in (
+        "filesystem/__init__.py",
+        "filesystem/models.py",
+        "filesystem/store.py",
+        "filesystem/scanner.py",
+        "filesystem/efu.py",
+        "filesystem/cli.py",
+        "worktrees/__init__.py",
+        "worktrees/models.py",
+        "worktrees/git.py",
+        "worktrees/catalog.py",
+        "worktrees/cli.py",
+        "local/__init__.py",
+        "local/service.py",
+        "local/cli.py",
+    )
+)
+ISOLATED_TARGET_MODULES = (
+    ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES | ISOLATED_LOCAL_MODULES
+)
 
 
 def isolated_runtime_imports(source: str, package: str) -> set[str]:

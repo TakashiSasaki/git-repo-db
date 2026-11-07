@@ -154,12 +154,12 @@ jobs:
       - name: Install isolated documentation dependencies
         run: uv sync --locked --project documentation --python "$CI_PRODUCT_PYTHON"
 
-      - name: Verify schema visualization freshness
-        run: uv run --no-sync --project documentation python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
-
+      # The receipt-producing site build checks schema freshness against this IR;
+      # a separate schema_viz --check here would repeat the same generation/check.
       - name: Execute independent documentation obligations and retain receipt
         env:
           CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          DOCS_PYTEST_WORKERS: '2'
         run: |
           source_sha=$(git rev-parse HEAD)
           uv run --no-sync --project documentation python documentation/tools/verify_documentation.py --product-source "$source_sha" --documentation-source "$source_sha"
