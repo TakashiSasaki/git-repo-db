@@ -26,6 +26,9 @@ def test_index_covers_every_python_owner_and_packaged_resource():
         "repo-catalog-git-acquisition",
         "repo-catalog-exchange",
         "repo-catalog-paired-recovery",
+        "repo-catalog-filesystem",
+        "repo-catalog-worktrees",
+        "repo-catalog-local",
     }
     baseline = {entry["path"]: entry for entry in report["modules"]}
     isolated = {entry["path"]: entry for entry in report["isolated_modules"]}
@@ -39,6 +42,13 @@ def test_index_covers_every_python_owner_and_packaged_resource():
         core["sha256"]
         == hashlib.sha256((audit.ROOT / core["path"]).read_bytes()).hexdigest()
     )
+    for package, module in (
+        ("filesystem", "store"),
+        ("worktrees", "catalog"),
+        ("local", "service"),
+    ):
+        path = f"packages/{package}/src/repo_catalog/{package}/{module}.py"
+        assert isolated[path]["owner"] == f"repo-catalog-{package}"
     assert "functions" not in core
     assert {entry["path"] for entry in report["packaged_resources"]} == {
         path.relative_to(audit.ROOT).as_posix()

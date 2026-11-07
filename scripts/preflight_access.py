@@ -122,23 +122,24 @@ def check_console_script() -> dict[str, object]:
     import repo_catalog
     from repo_catalog import _version
 
-    expected_roots = {
-        (ROOT / directory / "repo_catalog").resolve()
-        for directory in (
-            "src",
-            "packages/core/src",
-            "packages/contracts/src",
-            "packages/runtime/src",
-            "packages/context/src",
-            "packages/access/src",
-            "packages/paired-query/src",
-            "packages/search/src",
-            "packages/operational/src",
-            "packages/git-acquisition/src",
-            "packages/exchange/src",
-            "packages/paired-recovery/src",
-        )
-    }
+    # The synchronized development environment installs every declared product
+    # member. Keep the namespace boundary tied to the workspace declaration,
+    # rather than maintaining a second hard-coded catalog/module inventory.
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    members = project["tool"]["uv"]["workspace"]["members"]
+    if any(
+        not isinstance(member, str) or any(c in member for c in "*?[]")
+        for member in members
+    ):
+        raise SystemExit("Preflight failed: explicit workspace members required")
+    expected_roots = {(ROOT / "src/repo_catalog").resolve()}
+    for member in members:
+        member_root = ROOT / member
+        if member_root.is_symlink() or not member_root.resolve().is_relative_to(
+            ROOT.resolve()
+        ):
+            raise SystemExit("Preflight failed: invalid workspace member")
+        expected_roots.add((member_root / "src/repo_catalog").resolve())
     namespace_roots = {Path(path).resolve() for path in repo_catalog.__path__}
     if namespace_roots != expected_roots:
         raise SystemExit(
