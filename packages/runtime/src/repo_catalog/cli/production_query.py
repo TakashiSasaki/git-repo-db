@@ -45,7 +45,7 @@ def _query_service(args, features):
     if features is not None and (
         features.__name__.endswith(".query_features")
         or args.mode == "context_only"
-        or args.command == "context-resource"
+        or args.command in ("context-resource", "context-resources")
         or not _core_available()
     ):
         return features.query_service(args.catalog, mode=args.mode)

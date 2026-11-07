@@ -37,12 +37,12 @@ from repo_catalog.application.context_query import ContextResourceReader
 from repo_catalog.application.core_query import (
     CoreQueryService,
     PinnedCoreSnapshot,
-    _paginate_items,
     _QueryWorkBoundary,
     _QueryWorkError,
     _stored_view,
 )
 from repo_catalog.application.query_encoding import encode_metered
+from repo_catalog.application.query_pagination import _paginate_items
 from repo_catalog.domain.p1_core import (
     OID,
     CoreFailure,
@@ -50,7 +50,6 @@ from repo_catalog.domain.p1_core import (
 from repo_catalog.domain.production_query import (
     SEARCH_PROJECTION_KINDS,
     CatalogReadMode,
-    ContextResourceView,
     CoverageView,
     GitObjectView,
     PageRequest,
@@ -146,19 +145,6 @@ class ProductionQueryService(ContextResourceReader, CoreQueryService):
     @search_adapter.setter
     def search_adapter(self, adapter):
         self._search_adapter = adapter
-
-    def _mapping_filter(self) -> dict[str, object]:
-        from repo_catalog.domain.p1_context import MappingOperationEvidence
-
-        evidence = self.mapping_evidence or MappingOperationEvidence()
-        return {
-            "confirmed": sorted(
-                k.coordinates() for k in evidence.confirmed_disposition_keys
-            ),
-            "contradicted": sorted(
-                k.coordinates() for k in evidence.contradicted_disposition_keys
-            ),
-        }
 
     def detect_mode(self) -> CatalogReadMode:
         self._check_stop()
@@ -352,95 +338,6 @@ class ProductionQueryService(ContextResourceReader, CoreQueryService):
                     )
                 )
             return tuple(views)
-
-    def list_context_resources(
-        self,
-        page: PageRequest = PageRequest(),
-        *,
-        service_instance_uuidv4: str | None = None,
-        resource_kind: str | None = None,
-        repository_uuidv4: str | None = None,
-        identifier_namespace: ResourceKey | None = None,
-        parent: ResourceKey | None = None,
-    ) -> PageResult[ContextResourceView]:
-        if parent is not None:
-            raise QueryError(
-                "I2_PARENT_QUERY_UNSUPPORTED",
-                "parent",
-                "semantic Parent queries require I3",
-            )
-        with self.open_snapshot(required_store="context") as snap:
-            assert snap.context is not None
-            token_str = snap.token.encode()
-            validate_core = None
-            if snap.core is not None:
-                core_ref = snap.core
-
-                def _check_core_list(fmt: str, oid_hex: str) -> bool:
-                    return bool(
-                        core_ref.sql(
-                            "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
-                            (fmt, oid_hex),
-                        )
-                    )
-
-                validate_core = _check_core_list
-            keys = snap.context.resources(kind=resource_kind)
-
-            def views():
-                for key in keys:
-                    if (
-                        service_instance_uuidv4 is not None
-                        and key.service_instance_uuidv4 != service_instance_uuidv4
-                    ):
-                        continue
-                    view = self._context_resource_in_snapshot(
-                        snap.context,
-                        key,
-                        include_text=False,
-                        validate_core=validate_core,
-                    )
-                    if repository_uuidv4 is not None and not view.matches_repository(
-                        repository_uuidv4
-                    ):
-                        continue
-                    if (
-                        identifier_namespace is not None
-                        and view.identifier_namespace != identifier_namespace
-                    ):
-                        continue
-                    yield view
-
-            selected = _paginate_items(
-                views(),
-                cursor_validator=validate_cursor_key,
-                key_fn=lambda v: v.semantic_key,
-                page=page,
-                endpoint_kind="context_resources",
-                filters={
-                    "identifier_namespace": list(identifier_namespace.coordinates())
-                    if identifier_namespace
-                    else None,
-                    "mapping_evidence": self._mapping_filter(),
-                    "repository_uuidv4": repository_uuidv4,
-                    "resource_kind": resource_kind,
-                    "service_instance_uuidv4": service_instance_uuidv4,
-                },
-                snapshot_token=token_str,
-            )
-
-            return replace(
-                selected,
-                items=tuple(
-                    self._context_resource_in_snapshot(
-                        snap.context,
-                        view.resource,
-                        include_text=True,
-                        validate_core=validate_core,
-                    )
-                    for view in selected.items
-                ),
-            )
 
     def get_context_coverage(self, scope: CoverageScope) -> CoverageView:
         with self.open_snapshot(required_store="context") as snap:

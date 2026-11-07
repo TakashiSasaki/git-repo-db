@@ -149,7 +149,13 @@ class PairedResourceView:
 
 def validate_cursor_key(endpoint: str, key: tuple) -> None:
     """Validate positions owned by the installed Context/Search query feature."""
-    widths = {"context_resources": 3, "paired_resources": 3, "search": 2}
+    if endpoint == "context_resources":
+        from repo_catalog.domain.context_query import (
+            validate_cursor_key as validate_context_key,
+        )
+
+        return validate_context_key(endpoint, key)
+    widths = {"paired_resources": 3, "search": 2}
     if (
         endpoint not in widths
         or not isinstance(key, tuple)

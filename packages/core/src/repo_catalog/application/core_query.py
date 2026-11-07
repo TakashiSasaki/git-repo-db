@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import hashlib
-import heapq
 import json
 import time
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from repo_catalog.adapters.sqlite.core_coordination import (
     CoreCoordinator,
     catalog_completion,
 )
 from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.application.query_pagination import _paginate_items
 from repo_catalog.application.query_runtime import (
     QueryReader,
 )
@@ -51,10 +51,8 @@ from repo_catalog.domain.query_contracts import (
     CoverageView,
     PageRequest,
     PageResult,
-    PaginationCursor,
     QueryError,
     SnapshotFenceToken,
-    filter_digest,
 )
 from repo_catalog.domain.query_work import UnlimitedWorkBudget
 from repo_catalog.domain.ref_observation import NotesMapping, RefObservationKey
@@ -68,8 +66,6 @@ if TYPE_CHECKING:
         RefObservationClaim,
         RefObservationProjection,
     )
-
-T = TypeVar("T")
 
 ALL_SCALAR_FIELDS: tuple[ScalarField, ...] = (
     "type",
@@ -109,72 +105,6 @@ class PinnedCoreSnapshot:
     mode: CatalogReadMode
     token: SnapshotFenceToken
     core: GitCore | None = None
-
-
-def _paginate_items(
-    items: Iterable[T],
-    *,
-    key_fn: Callable[[T], tuple],
-    page: PageRequest,
-    endpoint_kind: str,
-    filters: dict[str, object],
-    snapshot_token: str,
-    cursor_validator: Callable[[str, tuple], None] = validate_cursor_key,
-) -> PageResult[T]:
-    if page.expected_token is not None and page.expected_token != snapshot_token:
-        raise QueryError(
-            "SNAPSHOT_MISMATCH",
-            endpoint_kind,
-            "expected_token does not match current pinned snapshot",
-        )
-    f_digest = filter_digest(endpoint_kind, filters)
-    last_key = None
-    if page.cursor is not None:
-        last_key = PaginationCursor.decode(
-            page.cursor,
-            expected_endpoint=endpoint_kind,
-            expected_filter_digest=f_digest,
-            current_snapshot_token=snapshot_token,
-            validate_key=cursor_validator,
-        ).last_key
-    total_count = 0
-    remaining_count = 0
-
-    def eligible():
-        nonlocal total_count, remaining_count
-        for item in items:
-            total_count += 1
-            if last_key is None or key_fn(item) > last_key:
-                remaining_count += 1
-                yield item
-
-    # Exact total_count still requires a bounded scan; keep only limit+1 views.
-    selected = heapq.nsmallest(page.limit + 1, eligible(), key=key_fn)
-    sliced = tuple(selected[: page.limit])
-    has_more = remaining_count > len(sliced)
-    next_cursor = None
-    if has_more and sliced:
-        position = key_fn(sliced[-1])
-        try:
-            cursor_validator(endpoint_kind, position)
-        except Exception as error:
-            raise QueryError(
-                "INVALID_CURSOR", "pagination", "invalid endpoint key"
-            ) from error
-        next_cursor = PaginationCursor(
-            endpoint_kind=endpoint_kind,
-            filter_digest=f_digest,
-            snapshot_token=snapshot_token,
-            last_key=position,
-        ).encode()
-
-    return PageResult(
-        items=sliced,
-        snapshot_token=snapshot_token,
-        next_cursor=next_cursor,
-        has_more=has_more,
-        total_count=total_count,
-    )
 
 
 class CoreQueryService(QueryReader):
@@ -422,6 +352,7 @@ class CoreQueryService(QueryReader):
                     ),
                     key_fn=lambda v: v.ref_observation.ref_observation_key.key,
                     page=page,
+                    cursor_validator=validate_cursor_key,
                     endpoint_kind="ref_observations",
                     filters={},
                     snapshot_token=snap.token.encode(),
@@ -592,6 +523,7 @@ class CoreQueryService(QueryReader):
                 views(),
                 key_fn=lambda v: v.object_oid.key,
                 page=page,
+                cursor_validator=validate_cursor_key,
                 endpoint_kind="git_objects",
                 filters={
                     "native_type": native_type,
@@ -639,6 +571,7 @@ class CoreQueryService(QueryReader):
                     v.observation.provenance.encoded,
                 ),
                 page=page,
+                cursor_validator=validate_cursor_key,
                 endpoint_kind="git_observations",
                 filters={
                     "observation_kind": observation_kind,

@@ -6,19 +6,26 @@ import json
 import time
 from collections.abc import Callable
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from repo_catalog.adapters.sqlite.catalog_runtime import catalog_completion
 from repo_catalog.adapters.sqlite.production_context import Context
+from repo_catalog.application.query_pagination import (
+    _paginate_items,
+    validate_page_request,
+)
 from repo_catalog.application.query_runtime import QueryReader, _stored_view
-from repo_catalog.domain.context_query import ContextResourceView
+from repo_catalog.domain.context_query import ContextResourceView, validate_cursor_key
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.production_context import ResourceRelation
 from repo_catalog.domain.query_contracts import (
     ByteReadResult,
+    PageRequest,
+    PageResult,
     QueryError,
     SnapshotFenceToken,
 )
+from repo_catalog.domain.shared_values import CoreFailure, uuid4_value
 
 
 @dataclass
@@ -30,6 +37,141 @@ class PinnedContextSnapshot:
 
 
 class ContextResourceReader:
+    def _mapping_filter(self) -> dict[str, object]:
+        from repo_catalog.domain.p1_context import MappingOperationEvidence
+
+        evidence = self.mapping_evidence or MappingOperationEvidence()
+        return {
+            "confirmed": sorted(
+                k.coordinates() for k in evidence.confirmed_disposition_keys
+            ),
+            "contradicted": sorted(
+                k.coordinates() for k in evidence.contradicted_disposition_keys
+            ),
+        }
+
+    def list_context_resources(
+        self,
+        page: PageRequest = PageRequest(),
+        *,
+        service_instance_uuidv4: str | None = None,
+        resource_kind: str | None = None,
+        repository_uuidv4: str | None = None,
+        identifier_namespace: ResourceKey | None = None,
+        parent: ResourceKey | None = None,
+    ) -> PageResult[ContextResourceView]:
+        # Canonicalize caller values before opening the stored-data boundary.
+        if type(page) is not PageRequest:
+            raise QueryError(
+                "INVALID_INPUT", "context-resources", "PageRequest required"
+            )
+        try:
+            for value in (service_instance_uuidv4, repository_uuidv4):
+                if value is not None:
+                    if type(value) is not str:
+                        raise ValueError("canonical UUIDv4 string required")
+                    uuid4_value(value)
+            if resource_kind is not None and (
+                type(resource_kind) is not str or not resource_kind
+            ):
+                raise ValueError("resource_kind must be a nonempty string")
+
+            def checked_key(value):
+                if value is None:
+                    return None
+                if type(value) is not ResourceKey:
+                    raise ValueError("ResourceKey required")
+                return ResourceKey(
+                    value.service_instance_uuidv4,
+                    value.resource_kind,
+                    value.provider_resource_id,
+                )
+
+            identifier_namespace = checked_key(identifier_namespace)
+            parent = checked_key(parent)
+        except (
+            CoreFailure,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RecursionError,
+        ) as error:
+            raise QueryError(
+                "INVALID_INPUT", "context-resources", str(error)
+            ) from error
+        if parent is not None:
+            raise QueryError(
+                "I2_PARENT_QUERY_UNSUPPORTED",
+                "parent",
+                "semantic Parent queries require I3",
+            )
+        filters = {
+            "identifier_namespace": list(identifier_namespace.coordinates())
+            if identifier_namespace
+            else None,
+            "mapping_evidence": self._mapping_filter(),
+            "repository_uuidv4": repository_uuidv4,
+            "resource_kind": resource_kind,
+            "service_instance_uuidv4": service_instance_uuidv4,
+        }
+        page = validate_page_request(
+            page,
+            endpoint_kind="context_resources",
+            filters=filters,
+            cursor_validator=validate_cursor_key,
+        )
+        with self.open_snapshot(required_store="context") as snap:
+            assert snap.context is not None
+            token_str = snap.token.encode()
+            validate_core = self._context_core_resolver(snap)
+
+            def views():
+                for key in snap.context.resources(kind=resource_kind):
+                    if (
+                        service_instance_uuidv4 is not None
+                        and key.service_instance_uuidv4 != service_instance_uuidv4
+                    ):
+                        continue
+                    view = self._context_resource_in_snapshot(
+                        snap.context,
+                        key,
+                        include_text=False,
+                        validate_core=validate_core,
+                    )
+                    if repository_uuidv4 is not None and not view.matches_repository(
+                        repository_uuidv4
+                    ):
+                        continue
+                    if (
+                        identifier_namespace is not None
+                        and view.identifier_namespace != identifier_namespace
+                    ):
+                        continue
+                    yield view
+
+            selected = _paginate_items(
+                views(),
+                cursor_validator=validate_cursor_key,
+                key_fn=lambda v: v.semantic_key,
+                page=page,
+                endpoint_kind="context_resources",
+                filters=filters,
+                snapshot_token=token_str,
+            )
+
+            return replace(
+                selected,
+                items=tuple(
+                    self._context_resource_in_snapshot(
+                        snap.context,
+                        view.resource,
+                        include_text=True,
+                        validate_core=validate_core,
+                    )
+                    for view in selected.items
+                ),
+            )
+
     def get_context_resource(
         self,
         resource_key: ResourceKey,
@@ -48,7 +190,13 @@ class ContextResourceReader:
                 resource_key.resource_kind,
                 resource_key.provider_resource_id,
             )
-        except (ValueError, TypeError, AttributeError, RecursionError) as error:
+        except (
+            CoreFailure,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RecursionError,
+        ) as error:
             raise QueryError("INVALID_INPUT", "context-resource", str(error)) from error
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None

@@ -189,7 +189,6 @@ def main(output):
         "get_git_object",
         "get_paired_resource",
         "search",
-        "list_context_resources",
     ):
         assert not hasattr(service, name), name
     help_result = subprocess.run(
@@ -316,6 +315,388 @@ def main(output):
         response = cli(damaged)
         assert response.returncode == 2
     checks.append("corrupt_text_and_stored_structure_stop_without_authority_write")
+
+    # OP-03B: the same installed minimum now exposes Resource enumeration.
+    from dataclasses import replace
+
+    from repo_catalog.domain.query_contracts import PageRequest, SnapshotFenceToken
+
+    listed = service.list_context_resources(PageRequest(limit=100))
+    assert [json.loads(json.dumps(v.to_dict())) for v in listed.items] == data[
+        "listing"
+    ]
+    assert listed.total_count == len(data["listing"]) and not listed.has_more
+    empty = ContextQueryService(
+        root / "empty", mode="context_only"
+    ).list_context_resources()
+    assert (
+        empty.items == ()
+        and empty.total_count == 0
+        and not empty.has_more
+        and empty.next_cursor is None
+    )
+    collected, cursor = [], None
+    while True:
+        part = service.list_context_resources(
+            PageRequest(limit=1, cursor=cursor, expected_token=listed.snapshot_token)
+        )
+        assert part.total_count == listed.total_count and len(part.items) == 1
+        collected.extend(v.semantic_key for v in part.items)
+        if not part.has_more:
+            assert part.next_cursor is None
+            break
+        assert part.next_cursor and part.next_cursor != cursor
+        cursor = part.next_cursor
+    assert collected == sorted(v.semantic_key for v in listed.items)
+    checks.append("enumeration_empty_populated_complete_key_pages_counts")
+
+    for filters in (
+        {"service_instance_uuidv4": key.service_instance_uuidv4},
+        {"service_instance_uuidv4": "11111111-1111-4111-8111-111111111111"},
+        {"resource_kind": key.resource_kind},
+        {"repository_uuidv4": data["repository"]},
+        {"identifier_namespace": key},
+    ):
+        expected = [
+            v
+            for v in listed.items
+            if (
+                "service_instance_uuidv4" not in filters
+                or v.resource.service_instance_uuidv4
+                == filters["service_instance_uuidv4"]
+            )
+            and (
+                "resource_kind" not in filters
+                or v.resource.resource_kind == filters["resource_kind"]
+            )
+            and (
+                "repository_uuidv4" not in filters
+                or v.matches_repository(filters["repository_uuidv4"])
+            )
+            and (
+                "identifier_namespace" not in filters
+                or v.identifier_namespace == filters["identifier_namespace"]
+            )
+        ]
+        actual = service.list_context_resources(**filters)
+        assert actual.items == tuple(expected) and actual.total_count == len(expected)
+    checks.append("enumeration_service_kind_repository_namespace_filters")
+
+    command = [
+        sys.executable,
+        "-I",
+        "-m",
+        "repo_catalog.cli.production_query",
+        "context-resources",
+        "--catalog",
+        str(catalog),
+        "--mode",
+        "context_only",
+        "--limit",
+        "1",
+    ]
+    response = subprocess.run(
+        command, cwd=root, capture_output=True, text=True, timeout=30
+    )
+    assert response.returncode == 0, response.stderr
+    first = json.loads(response.stdout)
+    assert (
+        first["items"] == data["listing"][:1]
+        and first["total_count"] == listed.total_count
+    )
+    response = subprocess.run(
+        command
+        + [
+            "--cursor",
+            first["next_cursor"],
+            "--expected-token",
+            first["snapshot_token"],
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert (
+        response.returncode == 0
+        and json.loads(response.stdout)["items"] == data["listing"][1:2]
+    )
+    assert "context-resources" in help_result.stdout
+    assert (
+        ContextQueryService(opaque, mode="context_only")
+        .list_context_resources()
+        .total_count
+        == listed.total_count
+    )
+    refuses(
+        lambda: ContextQueryService(opaque).list_context_resources(),
+        {"MISSING_CAPABILITY"},
+    )
+    refuses(
+        lambda: ContextQueryService(catalog, mode="paired").list_context_resources(),
+        {"MISSING_CAPABILITY"},
+    )
+    checks.append("enumeration_cli_continuation_capability_opaque_core")
+
+    # Page/filter/cursor failures are caller errors even if stored rows are bad.
+    small = service.list_context_resources(PageRequest(limit=1))
+    for bad_filters in (
+        {"repository_uuidv4": object()},
+        {"service_instance_uuidv4": "wrong"},
+        {"resource_kind": []},
+        {"identifier_namespace": bad_key},
+        {"parent": bad_key},
+    ):
+        refuses(
+            lambda: service.list_context_resources(**bad_filters), {"INVALID_INPUT"}
+        )
+    refuses(
+        lambda: service.list_context_resources(parent=key),
+        {"I2_PARENT_QUERY_UNSUPPORTED"},
+    )
+    for field, value, code in (
+        ("limit", True, "INVALID_LIMIT"),
+        ("cursor", 12, "INVALID_CURSOR"),
+        ("expected_token", "bad", "INVALID_TOKEN"),
+    ):
+        bad_page = replace(PageRequest())
+        object.__setattr__(bad_page, field, value)
+        refuses(lambda: service.list_context_resources(bad_page), {code})
+    refuses(lambda: service.list_context_resources(object()), {"INVALID_INPUT"})
+    refuses(
+        lambda: service.list_context_resources(PageRequest(cursor="invalid")),
+        {"INVALID_CURSOR"},
+    )
+    refuses(
+        lambda: service.list_context_resources(
+            PageRequest(cursor=small.next_cursor), resource_kind="issue"
+        ),
+        {"INVALID_CURSOR"},
+    )
+    token = replace(
+        SnapshotFenceToken.parse(listed.snapshot_token), context_sha256="0" * 64
+    ).encode()
+    refuses(
+        lambda: service.list_context_resources(PageRequest(expected_token=token)),
+        {"SNAPSHOT_MISMATCH"},
+    )
+    assert not (catalog / "p1-recovery-stop.json").exists()
+    corrupt = ContextQueryService(root / "damaged-provenance", mode="context_only")
+    refuses(
+        lambda: corrupt.list_context_resources(PageRequest(cursor="invalid")),
+        {"INVALID_CURSOR"},
+    )
+    checks.append("enumeration_input_cursor_filter_token_errors_not_corruption")
+
+    # Authentic cursor encoding with wrong endpoint or Context position is refused.
+    import base64
+
+    envelope = json.loads(base64.urlsafe_b64decode(small.next_cursor))
+    for endpoint, position in (
+        ("paired_resources", list(key.coordinates())),
+        ("context_resources", [key.service_instance_uuidv4, "issue", "["]),
+    ):
+        payload = dict(envelope["payload"], endpoint_kind=endpoint, last_key=position)
+
+        def canonical(value):
+            return json.dumps(
+                value,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+                allow_nan=False,
+            )
+
+        changed = canonical(
+            {
+                "payload": payload,
+                "checksum_sha256": hashlib.sha256(
+                    ("p6-cursor-v1:" + canonical(payload)).encode()
+                ).hexdigest(),
+            }
+        )
+        encoded = base64.urlsafe_b64encode(changed.encode()).decode()
+        refuses(
+            lambda: service.list_context_resources(PageRequest(cursor=encoded)),
+            {"INVALID_CURSOR"},
+        )
+    checks.append("enumeration_wrong_endpoint_and_semantic_cursor_key")
+
+    changed = fresh("changed-authority")
+    original_service = ContextQueryService(changed, mode="context_only")
+    previous = original_service.list_context_resources(PageRequest(limit=1))
+    from repo_catalog.adapters.sqlite.p1_schema import connect
+
+    with connect(changed / "context.sqlite3", "context") as db:
+        db.execute("UPDATE providers SET configuration_json='{}'")
+    refuses(
+        lambda: original_service.list_context_resources(
+            PageRequest(cursor=previous.next_cursor)
+        ),
+        {"SNAPSHOT_MISMATCH"},
+    )
+    refuses(
+        lambda: original_service.list_context_resources(
+            PageRequest(expected_token=previous.snapshot_token)
+        ),
+        {"SNAPSHOT_MISMATCH"},
+    )
+    assert not (changed / "p1-recovery-stop.json").exists()
+    checks.append("enumeration_changed_authority_stale_cursor_fence")
+
+    # Reconstruction scans metadata first, resolves checked text only for emitted rows.
+    reads = []
+
+    def count_text(self, digest):
+        reads.append(digest)
+        return original(self, digest)
+
+    with patch.object(Context, "read_text", count_text):
+        single = service.list_context_resources(PageRequest(limit=1))
+    expected_digests = {
+        digest for v in single.items for digest in v.resolved_texts if len(digest) == 64
+    }
+    assert set(reads) == expected_digests
+    refuses(
+        lambda: ContextQueryService(
+            catalog, read_limits=SnapshotReadLimits(max_total_rows=1)
+        ).list_context_resources(),
+        {"QUERY_BUDGET"},
+    )
+    assert not (catalog / "p1-recovery-stop.json").exists()
+    checks.append("enumeration_two_phase_text_and_budget_not_corruption")
+
+    for timing in ("during", "after"):
+        dest = fresh("enumeration-" + timing)
+        if timing == "during":
+
+            def stop_list(self, digest):
+                value = original(self, digest)
+                persist_catalog_stop(dest, "synthetic enumeration stop")
+                return value
+
+            target = patch.object(Context, "read_text", stop_list)
+        else:
+
+            @contextmanager
+            def stop_snapshot(*args, **kwargs):
+                with original_snapshot(*args, **kwargs) as current:
+                    yield current
+                persist_catalog_stop(dest, "synthetic post-cleanup enumeration stop")
+
+            target = patch.object(Context, "snapshot", stop_snapshot)
+        with target:
+            refuses(
+                lambda: ContextQueryService(
+                    dest, mode="context_only"
+                ).list_context_resources(),
+                {"RECOVERY_STOP", "RECOVERY_REQUIRED"},
+            )
+    refuses(
+        lambda: ContextQueryService(stopped).list_context_resources(),
+        {"RECOVERY_STOP", "RECOVERY_REQUIRED"},
+    )
+    checks.append("enumeration_persistent_during_final_completion_stop")
+
+    for fault in ("text", "provenance"):
+        dest = fresh("enumeration-damaged-" + fault)
+        with sqlite3.connect(dest / "context.sqlite3") as db:
+            table = "text_bodies" if fault == "text" else "field_candidates"
+            triggers = db.execute(
+                "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=?",
+                (table,),
+            ).fetchall()
+            for name, _ in triggers:
+                db.execute('DROP TRIGGER "' + name + '"')
+            db.execute("PRAGMA ignore_check_constraints=ON")
+            db.execute(
+                "UPDATE text_bodies SET text_value='tampered'"
+                if fault == "text"
+                else "UPDATE field_candidates SET provenance_json='[]'"
+            )
+            for _, sql in triggers:
+                db.execute(sql)
+        before = hashlib.sha256((dest / "context.sqlite3").read_bytes()).hexdigest()
+        refuses(
+            lambda: ContextQueryService(
+                dest, mode="context_only"
+            ).list_context_resources(),
+            {"AUTHORITATIVE_CORRUPTION"},
+        )
+        assert (dest / "p1-recovery-stop.json").exists()
+        assert (
+            hashlib.sha256((dest / "context.sqlite3").read_bytes()).hexdigest()
+            == before
+        )
+    checks.append("enumeration_real_text_structure_corruption_persists_stop_no_repair")
+
+    from repo_catalog.domain.p1_context import (
+        FieldClock,
+        MappingClaimKey,
+        MappingDispositionKey,
+        MappingOperationEvidence,
+    )
+
+    mapping = json.loads((root / "mapping.json").read_text())
+    keys = frozenset(
+        MappingDispositionKey(
+            MappingClaimKey(
+                ResourceKey(*d[:3]), d[3], FieldClock.from_json(d[4]), d[5], d[6]
+            ),
+            d[7],
+            FieldClock.from_json(d[8]),
+            d[9],
+        )
+        for d in mapping["dispositions"]
+    )
+    plain = ContextQueryService(root / "mapping", mode="context_only")
+    qualified = ContextQueryService(
+        root / "mapping",
+        mode="context_only",
+        mapping_evidence=MappingOperationEvidence(keys),
+    )
+    for query_service, expected in (
+        (plain, mapping["plain"]),
+        (qualified, mapping["qualified"]),
+    ):
+        result = query_service.list_context_resources()
+        assert json.loads(json.dumps([v.to_dict() for v in result.items])) == expected
+        by_id = {
+            v.resource.provider_resource_id: v
+            for v in result.items
+            if v.resource.resource_kind == "issue"
+        }
+        assert by_id['"7"'].repository_roles[0].state == "unresolved_provider_only"
+        assert by_id['"11"'].repository_roles[0].state == "explicit_null"
+        assert by_id['"12"'].repository_roles == ()
+        expected_targets = (
+            set(mapping["repositories"])
+            if query_service is plain
+            else {mapping["repositories"][1]}
+        )
+        assert (
+            set(by_id['"13"'].repository_roles[0].mapping.active_repository_uuidv4s)
+            == expected_targets
+        )
+        for repository in mapping["repositories"]:
+            page = query_service.list_context_resources(repository_uuidv4=repository)
+            assert page.items == tuple(
+                v for v in result.items if v.matches_repository(repository)
+            )
+    page = plain.list_context_resources(PageRequest(limit=1))
+    refuses(
+        lambda: qualified.list_context_resources(PageRequest(cursor=page.next_cursor)),
+        {"INVALID_CURSOR"},
+    )
+    assert plain.get_context_resource(
+        ResourceKey.from_native(mapping["service"], "issue", "10")
+    ).matches_repository(mapping["repositories"][0])
+    assert not qualified.get_context_resource(
+        ResourceKey.from_native(mapping["service"], "issue", "10")
+    ).matches_repository(mapping["repositories"][0])
+    checks.append(
+        "enumeration_qualified_mapping_alternatives_missing_null_unresolved_evidence_bound_cursor"
+    )
 
     origins = {}
     for name, module in list(sys.modules.items()):

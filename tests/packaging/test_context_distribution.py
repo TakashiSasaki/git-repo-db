@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from repo_catalog.application.production_query import ProductionQueryService
-from tests.integration.p6.conftest import populate_rich_catalog
+from tests.integration.p6.conftest import init_catalog, populate_rich_catalog
 from tests.support.distributions import (
     build_once,
     dependency_wheels,
@@ -102,11 +102,74 @@ def test_context_resource_reader_without_concrete_core(
         "expected": expected,
         "digest": digest,
         "text": text,
+        "listing": [v.to_dict() for v in service.list_context_resources().items],
+        "repository": expected["repository_uuidv4"],
         "context_sha256": hashlib.sha256(
             (producer / "context.sqlite3").read_bytes()
         ).hexdigest(),
     }
+    init_catalog(outside / "empty", roles=("context",))
     (outside / "fixture.json").write_text(json.dumps(manifest))
+    # Independently modeled Provider intake produces missing/null/unresolved and
+    # competing mappings, then attributed disposition reports. Only closed T is
+    # copied; no producer acquisition/Core implementation enters the consumer.
+    from repo_catalog.domain.acquisition import ProviderIntakeBatch
+    from repo_catalog.domain.p1_context import (
+        FieldClock,
+        MappingDisposition,
+        MappingOperationEvidence,
+    )
+    from tests.integration.i23.test_provider_exchange import (
+        producer as mapping_producer,
+    )
+    from tests.integration.i23.test_provider_exchange import provenance
+    from tests.support.context_admission import AuthorizedProviderAcquisition
+
+    mapping_path = tmp_path / "mapping-producer"
+    mapping_service, r1, r2, claims = mapping_producer(mapping_path)
+    dispositions = tuple(
+        MappingDisposition(
+            target.claim_key,
+            kind,
+            FieldClock("operation", 20),
+            provenance(kind),
+            21,
+            claims[3].claim_key if kind == "correct" else None,
+        )
+        for target, kind in (
+            (claims[0], "withdraw"),
+            (claims[1], "dispute"),
+            (claims[2], "correct"),
+        )
+    )
+    AuthorizedProviderAcquisition(mapping_path).admit_batch(
+        ProviderIntakeBatch(mapping_service, mapping_dispositions=dispositions)
+    )
+    mapping_dest = outside / "mapping"
+    mapping_dest.mkdir()
+    for name in ("context.sqlite3", "context.sqlite3-wal", "context.sqlite3-shm"):
+        if (mapping_path / name).exists():
+            shutil.copy2(mapping_path / name, mapping_dest / name)
+    confirmed = MappingOperationEvidence(
+        frozenset(d.disposition_key for d in dispositions)
+    )
+    plain = ProductionQueryService(mapping_path, mode="context_only")
+    qualified = ProductionQueryService(
+        mapping_path, mode="context_only", mapping_evidence=confirmed
+    )
+    (outside / "mapping.json").write_text(
+        json.dumps(
+            {
+                "service": mapping_service,
+                "repositories": [r1, r2],
+                "dispositions": [d.disposition_key.coordinates() for d in dispositions],
+                "plain": [v.to_dict() for v in plain.list_context_resources().items],
+                "qualified": [
+                    v.to_dict() for v in qualified.list_context_resources().items
+                ],
+            }
+        )
+    )
     links = tmp_path / "allowed-artifacts"
     links.mkdir()
     for artifact in artifacts:
@@ -145,7 +208,7 @@ def test_context_resource_reader_without_concrete_core(
     run([python, "-I", driver, receipt], outside, env)
     evidence = json.loads(receipt.read_text())
     assert evidence["result"] == "passed"
-    assert len(evidence["checks"]) == 12
+    assert len(evidence["checks"]) == 22
     evidence["artifacts"] = {
         artifact.name: hashlib.sha256(artifact.read_bytes()).hexdigest()
         for artifact in artifacts
@@ -189,7 +252,21 @@ def test_composed_context_reader_artifact_parity(
         d["available"] for d in expected["context_only"]["core_dependencies"]
     )
     (outside / "expected.json").write_text(
-        json.dumps({"key": key.coordinates(), "views": expected})
+        json.dumps(
+            {
+                "key": key.coordinates(),
+                "views": expected,
+                "listings": {
+                    mode: [
+                        v.to_dict()
+                        for v in ProductionQueryService(catalog, mode=mode)
+                        .list_context_resources()
+                        .items
+                    ]
+                    for mode in expected
+                },
+            }
+        )
     )
     venv = tmp_path / "venv"
     run = package_build_runner
@@ -205,6 +282,9 @@ def test_composed_context_reader_artifact_parity(
             "--python",
             python,
             "--offline",
+            "--no-index",
+            "--find-links",
+            ROOT / "artifacts/wheelhouse",
             "--requirements",
             products["requirements"],
             products[variant],
@@ -231,6 +311,12 @@ key = ResourceKey(*fixture["key"])
 for mode, expected in fixture["views"].items():
     view = ProductionQueryService(Path("catalog"), mode=mode).get_context_resource(key)
     assert json.loads(json.dumps(view.to_dict())) == expected
+    listing = ProductionQueryService(Path("catalog"), mode=mode).list_context_resources()
+    assert json.loads(json.dumps([v.to_dict() for v in listing.items])) == fixture["listings"][mode]
+    assert listing.total_count == len(listing.items)
+    enumerated = subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "context-resources", "--catalog", "catalog", "--mode", mode, "--limit", "1"], capture_output=True, text=True, timeout=30)
+    assert enumerated.returncode == 0, enumerated.stderr
+    assert json.loads(enumerated.stdout)["items"] == fixture["listings"][mode][:1]
     response = subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "context-resource", "--catalog", "catalog", "--mode", mode, "--service", key.service_instance_uuidv4, "--kind", key.resource_kind, "--id", key.provider_resource_id], capture_output=True, text=True, timeout=30)
     assert response.returncode == 0, response.stderr
     assert json.loads(response.stdout) == expected
