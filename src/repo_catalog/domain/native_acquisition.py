@@ -9,7 +9,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import fields, replace
 
-from repo_catalog.domain.acquisition import (
+from repo_catalog.domain.git_acquisition import (
     GitMetadataInput,
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,
