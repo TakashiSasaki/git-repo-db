@@ -13,10 +13,8 @@ import pytest
 
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
-from repo_catalog.application.production_query import (
-    ProductionQueryService,
-    _paginate_items,
-)
+from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.application.query_pagination import _paginate_items
 from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     FieldCandidate,

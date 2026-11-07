@@ -19,6 +19,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
         "worktrees",
         "local",
         "paired-query",
+        "search",
         "contracts",
     ]
     (tmp_path / "pyproject.toml").write_text(
@@ -62,7 +63,7 @@ def console_check(tmp_path, namespace_extra=None, version_extra=False):
 
 def test_exact_workspace_namespace_is_accepted(tmp_path):
     result = console_check(tmp_path)
-    assert len(result["namespace_roots"]) == 10
+    assert len(result["namespace_roots"]) == 11
     assert result["version"] == "0.2.0"
 
 

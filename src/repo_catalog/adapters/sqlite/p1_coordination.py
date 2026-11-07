@@ -58,23 +58,14 @@ from repo_catalog.adapters.sqlite.paired_coordination import (
 from repo_catalog.adapters.sqlite.paired_coordination import (
     validate_pair as validate_pair,
 )
+from repo_catalog.adapters.sqlite.search_projection import (
+    SearchProjection as SearchProjection,
+)
 from repo_catalog.domain.p1_coordination import (
     AdmissionFailure,
     CoordinationError,
     PairAdmission,
     SnapshotToken,
-)
-from repo_catalog.domain.p1_coordination import (
-    NotesLimits as NotesLimits,
-)
-from repo_catalog.domain.p1_coordination import (
-    RequestIdentity as RequestIdentity,
-)
-from repo_catalog.domain.p1_coordination import (
-    WorkMeasurement as WorkMeasurement,
-)
-from repo_catalog.domain.p1_coordination import (
-    WorkPermit as WorkPermit,
 )
 
 
@@ -311,117 +302,3 @@ class PairCoordinator(PairSnapshotCoordinator):
             if pair.token.__dict__ != candidate["token"]:
                 raise CoordinationError("PAIR_CONTENT", "backup")
             return pair.token
-
-
-class SearchProjection:
-    """Discardable authority-derived candidates; None requires authority scan.
-
-    Public builders read actual pinned authority. There is no general text/body
-    admission API: P6 owns additional typed projectors, including verified notes.
-    """
-
-    def __init__(self, db: sqlite3.Connection | None):
-        self.db = db
-
-    @staticmethod
-    def context_documents(pair: PairedSnapshot) -> dict[str, str]:
-        if validate_pair(pair.core, pair.context) != pair.token:
-            raise CoordinationError("SNAPSHOT_CONTENT", "search")
-        documents = {}
-        for row in pair.context.execute(
-            "SELECT c.service_instance_uuidv4,c.resource_kind,c.provider_resource_id,c.field_name,"
-            "c.clock_json,c.value_json,c.provenance_json,b.text_value "
-            "FROM field_candidates c LEFT JOIN text_bodies b ON c.text_body_sha256=b.sha256"
-        ):
-            # Only this named local FK denotes retained text. Reported digests
-            # remain qualified metadata even if equal bytes happen to be local.
-            value = row[7] if row[3] == "text_body_sha256" else json.loads(row[5])
-            if isinstance(value, str):
-                documents[_json(tuple(row[:7]))] = value
-        return documents
-
-    def rebuild_context(self, pair: PairedSnapshot):
-        self._replace("context_text", pair.token, self.context_documents(pair))
-
-    def rebuild_git_metadata(self, pair: PairedSnapshot):
-        if validate_pair(pair.core, pair.context) != pair.token:
-            raise CoordinationError("SNAPSHOT_CONTENT", "search")
-        documents = {
-            _json(tuple(row)): row[1]
-            for row in pair.core.execute(
-                "SELECT object_format,object_oid FROM git_objects"
-            )
-        }
-        self._replace("git_metadata", pair.token, documents)
-
-    def _replace(self, kind: str, token: SnapshotToken, documents: dict[str, str]):
-        if self.db is None:
-            raise CoordinationError("UNAVAILABLE", "search")
-        self.db.execute("BEGIN IMMEDIATE")
-        try:
-            self.db.execute(
-                "DELETE FROM search_documents WHERE projection_kind=?", (kind,)
-            )
-            self.db.execute(
-                "DELETE FROM search_projections WHERE projection_kind=?", (kind,)
-            )
-            self.db.execute(
-                "INSERT INTO search_projections VALUES(?,?)", (kind, token.encode())
-            )
-            self.db.executemany(
-                "INSERT INTO search_documents VALUES(?,?,?,?)",
-                [(kind, token.encode(), key, text) for key, text in documents.items()],
-            )
-            self.db.commit()
-        except BaseException:
-            self.db.rollback()
-            raise
-
-    def candidates(
-        self, kind: str, token: SnapshotToken, needle: str
-    ) -> set[str] | None:
-        if self.db is None:
-            return None
-        try:
-            self.db.execute("BEGIN")
-            if not self.db.execute(
-                "SELECT 1 FROM search_projections WHERE projection_kind=? AND snapshot_token_json=?",
-                (kind, token.encode()),
-            ).fetchone():
-                return None
-            return {
-                row[0]
-                for row in self.db.execute(
-                    "SELECT document_key_json FROM search_documents WHERE projection_kind=? "
-                    "AND snapshot_token_json=? AND instr(searchable_text,?)>0",
-                    (kind, token.encode(), needle),
-                )
-            }
-        except sqlite3.DatabaseError:
-            return None
-        finally:
-            self.db.rollback()
-
-    def read(
-        self,
-        kind: str,
-        token: SnapshotToken,
-        needle: str,
-        authoritative_scan: Callable[[], dict[str, str]],
-    ) -> tuple[str, dict[str, str]]:
-        candidates = self.candidates(kind, token, needle)
-        rows = authoritative_scan()  # caller retains pinned authority snapshot
-        expected = {key for key, text in rows.items() if needle in text}
-        if candidates is not None and candidates != expected:
-            # A matching freshness token alone cannot prove a damaged/truncated
-            # projection complete. The conservative P1 adapter verifies against
-            # direct authority; optimized completeness proof belongs to P6.
-            candidates = None
-        return (
-            "projection" if candidates is not None else "authority_scan",
-            {
-                key: text
-                for key, text in rows.items()
-                if needle in text and (candidates is None or key in candidates)
-            },
-        )

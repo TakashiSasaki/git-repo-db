@@ -1,4 +1,4 @@
-"""Git-authority Search extraction, loaded only for Git projections."""
+"""Authority-specific Search extraction; imported only for this authority."""
 
 from __future__ import annotations
 

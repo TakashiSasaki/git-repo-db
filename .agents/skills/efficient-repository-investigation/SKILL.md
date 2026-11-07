@@ -199,6 +199,10 @@ failed counterexample and change only the patch owner; rerun the same behavioral
 assertions. The canonical validation-cancellation test is
 `tests/integration/p1/test_validation_stop.py`; successful ordinary reads alone do
 not replace its cancellation/no-corruption-stop control.
+Keep intended composition reexports explicit (`from owner import Name as Name`)
+when lint can remove otherwise-unused imports. Collect an existing consumer of
+the old public import path after extraction; SearchProjection's legacy derivative
+tests caught a missing reexport before its runtime assertions could execute.
 
 When canonicalizing frozen caller dataclasses, rebuild from explicit named fields
 and use the new value afterward. Calling an instance's overridable `coordinates()`
@@ -213,6 +217,16 @@ For new Query methods accepting caller work, reuse `_QueryWorkBoundary` inside
 snapshot reads and unwrap only outside every Core/paired/application classifier.
 A caller's JSONDecodeError must not become a persisted catalog-corruption stop.
 Pair callback identity/no-stop tests with genuine stored-corruption stop tests.
+Apply this boundary to external derivative ports too: guard method lookup,
+invocation and returned-mapping normalization before using their values inside
+authority classifiers. Copy bounded plain key/value data rather than retaining
+custom comparison behavior. SearchIndexPort JSONDecodeError formerly produced a
+false persistent stop; `test_search_independence.py` pairs exact exception identity
+with subsequent valid reads. Keep actual authority extraction inside the stored
+classifier. Decode a cursor against the actual pinned token before verified body
+extraction, as well as validating its wire/filter shape before snapshot entry;
+the stale-cursor counterexample must observe zero extractor/body calls. These are
+caller/derivative boundaries, not exceptions to genuine authority-corruption stop.
 When discovering Notes associations, test Group-only reports: a whole Group can
 be valid without any standalone Mapping row. Discover bounded headers and let
 the checked exact-Claim reader validate members before attributing a target.

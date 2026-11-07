@@ -1,7 +1,8 @@
-"""Search-only public values, independent of concrete authority implementations."""
+"""Search-only public values; no concrete authority or paired integration."""
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -13,6 +14,24 @@ SEARCH_PROJECTION_KINDS: tuple[SearchProjectionKind, ...] = (
     "notes",
     "context_text",
 )
+
+
+def canonical_projection_kinds(kinds):
+    if (
+        type(kinds) not in (tuple, list)
+        or not 0 < len(kinds) <= len(SEARCH_PROJECTION_KINDS)
+        or any(
+            type(kind) is not str or kind not in SEARCH_PROJECTION_KINDS
+            for kind in kinds
+        )
+        or len(set(kinds)) != len(kinds)
+    ):
+        raise QueryError(
+            "INVALID_PROJECTION_KIND",
+            "search",
+            "finite unique supported projection kinds required",
+        )
+    return tuple(kinds)
 
 
 @dataclass(frozen=True)
@@ -27,7 +46,7 @@ class SearchQuery:
 
     def __post_init__(self) -> None:
         if (
-            not isinstance(self.query_text, str)
+            type(self.query_text) is not str
             or not self.query_text
             or len(self.query_text) > 4096
         ):
@@ -38,16 +57,9 @@ class SearchQuery:
             raise QueryError(
                 "INVALID_QUERY", "search", "valid Unicode required"
             ) from error
-        if (
-            not self.projection_kinds
-            or len(set(self.projection_kinds)) != len(self.projection_kinds)
-            or any(k not in SEARCH_PROJECTION_KINDS for k in self.projection_kinds)
-        ):
-            raise QueryError(
-                "INVALID_PROJECTION_KIND",
-                "search",
-                f"projection_kinds must be subset of {SEARCH_PROJECTION_KINDS}",
-            )
+        object.__setattr__(
+            self, "projection_kinds", canonical_projection_kinds(self.projection_kinds)
+        )
         PageRequest(
             limit=self.limit, cursor=self.cursor, expected_token=self.expected_token
         )
@@ -99,3 +111,23 @@ class SearchResponse:
             "snapshot_token": self.snapshot_token,
             "total_count": self.total_count,
         }
+
+
+def validate_cursor_key(endpoint: str, key: tuple) -> None:
+    if (
+        endpoint != "search"
+        or type(key) is not tuple
+        or len(key) != 2
+        or any(type(v) is not str or not v or len(v) > 32768 for v in key)
+    ):
+        raise ValueError("invalid Search cursor shape")
+    if key[0] not in SEARCH_PROJECTION_KINDS:
+        raise ValueError("invalid projection")
+    document = json.loads(key[1])
+    if (
+        not isinstance(document, list)
+        or not document
+        or any(type(v) is not str for v in document)
+        or canonical_json(document) != key[1]
+    ):
+        raise ValueError("invalid document key")

@@ -11454,6 +11454,23 @@
       "static_consumer_references": [
         "docs/architecture/module-independence-contract.md"
       ]
+    },
+    "docs/implementation/minimal-search-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements ADR0037 OP-05/06 without changing accepted decisions; revision-bound execution and review evidence belong to the PR.",
+      "source": "docs/implementation/minimal-search-distribution.md",
+      "producer": "OP-05/06 Search distribution implementation.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum Search distributions (OP-05/06)",
+      "cited_adrs": [
+        "0037",
+        "0038"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
     }
   }
 }

@@ -274,8 +274,8 @@ the setup command; obtain the effective default with
 `scripts/local-run.sh uv cache dir`, never assume a machine-specific path.
 Dependency setup is not test execution and does not change the selected SQLite.
 
-Use a unique explicit `--basetemp` under the existing git-ignored artifact
-location when an installed-distribution run must retain wheels, source/build
+Use a unique explicit `--basetemp` in a retained location outside Git checkouts
+when an installed-distribution run must retain wheels, source/build
 bindings and consumer receipts for a later reviewer. Pytest's default numbered
 temporary directories are retention-limited: later successful runs can remove
 earlier supporting artifacts even though invocation/JUnit records remain. If
@@ -283,6 +283,13 @@ that happens, preserve the surviving records, rebuild from the frozen source
 inputs and rerun only the missing artifact lane; explain the retention reason
 instead of relabeling the new run as the original. Never reuse one basetemp for
 concurrent or still-needed runs, because pytest clears it at startup.
+Create the parent directory before invoking pytest. Git discovery walks upward:
+a synthetic plain directory under a checkout is still inside that repository.
+Local catalog installation tests placed under repository artifacts discovered
+the real parent and expanded its registered worktrees instead of the intended
+plain fixture. An external basetemp preserves the original assertions without
+changing production discovery or scanning unrelated working copies. Keep the
+failed evidence and rerun only affected lanes; record the retained external path.
 
 For a newly created external probe module or complex fixture, check collection
 and a representative executable node in the intended checkout before expanding

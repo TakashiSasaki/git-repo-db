@@ -27,6 +27,7 @@ def _features():
     """Load the explicit optional composition only when its code is installed."""
     for name in (
         "repo_catalog.cli.query_features",
+        "repo_catalog.cli.search_query_features",
         "repo_catalog.cli.paired_query_features",
         "repo_catalog.cli.context_query_features",
     ):
@@ -44,7 +45,9 @@ def _core_available():
 
 def _query_service(args, features):
     if features is not None and (
-        features.__name__.endswith((".query_features", ".paired_query_features"))
+        features.__name__.endswith(
+            (".query_features", ".search_query_features", ".paired_query_features")
+        )
         or args.mode == "context_only"
         or args.command in ("context-resource", "context-resources")
         or not _core_available()
