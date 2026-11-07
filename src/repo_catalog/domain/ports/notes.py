@@ -8,6 +8,7 @@ from typing import Protocol
 from repo_catalog.domain.p1_core import OID, NativeObject
 from repo_catalog.domain.ports.p1_core import WorkBudget
 from repo_catalog.domain.ref_observation import NotesMappingEvidence
+from repo_catalog.domain.request_scope import request_scope as request_scope
 
 
 class NotesSource(Protocol):
@@ -45,26 +46,3 @@ class NotesProgress(Protocol):
     def save_once_bounded(
         self, scope: str, value: dict, max_bytes: int, *, encoded: str
     ) -> dict: ...
-
-
-def request_scope(
-    repository_uuidv4, catalog_instance_uuidv4, source_attribution, source_scope
-):
-    """Exact explicit Notes request intent, independent of per-attempt limits."""
-    from repo_catalog.domain.p1_core import CoreFailure, encode, uuid4_value
-
-    uuid4_value(repository_uuidv4)
-    uuid4_value(catalog_instance_uuidv4)
-    if not source_attribution or not source_scope:
-        raise CoreFailure(
-            "NOTES_SCOPE", "request", "actual source attribution/scope required"
-        )
-    return encode(
-        [
-            repository_uuidv4,
-            catalog_instance_uuidv4,
-            source_attribution,
-            "p4-notes/1",
-            source_scope,
-        ]
-    )

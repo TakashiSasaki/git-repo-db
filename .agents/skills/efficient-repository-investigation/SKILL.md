@@ -249,3 +249,16 @@ exercise typed salvage and exact-Claim body isolation. The OID naming contract
 and `tests/unit/test_ref_physical_format.py` record this verified case. Use the
 existing schema fingerprint generator and physical audit for actual DDL changes;
 never rewrite historical evidence or loosen exact-field validation to get green.
+
+## Audit SQLite URI targets without losing file restrictions
+
+When an existing-store opener changes to URI `mode=rw` to prevent creation after
+an existence-check race, retain explicit fresh and `:memory:` probe behavior.
+The local runtime safety probe caught treating `:memory:` as a filesystem URI.
+For `sqlite3.connect` audit hooks, parse a `file:` URI with `urlsplit`/`unquote`,
+check its intended mode/authority, then apply the original filename allowlist.
+Checking `Path(uri).name` instead falsely rejects the query suffix. The installed
+Context reader probe preserves its Context-only restriction after normalization;
+the O-only probe independently removes O just before open and asserts no file is
+recreated. These are local SQLite connection controls, not a filesystem sandbox
+or permission to create optional authorities.

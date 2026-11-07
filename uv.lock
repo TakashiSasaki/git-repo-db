@@ -11,6 +11,7 @@ members = [
     "repo-catalog-core",
     "repo-catalog-filesystem",
     "repo-catalog-local",
+    "repo-catalog-operational",
     "repo-catalog-paired-query",
     "repo-catalog-runtime",
     "repo-catalog-search",
@@ -253,6 +254,7 @@ dependencies = [
     { name = "repo-catalog-context" },
     { name = "repo-catalog-contracts" },
     { name = "repo-catalog-core" },
+    { name = "repo-catalog-operational" },
     { name = "repo-catalog-paired-query" },
     { name = "repo-catalog-search" },
 ]
@@ -280,6 +282,7 @@ requires-dist = [
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
     { name = "repo-catalog-core", editable = "packages/core" },
     { name = "repo-catalog-local", marker = "extra == 'local'", editable = "packages/local" },
+    { name = "repo-catalog-operational", editable = "packages/operational" },
     { name = "repo-catalog-paired-query", editable = "packages/paired-query" },
     { name = "repo-catalog-search", editable = "packages/search" },
 ]
@@ -353,6 +356,21 @@ dependencies = [
 requires-dist = [
     { name = "repo-catalog-filesystem", editable = "packages/filesystem" },
     { name = "repo-catalog-worktrees", editable = "packages/worktrees" },
+]
+
+[[package]]
+name = "repo-catalog-operational"
+version = "0.2.0"
+source = { editable = "packages/operational" }
+dependencies = [
+    { name = "repo-catalog-contracts" },
+    { name = "repo-catalog-runtime" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "repo-catalog-contracts", editable = "packages/contracts" },
+    { name = "repo-catalog-runtime", editable = "packages/runtime" },
 ]
 
 [[package]]

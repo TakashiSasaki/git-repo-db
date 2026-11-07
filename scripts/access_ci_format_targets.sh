@@ -1,5 +1,7 @@
 # Shared by Access Ruff checks and its scoped offline reproducer.
 targets=(
+  packages/operational/src/repo_catalog/adapters/sqlite/operational_coordination.py
+  packages/contracts/src/repo_catalog/domain/request_scope.py
   scripts/preflight_access.py
   scripts/compare_access_regressions.py
   scripts/audit_access_acceptance.py
@@ -16,8 +18,8 @@ targets=(
   src/repo_catalog/adapters/git/native.py
   src/repo_catalog/adapters/git/notes.py
   src/repo_catalog/application/notes.py
-  src/repo_catalog/adapters/sqlite/notes.py
-  src/repo_catalog/adapters/sqlite/acquisition.py
+  packages/operational/src/repo_catalog/adapters/sqlite/notes.py
+  packages/operational/src/repo_catalog/adapters/sqlite/acquisition.py
   src/repo_catalog/domain/ports/notes.py
   tests/unit/test_native_acquisition_values.py
   packages/context/src/repo_catalog/domain/context_registration.py

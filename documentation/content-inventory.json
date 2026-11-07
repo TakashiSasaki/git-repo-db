@@ -11471,6 +11471,24 @@
       "static_consumer_references": [
         "docs/architecture/module-independence-contract.md"
       ]
+    },
+    "docs/implementation/minimal-operational-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements durable Operational ownership as an ADR0037 OP08/09 prerequisite; no new accepted design.",
+      "source": "docs/implementation/minimal-operational-distribution.md",
+      "producer": "Operational ownership prerequisite implementation.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum durable Operational distribution",
+      "cited_adrs": [
+        "0024",
+        "0025",
+        "0038"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
     }
   }
 }

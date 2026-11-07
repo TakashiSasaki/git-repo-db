@@ -31,9 +31,9 @@ from repo_catalog.domain.p1_coordination import (
     NotesLimits,
     RequestIdentity,
 )
-from repo_catalog.domain.p1_core import CoreFailure, encode, uuid4_value
-from repo_catalog.domain.ports.notes import request_scope
 from repo_catalog.domain.query_work import UnlimitedWorkBudget as UnlimitedWorkBudget
+from repo_catalog.domain.request_scope import request_scope
+from repo_catalog.domain.shared_values import CoreFailure, encode, uuid4_value
 from repo_catalog.domain.time import (
     validate_observation_us,
     validate_required_observation_us,

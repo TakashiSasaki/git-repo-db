@@ -521,7 +521,7 @@ class WorkLedger:
         across requests and connections. Request issuance remains independent.
         """
         from repo_catalog.domain.exchange import ExchangeError
-        from repo_catalog.domain.shared_values import uuid4_value
+        from repo_catalog.domain.p1_core import uuid4_value
 
         uuid4_value(sender)
         uuid4_value(package_id)

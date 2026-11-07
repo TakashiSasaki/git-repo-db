@@ -5,8 +5,8 @@ import os
 from contextlib import contextmanager
 
 from repo_catalog.domain.p1_coordination import CoordinationError
-from repo_catalog.domain.p1_core import CoreFailure
-from repo_catalog.domain.ports.notes import request_scope
+from repo_catalog.domain.request_scope import request_scope
+from repo_catalog.domain.shared_values import CoreFailure
 
 
 class NotesProgress:

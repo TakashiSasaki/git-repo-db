@@ -247,7 +247,12 @@ def _open(
     path = Path(path)
     if not fresh and not path.is_file():
         raise SchemaError(f"store absent: {path.name}")
-    db = sqlite3.connect(path, isolation_level=None, cached_statements=0)
+    db = sqlite3.connect(
+        path if fresh else path.resolve().as_uri() + "?mode=rw",
+        uri=not fresh,
+        isolation_level=None,
+        cached_statements=0,
+    )
     try:
         db.row_factory = sqlite3.Row
         register_functions(db, store)
