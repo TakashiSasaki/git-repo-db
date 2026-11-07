@@ -12,7 +12,7 @@
       "source": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md",
       "producer": "Owner-directed implementation task.",
       "consumers": "ADR index, local catalog operation contract, implementers and reviewers.",
-      "publication": "not staged",
+      "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0039: Independent filesystem and worktree catalogs",
       "status_in_source": "accepted",
       "static_consumer_references": ["docs/adr/README.md", "docs/architecture/local-catalog-contract.md"]
