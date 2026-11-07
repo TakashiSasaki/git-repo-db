@@ -11437,6 +11437,23 @@
       "static_consumer_references": [
         "docs/implementation/minimal-core-distribution.md"
       ]
+    },
+    "docs/implementation/minimal-paired-query-distribution.md": {
+      "status": "implementation-contract",
+      "owner": "docs/implementation/",
+      "authority": "Implements ADR0037 OP-04 without changing accepted decisions; revision-bound execution and review evidence belong to the PR.",
+      "source": "docs/implementation/minimal-paired-query-distribution.md",
+      "producer": "OP-04 paired Query distribution implementation.",
+      "consumers": "Package authors, independent reviewers and installed-artifact verification.",
+      "publication": "not staged",
+      "source_heading": "# Minimum paired Query distribution (OP-04)",
+      "cited_adrs": [
+        "0037",
+        "0038"
+      ],
+      "static_consumer_references": [
+        "docs/architecture/module-independence-contract.md"
+      ]
     }
   }
 }

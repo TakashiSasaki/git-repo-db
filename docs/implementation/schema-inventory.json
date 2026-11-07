@@ -24,6 +24,7 @@
       "packages/runtime/src/**/*.py lexical references",
       "packages/context/src/**/*.py lexical references",
       "packages/access/src/**/*.py lexical references",
+      "packages/paired-query/src/**/*.py lexical references",
       "packages/filesystem/src/**/*.py lexical references",
       "packages/worktrees/src/**/*.py lexical references",
       "packages/local/src/**/*.py lexical references",
@@ -14298,6 +14299,30 @@
           ],
           "source_references": [
             {
+              "excerpt": "\"SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?\",",
+              "excerpt_truncated": false,
+              "line": 29,
+              "operation_hint": "read",
+              "path": "packages/paired-query/src/repo_catalog/adapters/sqlite/paired_coordination.py",
+              "scope": "validate_dependencies"
+            },
+            {
+              "excerpt": "\"SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?\",",
+              "excerpt_truncated": false,
+              "line": 66,
+              "operation_hint": "read",
+              "path": "packages/paired-query/src/repo_catalog/application/paired_query.py",
+              "scope": "resolve"
+            },
+            {
+              "excerpt": "\"SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?\",",
+              "excerpt_truncated": false,
+              "line": 232,
+              "operation_hint": "read",
+              "path": "packages/paired-query/src/repo_catalog/application/paired_query.py",
+              "scope": "check_in_core"
+            },
+            {
               "excerpt": "if table == \"git_objects\" and items[\"verified\"] and not prior[\"verified\"]:",
               "excerpt_truncated": false,
               "line": 583,
@@ -23793,6 +23818,22 @@
             "snapshot_id"
           ],
           "source_references": [
+            {
+              "excerpt": "def snapshots(self) -> Iterator[PairedSnapshot]:",
+              "excerpt_truncated": false,
+              "line": 170,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/paired-query/src/repo_catalog/adapters/sqlite/paired_coordination.py",
+              "scope": "snapshots"
+            },
+            {
+              "excerpt": "with coordinator.snapshots() as pair:",
+              "excerpt_truncated": false,
+              "line": 164,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/paired-query/src/repo_catalog/application/paired_query.py",
+              "scope": "_open_snapshot"
+            },
             {
               "excerpt": "\"SELECT coalesce(max(generation), 0) FROM snapshots WHERE repository_uuidv4=?\",",
               "excerpt_truncated": false,

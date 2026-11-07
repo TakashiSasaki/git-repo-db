@@ -263,6 +263,9 @@ def test_composed_context_reader_artifact_parity(
         json.dumps(
             {
                 "key": key.coordinates(),
+                "paired": ProductionQueryService(catalog, mode="paired")
+                .get_paired_resource(key, include_core_bytes=True)
+                .to_dict(),
                 "views": expected,
                 "metadata": {
                     mode: {
@@ -334,7 +337,7 @@ from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 installed = Path(sysconfig.get_path("purelib")).resolve()
 products = {d.metadata["Name"]: d for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
-assert set(products) == {"repo-catalog", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
+assert set(products) == {"repo-catalog", "repo-catalog-paired-query", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
 owners = {}
 for name, distribution in products.items():
     for member in distribution.files:
@@ -347,6 +350,11 @@ for mode, expected in fixture["views"].items():
     view = ProductionQueryService(Path("catalog"), mode=mode).get_context_resource(key)
     assert json.loads(json.dumps(view.to_dict())) == expected
     reader = ProductionQueryService(Path("catalog"), mode=mode)
+    if mode == "paired":
+        assert json.loads(json.dumps(reader.get_paired_resource(key, include_core_bytes=True).to_dict())) == fixture["paired"]
+        paired = subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "paired-resource", "--catalog", "catalog", "--mode", mode, "--service", key.service_instance_uuidv4, "--kind", key.resource_kind, "--id", key.provider_resource_id, "--include-core-bytes"], capture_output=True, text=True, timeout=30)
+        assert paired.returncode == 0, paired.stderr
+        assert json.loads(paired.stdout) == fixture["paired"]
     assert [v.to_dict() for v in reader.list_providers()] == fixture["metadata"][mode]["providers"]
     assert [v.to_dict() for v in reader.list_source_views()] == fixture["metadata"][mode]["sources"]
     coverage = fixture["metadata"][mode]["coverage"]

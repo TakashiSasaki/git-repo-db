@@ -43,6 +43,19 @@ class PinnedContextSnapshot:
 
 
 class ContextReader:
+    @staticmethod
+    def _checked_resource_key(value, scope="context-resource") -> ResourceKey:
+        try:
+            if type(value) is not ResourceKey:
+                raise ValueError("ResourceKey required")
+            return ResourceKey(
+                value.service_instance_uuidv4,
+                value.resource_kind,
+                value.provider_resource_id,
+            )
+        except (ValueError, TypeError, AttributeError, RecursionError) as error:
+            raise QueryError("INVALID_INPUT", scope, str(error)) from error
+
     def list_providers(self) -> tuple[ProviderView, ...]:
         with self.open_snapshot(required_store="context") as snap:
             return self._providers_in_snapshot(snap.context)
@@ -213,19 +226,16 @@ class ContextReader:
             ):
                 raise ValueError("resource_kind must be a nonempty string")
 
-            def checked_key(value):
-                if value is None:
-                    return None
-                if type(value) is not ResourceKey:
-                    raise ValueError("ResourceKey required")
-                return ResourceKey(
-                    value.service_instance_uuidv4,
-                    value.resource_kind,
-                    value.provider_resource_id,
-                )
-
-            identifier_namespace = checked_key(identifier_namespace)
-            parent = checked_key(parent)
+            identifier_namespace = (
+                self._checked_resource_key(identifier_namespace, "context-resources")
+                if identifier_namespace is not None
+                else None
+            )
+            parent = (
+                self._checked_resource_key(parent, "context-resources")
+                if parent is not None
+                else None
+            )
         except (
             CoreFailure,
             ValueError,
@@ -315,26 +325,9 @@ class ContextReader:
         *,
         include_text: bool = True,
     ) -> ContextResourceView:
-        # Caller values must be checked outside stored-data classifiers. Rebuild
-        # the canonical value so instance overrides cannot become stored faults.
-        if type(resource_key) is not ResourceKey or type(include_text) is not bool:
-            raise QueryError(
-                "INVALID_INPUT", "context-resource", "ResourceKey and bool required"
-            )
-        try:
-            resource_key = ResourceKey(
-                resource_key.service_instance_uuidv4,
-                resource_key.resource_kind,
-                resource_key.provider_resource_id,
-            )
-        except (
-            CoreFailure,
-            ValueError,
-            TypeError,
-            AttributeError,
-            RecursionError,
-        ) as error:
-            raise QueryError("INVALID_INPUT", "context-resource", str(error)) from error
+        if type(include_text) is not bool:
+            raise QueryError("INVALID_INPUT", "context-resource", "bool required")
+        resource_key = self._checked_resource_key(resource_key)
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             return self._context_resource_in_snapshot(

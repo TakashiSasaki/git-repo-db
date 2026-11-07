@@ -3,54 +3,13 @@
 from __future__ import annotations
 
 from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.cli import paired_query_features
 from repo_catalog.domain.production_query import SEARCH_PROJECTION_KINDS, SearchQuery
 from repo_catalog.domain.query_contracts import QueryError
 
 
 def add_commands(sub, _add_common_args, _add_page_args):
-    # context-resource
-    p_cres = sub.add_parser(
-        "context-resource", help="Query a single Context resource by ResourceKey"
-    )
-    _add_common_args(p_cres)
-    p_cres.add_argument("--service", required=True)
-    p_cres.add_argument("--kind", required=True)
-    p_cres.add_argument(
-        "--id", required=True, help="Serialized canonical Resource identity JSON TEXT"
-    )
-
-    # context-resources
-    p_cress = sub.add_parser(
-        "context-resources", help="List Context resources with pagination"
-    )
-    _add_common_args(p_cress)
-    p_cress.add_argument("--service", default=None)
-    p_cress.add_argument("--kind", default=None)
-    p_cress.add_argument("--repository", default=None)
-    _add_page_args(p_cress)
-
-    # paired-resource
-    p_pres = sub.add_parser(
-        "paired-resource",
-        help="Query a paired Context resource with Core OID resolution",
-    )
-    _add_common_args(p_pres)
-    p_pres.add_argument("--service", required=True)
-    p_pres.add_argument("--kind", required=True)
-    p_pres.add_argument(
-        "--id", required=True, help="Serialized canonical Resource identity JSON TEXT"
-    )
-    p_pres.add_argument("--include-core-bytes", action="store_true")
-
-    # paired-resources
-    p_press = sub.add_parser(
-        "paired-resources",
-        help="List paired Context resources with Core OID resolution",
-    )
-    _add_common_args(p_press)
-    p_press.add_argument("--kind", default=None)
-    p_press.add_argument("--repository", default=None)
-    _add_page_args(p_press)
+    paired_query_features.add_commands(sub, _add_common_args, _add_page_args)
 
     # search-rebuild
     p_sreb = sub.add_parser(
@@ -86,50 +45,9 @@ def query_service(directory, *, mode):
 def query_payload(service, args, page_from_args):
     cmd = args.command
     _page_from_args = page_from_args
-    if cmd == "context-resource":
-        from repo_catalog.domain.p1_context import ResourceKey
-
-        rkey = ResourceKey(args.service, args.kind, args.id)
-        view = service.get_context_resource(rkey, include_text=True)
-        payload = view.to_dict()
-    elif cmd == "context-resources":
-        page = service.list_context_resources(
-            _page_from_args(args),
-            service_instance_uuidv4=args.service,
-            resource_kind=args.kind,
-            repository_uuidv4=args.repository,
-        )
-        payload = {
-            "has_more": page.has_more,
-            "items": [item.to_dict() for item in page.items],
-            "next_cursor": page.next_cursor,
-            "snapshot_token": page.snapshot_token,
-            "total_count": page.total_count,
-        }
-    elif cmd == "paired-resource":
-        from repo_catalog.domain.p1_context import ResourceKey
-
-        rkey = ResourceKey(args.service, args.kind, args.id)
-        view = service.get_paired_resource(
-            rkey,
-            include_text=True,
-            include_core_bytes=args.include_core_bytes,
-        )
-        payload = view.to_dict()
-    elif cmd == "paired-resources":
-        page = service.list_paired_resources(
-            _page_from_args(args),
-            resource_kind=args.kind,
-            repository_uuidv4=args.repository,
-        )
-        payload = {
-            "has_more": page.has_more,
-            "items": [item.to_dict() for item in page.items],
-            "next_cursor": page.next_cursor,
-            "snapshot_token": page.snapshot_token,
-            "total_count": page.total_count,
-        }
-    elif cmd == "search-rebuild":
+    if cmd not in ("search", "search-rebuild"):
+        return paired_query_features.query_payload(service, args, page_from_args)
+    if cmd == "search-rebuild":
         kinds = tuple(k.strip() for k in args.kinds.split(",") if k.strip())
         counts = service.rebuild_search(kinds)
         token = service.snapshot_token()

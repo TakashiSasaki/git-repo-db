@@ -69,6 +69,13 @@ same `repo_catalog/...` path. A clean conflict list alone cannot prove isolation
    split files as well as renamed/deleted files; preserve behavior in one owner
    and use deliberate reexports where needed. Account for build exclusions or
    other layouts instead of treating this source-path projection as wheel proof.
+   Resolve explicit conflict hunks from a preserved merge blob. A greedy whole-file
+   regular expression with DOTALL can consume class bodies beyond the markers
+   while leaving valid Python. After a resolution, inspect the definition/import
+   delta and smoke-import affected public entry points before starting installed
+   artifact checks. If a symbol disappeared accidentally, restore the original
+   merge blob and redo the bounded hunk; do not reconstruct it from the damaged
+   working copy or weaken a consumer assertion. Keep the failed run's evidence.
 4. Update workspace membership, dependencies, lock inputs, namespace/preflight
    inventories and CI formatter targets together. Regenerate generated reports
    from the resolved source with their existing producers. When the CI-only
@@ -238,6 +245,14 @@ aggregates. This procedure adds no test-selection or release gate.
 ## Development validation loop (ordinary PRs and stacked iterations)
 
 ### Choose and prepare the next run before executing it
+
+For package/source-owner moves, check both `audit_callsite_dependencies.py --check`
+and `audit_implementation_boundary.py --check`. The neutral
+`schema_inventory.py --check` validates SQL/fingerprints and can pass while the
+full source-reference inventory/table-disposition reports are stale. Regenerate
+those reports with their existing producer, inspect the lexical-reference delta
+and verify unchanged SQL/schema semantics; never weaken the strict byte check.
+A successful main test workflow does not replace the separate Access audit lane.
 
 At an ordinary development checkpoint, inspect all workflows triggered by the
 changed paths, not only `tests.yml`. Compare each workflow's selected work with
