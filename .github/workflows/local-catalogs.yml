@@ -1,23 +1,6 @@
 name: Native Windows local catalogs
 
 on:
-  pull_request:
-    paths:
-      - 'packages/contracts/**'
-      - 'packages/filesystem/**'
-      - 'packages/worktrees/**'
-      - 'packages/local/**'
-      - 'tests/filesystem/**'
-      - 'tests/worktrees/**'
-      - 'tests/local/**'
-      - 'tests/unit/test_local_catalog_runtime.py'
-      - 'tests/support/network_guard/**'
-      - 'scripts/local_catalog_runtime.py'
-      - 'scripts/ci_python_runtime.py'
-      - 'scripts/ci_python_runtime.json'
-      - '.github/workflows/local-catalogs.yml'
-      - 'pyproject.toml'
-      - 'uv.lock'
   workflow_dispatch:
 
 permissions:

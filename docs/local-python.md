@@ -26,7 +26,9 @@ worktrees and local packages. The executable is `PATH/python/python.exe`.
 The focused `.github/workflows/local-catalogs.yml` records this flow and runs only
 the standalone packages/tests, keeping Core, Context, Access and the POSIX runtime
 physically absent. It is not a Windows port of the existing rich product. Its
-native execution result must be reported separately from Linux verification.
+native execution result must be reported separately from Linux verification. Run
+Windows machine tests and Windows VM CI only for release builds or on explicit
+owner request; the workflow is manually dispatched and does not run on pull requests.
 
 - Linux `x86_64` or `aarch64` (glibc). Other hosts are refused with a clear message;
   no other Python or SQLite is substituted. Adding a platform means adding its

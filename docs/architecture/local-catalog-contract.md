@@ -91,8 +91,10 @@ Use synthetic file/Git fixtures and real SQLite with the environment's verified
 Python. Exercise linked/distant-bare/separate-git-dir cases, missing siblings,
 unborn/detached heads, untracked/ignored files, history interruption, hash races,
 special files, EFU encoding/collisions, and isolated direct/sdist-built installs.
-Native Windows tests cover path/attribute/reparse and concurrent access behavior;
-Linux results alone do not prove Windows execution. Missing capability, malformed
+When building a release or explicitly requested by the owner, native Windows tests
+cover path/attribute/reparse and concurrent access behavior. Ordinary development
+does not run Windows machine tests or Windows VM CI. Linux results alone do not
+prove Windows execution. Missing capability, malformed
 input, partial observation and stored corruption remain distinct diagnoses.
 
 Existing Git acquisition preserves durable cumulative work and stop checks after

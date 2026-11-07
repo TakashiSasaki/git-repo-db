@@ -69,7 +69,9 @@ mapped filenames are prohibited because they change identity.
   packages. SQLite transactions own each new DB's locking. Catalog DB storage is
   local; filesystem input may include Windows UNC paths.
 - Do not claim Windows execution from mocked path tests. Native focused Windows
-  validation is distinct from Linux evidence and from release qualification.
+  validation is distinct from Linux evidence. The owner clarified on 2026-11-07
+  that Windows machine tests and VM CI run only for release builds or on explicit
+  request; they are not ordinary-development gates.
 
 ## Context & Reason
 

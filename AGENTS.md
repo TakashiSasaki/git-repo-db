@@ -75,6 +75,11 @@ report the failure; do not bypass it, delete an incompatible `.venv` silently or
 
 ## CPU architecture validation scope
 
+**Windows validation scope:** Do not run native Windows machine tests or Windows
+VM CI during ordinary development. Run them only for release builds or when the
+owner explicitly requests Windows validation. Preserve Windows support and the
+manual workflow; do not describe simulated tests as native Windows execution.
+
 During ordinary development (including feature PRs, local tests, development CI,
 and independent development reviews), verification on **one available CPU
 architecture** is sufficient. Do not require x86_64/aarch64 parity, a

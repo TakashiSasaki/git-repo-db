@@ -912,7 +912,8 @@ Keep the existing POSIX extractor's no-follow checks intact.
 Reproduce the portability boundary and refusal controls with
 `scripts/local-run.sh pytest -q -n 2 tests/unit/test_local_catalog_runtime.py -k windows_extract`.
 The regression simulates the missing constant on Linux; it does not establish native
-Windows behavior. Run the native Windows workflow separately when available. This
+Windows behavior. Run the native Windows workflow only for release builds or when
+the owner explicitly requests it. This
 procedure concerns the standalone local-catalog bootstrap, not a general permission
 to weaken archive extraction or change other runtime installers.
 
@@ -936,7 +937,8 @@ exception. Reproduce the verified controls with
 and `tests/filesystem/test_filesystem.py -k 'backup or identity'` using the same
 runner prefix. These are standalone ADR0039 safeguards; do not substitute them
 for existing Core–Context paired recovery, stop fencing or complete WAL/journal
-preservation. Native Windows execution remains separately required.
+preservation. Native Windows execution is reserved for release builds or an explicit
+owner request; it is not a routine development gate.
 
 ## Check extracted smoke programs as shared interfaces
 
