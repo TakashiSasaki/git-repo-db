@@ -20,23 +20,18 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.p1_coordination import (
+from repo_catalog.adapters.sqlite.catalog_runtime import (
     SnapshotReadLimits,
     apply_snapshot_read_limits,
 )
 from repo_catalog.adapters.sqlite.p1_schema import SchemaError, connect, initialize
-from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey
 from repo_catalog.domain.p1_coordination import CoordinationError
-from repo_catalog.domain.p1_core import OID, GitObservation, Provenance
-from repo_catalog.domain.production_query import (
-    SEARCH_PROJECTION_KINDS,
+from repo_catalog.domain.query_contracts import (
     QueryError,
     SnapshotFenceToken,
     canonical_json,
-    provider_role_summary,
-    repository_relation_summary,
 )
+from repo_catalog.domain.search_query import SEARCH_PROJECTION_KINDS
 
 
 class BoundedDocuments(dict):
@@ -240,289 +235,19 @@ class ProductionSearchAdapter:
             return None
 
     @staticmethod
-    def extract_git_metadata_documents(
-        core: GitCore,
-    ) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
-        """Extract searchable `git_metadata` documents and summaries from a pinned `GitCore`.
-
-        Indexes commit/tag messages, author/committer/tagger identities, tag names,
-        ref observations, and decoded tree entry names. Strictly excludes ordinary
-        file blobs (`type == 'blob'`).
-        """
-        documents: dict[str, str] = BoundedDocuments()
-        summaries: dict[str, dict[str, object]] = {}
-
-        # 1. Inspect git_objects and their scalar/relation claims
-        obj_rows = core.sql(
-            "SELECT object_format,object_oid FROM git_objects ORDER BY object_format,object_oid"
+    def extract_git_metadata_documents(core):
+        """Compatibility entry point; authority code is loaded only when selected."""
+        from repo_catalog.adapters.sqlite.search_core import (
+            extract_git_metadata_documents,
         )
-        for row in obj_rows:
-            object_oid = OID(row[0], row[1])
-            type_proj = core.scalar(object_oid, "type")
-            known_types = {
-                alt["value"][1]
-                for alt in type_proj.alternatives
-                if isinstance(alt["value"], list)
-                and len(alt["value"]) == 2
-                and alt["value"][0] == "known"
-            }
-            canonical_type = (
-                type_proj.canonical[1]
-                if isinstance(type_proj.canonical, list)
-                and len(type_proj.canonical) == 2
-                and type_proj.canonical[0] == "known"
-                else None
-            )
-            # Strictly exclude ordinary file blobs
-            if canonical_type == "blob" or (known_types == {"blob"}):
-                continue
 
-            # Scalar text fields for commit/tag/metadata
-            for field in (
-                "message",
-                "author",
-                "author_name",
-                "author_email",
-                "committer",
-                "committer_name",
-                "committer_email",
-                "tag_name",
-                "tagger",
-                "decoded_name",
-            ):
-                proj = core.scalar(object_oid, field)
-                for alt in proj.alternatives:
-                    val = alt["value"]
-                    if (
-                        isinstance(val, list)
-                        and len(val) == 2
-                        and val[0] == "known"
-                        and isinstance(val[1], str)
-                        and val[1]
-                    ):
-                        prov_json = canonical_json(alt["provenance"])
-                        doc_key = canonical_json(
-                            [
-                                "scalar",
-                                object_oid.object_format,
-                                object_oid.object_oid,
-                                field,
-                                prov_json,
-                            ]
-                        )
-                        documents[doc_key] = val[1]
-                        summaries[doc_key] = {
-                            "checked": alt["checked"],
-                            "field": field,
-                            "object_oid": object_oid.object_oid,
-                            "kind": "scalar",
-                            "native_type": canonical_type,
-                            "object_format": object_oid.object_format,
-                            "provenance": alt["provenance"],
-                        }
-
-            # Tree entry names (decoded from hex)
-            tree_proj = core.relations(object_oid, "tree_entries")
-            for alt in tree_proj.alternatives:
-                prov_json = canonical_json(alt["provenance"])
-                for member in alt["membership"]:
-                    coord, target_fmt, target_object_oid = member
-                    mode, name_hex = coord[0], coord[1]
-                    decoded_name = bytes.fromhex(name_hex).decode(
-                        "utf-8", "backslashreplace"
-                    )
-                    doc_key = canonical_json(
-                        [
-                            "tree_entry",
-                            object_oid.object_format,
-                            object_oid.object_oid,
-                            name_hex,
-                            target_object_oid,
-                            prov_json,
-                        ]
-                    )
-                    documents[doc_key] = decoded_name
-                    summaries[doc_key] = {
-                        "checked": alt["checked"],
-                        "entry_mode": mode,
-                        "entry_name": decoded_name,
-                        "object_oid": object_oid.object_oid,
-                        "kind": "tree_entry",
-                        "object_format": object_oid.object_format,
-                        "target_object_oid": [target_fmt, target_object_oid],
-                    }
-
-        # 2. Ref observations
-        obs_rows = core.sql(
-            "SELECT capture_origin_uuidv4,capture_uuidv4,repository_uuidv4,kind,scope,value,provenance "
-            "FROM git_observations WHERE kind='ref' "
-            "ORDER BY capture_origin_uuidv4,capture_uuidv4,scope,provenance"
-        )
-        for row in obs_rows:
-            observation = GitObservation(
-                row[0],
-                row[1],
-                row[2],
-                row[3],
-                tuple(json.loads(row[4])),
-                json.loads(row[5]),
-                Provenance(*json.loads(row[6])),
-            )
-            value = observation.value
-            ref_name = value.get("ref")
-            if isinstance(ref_name, str) and ref_name:
-                doc_key = canonical_json(
-                    [
-                        "ref_observation",
-                        row[0],
-                        row[1],
-                        ref_name,
-                        row[6],
-                    ]
-                )
-                target = value.get("target")
-                searchable = (
-                    f"{ref_name} {target[1]}"
-                    if isinstance(target, list) and len(target) == 2
-                    else ref_name
-                )
-                documents[doc_key] = searchable
-                summaries[doc_key] = {
-                    "capture_origin_uuidv4": row[0],
-                    "capture_uuidv4": row[1],
-                    "kind": "ref_observation",
-                    "observed_at_us": value.get("observed_at_us"),
-                    "ref": ref_name,
-                    "target": target,
-                }
-
-        return documents, summaries
+        return extract_git_metadata_documents(core)
 
     @staticmethod
-    def extract_context_documents(
-        context,
-        *,
-        evidence=None,
-    ) -> tuple[dict[str, str], dict[str, dict[str, object]]]:
-        """Extract searchable `context_text` documents and summaries from a pinned Context snapshot.
+    def extract_context_documents(context, *, evidence=None):
+        """Compatibility entry point; authority code is loaded only when selected."""
+        from repo_catalog.adapters.sqlite.search_context import (
+            extract_context_documents,
+        )
 
-        Resolves `text_body_sha256` via the verification-aware `read_verified_text`
-        callable, and indexes current string `field_candidates` while excluding explicit
-        JSON `"null"`.
-        """
-        context._validate_stage()
-        documents: dict[str, str] = BoundedDocuments()
-        summaries: dict[str, dict[str, object]] = {}
-
-        rows = context.db.execute(
-            "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,field_name,"
-            "clock_json,value_json,provenance_json,observed_at_us "
-            "FROM field_candidates "
-            "ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json"
-        ).fetchall()
-        for row in rows:
-            (
-                service_id,
-                r_kind,
-                r_id,
-                field_name,
-                clock_json,
-                value_json,
-                prov_json,
-                obs_at,
-            ) = row
-            parsed_clock = json.loads(clock_json)
-            clock = FieldClock(parsed_clock["domain"], parsed_clock["at_us"])
-            if clock.encode() != clock_json:
-                raise ValueError("invalid stored canonical clock")
-            FieldCandidate(
-                ResourceKey(service_id, r_kind, r_id),
-                field_name,
-                value_json,
-                clock,
-                prov_json,
-                obs_at,
-            )
-            decoded_val = json.loads(value_json)
-            if decoded_val is None:
-                continue
-            if field_name == "text_body_sha256":
-                if not isinstance(decoded_val, str):
-                    continue
-                text_val = context.read_text(decoded_val)
-            elif isinstance(decoded_val, str):
-                text_val = decoded_val
-            else:
-                continue
-
-            doc_key = canonical_json(
-                [
-                    service_id,
-                    r_kind,
-                    r_id,
-                    field_name,
-                    clock_json,
-                    value_json,
-                    prov_json,
-                ]
-            )
-            documents[doc_key] = text_val
-            summaries[doc_key] = {
-                "clock": json.loads(clock_json),
-                "field_name": field_name,
-                "observed_at_us": obs_at,
-                "provenance": json.loads(prov_json),
-                "provider_resource_id": r_id,
-                "resource_kind": r_kind,
-                "service_instance_uuidv4": service_id,
-                "repository_roles": [
-                    provider_role_summary(role)
-                    for role in context.provider_repository_roles(
-                        ResourceKey(service_id, r_kind, r_id), evidence=evidence
-                    )
-                ],
-            }
-
-        for resource in context.resources():
-            for role in context.provider_repository_roles(resource, evidence=evidence):
-                key = canonical_json(
-                    [
-                        "provider_repository_role",
-                        *resource.coordinates(),
-                        role.scope.relation_kind,
-                        canonical_json(role.scope.to_dict()),
-                        role.provenance_json,
-                    ]
-                )
-                targets = (
-                    role.mapping.active_repository_uuidv4s
-                    if role.mapping is not None
-                    else ()
-                )
-                documents[key] = " ".join(
-                    (
-                        role.scope.relation_kind,
-                        role.scope.provider_repository_id or "null",
-                        *targets,
-                    )
-                )
-                summaries[key] = {
-                    "kind": "current_provider_repository_role",
-                    **provider_role_summary(role),
-                }
-            for relation in context.repository_relations(resource, evidence=evidence):
-                key = canonical_json(
-                    ["repository_relation", *relation.claim_key.coordinates()]
-                )
-                documents[key] = " ".join(
-                    (
-                        relation.relation_kind,
-                        relation.relation.target_repository_uuidv4 or "null",
-                    )
-                )
-                summaries[key] = {
-                    "kind": "stored_core_target_relation",
-                    **repository_relation_summary(relation),
-                }
-
-        return documents, summaries
+        return extract_context_documents(context, evidence=evidence)

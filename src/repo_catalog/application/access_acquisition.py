@@ -21,10 +21,10 @@ from repo_catalog.adapters.git.access_native import AccessGitSource
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.application.access_workflow import AccessWorkflow, Reviewer
-from repo_catalog.application.acquisition import GitAcquisition
+from repo_catalog.application.git_acquisition import GitAcquisition
 from repo_catalog.domain.access_registry import AccessRegistryError
 from repo_catalog.domain.access_workflow import AccessSelection, review_document
-from repo_catalog.domain.acquisition import (
+from repo_catalog.domain.git_acquisition import (
     GitAcquisitionReport,
     GitNativeAcquisitionRequest,
 )
