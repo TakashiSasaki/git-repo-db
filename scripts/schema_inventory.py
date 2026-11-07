@@ -10,6 +10,7 @@ import hashlib
 import re
 import sqlite3
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,8 @@ for source in (
     ROOT / "packages/git-acquisition/src",
     ROOT / "packages/exchange/src",
     ROOT / "packages/paired-recovery/src",
+    ROOT / "packages/filesystem/src",
+    ROOT / "packages/worktrees/src",
 ):
     if str(source) not in sys.path:
         sys.path.insert(0, str(source))
@@ -332,26 +335,93 @@ def introspect_store(
     store_slug: str,
     store_title: str,
     db_filename: str,
-    format_id: str,
-    schema_version: int,
+    format_id: str | None,
+    schema_version: int | None,
     expected_sha256: bytes,
     ddl: str,
     group_map: dict[str, list[str]],
     *,
     register_udf: bool = False,
+    prepare: Callable[[sqlite3.Connection], None] | None = None,
+    include_runtime_details: bool = False,
 ) -> dict[str, Any]:
     """Introspect a single SQLite schema entirely in memory."""
-    db = sqlite3.connect(":memory:")
-    if register_udf:
-        register_git_object_sql_function(db)
-    db.execute("PRAGMA foreign_keys=ON")
-    db.executescript(ddl)
-
     ddl_sha256 = hashlib.sha256(ddl.encode()).digest()
     if ddl_sha256 != expected_sha256:
         raise ValueError(
             f"DDL hash mismatch for {store_slug}: computed {ddl_sha256.hex()}, declared {expected_sha256.hex()}"
         )
+    db = sqlite3.connect(":memory:")
+    try:
+        if register_udf:
+            register_git_object_sql_function(db)
+        db.execute("PRAGMA foreign_keys=ON")
+        if prepare is not None:
+            prepare(db)
+        db.executescript(ddl)
+        result = _read_store_schema(
+            db,
+            store_slug,
+            store_title,
+            db_filename,
+            format_id,
+            schema_version,
+            ddl_sha256,
+            group_map,
+        )
+        if include_runtime_details:
+            result["extracted_objects"] = [
+                {"type": kind, "name": name}
+                for kind, name in db.execute(
+                    "SELECT type,name FROM sqlite_schema WHERE sql IS NOT NULL "
+                    "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'catalog_fts_%' ORDER BY type,name"
+                )
+            ]
+            result["extraction_connection"] = {
+                "pragmas": {
+                    name: db.execute(f"PRAGMA {name}").fetchone()[0]
+                    for name in (
+                        "foreign_keys",
+                        "recursive_triggers",
+                        "trusted_schema",
+                        "ignore_check_constraints",
+                        "defer_foreign_keys",
+                    )
+                },
+                "registered_functions": sorted(
+                    (
+                        {"name": row[0], "arity": row[4], "flags": row[5]}
+                        for row in db.execute("PRAGMA function_list")
+                        if row[1] == 0
+                    ),
+                    key=lambda row: (row["name"], row["arity"]),
+                ),
+            }
+            for _, name, kind, ncol, without_rowid, strict in db.execute(
+                "PRAGMA table_list"
+            ):
+                if name in result["tables"]:
+                    result["tables"][name].update(
+                        is_strict=bool(strict),
+                        without_rowid=bool(without_rowid),
+                        sqlite_table_type=kind,
+                        column_count=ncol,
+                    )
+        return result
+    finally:
+        db.close()
+
+
+def _read_store_schema(
+    db,
+    store_slug,
+    store_title,
+    db_filename,
+    format_id,
+    schema_version,
+    ddl_sha256,
+    group_map,
+) -> dict[str, Any]:
 
     # Invert group map: table_name -> group_slug
     table_to_group: dict[str, str] = {}
@@ -561,8 +631,6 @@ def introspect_store(
                     }
                 )
 
-    db.close()
-
     total_fks = sum(len(t["foreign_keys"]) for t in tables.values())
     return {
         "slug": store_slug,
@@ -583,8 +651,16 @@ def introspect_store(
     }
 
 
-def introspect_all() -> dict[str, Any]:
-    """Introspect all three stores and assemble normalized schema intermediate representation."""
+def introspect_all(
+    profile: str = "normal", *, include_runtime_details: bool = False
+) -> dict[str, Any]:
+    """Extract the normal renderer input, or the explicit all-format diagnostic IR."""
+    if profile == "all":
+        from scripts.schema_catalog import build_catalog
+
+        return build_catalog()
+    if profile != "normal":
+        raise ValueError("Unknown inventory profile: " + profile)
     core = introspect_store(
         "core",
         "Core Store",
@@ -595,6 +671,7 @@ def introspect_all() -> dict[str, Any]:
         schema_sql(),
         CORE_GROUPS,
         register_udf=True,
+        include_runtime_details=include_runtime_details,
     )
     operational = introspect_store(
         "operational",
@@ -605,6 +682,7 @@ def introspect_all() -> dict[str, Any]:
         OPERATIONAL_DDL_SHA256,
         operational_schema_sql(),
         OPERATIONAL_GROUPS,
+        include_runtime_details=include_runtime_details,
     )
     search = introspect_store(
         "search",
@@ -615,6 +693,7 @@ def introspect_all() -> dict[str, Any]:
         SEARCH_DDL_SHA256,
         search_schema_sql(),
         SEARCH_GROUPS,
+        include_runtime_details=include_runtime_details,
     )
 
     # Attach logical cross-store relationships to tables
@@ -833,7 +912,20 @@ def executed_producer_inputs(root: Path, inputs: list[str]) -> list[str]:
     return sorted(executed)
 
 
-def export_inventory(output: Path, source: str) -> dict[str, Any]:
+def validate_inventory(inventory: dict[str, Any], profile: str) -> list[str]:
+    if profile == "all":
+        from scripts.schema_catalog import validate_catalog
+
+        return validate_catalog(inventory)
+    return (
+        validate_logical_dependencies(inventory)
+        + validate_functional_groups_consistency()
+    )
+
+
+def export_inventory(
+    output: Path, source: str, profile: str = "normal"
+) -> dict[str, Any]:
     """Export complete IR from this exact committed producer checkout."""
     import json
     import os
@@ -862,11 +954,8 @@ def export_inventory(output: Path, source: str) -> dict[str, Any]:
         raise ValueError("Producer must execute the selected product checkout")
     inputs = producer_input_names(ROOT, source)
     hashes = verify_producer_bytes(ROOT, source, inputs)
-    inventory = introspect_all()
-    errors = (
-        validate_logical_dependencies(inventory)
-        + validate_functional_groups_consistency()
-    )
+    inventory = introspect_all(profile)
+    errors = validate_inventory(inventory, profile)
     if errors:
         raise ValueError("Invalid neutral inventory: " + "; ".join(errors))
     executed = executed_producer_inputs(ROOT, inputs)
@@ -888,6 +977,8 @@ def export_inventory(output: Path, source: str) -> dict[str, Any]:
             "sqlite": sqlite3.sqlite_version,
         },
     }
+    if profile != "normal":
+        manifest["inventory_profile"] = profile
     write_private(ROOT, inventory_path, raw)
     write_private_json(ROOT, manifest_path, manifest)
     return manifest
@@ -900,19 +991,18 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--source")
+    parser.add_argument("--profile", choices=("normal", "all"), default="normal")
     args = parser.parse_args()
     if args.check:
-        ir = introspect_all()
-        errors = (
-            validate_logical_dependencies(ir) + validate_functional_groups_consistency()
-        )
+        ir = introspect_all(args.profile)
+        errors = validate_inventory(ir, args.profile)
         if errors:
             parser.exit(1, "\n".join(errors) + "\n")
         print(
-            "Neutral inventory: complete implemented three-store SQL/fingerprints verified"
+            f"Neutral inventory ({args.profile}): {len(ir['stores'])} schema definitions checked"
         )
     elif args.output and args.source:
-        manifest = export_inventory(args.output, args.source)
+        manifest = export_inventory(args.output, args.source, args.profile)
         print("Neutral IR exported: " + manifest["ir_sha256"])
     else:
         parser.error("choose --check or --output with explicit --source")

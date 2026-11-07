@@ -2429,6 +2429,10 @@ def main(argv: list[str] | None = None) -> int:
 
     print("Loading pinned Three-Store schema inventory...")
     ir = json.loads(args.ir.read_bytes())
+    if ir.get("profile", "normal") != "normal":
+        parser.error(
+            "This renderer requires the normal three-store IR; export with --profile normal"
+        )
     print(
         f"Inventory loaded: Core ({ir['summary']['core_tables']} tables, {ir['summary']['core_fks']} FKs), "
         f"Operational ({ir['summary']['operational_tables']} tables, {ir['summary']['operational_fks']} FKs), "
