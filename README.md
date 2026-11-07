@@ -48,6 +48,42 @@ uv pip install --python /path/to/venv/bin/python \
 
 ## 初期化と収集
 
+### 独立したファイル・ワークツリーカタログ
+
+追加の `repo-catalog-filesystem` と `repo-catalog-worktrees` は、それぞれ独立した
+SQLite DBを持ちます。通常ディレクトリのファイル属性・SHA-256・スキャン履歴と、
+Gitワークツリーの配置・HEAD・明示的なRepository関連を別々に保存します。
+ファイル本文は保存しません。既存のSchema 21 DBの初期化は不要です。
+
+開発環境では `./scripts/setup-local-python.sh` で追加CLIも導入されます。
+単独導入には各パッケージを、両方を連携させる場合は `repo-catalog-local` を使います。
+既存製品への追加導入は `repo-catalog[local]` でも選択できます。
+
+```bash
+scripts/local-run.sh repo-catalog-local init \
+  --filesystem-db /path/to/filesystem.sqlite3 --worktrees-db /path/to/worktrees.sqlite3
+scripts/local-run.sh repo-catalog-local scan \
+  --filesystem-db /path/to/filesystem.sqlite3 --worktrees-db /path/to/worktrees.sqlite3 \
+  /path/to/checkout-or-bare-repository
+scripts/local-run.sh repo-catalog-local export \
+  --filesystem-db /path/to/filesystem.sqlite3 --worktrees-db /path/to/worktrees.sqlite3 \
+  --scan SCAN_UUID --output files.efu
+```
+
+`scan` は同じGitリポジトリの登録済みワークツリーも走査します。別置き・bareの
+Git格納場所に対応し、未追跡・ignore対象も含めます。Git管理領域は既定で除外し、
+`--include-git-admin` で含められます。リンク先は追跡しません。
+ハッシュは毎回通常ファイルの実内容から計算し、変更中・読取失敗は履歴に残します。
+
+Git不要の通常ディレクトリは `repo-catalog-filesystem --database PATH init` と
+`repo-catalog-filesystem --database PATH scan ROOT` で収集できます。
+EFU/CSV出力は保存済み観測だけで完結し、元のファイルが失われても利用できます。
+部分スキャンの出力には `--allow-partial` が必要です。標準5列に `SHA256` と
+選択した追加情報を付けます。詳細は[操作契約](docs/architecture/local-catalog-contract.md)と
+[連携CLI](packages/local/README.md)を参照してください。
+
+### 既存Git・Providerカタログ
+
 global optionはsubcommandより前へ置きます。以下の容量は操作例であり、300repo向けの推奨値ではありません。
 
 ```bash

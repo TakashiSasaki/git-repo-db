@@ -1,0 +1,94 @@
+name: Native Windows local catalogs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      UV_PYTHON_DOWNLOADS: never
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: '0.12.19'
+          enable-cache: false
+      - name: Install checksum-bound complete Windows Python
+        run: |
+          python scripts/local_catalog_runtime.py install `
+            --destination "$env:RUNNER_TEMP/local-catalog-python" `
+            --receipt artifacts/local-catalog-runtime/install.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate native runtime before dependencies
+        run: |
+          & $env:CI_PRODUCT_PYTHON scripts/local_catalog_runtime.py probe `
+            --installation artifacts/local-catalog-runtime/install.json `
+            --output artifacts/local-catalog-runtime/before.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install only the independent local catalog distributions
+        run: |
+          $venv = Join-Path $env:RUNNER_TEMP 'local-catalog-venv'
+          uv venv $venv --python $env:CI_PRODUCT_PYTHON
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $python = Join-Path $venv 'Scripts/python.exe'
+          uv export --locked --only-group dev --no-emit-workspace `
+            --format requirements-txt `
+            --output-file artifacts/local-catalog-runtime/requirements.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv pip sync --python $python --require-hashes `
+            artifacts/local-catalog-runtime/requirements.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv pip install --python $python --no-deps --no-build-isolation `
+            ./packages/contracts ./packages/filesystem ./packages/worktrees ./packages/local
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "LOCAL_CATALOG_PYTHON=$python" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          (Join-Path $venv 'Scripts') | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+      - name: Validate installed factories and unchanged native runtime
+        run: |
+          & $env:LOCAL_CATALOG_PYTHON scripts/local_catalog_runtime.py probe `
+            --installation artifacts/local-catalog-runtime/install.json `
+            --reference artifacts/local-catalog-runtime/before.json `
+            --output artifacts/local-catalog-runtime/installed.json --factories
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Exercise native filesystem and Git behavior
+        env:
+          GIT_ALLOW_PROTOCOL: file
+          GIT_AUTHOR_NAME: repo-catalog-test
+          GIT_AUTHOR_EMAIL: test@example.invalid
+          GIT_COMMITTER_NAME: repo-catalog-test
+          GIT_COMMITTER_EMAIL: test@example.invalid
+          GIT_CONFIG_NOSYSTEM: '1'
+          GIT_CONFIG_GLOBAL: NUL
+        run: |
+          $env:PYTHONPATH = Join-Path $env:GITHUB_WORKSPACE 'tests/support/network_guard'
+          & $env:LOCAL_CATALOG_PYTHON -m pytest --noconftest -o pythonpath= `
+            -q -n 2 tests/filesystem tests/worktrees tests/local `
+            tests/unit/test_local_catalog_runtime.py `
+            --junitxml=artifacts/local-catalog-runtime/native-tests.xml
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify runtime after native tests
+        run: |
+          & $env:LOCAL_CATALOG_PYTHON scripts/local_catalog_runtime.py probe `
+            --installation artifacts/local-catalog-runtime/install.json `
+            --reference artifacts/local-catalog-runtime/before.json `
+            --output artifacts/local-catalog-runtime/after.json --factories
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Preserve native verification receipts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: local-catalog-windows-${{ github.run_attempt }}
+          path: artifacts/local-catalog-runtime/
+          if-no-files-found: error
