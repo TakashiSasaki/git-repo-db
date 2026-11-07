@@ -9,8 +9,11 @@ members = [
     "repo-catalog-context",
     "repo-catalog-contracts",
     "repo-catalog-core",
+    "repo-catalog-filesystem",
+    "repo-catalog-local",
     "repo-catalog-paired-query",
     "repo-catalog-runtime",
+    "repo-catalog-worktrees",
 ]
 
 [[package]]
@@ -252,12 +255,18 @@ dependencies = [
     { name = "repo-catalog-paired-query" },
 ]
 
+[package.optional-dependencies]
+local = [
+    { name = "repo-catalog-local" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "hatchling" },
     { name = "jsonschema" },
     { name = "pytest" },
     { name = "pytest-xdist" },
+    { name = "repo-catalog-local" },
     { name = "ruff" },
 ]
 
@@ -268,8 +277,10 @@ requires-dist = [
     { name = "repo-catalog-context", editable = "packages/context" },
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
     { name = "repo-catalog-core", editable = "packages/core" },
+    { name = "repo-catalog-local", marker = "extra == 'local'", editable = "packages/local" },
     { name = "repo-catalog-paired-query", editable = "packages/paired-query" },
 ]
+provides-extras = ["local"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -277,6 +288,7 @@ dev = [
     { name = "jsonschema", specifier = ">=4.23,<5" },
     { name = "pytest", specifier = ">=8,<10" },
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
+    { name = "repo-catalog-local", editable = "packages/local" },
     { name = "ruff", specifier = ">=0.14,<1" },
 ]
 
@@ -321,6 +333,26 @@ requires-dist = [
 ]
 
 [[package]]
+name = "repo-catalog-filesystem"
+version = "0.2.0"
+source = { editable = "packages/filesystem" }
+
+[[package]]
+name = "repo-catalog-local"
+version = "0.2.0"
+source = { editable = "packages/local" }
+dependencies = [
+    { name = "repo-catalog-filesystem" },
+    { name = "repo-catalog-worktrees" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "repo-catalog-filesystem", editable = "packages/filesystem" },
+    { name = "repo-catalog-worktrees", editable = "packages/worktrees" },
+]
+
+[[package]]
 name = "repo-catalog-paired-query"
 version = "0.2.0"
 source = { editable = "packages/paired-query" }
@@ -349,6 +381,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "repo-catalog-contracts", editable = "packages/contracts" }]
+
+[[package]]
+name = "repo-catalog-worktrees"
+version = "0.2.0"
+source = { editable = "packages/worktrees" }
 
 [[package]]
 name = "rpds-py"

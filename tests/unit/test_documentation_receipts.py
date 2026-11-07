@@ -173,6 +173,24 @@ def test_independent_matching_documentation_obligations_can_complete_conjunction
     assert verify(evidence)["status"] == "verified"
 
 
+def test_parallel_documentation_receipt_preserves_exact_scope(evidence):
+    _, paths, _, _ = evidence
+    for path in paths:
+        value = json.loads(path.read_text())
+        value["commands"][2][-1:-1] = ["-n", "2", "--dist", "worksteal"]
+        path.write_text(json.dumps(value))
+    assert verify(evidence)["status"] == "verified"
+
+
+def test_parallel_documentation_receipt_rejects_deselection(evidence):
+    _, paths, _, _ = evidence
+    path = paths[1]
+    value = json.loads(path.read_text())
+    value["commands"][2][-1:-1] = ["-n", "2", "--dist", "worksteal", "-k", "safe"]
+    path.write_text(json.dumps(value))
+    assert verify(evidence)["status"] == "not_verified"
+
+
 @pytest.mark.parametrize(
     "change",
     [

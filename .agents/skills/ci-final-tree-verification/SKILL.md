@@ -45,6 +45,53 @@ both are prose. Preserve each lesson and choose a noncompeting section location;
 verify the merged text and runtime input equality. Do not silently edit or rewrite
 the reviewed branch to accommodate the documentation follow-up.
 
+### Reconcile diverged package-extraction stacks by installed module ownership
+
+When main splits a module while a pending stack extracts the same implementation
+into a separate distribution, a textual merge can retain both source owners.
+An observed trial integration had no duplicate installed paths in either input,
+but eight in the combined tree; seven were absent from Git's conflict-path list.
+Git compares repository paths, whereas two different source roots can ship the
+same `repo_catalog/...` path. A clean conflict list alone cannot prove isolation.
+
+1. Pin live main and each PR head/base; order the stack by actual ancestry, not
+   PR numbers or old green badges. A child's mergeability describes its current
+   parent branch, not the updated main. Keep independent CI-only work separate
+   from the product dependency chain when choosing an integration order.
+2. Save `git merge-tree --write-tree --name-only --no-messages TARGET FEATURE`
+   output and exit status. Distinguish generated-report conflicts from product,
+   build and workflow conflicts. A nonzero merge's tree contains unresolved
+   state; use it for diagnosis only, never as an executable acceptance candidate.
+3. List paths with `git ls-tree -r --name-only TREE`. Map each actual distribution
+   source root to its installed relative paths and group by that path. In this
+   workspace, strip `src/` or `packages/NAME/src/` before `repo_catalog/`.
+   Compare both input inventories with the combined inventory. Reconcile new
+   split files as well as renamed/deleted files; preserve behavior in one owner
+   and use deliberate reexports where needed. Account for build exclusions or
+   other layouts instead of treating this source-path projection as wheel proof.
+   Resolve explicit conflict hunks from a preserved merge blob. A greedy whole-file
+   regular expression with DOTALL can consume class bodies beyond the markers
+   while leaving valid Python. After a resolution, inspect the definition/import
+   delta and smoke-import affected public entry points before starting installed
+   artifact checks. If a symbol disappeared accidentally, restore the original
+   merge blob and redo the bounded hunk; do not reconstruct it from the damaged
+   working copy or weaken a consumer assertion. Keep the failed run's evidence.
+4. Update workspace membership, dependencies, lock inputs, namespace/preflight
+   inventories and CI formatter targets together. Regenerate generated reports
+   from the resolved source with their existing producers. When the CI-only
+   branch centralizes targets in a helper, incorporate moved paths into that
+   helper rather than restoring an older inline target list.
+5. Verify the resolved candidate with the existing ownership audits and affected
+   direct/sdist-derived isolated-install checks, outside the checkout. Source
+   path analysis and historical branch tests do not establish final wheel
+   ownership, optional-package absence or final combined behavior. Include
+   dependent defect-fix PRs in the plan, with their focused regressions.
+
+Use this for overlapping refactors and namespace-package distribution splits;
+ordinary unrelated prose changes need no artifact rebuild. It adds neither a
+release gate nor merge authorization. See the [module operation contract](../../../docs/architecture/module-independence-contract.md)
+and [ADR 0039 integration constraint](../../../docs/adr/0039-independent-filesystem-and-worktree-catalogs.md).
+
 ## Normalize collection files and preserve unique evidence targets
 
 A historical file named `p7-node-ids.txt` also contained a blank line and pytest's
@@ -916,6 +963,66 @@ the checkout and pass a fresh `--basetemp=PARENT/RUN` to the existing profile. K
 its sealed builds and consumer receipts alongside the review hashes; never reuse
 a nonempty basetemp whose evidence must survive (pytest clears it). Verify actual
 artifact hashes after copying, and keep private raw evidence untracked.
+
+## Check platform assumptions in called extraction helpers
+
+A Windows bootstrap passed Linux inspection but its called archive extractor used
+`os.O_NOFOLLOW`, which is unavailable on Windows. Audit the entire called helper
+chain for platform-specific constants and system calls, not just the entry point.
+Do not replace a missing no-follow flag with zero without equivalent safeguards:
+the local-catalog extractor uses a fresh private destination, validates the archive
+before writing, rejects links and reparse parents, and creates files exclusively.
+Keep the existing POSIX extractor's no-follow checks intact.
+
+Reproduce the portability boundary and refusal controls with
+`scripts/local-run.sh pytest -q -n 2 tests/unit/test_local_catalog_runtime.py -k windows_extract`.
+The regression simulates the missing constant on Linux; it does not establish native
+Windows behavior. Run the native Windows workflow only for release builds or when
+the owner explicitly requests it. This
+procedure concerns the standalone local-catalog bootstrap, not a general permission
+to weaken archive extraction or change other runtime installers.
+
+## Preserve import-classification context in scoped Ruff reproducers
+
+An Access CI formatter artifact once included only the explicitly checked files;
+rerunning Ruff after extraction produced false `I001` failures because other
+first-party modules and `tests/integration/__init__.py` were missing. Include the
+package roots, config, test package initializers and supporting source context,
+then run both real Ruff checks in a fresh extracted directory. Verify the archive
+comes from the selected Git commit and record its scope, bytes and SHA-256 along
+with the formatter hash. A formatter-scoped archive is not a complete offline test
+reproducer. Preserve the full source artifact for failure, release or selected
+test/packaging workflows; do not discard historical evidence from Git.
+
+The bounded controls are `scripts/local-run.sh pytest -q -n 2
+tests/unit/test_access_ci_reproduction.py`. A 2026-11-07 local measurement at
+`bde21124` compared sequential archive creation: the complete archive was
+208,098,527 bytes in 11.95 seconds; the formatter scope was 1,577,415 bytes in
+0.33 seconds. These are single observations on one Linux host, not hosted CI or
+end-to-end speed guarantees. See `docs/ci-performance.md` for test scope and limits.
+
+## Bind standalone SQLite restores to the bytes actually activated
+
+The local-catalog review found two concrete counterexamples: checking a source
+pathname's SHA-256 before a later SQLite open admits replacement bytes, and a
+read-only SQLite open can consume WAL bytes absent from the checked main file.
+Use a private staged copy, hash the exact bytes copied from a pinned regular-file
+descriptor, reject unsupported source sidecars, validate the staged schema/domain
+and namespace, then install only that verified copy into a fresh destination.
+Close SQLite connections explicitly; their context managers commit/rollback but
+do not close handles. Compare the copied identity with the manifest identity,
+including when the live source handle has cached earlier identity metadata.
+
+Exercise both sides of the race: replacement before copying must be refused;
+changes to the original after staging cannot alter the restored result. Check
+destination noncreation on refusal and source preservation, not just the raised
+exception. Reproduce the verified controls with
+`scripts/local-run.sh pytest -q -n 2 tests/worktrees/test_worktrees.py -k restore`
+and `tests/filesystem/test_filesystem.py -k 'backup or identity'` using the same
+runner prefix. These are standalone ADR0039 safeguards; do not substitute them
+for existing Core–Context paired recovery, stop fencing or complete WAL/journal
+preservation. Native Windows execution is reserved for release builds or an explicit
+owner request; it is not a routine development gate.
 
 ## Check extracted smoke programs as shared interfaces
 
