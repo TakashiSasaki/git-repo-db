@@ -92,6 +92,48 @@ def test_expanded_worktrees_are_not_rediscovered_during_walk(tmp_path):
         )
 
 
+def test_failed_explicit_alias_allows_real_path_retry(tmp_path, monkeypatch):
+    parent = tmp_path / "parent"
+    real = repository(parent / "repo")
+    alias = tmp_path / "alias"
+    try:
+        alias.symlink_to(real, target_is_directory=True)
+    except OSError:
+        pytest.skip("directory symlinks unavailable to this test account")
+    with LocalCatalog.initialize(
+        tmp_path / "files.sqlite3", tmp_path / "worktrees.sqlite3"
+    ) as catalog:
+        discover = catalog.worktrees.discover
+
+        def limited_alias(path, *, expand):
+            if path == alias:
+                return discover(path, expand=expand, output_limit_bytes=1)
+            return discover(path, expand=expand)
+
+        monkeypatch.setattr(catalog.worktrees, "discover", limited_alias)
+        result = catalog.scan([alias, parent])
+        assert result.status == "partial"
+        failed = next(
+            d for d in result.discoveries if d.requested_path == os.fsencode(alias)
+        )
+        assert failed.status == "error" and "LIMIT" in failed.errors
+        retried = next(
+            d for d in result.discoveries if d.requested_path == os.fsencode(real)
+        )
+        assert retried.status == "complete"
+        parent_scan = next(
+            s for s in result.scans if s.root_path == os.fsencode(parent)
+        )
+        references = catalog.worktrees.scan_references(
+            parent_scan.namespace_uuid, parent_scan.scan_uuid
+        )
+        assert any(
+            r["observation_uuid"] == retried.observation_uuid
+            and r["root_path"] == os.fsencode(real)
+            for r in references
+        )
+
+
 def test_distant_bare_repository_expands_all_worktrees_and_exports_offline(tmp_path):
     source = repository(tmp_path / "source")
     storage = tmp_path / "distant" / "storage.git"
