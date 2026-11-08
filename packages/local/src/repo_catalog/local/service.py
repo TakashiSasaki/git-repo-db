@@ -213,7 +213,7 @@ class LocalCatalog:
         errors: list[str] = []
         targets: dict[bytes, Path] = {}
         target_identities = set()
-        inspected: set[bytes] = set()
+        inspected: set[tuple] = set()
         admin_paths: set[bytes] = set()
         always_exclude = self._catalog_paths()
 
@@ -230,8 +230,12 @@ class LocalCatalog:
                 errors.append(f"topology:{path!s}:{type(error).__name__}:{error}")
                 return None
             discoveries.append(result)
-            inspected.add(_key(path))
+            inspected.add(_physical_key(path))
             for entry in result.entries:
+                # Expanded entries with no error were inspected by Git already.
+                # Do not suppress retries for unavailable or changed worktrees.
+                if entry.error is None:
+                    inspected.add(_physical_key(_path(entry.root_path)))
                 if entry.git_dir:
                     admin_paths.add(_key(entry.git_dir))
                 if entry.common_dir:
@@ -263,7 +267,7 @@ class LocalCatalog:
             ):
                 current = _path(directory)
                 if ".git" in dirnames or ".git" in filenames:
-                    if _key(current) not in inspected:
+                    if _physical_key(current) not in inspected:
                         discover(current, expand=False)
                 excluded = _root_exclusions(always_exclude | admin_paths, root)
                 dirnames[:] = [

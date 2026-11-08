@@ -51,6 +51,47 @@ def rows(catalog, scan):
     }
 
 
+def test_expanded_worktrees_are_not_rediscovered_during_walk(tmp_path):
+    first = repository(tmp_path / "first")
+    second, third = tmp_path / "second", tmp_path / "third"
+    git("worktree", "add", "-b", "second", second, cwd=first)
+    git("worktree", "add", "-b", "third", third, cwd=first)
+    nested = repository(second / "nested")
+    with LocalCatalog.initialize(
+        tmp_path / "files.sqlite3", tmp_path / "worktrees.sqlite3"
+    ) as catalog:
+        result = catalog.scan([first])
+        assert result.status == "complete", result
+        assert {d.requested_path for d in result.discoveries} == {
+            os.fsencode(first),
+            os.fsencode(nested),
+        }
+        assert {s.root_path for s in result.scans} == {
+            os.fsencode(first),
+            os.fsencode(second),
+            os.fsencode(third),
+        }
+        for scan in result.scans:
+            assert "tracked.txt" in rows(catalog, scan)
+            refs = catalog.worktrees.scan_references(
+                scan.namespace_uuid, scan.scan_uuid
+            )
+            assert sum(r["root_path"] == scan.root_path for r in refs) == 1
+
+        # Explicit requests and later scans remain independent observations.
+        explicit = catalog.scan([first, second])
+        assert [d.requested_path for d in explicit.discoveries[:2]] == [
+            os.fsencode(first),
+            os.fsencode(second),
+        ]
+        assert explicit.status == "complete"
+        assert len(explicit.scans) == 3
+        assert (
+            explicit.discoveries[0].observation_uuid
+            != result.discoveries[0].observation_uuid
+        )
+
+
 def test_distant_bare_repository_expands_all_worktrees_and_exports_offline(tmp_path):
     source = repository(tmp_path / "source")
     storage = tmp_path / "distant" / "storage.git"
