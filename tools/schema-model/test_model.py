@@ -155,6 +155,65 @@ class ModelTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 model.load_input(p)
 
+    def test_fk_parent_and_endpoint_mutations(self):
+        revision = self.producer["product_source"]["commit"]
+        table = self.data["stores"]["normal.core"]["tables"]["acquisition_roots"]
+        fk = next(
+            f for f in table["foreign_keys"] if f["target_table"] == "git_acquisitions"
+        )
+        fk_node = model.iri(
+            revision, "normal.core", "acquisition_roots", "fk", fk["id"]
+        )
+        wrong_table = model.iri(revision, "normal.core", "Table", "acquisition_roots")
+        for predicate in ("targetTable", "sourceTable"):
+            with self.subTest(predicate=predicate):
+                graph = self.graph - Graph()
+                target = (
+                    wrong_table
+                    if predicate == "targetTable"
+                    else model.iri(revision, "normal.core", "Table", "git_acquisitions")
+                )
+                graph.set((fk_node, model.M[predicate], target))
+                self.assertTrue(model.mapping_errors(graph, self.data, self.producer))
+                with tempfile.TemporaryDirectory() as d:
+                    result = model.validate(
+                        self.data, self.producer, Path(d), graph=graph
+                    )
+                    self.assertNotEqual(
+                        result["families"]["data_conformance"]["status"], "pass"
+                    )
+        graph = self.graph - Graph()
+        binding = model.iri(
+            revision, "normal.core", "acquisition_roots", "fk", fk["id"], 0
+        )
+        other_fk = next(
+            n for n in graph.subjects(RDF.type, model.M.ForeignKey) if n != fk_node
+        )
+        graph.set((binding, model.M.foreignKey, other_fk))
+        self.assertTrue(model.mapping_errors(graph, self.data, self.producer))
+
+    def test_removed_foreign_keys_are_not_vacuous_success(self):
+        data = copy.deepcopy(self.data)
+        for store in data["stores"].values():
+            for table in store["tables"].values():
+                table["foreign_keys"] = []
+        with self.assertRaisesRegex(ValueError, "FK coverage"):
+            model.expected_targets(data, self.producer["product_source"]["commit"])
+        # Even with the count forged to zero, required FK shapes must not pass.
+        for store in data["stores"].values():
+            store["foreign_key_count"] = 0
+        with tempfile.TemporaryDirectory() as d:
+            result = model.validate(data, self.producer, Path(d))
+            self.assertEqual(
+                result["families"]["data_conformance"]["status"], "undetermined"
+            )
+
+    def test_external_column_binding_order(self):
+        graph = self.graph - Graph()
+        node = next(graph.subjects(RDF.type, model.M.ReferenceBinding))
+        graph.set((node, model.M.position, Literal(99)))
+        self.assertTrue(model.mapping_errors(graph, self.data, self.producer))
+
     def test_actual_negative_shape(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d)

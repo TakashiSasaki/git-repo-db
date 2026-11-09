@@ -42,6 +42,8 @@ CLASSES = (
     "View",
     "Index",
     "Trigger",
+    "ReferenceBinding",
+    "LogicalAnnotation",
 )
 
 
@@ -178,6 +180,10 @@ def expected_targets(data, revision):
         expected[kind] = {iri(revision, kind, n) for n in data[field]}
     for name, store in data["stores"].items():
         expected["SchemaDefinition"].add(iri(revision, "schema", name))
+        if store["foreign_key_count"] != sum(
+            len(t["foreign_keys"]) for t in store["tables"].values()
+        ):
+            raise ValueError("FK coverage differs from independent extraction count")
         records = store["extracted_objects"]
         if len({(r["type"], r["name"]) for r in records}) != len(records):
             raise ValueError("duplicate extracted object")
@@ -208,6 +214,15 @@ def expected_targets(data, revision):
                 )
     expected["ExternalReference"] = {
         iri(revision, "reference", x["id"]) for x in data["optional_references"]
+    }
+    expected["ReferenceBinding"] = {
+        iri(revision, "reference", ref["id"], pos)
+        for ref in data["optional_references"]
+        for pos in range(len(ref["source_columns"]))
+    }
+    expected["LogicalAnnotation"] = {
+        iri(revision, "logical-annotation", ref["id"])
+        for ref in data["normal_logical_dependencies"]
     }
     if (
         not expected["SchemaDefinition"]
@@ -362,6 +377,77 @@ def project(data, producer):
             "qualifiedExternalReference",
             node,
         )
+        for pos, column in enumerate(ref["source_columns"]):
+            binding = iri(revision, "reference", ref["id"], pos)
+            record(binding, "ReferenceBinding", {"position": pos})
+            link(binding, "reference", node)
+            link(binding, "position", Literal(pos))
+            link(
+                binding,
+                "sourceColumn",
+                iri(
+                    revision, ref["source_store"], ref["source_table"], "column", column
+                ),
+            )
+            if "target_columns" in ref:
+                link(
+                    binding,
+                    "targetColumn",
+                    iri(
+                        revision,
+                        ref["target_store"],
+                        ref["target_table"],
+                        "column",
+                        ref["target_columns"][pos],
+                    ),
+                )
+            else:
+                link(
+                    binding,
+                    "targetDomain",
+                    iri(revision, "ResponsibilityDomain", ref["target_domain"]),
+                )
+    for annotation in data["normal_logical_dependencies"]:
+        node = iri(revision, "logical-annotation", annotation["id"])
+        record(node, "LogicalAnnotation", annotation)
+        link(
+            node,
+            "sourceTable",
+            iri(
+                revision,
+                annotation["source_store"],
+                "Table",
+                annotation["source_table"],
+            ),
+        )
+        link(
+            node,
+            "targetTable",
+            iri(
+                revision,
+                annotation["target_store"],
+                "Table",
+                annotation["target_table"],
+            ),
+        )
+        link(
+            node,
+            "interpretation",
+            Literal(
+                "historical annotation; not current authority or operation requirement"
+            ),
+        )
+        link(
+            node,
+            "declaredColumnPairs",
+            Literal(
+                canonical(
+                    list(
+                        zip(annotation["source_columns"], annotation["target_columns"])
+                    )
+                )
+            ),
+        )
     return graph
 
 
@@ -412,12 +498,36 @@ def mapping_errors(graph, data, producer):
                 for d in store["definition_sources"]
             ],
         )
+        exact(
+            iri(rev, "schema", name),
+            "assembledBy",
+            [iri(rev, "SourceUnit", store["composition_entrypoint"])],
+        )
         for tn, table in store["tables"].items():
+            table_node = iri(rev, name, "Table", tn)
+            exact(table_node, "schema", [iri(rev, "schema", name)])
+            exact(
+                table_node,
+                "physicalForeignKey",
+                [iri(rev, name, tn, "fk", fk["id"]) for fk in table["foreign_keys"]],
+            )
+            for column in table["columns"]:
+                exact(
+                    iri(rev, name, tn, "column", column["name"]), "table", [table_node]
+                )
             for pos, col in enumerate(table["primary_key"]):
                 node = iri(rev, name, tn, "pk", pos)
                 exact(node, "position", [Literal(pos)])
+                exact(node, "table", [table_node])
                 exact(node, "column", [iri(rev, name, tn, "column", col)])
             for fk in table["foreign_keys"]:
+                fk_node = iri(rev, name, tn, "fk", fk["id"])
+                exact(fk_node, "sourceTable", [table_node])
+                exact(
+                    fk_node,
+                    "targetTable",
+                    [iri(rev, name, "Table", fk["target_table"])],
+                )
                 effective = fk["to_columns"]
                 if all(x is None for x in effective):
                     effective = store["tables"][fk["target_table"]]["primary_key"]
@@ -427,6 +537,7 @@ def mapping_errors(graph, data, producer):
                 for pos, (src, dst) in enumerate(zip(fk["from_columns"], effective)):
                     node = iri(rev, name, tn, "fk", fk["id"], pos)
                     exact(node, "position", [Literal(pos)])
+                    exact(node, "foreignKey", [fk_node])
                     exact(node, "sourceColumn", [iri(rev, name, tn, "column", src)])
                     exact(
                         node,
@@ -442,6 +553,56 @@ def mapping_errors(graph, data, producer):
             node,
         ) in graph:
             errors.append("reference classification: " + ref["id"])
+        for pos, column in enumerate(ref["source_columns"]):
+            binding = iri(rev, "reference", ref["id"], pos)
+            exact(binding, "reference", [node])
+            exact(binding, "position", [Literal(pos)])
+            exact(
+                binding,
+                "sourceColumn",
+                [iri(rev, ref["source_store"], ref["source_table"], "column", column)],
+            )
+            if "target_columns" in ref:
+                exact(
+                    binding,
+                    "targetColumn",
+                    [
+                        iri(
+                            rev,
+                            ref["target_store"],
+                            ref["target_table"],
+                            "column",
+                            ref["target_columns"][pos],
+                        )
+                    ],
+                )
+            else:
+                exact(
+                    binding,
+                    "targetDomain",
+                    [iri(rev, "ResponsibilityDomain", ref["target_domain"])],
+                )
+    for ref in data["normal_logical_dependencies"]:
+        node = iri(rev, "logical-annotation", ref["id"])
+        exact(
+            node,
+            "sourceTable",
+            [iri(rev, ref["source_store"], "Table", ref["source_table"])],
+        )
+        exact(
+            node,
+            "targetTable",
+            [iri(rev, ref["target_store"], "Table", ref["target_table"])],
+        )
+        exact(
+            node,
+            "declaredColumnPairs",
+            [
+                Literal(
+                    canonical(list(zip(ref["source_columns"], ref["target_columns"])))
+                )
+            ],
+        )
     return errors
 
 
@@ -532,8 +693,13 @@ def validate(data, producer, output, timeout=60, graph=None):
     check_shapes(shapes, catalog)
     checks = []
     mapping = mapping_errors(graph, data, producer)
-    coverage_ok = not mapping and all(
-        not v["missing"] and not v["unexpected"] for v in cov.values()
+    required_nonempty = all(
+        cov[c["target_class"]]["expected"] > 0 for c in catalog["constraints"]
+    )
+    coverage_ok = (
+        required_nonempty
+        and not mapping
+        and all(not v["missing"] and not v["unexpected"] for v in cov.values())
     )
     for c in catalog["constraints"]:
         cls = c["target_class"]
@@ -600,7 +766,7 @@ def validate(data, producer, output, timeout=60, graph=None):
             **{
                 p.name: digest(p.read_bytes())
                 for p in HERE.iterdir()
-                if p.suffix in (".py", ".json", ".ttl") or p.name == "uv.lock"
+                if p.suffix in (".py", ".json", ".ttl", ".toml") or p.name == "uv.lock"
             },
         },
         "coverage": cov,
@@ -618,7 +784,10 @@ def validate(data, producer, output, timeout=60, graph=None):
             }
             for f in FAMILIES
         },
-        "unformalized": data["scope"]["unformalized"],
+        "unformalized": data["scope"]["unformalized"]
+        + [
+            "Operation requiresCapability and derivedFrom are not instantiated: IR supplies no authoritative operation/derivation registry; logical dependencies remain historical annotations, not current requirements."
+        ],
         "fixture_expectation": None,
     }
     import jsonschema

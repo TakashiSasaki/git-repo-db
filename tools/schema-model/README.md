@@ -110,3 +110,20 @@ model. None of those increments, ontology publication, product dependency
 changes, a mandatory CI gate, release qualification or deployment is introduced
 by this tool. Open Ontologies capability claims require current controls;
 previous experiments exposed large-integer comparison and proof-runner limits.
+
+### Exact pilot limits
+
+Raw SQL and complete original records are retained in `source-ir.json`, with its
+own digest in the receipt; RDF nodes carry source-record digests and compact
+scalar fields. This avoids replicating large SQL literals in each checker input.
+Qualified external references have ordered `ReferenceBinding` nodes. The nine
+baseline normal logical dependencies are explicit `LogicalAnnotation` records,
+not current operation requirements: some descriptions predate accepted scoped
+supersessions. `requiresCapability` and `derivedFrom` are not instantiated because
+the input IR has no authoritative operation/derivation registry; these omissions
+are reported as unformalized, rather than guessed from historical descriptions.
+
+Required structural constraint classes must be nonempty. FK enumeration is also
+checked against the separate extraction FK count before graph generation can
+claim coverage. This is consistency validation, not authentication of a malicious
+producer or a replacement for independently rerunning SQLite extraction.
