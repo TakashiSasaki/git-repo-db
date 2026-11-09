@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "shapes_sha256": "b440ddfa76fee970e9afcfa0c99ca1667ba7536bae48fceae18d692d07992a8f",
+  "authority": [
+    "docs/architecture/local-catalog-contract.md",
+    "docs/adr/0040-scoped-machine-readable-model-validation.md"
+  ],
+  "constraints": {
+    "EntryShape": "full composite entry key uniqueness and same-snapshot physical FK; preserves path BLOB",
+    "ScanShape": "optional unique outcome",
+    "OutcomeShape": "same-snapshot scan FK",
+    "ReferenceShape": "WT physical FK and explicit unresolved external reference"
+  }
+}

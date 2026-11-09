@@ -1,0 +1,18 @@
+@prefix m: <urn:git-repo-db:instance-pilot:v1:> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+m:EntryShape a sh:NodeShape; sh:targetClass m:Entry;
+ sh:property [sh:path m:pathBytes; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:base64Binary];
+ sh:property [sh:path m:parent; sh:minCount 1; sh:maxCount 1; sh:class m:Scan];
+ sh:sparql [sh:message "Duplicate complete entry semantic key"; sh:select """
+ PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
+ SELECT $this WHERE { $this m:semanticKey ?key . ?other a m:Entry; m:semanticKey ?key . FILTER ($this != ?other) }
+ """] .
+m:OutcomeShape a sh:NodeShape; sh:targetClass m:Outcome;
+ sh:property [sh:path m:parent; sh:minCount 1; sh:maxCount 1; sh:class m:Scan] .
+m:ScanShape a sh:NodeShape; sh:targetClass m:Scan;
+ sh:property [sh:path m:outcome; sh:maxCount 1; sh:class m:Outcome] .
+m:ReferenceShape a sh:NodeShape; sh:targetClass m:ExternalReference;
+ sh:property [sh:path m:resolution; sh:hasValue "unresolved"; sh:minCount 1; sh:maxCount 1];
+ sh:property [sh:path m:worktree; sh:minCount 1; sh:maxCount 1; sh:class m:Worktree] .
