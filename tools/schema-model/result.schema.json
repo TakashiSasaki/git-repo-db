@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Scoped schema-model result v1",
+  "type": "object",
+  "required": ["schema_version", "families"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "families": {
+      "type": "object",
+      "required": ["data_conformance", "spec_satisfiability", "operation_invariants", "implementation_conformance"],
+      "additionalProperties": false,
+      "patternProperties": {"^(data_conformance|spec_satisfiability|operation_invariants|implementation_conformance)$": {
+        "type": "object", "required": ["status", "scope", "reason"],
+        "properties": {"status": {"enum": ["pass", "fail", "undetermined", "not_run", "not_applicable"]}, "scope": {"type": "string"}, "reason": {"type": "string"}}
+      }}
+    }
+  },
+  "allOf": [{"if": {"properties": {"families": {"properties": {"data_conformance": {"properties": {"status": {"enum": ["pass", "fail"]}}}}}}}, "then": {"required": ["source", "tool", "digests", "coverage", "constraints", "unformalized", "fixture_expectation"]}}]
+}

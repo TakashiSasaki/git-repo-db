@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "fragment": "Core cardinality/class/datatype and pinned SELECT only",
+  "constraints": [
+    {
+      "id": "OWNER-01",
+      "shape": "urn:git-repo-db:model:v1:OWNER-01",
+      "target_class": "SourceUnit",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog"
+    },
+    {
+      "id": "FK-01",
+      "shape": "urn:git-repo-db:model:v1:FK-01",
+      "target_class": "ForeignKey",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog"
+    },
+    {
+      "id": "BIND-01",
+      "shape": "urn:git-repo-db:model:v1:BIND-01",
+      "target_class": "ColumnBinding",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog"
+    },
+    {
+      "id": "PK-01",
+      "shape": "urn:git-repo-db:model:v1:PK-01",
+      "target_class": "PrimaryKeyPart",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog"
+    },
+    {
+      "id": "TABLE-01",
+      "shape": "urn:git-repo-db:model:v1:TABLE-01",
+      "target_class": "Table",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog"
+    },
+    {
+      "id": "COL-01",
+      "shape": "urn:git-repo-db:model:v1:COL-01",
+      "target_class": "Column",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog"
+    },
+    {
+      "id": "FORMAT-01",
+      "shape": "urn:git-repo-db:model:v1:FORMAT-01",
+      "target_class": "SchemaDefinition",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog"
+    },
+    {
+      "id": "BOUNDARY-01",
+      "shape": "urn:git-repo-db:model:v1:BOUNDARY-01",
+      "target_class": "ForeignKey",
+      "authority": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "implementation": "scripts/schema_catalog.py:validate_catalog",
+      "select": "PREFIX m: <urn:git-repo-db:model:v1:> SELECT $this WHERE { $this m:sourceTable/m:schema ?s ; m:targetTable/m:schema ?t . FILTER (?s != ?t) }"
+    }
+  ],
+  "shape_graph_digest": "4989789508844718206922524716596438918188712339245908573927596997884005454222893"
+}

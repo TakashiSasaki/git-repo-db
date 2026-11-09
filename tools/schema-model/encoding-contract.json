@@ -1,0 +1,61 @@
+{
+  "contract_version": 1,
+  "namespace": "urn:git-repo-db:model:v1:",
+  "status": "future-instance-projection-contract",
+  "implemented_scope": "Structural projection of schema inventory only; no catalog instance extraction or instance conformance guarantee.",
+  "authority": [
+    "docs/adr/0040-scoped-machine-readable-model-validation.md",
+    "docs/architecture/local-catalog-contract.md"
+  ],
+  "identity": {
+    "row_occurrence": "Qualify each source row occurrence by source revision, database snapshot, table and extraction occurrence. Do not derive occurrence identity only from its semantic key.",
+    "semantic_key": "Preserve every original component, component order and field representation independently of occurrence identity.",
+    "duplicate_control": "Two deliberately duplicated semantic keys remain two row occurrences; compare source and projected occurrence counts.",
+    "uuid": "Preserve original text. Apply canonicality only according to the individual field and operation contract; do not normalize during projection.",
+    "repository_claim": "Allow multiple Repository UUID claims for the same common directory. A path or claim does not establish verified Core identity."
+  },
+  "values": {
+    "presence_states": ["present", "sql_null", "missing_extraction"],
+    "bytes": {
+      "representation": "Explicit base64 encoding of original bytes with original byte length",
+      "empty": "Empty bytes are present, not SQL NULL or missing; an empty relative path can denote the root.",
+      "round_trip": "Decoded bytes must equal original bytes exactly, including non-UTF-8 paths.",
+      "forbidden": ["lossy Unicode decoding", "Unicode normalization", "case folding", "symlink resolution as identity"]
+    },
+    "native_time_ns": {
+      "representation": "Preserve original decimal TEXT lexeme and explicit nanosecond unit and clock meaning.",
+      "range": "May be negative or exceed signed 64-bit; use arbitrary-precision integer comparison only where required.",
+      "forbidden": ["floating-point seconds", "blanket xsd:long restriction", "unknown mapped to zero"]
+    },
+    "observation_time_us": "Keep SQLite INTEGER microsecond fields distinct from native nanosecond TEXT; enforce requiredness and range according to each field, not a universal time shape."
+  },
+  "scans": {
+    "scan_and_outcome": "Separate Scan and ScanOutcome nodes. A scan may have zero or one outcome. Missing outcome denotes legitimate incompleteness, not a missing terminal value error.",
+    "history": "Keep namespace, scan and relative-path composite identity; identical paths in different scans remain distinct observations.",
+    "hash_claim": "A correctly formed digest and hash status do not prove present real-byte equality or actual scanner execution."
+  },
+  "external_references": {
+    "classification": "Qualified external references are distinct from same-database physical foreign keys.",
+    "reference_validation": "Validate supplied components even when target instance data is absent.",
+    "target_states": ["unresolved", "resolved", "invalid"],
+    "unresolved": "Required target instance or resolution scope was not supplied; absence alone is not corruption.",
+    "resolved": "Only after matching supplied target identity, scope and complete key; never infer from a flag alone.",
+    "namespace": "Filesystem and Worktrees namespaces need not match.",
+    "root": "A Filesystem scan root may contain a nested worktree root; exact path equality is not required.",
+    "partial_completion": "A committed Filesystem scan remains independently valid if execution stops before the Worktrees link is saved."
+  },
+  "verification_boundary": {
+    "instance_projection": "not_implemented_in_PR_A",
+    "real_sqlite_and_api_fixtures": "follow_on_PR_B",
+    "required_future_controls": [
+      "SQL NULL versus missing versus empty bytes",
+      "negative and greater-than-signed64 native nanoseconds",
+      "duplicate row occurrences with equal semantic keys",
+      "incomplete scan and terminal outcomes",
+      "optional target absent, matching and mismatching",
+      "same path in distinct scans",
+      "multiple repository claims and independent namespaces",
+      "Filesystem committed before missing Worktrees link"
+    ]
+  }
+}

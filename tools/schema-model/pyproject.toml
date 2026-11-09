@@ -1,0 +1,9 @@
+[project]
+name = "git-repo-db-schema-model"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["pyshacl==0.40.2", "rdflib==7.6.0", "jsonschema==4.26.0"]
+[tool.uv]
+package = false
+[tool.uv.workspace]
+members = []
