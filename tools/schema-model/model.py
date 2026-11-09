@@ -165,11 +165,75 @@ def load_input(directory):
                 owners[source_path] = name
     if data["distributions"] != distributions or data["source_ownership"] != owners:
         raise ValueError("source ownership/distribution coverage mismatch")
+    failures = reference_errors(data)
+    if failures:
+        raise ValueError("; ".join(failures))
     return data, producer
+
+
+def reference_errors(data):
+    """Validate schema endpoints, never require optional target instance rows."""
+    errors = []
+    for ref in data["optional_references"]:
+        source = (
+            data["stores"]
+            .get(ref["source_store"], {})
+            .get("tables", {})
+            .get(ref["source_table"])
+        )
+        source_columns = ref["source_columns"]
+        if (
+            not isinstance(source_columns, list)
+            or any(not isinstance(c, str) for c in source_columns)
+            or len(set(source_columns)) != len(source_columns)
+        ):
+            errors.append(ref["id"] + ": invalid source column representation")
+            continue
+        if (
+            not source
+            or not source_columns
+            or not set(source_columns) <= {c["name"] for c in source["columns"]}
+        ):
+            errors.append(ref["id"] + ": invalid reference source columns")
+        if "target_columns" not in ref:
+            if ref.get("target_domain") not in data["authority_domains"]:
+                errors.append(ref["id"] + ": unknown reference target domain")
+            continue
+        target_columns = ref["target_columns"]
+        if not isinstance(target_columns, list) or any(
+            not isinstance(c, str) for c in target_columns
+        ):
+            errors.append(ref["id"] + ": invalid target column representation")
+            continue
+        if (
+            len(source_columns) != len(target_columns)
+            or not target_columns
+            or len(set(target_columns)) != len(target_columns)
+        ):
+            errors.append(ref["id"] + ": reference arity/duplicate columns")
+        if ref["target_store"] not in data["stores"]:
+            if data.get("profile") == "all":
+                errors.append(
+                    ref["id"] + ": target schema missing from complete profile"
+                )
+            # A future partial schema profile can leave targets unresolved. The
+            # current CLI separately admits only source-bound all-format inputs.
+            continue
+        target = data["stores"][ref["target_store"]]["tables"].get(ref["target_table"])
+        if not target or not set(target_columns) <= {
+            c["name"] for c in target["columns"]
+        }:
+            errors.append(ref["id"] + ": invalid reference target columns")
+        elif target_columns != target["primary_key"]:
+            errors.append(ref["id"] + ": qualified reference key order mismatch")
+    return errors
 
 
 def expected_targets(data, revision):
     """Independent enumeration: SQLite extracted_objects, not projected RDF."""
+    ref_errors = reference_errors(data)
+    if ref_errors:
+        raise ValueError("; ".join(ref_errors))
     expected = {c: set() for c in CLASSES}
     for kind, field in [
         ("Distribution", "distributions"),
@@ -234,6 +298,9 @@ def expected_targets(data, revision):
 
 
 def project(data, producer):
+    failures = reference_errors(data)
+    if failures:
+        raise ValueError("; ".join(failures))
     revision = producer["product_source"]["commit"]
     graph = Graph()
 
@@ -477,7 +544,7 @@ def coverage(graph, data, producer):
 def mapping_errors(graph, data, producer):
     """Compare ordered bindings to source IR, independently of SHACL verdict."""
     rev = producer["product_source"]["commit"]
-    errors = []
+    errors = reference_errors(data)
 
     def exact(node, predicate, expected):
         if set(graph.objects(node, M[predicate])) != set(expected):
@@ -582,6 +649,15 @@ def mapping_errors(graph, data, producer):
                     "targetDomain",
                     [iri(rev, "ResponsibilityDomain", ref["target_domain"])],
                 )
+        for predicate in ("sourceColumn", "targetColumn"):
+            for pos in range(len(ref["source_columns"])):
+                for column_node in graph.objects(
+                    iri(rev, "reference", ref["id"], pos), M[predicate]
+                ):
+                    if (column_node, RDF.type, M.Column) not in graph:
+                        errors.append(
+                            ref["id"] + ": reference endpoint is not a Column"
+                        )
     for ref in data["normal_logical_dependencies"]:
         node = iri(rev, "logical-annotation", ref["id"])
         exact(

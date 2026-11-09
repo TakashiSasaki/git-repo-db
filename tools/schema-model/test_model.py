@@ -214,6 +214,65 @@ class ModelTests(unittest.TestCase):
         graph.set((node, model.M.position, Literal(99)))
         self.assertTrue(model.mapping_errors(graph, self.data, self.producer))
 
+    def test_reference_schema_endpoints_and_order(self):
+        for mutation in ("missing", "arity", "extra", "order", "source"):
+            data = copy.deepcopy(self.data)
+            ref = next(
+                r
+                for r in data["optional_references"]
+                if r["id"] == "worktrees.filesystem-scan"
+            )
+            if mutation == "missing":
+                ref["target_columns"][0] = "__missing_namespace_uuid__"
+            elif mutation == "arity":
+                ref["target_columns"].pop()
+            elif mutation == "extra":
+                ref["target_columns"].append("extra")
+            elif mutation == "source":
+                ref["source_columns"][0] = "__missing_source__"
+            else:
+                ref["target_columns"].reverse()
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                model.expected_targets(data, self.producer["product_source"]["commit"])
+        # Schema input coverage is not optional instance availability.
+        self.assertEqual(model.reference_errors(self.data), [])
+        partial = copy.deepcopy(self.data)
+        partial["profile"] = "future-partial"
+        del partial["stores"]["filesystem"]
+        self.assertEqual(model.reference_errors(partial), [])
+        partial["profile"] = "all"
+        self.assertTrue(model.reference_errors(partial))
+
+    def test_rehashed_invalid_external_target_is_rejected(self):
+        data = copy.deepcopy(self.data)
+        ref = next(
+            r
+            for r in data["optional_references"]
+            if r["id"] == "worktrees.filesystem-scan"
+        )
+        ref["target_columns"][0] = "__missing_namespace_uuid__"
+        raw = json.dumps(data).encode()
+        manifest = copy.deepcopy(self.producer)
+        manifest["ir_sha256"] = model.digest(raw)
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d)
+            (p / "inventory.json").write_bytes(raw)
+            (p / "producer.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "invalid reference target columns"):
+                model.load_input(p)
+        data = copy.deepcopy(self.data)
+        next(r for r in data["optional_references"] if "target_domain" in r)[
+            "target_domain"
+        ] = "__missing_domain__"
+        self.assertTrue(model.reference_errors(data))
+
+    def test_reference_endpoint_rdf_type(self):
+        graph = self.graph - Graph()
+        binding = next(graph.subjects(RDF.type, model.M.ReferenceBinding))
+        column = next(graph.objects(binding, model.M.sourceColumn))
+        graph.remove((column, RDF.type, model.M.Column))
+        self.assertTrue(model.mapping_errors(graph, self.data, self.producer))
+
     def test_actual_negative_shape(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d)
