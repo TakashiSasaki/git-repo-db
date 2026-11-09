@@ -449,7 +449,7 @@
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
       "owner": "repo-catalog-local",
-      "sha256": "4f792b80fe8b924ea0533653ba5da3c32b77befc129b61c41ae84e7ac9d5309f"
+      "sha256": "5b8e59beb6d46262df4a14ac21448c0833d62090ba2dca0e6707077c14f84527"
     },
     {
       "path": "packages/operational/src/repo_catalog/adapters/sqlite/acquisition.py",
