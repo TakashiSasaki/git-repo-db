@@ -1,6 +1,6 @@
 ---
-status: proposed
-date: null
+status: accepted
+date: 2026-11-09
 replaces: []
 refines:
   - 0017-domain-keys-without-storage-surrogates.md
@@ -13,10 +13,14 @@ refines:
 
 ## Decision
 
-**Proposal for owner review, not an accepted guarantee or a new CI gate.** The
-owner requested analysis, a work plan and progress on 2026-11-07. That authorizes
-the bounded inventory work and this proposal; it is not recorded as acceptance
-of the semantic-validation architecture. No retained instance is changed.
+**Owner-accepted design, 2026-11-09; not an implementation or new CI gate.**
+The owner explicitly instructed 「これを採用するのでプルリクエストをマージしてください」
+in the 2026-11-09 conversation concerning PR #257. This adopts the complete
+ADR 0040 proposal and authorizes that PR's merge following scoped validation.
+The earlier 2026-11-07 request authorized analysis and the proposal, not
+prior acceptance. No product/runtime dependency, mandatory CI gate, ontology
+publication, release, deployment, or retained-catalog mutation is authorized
+by this decision.
 
 Build semantic validation on the existing source-bound SQLite schema IR. Keep
 implementation facts, accepted design obligations and executed evidence distinct.
@@ -95,15 +99,16 @@ external reference, unresolved target data is not a negative conformance result.
 - Do not load repository/instance data into a shared ontology store as an implicit
   side effect of checks. Prefer local files or isolated request-scoped graphs.
 - Do not change normal Schema 21 activation, seven-domain boundaries, independent
-  packages, existing stop/recovery/budget obligations or public documentation
-  selection through this tooling proposal.
+  packages or existing stop/recovery/budget obligations. Do not expand
+  publication beyond this accepted ADR or introduce public ontology materials
+  through this decision.
 - Do not add Windows, SQLite-version matrices or release gates to ordinary work.
   Use the environment's verified Python/loaded SQLite under ADR 0032; report the
   actual version, not a newly invented cross-environment pin.
 
 ## Context & Reason
 
-Level 3 applies to the proposed long-lived, cross-module semantic/evidence
+Level 3 applies to the accepted long-lived, cross-module semantic/evidence
 contract and future mandatory validation interpretation. It does not turn a
 read-only inventory extension into a new product architecture decision. That
 reversible engineering increment is independently reviewable in
@@ -119,7 +124,7 @@ The first inventory commit, `9f0aea2f3c7d179a96060d375a75a1b0af8f42b5`, extracts
 156 table definitions across those formats, preserves normal-profile output and
 separates P1's Runtime assembler, domain DDL and Contracts coverage contribution.
 Its [guide](../../documentation/schema-model-inventory.md) states the structural
-checks and remaining semantic gaps. It does not implement this proposed ontology.
+checks and remaining semantic gaps. It does not implement the semantic model specified by this decision.
 
 A request-scoped Open Ontologies experiment on that commit's ten composition
 records produced: ten targets conforming; one deliberately duplicated composition
@@ -144,10 +149,10 @@ cannot describe.
 | Increment | Reviewable outcome | Dependency / acceptance condition |
 | --- | --- | --- |
 | Inventory foundation | All registered formats, ownership and structural counterexamples; source-bound JSON | PR #256, independent reversible work under existing contracts |
-| Semantic model pilot | Versioned vocabulary and operation/format/domain mapping; RDF projection; FS/WT composite keys, hash states and optional-reference shapes | Accept this design; define executable projection/shape contract before expanding scope |
+| Semantic model pilot | Versioned vocabulary and operation/format/domain mapping; RDF projection; FS/WT composite keys, hash states and optional-reference shapes | Design accepted; define executable projection/shape contract before expanding scope |
 | Conformance fixtures | Valid empty initial catalogs, complete/partial/interrupted scans, malformed references, supplied/unsupplied targets, conflicting observations and SQL-vs-shape counterexamples | Pilot mapping; use real disposable SQLite fixtures and exact byte/time encodings |
 | CI integration | Reproducible optional tool environment, local Linux checks, non-vacuous coverage gate, cached immutable inputs and compact result evidence | Pilot checks prove positive/negative/unsupported cases; select and pin a reproducible local SHACL runner before making it required |
-| Operation model | Bounded Core-before-Context persistence, interruption and permitted partial completion; matching implementation tests | Accept design; map the exact selected acquisition/Exchange contract and source paths before specifying transitions |
+| Operation model | Bounded Core-before-Context persistence, interruption and permitted partial completion; matching implementation tests | Design accepted; map the exact selected acquisition/Exchange contract and source paths before specifying transitions |
 
 The semantic pilot must map the seven responsibility areas and relevant operations,
 while clearly labeling incomplete mappings. Start instance constraints with
@@ -159,7 +164,7 @@ guarantee is inferred from either model.
 Remaining engineering choices include RDF term names/encoding version, which
 SHACL Core/SPARQL fragment is portable, the pinned local runner and the exact
 finite state-model bounds. Public ontology publication, new services and new
-runtime dependencies are outside this proposal. Open Ontologies can remain an
+runtime dependencies are outside this decision. Open Ontologies can remain an
 optional interrogation/validation adapter; service access must not be necessary
 for deterministic ordinary CI. Acceptance is separate from implementation,
 verification, merge and publication.
@@ -177,4 +182,6 @@ verification, merge and publication.
 - [W3C SHACL](https://www.w3.org/TR/shacl/)
 - [W3C OWL 2 direct semantics](https://www.w3.org/TR/owl2-direct-semantics/)
 - [SQLite CHECK constraints](https://www.sqlite.org/lang_createtable.html#check_constraints)
-- Owner request and supplied assessment in the 2026-11-07 task conversation; no acceptance recorded.
+- Owner's explicit acceptance and merge instruction for PR #257 on 2026-11-09:
+  「これを採用するのでプルリクエストをマージしてください」.
+  Acceptance does not itself establish implementation or formal proof.

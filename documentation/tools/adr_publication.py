@@ -45,6 +45,7 @@ PUBLIC_ADRS = (
     "docs/adr/0037-operation-scoped-module-independence.md",
     "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
     "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md",
+    "docs/adr/0040-scoped-machine-readable-model-validation.md",
 )
 SUPPORT = ("docs/adr/policy.md",)
 

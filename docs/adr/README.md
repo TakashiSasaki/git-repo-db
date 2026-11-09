@@ -87,12 +87,11 @@ exceptions require explicit owner approval.
 | [0037](0037-operation-scoped-module-independence.md) | Operation-scoped module/install independence, M-01–M-07 | 2026-10-31 | Accepted target; basic Core includes complete Git-only recovery, Context reads exclude concrete Core, Search requires extra installation. No implementation/Schema 21 switch implied. |
 | [0038](0038-scoped-recovery-and-optional-initialization.md) | Complete recovery successor to 0026, scoped optional-store initialization | 2026-10-31 | Accepted whole-record replacement; stop/preservation/typed merge/budgets/activation carried forward. Git-only O/S timing changes; paired recovery unchanged. |
 | [0039](0039-independent-filesystem-and-worktree-catalogs.md) | Independent filesystem/worktree authorities, historical SHA-256 and EFU | 2026-11-06 | Owner accepted the plan and requested implementation. Two independent DBs and optional composition; no Schema 21 migration or ordinary file-body archive. Validation is separately reported. |
+| [0040](0040-scoped-machine-readable-model-validation.md) | Scoped machine-readable semantic models, qualified references and validation evidence | 2026-11-09 | **Owner-accepted design**; source-bound IR, optional RDF/SHACL and bounded operation models. No new runtime dependency or semantic CI gate; implementation and proof remain separate. |
 
 ## Proposed Records
 
-| Record | Proposed scope | Status |
-| --- | --- | --- |
-| [0040](0040-scoped-machine-readable-model-validation.md) | Source-bound semantic models, optional references, scoped validation evidence and bounded operation models | Proposed; inventory foundation in #256 is independently implemented. No new semantic CI gate or product guarantee adopted. |
+None.
 
 **2026-10-31 acceptance/retirement:** the owner accepted complete 0037/0038 and
 0026 carry-forward/retirement after independent design reviews, then separately
@@ -102,7 +101,7 @@ acceptance-delta and CI evidence. Retired 0026 remains in [pinned history](https
 not as a contradictory accepted file. Acceptance does not implement installation
 guarantees or authorize product implementation, migration or release.
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0040** (includes proposed 0040; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0040 allocation checked the index, fetched reachable history, live remote branches and open PRs on 2026-11-07; no later design allocation was found. Its proposal is not acceptance.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0040** (includes accepted 0040; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0040 allocation checked the index, fetched reachable history, live remote branches and open PRs on 2026-11-07; no later design allocation was found. Owner accepted ADR 0040 on 2026-11-09; implementation, verification and release remain separate.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 
