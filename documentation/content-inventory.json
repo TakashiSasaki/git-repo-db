@@ -5,6 +5,18 @@
     "docs/phase2/reviews/": "0ec5f25e7cd48b7f4dcccec69dc55154b6b030eb"
   },
   "records": {
+    "docs/adr/0040-scoped-machine-readable-model-validation.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Owner-accepted design on 2026-11-09; no mandatory semantic gate, product implementation or formal proof asserted.",
+      "source": "docs/adr/0040-scoped-machine-readable-model-validation.md",
+      "producer": "Owner-requested machine-readable schema analysis and work plan.",
+      "consumers": "ADR index, implementation planning and reviewers.",
+      "publication": "read-only current-decision staging; original source remains authoritative",
+      "source_heading": "# ADR 0040: Scoped machine-readable models and validation evidence",
+      "status_in_source": "accepted",
+      "static_consumer_references": ["docs/adr/README.md"]
+    },
     "documentation/schema-model-inventory.md": {
       "status": "maintained-tool-reference",
       "owner": "documentation/",

@@ -177,3 +177,21 @@ formats expose only an opaque format ID, others only an integer schema version.
 See [the inventory guide](../../../documentation/schema-model-inventory.md).
 These checks are useful preparation for RDF/SHACL; they do not constitute ontology
 satisfiability, instance-data validation or a proof of implementation conformance.
+
+## 9. Verify the semantic checker and evidence source independently
+
+For an optional SHACL pilot, use one pinned IR and request-private graph. Exercise
+the same shape with a valid witness, a deliberate violation and no matching target.
+Inspect target counts, skipped constraints and definitive versus undetermined
+results; `violation_count == 0` alone is not success. Open Ontologies was observed
+to distinguish these three cases, while its verified-evaluator call returned no
+verdict when the executable was absent. Capability status is a point-in-time
+inventory; check the actual requested mode instead of inferring it from a healthy
+server or ordinary-SHACL success. Preserve engine/version and translation limits.
+
+When a repository test builds a temporary Git index with `git read-tree HEAD`,
+staging new files is insufficient. Commit a coherent inventory/file set before
+running that exact-tree check. Otherwise a new classification can fail as stale
+before the intended frozen-evidence counterexample is reached. Preserve the first
+failure, rerun after committing, and distinguish that setup issue from a product
+or validator defect. Do not weaken the frozen-evidence guard to make the test pass.
