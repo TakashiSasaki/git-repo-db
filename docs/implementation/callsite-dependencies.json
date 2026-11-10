@@ -379,7 +379,7 @@
     {
       "path": "packages/filesystem/src/repo_catalog/filesystem/store.py",
       "owner": "repo-catalog-filesystem",
-      "sha256": "7509400e19c5811030533cc671fd2685e50274df7f747c698c5c1bc1d1c2b370"
+      "sha256": "cb94e21994e7f7a96316d53e6ce32ff3d1c232698f927813c28d6c999b44adb2"
     },
     {
       "path": "packages/git-acquisition/src/repo_catalog/adapters/git/access_native.py",
