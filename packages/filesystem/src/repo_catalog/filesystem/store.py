@@ -75,6 +75,8 @@ def _connect(path, readonly=False):
     )
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA foreign_keys=ON")
+    # REPLACE must fire DELETE guards rather than bypass append-only history.
+    db.execute("PRAGMA recursive_triggers=ON")
     db.execute("PRAGMA trusted_schema=OFF")
     db.execute("PRAGMA busy_timeout=5000")
     if not readonly:
