@@ -1,0 +1,166 @@
+name: ADR0040 disposable combined preflight
+on:
+  push:
+    branches: [verification/adr0040-combined-20261110-cf3f92b1]
+permissions:
+  contents: read
+jobs:
+  combined:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CANDIDATE: d66df1ae7366de23e7b3af617a03db88dc1b2b5f
+      EXPECTED_TREE: dafa230332cad251edc1baab0f0ccc6df03647ab
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: d66df1ae7366de23e7b3af617a03db88dc1b2b5f
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          version: '0.12.19'
+      - name: Execute bounded combined-source verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          export EVIDENCE="$RUNNER_TEMP/adr0040-preflight-evidence"
+          mkdir "$EVIDENCE"
+          echo "EVIDENCE=$EVIDENCE" >> "$GITHUB_ENV"
+          run() {
+            name="$1"; shift
+            printf '%q ' "$@" > "$EVIDENCE/$name.command"
+            printf '\n' >> "$EVIDENCE/$name.command"
+            set +e
+            "$@" > "$EVIDENCE/$name.log" 2>&1
+            rc=$?
+            set -e
+            printf '%s\n' "$rc" > "$EVIDENCE/$name.exit"
+            printf '%s: exit %s\n' "$name" "$rc"
+            if [ "$rc" != 0 ]; then tail -n 35 "$EVIDENCE/$name.log"; fi
+            return "$rc"
+          }
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+          test "$(git rev-parse HEAD^{tree})" = "$EXPECTED_TREE"
+          test -z "$(git status --porcelain)"
+          git show -s --format=fuller HEAD > "$EVIDENCE/candidate.txt"
+          git rev-list --parents -n 1 HEAD >> "$EVIDENCE/candidate.txt"
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          main = '94d80d8a73098eee096ebee8b37e860960a10898'
+          a = 'b7dcd6721d0fafabe472fd1090067c67abb7cb0b'
+          b = '0b0a280bb45db1067b7f855eee439714a93de916'
+          c = 'c8654b18567fae96abf646bdf99a7b29e0b0f151'
+          expected = os.environ['EXPECTED_TREE']
+          trees = {label: git('merge-tree', '--write-tree', left, right)
+                   for label, left, right in [('main_a', main, a), ('a_b', a, b),
+                                             ('b_c', b, c), ('c_b', c, b)]}
+          assert trees['main_a'] == '49275e35b6d8d8f796be9698cd9e456517ae91e0'
+          assert trees['a_b'] == '96e3439199d13cb77846db1f9dad957087406e6a'
+          assert trees['b_c'] == trees['c_b'] == expected
+          assert git('merge-base', a, b) == a
+          assert git('merge-base', b, c) == main
+          assert git('rev-list', '--count', b, c, '^' + main) == '7'
+          assert not git('diff', '--name-only', c, 'HEAD', '--', 'packages', 'src',
+                         'tests', 'scripts', 'docs', 'documentation', '.agents',
+                         '.github', 'pyproject.toml', 'uv.lock')
+          assert not git('diff', '--name-only', b, 'HEAD', '--', 'tools')
+          out = {'candidate': git('rev-parse', 'HEAD'), 'tree': expected,
+                 'parents': git('show', '-s', '--format=%P', 'HEAD').split(),
+                 'merge_trees': trees, 'distinct_implementation_commits': 7}
+          Path(os.environ['EVIDENCE'], 'composition.json').write_text(json.dumps(out, indent=2))
+          print(json.dumps(out))
+          PY
+          run bootstrap ./scripts/setup-local-python.sh
+          run tool-sync uv sync --project tools/schema-model --locked --python "$(scripts/local-run.sh python -c 'import sys; print(sys._base_executable)')"
+          scripts/local-run.sh python - <<'PY' > "$EVIDENCE/runtime-isolation.json"
+          import json, os, platform, sqlite3, sys, tempfile
+          from pathlib import Path
+          from repo_catalog.worktrees import discover_topology
+          root = Path(tempfile.mkdtemp(prefix='adr0040-fixtures-', dir=os.environ['RUNNER_TEMP']))
+          markers = [str(p / '.git') for p in (root, *root.parents) if (p / '.git').exists()]
+          observed = discover_topology(root)
+          assert not markers, markers
+          assert observed.status == 'not_git', repr(observed)
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write(f'TEST_TMP_ROOT={root}\nTMPDIR={root}\n')
+          print(json.dumps({'python':sys.version, 'sqlite':sqlite3.sqlite_version,
+                            'architecture':platform.machine(), 'temp_root':str(root),
+                            'ancestor_git_markers':markers, 'product_git_discovery':observed.status}))
+          PY
+          export TEST_TMP_ROOT="$(python3 -c 'import json,os; print(json.load(open(os.environ["EVIDENCE"]+"/runtime-isolation.json"))["temp_root"])')"
+          export TMPDIR="$TEST_TMP_ROOT"
+          run inventory scripts/local-run.sh python scripts/schema_inventory.py --profile all --source "$CANDIDATE" --output documentation/.build/inputs/all-formats
+          cp -R documentation/.build/inputs/all-formats "$EVIDENCE/all-formats"
+          run structural uv run --project tools/schema-model --locked --offline python tools/schema-model/model.py --input documentation/.build/inputs/all-formats --output "$EVIDENCE/structural-result" --timeout 60
+          run instance-fixture bash -c 'scripts/local-run.sh python tools/schema-model/instance_fixture.py > "$EVIDENCE/instance.json"'
+          run instance-cli uv run --project tools/schema-model --locked --offline python tools/schema-model/instance_model.py "$EVIDENCE/instance.json" "$EVIDENCE/instance-result"
+          export INSTANCE_FIXTURE="$EVIDENCE/instance.json"
+          run instance-tests uv run --project tools/schema-model --locked --offline python -m unittest discover -s tools/schema-model -p test_instance_model.py -q
+          run product-tests scripts/local-run.sh python -m pytest -q -n 2 --basetemp="$TEST_TMP_ROOT/pytest-13" --junitxml="$EVIDENCE/product.xml" tests/filesystem/test_connection_guards.py tests/worktrees/test_worktrees.py::test_separate_git_directory_and_plain_directory tests/local/test_composition.py::test_nested_repository_does_not_expand_its_siblings tests/local/test_composition.py::test_self_databases_excluded_and_filesystem_export_needs_no_worktree_db tests/local/test_composition.py::test_physical_root_alias_is_scanned_once_and_self_databases_stay_excluded
+          run callsite scripts/local-run.sh python scripts/audit_callsite_dependencies.py --check
+          run lint scripts/local-run.sh ruff check tools/schema-model/instance_model.py tools/schema-model/test_instance_model.py packages/filesystem/src/repo_catalog/filesystem/store.py tests/filesystem/test_connection_guards.py
+          run format scripts/local-run.sh ruff format --check tools/schema-model/instance_model.py tools/schema-model/test_instance_model.py packages/filesystem/src/repo_catalog/filesystem/store.py tests/filesystem/test_connection_guards.py
+          run whitespace git diff --check 94d80d8a73098eee096ebee8b37e860960a10898 HEAD
+          test -z "$(git status --porcelain)"
+      - name: Preserve bounded summary and source identities
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, re, subprocess, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path(os.environ.get('EVIDENCE', os.environ['RUNNER_TEMP']+'/adr0040-preflight-evidence'))
+          root.mkdir(exist_ok=True)
+          summary = {'candidate':os.environ['CANDIDATE'], 'expected_tree':os.environ['EXPECTED_TREE'],
+                     'workflow_commit':os.environ['GITHUB_SHA'], 'run_id':os.environ['GITHUB_RUN_ID'],
+                     'exits':{p.stem:int(p.read_text()) for p in root.glob('*.exit')},
+                     'new_independent_agent_review':False}
+          for label in ('structural', 'instance'):
+              path = root / (label+'-result') / 'result.json'
+              if path.exists():
+                  result = json.loads(path.read_text())
+                  summary[label] = {'families':result.get('families'), 'coverage':result.get('coverage'),
+                                    'checker_invocations_completed':result.get('checker_invocations_completed'),
+                                    'source':result.get('source'), 'tool':result.get('tool'),
+                                    'result_sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+          report = root / 'product.xml'
+          if report.exists():
+              cases = ET.parse(report).getroot().findall('.//testcase')
+              summary['product_tests'] = {'total':len(cases),
+                  'failures':sum(c.find('failure') is not None for c in cases),
+                  'errors':sum(c.find('error') is not None for c in cases),
+                  'skipped':sum(c.find('skipped') is not None for c in cases),
+                  'nodes':[c.get('classname','')+'::'+c.get('name','') for c in cases]}
+          log = root / 'instance-tests.log'
+          if log.exists():
+              text = log.read_text(errors='replace')
+              summary['instance_tests_terminal'] = text[-1000:]
+          path = root / 'instance.json'
+          if path.exists():
+              value = json.loads(path.read_text())
+              summary['instance_fixture'] = {k:value.get(k) for k in ('source_commit','source_tree','runtime','producer_sha256','imported_product_sources')}
+              summary['instance_fixture']['sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
+          summary['final_git_status'] = subprocess.check_output(['git','status','--porcelain'],text=True)
+          (root/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+          index = {str(p.relative_to(root)):{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+                   for p in sorted(root.rglob('*')) if p.is_file() and p.name != 'index.json'}
+          (root/'index.json').write_text(json.dumps(index,indent=2)+'\n')
+          brief = {k:summary[k] for k in ('candidate','expected_tree','workflow_commit','exits')}
+          brief['product_tests'] = {k:v for k,v in summary.get('product_tests',{}).items() if k != 'nodes'}
+          brief['instance_tests_terminal'] = summary.get('instance_tests_terminal')
+          brief['families'] = {k:summary.get(k,{}).get('families') for k in ('structural','instance')}
+          print('ADR0040_PREFLIGHT_SUMMARY '+json.dumps(brief))
+          PY
+      - name: Retain synthetic verification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: adr0040-combined-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/adr0040-preflight-evidence/
+            artifacts/local-python/
+          retention-days: 14
