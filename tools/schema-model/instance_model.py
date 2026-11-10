@@ -2,18 +2,31 @@
 
 from __future__ import annotations
 
+import argparse
 import base64
 import hashlib
 import json
+import math
+import re
 import subprocess
 import sys
 from pathlib import Path
 from uuid import UUID
 
+import jsonschema
+from model import FAMILIES, git
 from rdflib import RDF, XSD, Graph, Literal, Namespace, URIRef
 
 M = Namespace("urn:git-repo-db:instance-pilot:v1:")
 HERE = Path(__file__).resolve().parent
+RESULT_SCHEMA = HERE / "result.schema.json"
+SCOPE = "fixed disposable FS/WT Entry/Scan/Outcome/ExternalReference shapes; no external target resolution"
+TARGETS = (
+    ("EntryShape", M.Entry, "filesystem", "entries"),
+    ("ScanShape", M.Scan, "filesystem", "scans"),
+    ("OutcomeShape", M.Outcome, "filesystem", "scan_outcomes"),
+    ("ReferenceShape", M.ExternalReference, "worktrees", "scan_references"),
+)
 
 
 def digest(value):
@@ -21,7 +34,9 @@ def digest(value):
 
 
 def canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+    )
 
 
 def value(cell):
@@ -166,54 +181,42 @@ def project(data):
     return g
 
 
-def validate(data, output, timeout=30):
-    output.mkdir(parents=True, exist_ok=True)
-    families = {
-        name: {"status": "not_run"}
-        for name in (
-            "data_conformance",
-            "spec_satisfiability",
-            "operation_invariants",
-            "implementation_conformance",
-        )
-    }
-    result = {
-        "scope": "fixed disposable FS/WT pilot; no external target resolution",
-        "families": families,
-        "input_sha256": digest(canonical(data).encode()),
-        "source_commit": data.get("source_commit"),
-        "source_tree": data.get("source_tree"),
-        "engine_evaluation_count": None,
-        "expected_counts": data.get("expected_counts"),
-        "tool_sha256": digest(Path(__file__).read_bytes()),
-        "shapes_sha256": digest((HERE / "instance_shapes.ttl").read_bytes()),
-        "lock_sha256": digest((HERE / "uv.lock").read_bytes()),
-    }
-    try:
-        shape_bytes = (HERE / "instance_shapes.ttl").read_bytes()
-        manifest = json.loads((HERE / "instance_constraints.json").read_text())
-        if digest(shape_bytes) != manifest["shapes_sha256"]:
-            raise ValueError("pinned pilot shape closure mismatch")
-        g = project(data)
-        result["constraint_targets"] = {
-            shape: {
-                "selected": len(set(g.subjects(RDF.type, cls))),
-                "coverage": "not_applicable"
-                if not set(g.subjects(RDF.type, cls))
-                else "selected",
-                "engine_evaluation_count": None,
+def new_result():
+    """The common contract also permits honest, incomplete admission failures."""
+    return {
+        "schema_version": 1,
+        "families": {
+            name: {
+                "status": "undetermined" if name == "data_conformance" else "not_run",
+                "scope": SCOPE
+                if name == "data_conformance"
+                else "outside instance-pilot execution",
+                "reason": "validation did not complete"
+                if name == "data_conformance"
+                else "not evaluated by the instance pilot",
             }
-            for shape, cls in (
-                ("EntryShape", M.Entry),
-                ("ScanShape", M.Scan),
-                ("OutcomeShape", M.Outcome),
-                ("ReferenceShape", M.ExternalReference),
-            )
-        }
-        result["checker_invocations_completed"] = 0
-        nt = "\n".join(sorted(g.serialize(format="nt").splitlines())) + "\n"
-        (output / "data.nt").write_text(nt)
-        result["graph_sha256"] = digest(nt.encode())
+            for name in FAMILIES
+        },
+    }
+
+
+def write_result(result, output):
+    jsonschema.validate(result, json.loads(RESULT_SCHEMA.read_text()))
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
+def save_diagnostics(output, stdout, stderr):
+    # TimeoutExpired may expose bytes even for subprocesses run with text=True.
+    for name, raw in (("engine.stdout", stdout), ("engine.stderr", stderr)):
+        if raw is not None:
+            (output / name).write_bytes(raw.encode() if isinstance(raw, str) else raw)
+
+
+def run_checker(output, timeout):
+    """Preserve child bytes before interpreting a normalized conformance result."""
+    try:
         checked = subprocess.run(
             [
                 sys.executable,
@@ -222,35 +225,181 @@ def validate(data, output, timeout=30):
                 str(HERE / "instance_shapes.ttl"),
             ],
             capture_output=True,
-            text=True,
             timeout=timeout,
-            check=True,
         )
+    except subprocess.TimeoutExpired as exc:
+        save_diagnostics(output, exc.stdout, exc.stderr)
+        raise
+    save_diagnostics(output, checked.stdout, checked.stderr)
+    return checked
+
+
+def validate(data, output, timeout=30):
+    output.mkdir(parents=True, exist_ok=True)
+    result = new_result()
+    result["checker_invocations_completed"] = 0
+    result["engine_evaluation_count"] = None
+    stage = "input admission"
+    try:
+        if not math.isfinite(timeout) or not 0 < timeout <= 600:
+            raise ValueError("timeout must be in (0,600] seconds")
+        if not isinstance(data, dict):
+            raise ValueError("instance input must be a JSON object")
+        # Preserve available producer claims without inventing missing identities.
+        result["source"] = {
+            key: data[key]
+            for key in (
+                "source_commit",
+                "source_tree",
+                "producer_sha256",
+                "runtime",
+                "imported_product_sources",
+                "scope",
+                "expected_counts",
+            )
+            if key in data
+        }
+        for key, size in (
+            ("source_commit", 40),
+            ("source_tree", 40),
+            ("producer_sha256", 64),
+        ):
+            if not isinstance(data.get(key), str) or not re.fullmatch(
+                f"[0-9a-f]{{{size}}}", data[key]
+            ):
+                raise ValueError(f"missing or malformed {key}")
+        if not isinstance(data.get("runtime"), dict) or any(
+            not isinstance(data["runtime"].get(key), str)
+            for key in ("python", "sqlite")
+        ):
+            raise ValueError("missing producer runtime identity")
+        if (
+            not isinstance(data.get("imported_product_sources"), dict)
+            or not data["imported_product_sources"]
+        ):
+            raise ValueError("missing imported product source bindings")
+        result["tool"] = {
+            "commit": git("rev-parse", "HEAD"),
+            "tree": git("rev-parse", "HEAD^{tree}"),
+            "working_tree_dirty": bool(git("status", "--porcelain")),
+        }
+        raw_input = (canonical(data) + "\n").encode()
+        (output / "source-input.json").write_bytes(raw_input)
+        result["digests"] = {"input": digest(raw_input)}
+        for name in (
+            "instance_model.py",
+            "instance_fixture.py",
+            "model.py",
+            "worker.py",
+            "instance_shapes.ttl",
+            "instance_constraints.json",
+            "result.schema.json",
+            "uv.lock",
+            "pyproject.toml",
+        ):
+            result["digests"][name] = digest((HERE / name).read_bytes())
+        shape_bytes = (HERE / "instance_shapes.ttl").read_bytes()
+        manifest = json.loads((HERE / "instance_constraints.json").read_text())
+        if digest(shape_bytes) != manifest["shapes_sha256"]:
+            raise ValueError("pinned pilot shape closure mismatch")
+        if set(manifest["constraints"]) != {shape for shape, *_ in TARGETS}:
+            raise ValueError("required constraint coverage missing")
+        g = project(data)
+        result["coverage"] = {
+            shape: {
+                "expected": data["expected_counts"][store][table],
+                "selected": len(set(g.subjects(RDF.type, cls))),
+                "coverage": "not_applicable"
+                if not set(g.subjects(RDF.type, cls))
+                else "selected",
+                "engine_evaluation_count": None,
+            }
+            for shape, cls, store, table in TARGETS
+        }
+        if any(c["expected"] != c["selected"] for c in result["coverage"].values()):
+            raise ValueError("projected target coverage mismatch")
+        result["constraints"] = [
+            {
+                "id": shape,
+                "authority": manifest["authority"],
+                "implementation": manifest["constraints"][shape],
+                "expected_targets": result["coverage"][shape]["expected"],
+                "selected_targets": result["coverage"][shape]["selected"],
+                "coverage": result["coverage"][shape]["coverage"],
+                "engine_evaluation_count": None,
+                "result_scope": "combined checker verdict; no per-constraint verdict attributed",
+            }
+            for shape, *_ in TARGETS
+        ]
+        result["unformalized"] = [
+            "External-target resolution is not implemented; references remain unresolved.",
+            "Zero OutcomeShape targets are explicitly not_applicable; terminal scan behavior is not exercised.",
+            "No general SQL/trigger/UDF semantics, all WT physical FKs, hash-state rules, scanner races or concurrent transitions.",
+            "No specification satisfiability, operation-model or whole-implementation proof.",
+        ]
+        result["fixture_expectation"] = None
+        nt = "\n".join(sorted(g.serialize(format="nt").splitlines())) + "\n"
+        (output / "data.nt").write_text(nt)
+        result["digests"]["graph"] = digest(nt.encode())
+        stage = "checker execution"
+        checked = run_checker(output, timeout)
+        result["checker_returncode"] = checked.returncode
+        if checked.returncode:
+            raise ValueError(f"checker exited {checked.returncode}; see engine.stderr")
         report = json.loads(checked.stdout)
+        (output / "engine.json").write_text(json.dumps(report, indent=2) + "\n")
+        if (
+            not isinstance(report, dict)
+            or report.get("status") not in ("pass", "fail")
+            or not isinstance(report.get("engine"), dict)
+            or not isinstance(report.get("raw_report"), str)
+            or not isinstance(report.get("reason"), str)
+        ):
+            raise ValueError("checker returned no supported definitive report")
         result["checker_invocations_completed"] = 1
         result["engine"] = report["engine"]
-        families["data_conformance"] = {
+        result["families"]["data_conformance"] = {
             "status": report["status"],
-            "scope": "Entry/Scan/Outcome/ExternalReference pilot shapes",
+            "scope": SCOPE,
+            "reason": "selected pilot shapes conform"
+            if report["status"] == "pass"
+            else "selected pilot shapes detected nonconformance; see engine.json",
         }
-        (output / "engine.json").write_text(json.dumps(report, indent=2))
     except (
         ValueError,
         KeyError,
         TypeError,
+        AttributeError,
         subprocess.SubprocessError,
         OSError,
     ) as exc:
-        families["data_conformance"] = {"status": "undetermined", "reason": str(exc)}
-    (output / "result.json").write_text(json.dumps(result, indent=2))
-    return result
+        result["families"]["data_conformance"]["reason"] = (
+            f"{stage}: {type(exc).__name__}: {exc}"
+        )
+    return write_result(result, output)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("input", type=Path)
+    parser.add_argument("output", type=Path)
+    parser.add_argument("--timeout", type=float, default=30)
+    args = parser.parse_args(argv)
+    try:
+        data = json.loads(args.input.read_bytes())
+    except (ValueError, OSError) as exc:
+        result = new_result()
+        result["families"]["data_conformance"]["reason"] = (
+            f"input admission: {type(exc).__name__}: {exc}"
+        )
+        result = write_result(result, args.output)
+    else:
+        result = validate(data, args.output, args.timeout)
+    print(json.dumps(result, indent=2))
+    return {"pass": 0, "fail": 1, "undetermined": 2}[
+        result["families"]["data_conformance"]["status"]
+    ]
 
 
 if __name__ == "__main__":
-    receipt = validate(json.loads(Path(sys.argv[1]).read_text()), Path(sys.argv[2]))
-    print(json.dumps(receipt, indent=2))
-    sys.exit(
-        {"pass": 0, "fail": 1, "undetermined": 2}[
-            receipt["families"]["data_conformance"]["status"]
-        ]
-    )
+    sys.exit(main())

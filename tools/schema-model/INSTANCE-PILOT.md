@@ -92,3 +92,41 @@ Imported FS/WT Python source bytes are checked against the recorded HEAD; this
 is not authentication of the whole interpreter or all transitive dependencies.
 Exact source commit/tree, producer/code/shape/lock/input hashes and actual
 Python/SQLite/SHACL versions are recorded. A digest is not authentication.
+
+## Common result receipts
+
+Every `result.json`, including input-admission failures, is validated against
+[`result.schema.json`](result.schema.json). All four families have a status,
+scope and reason. Definitive data results include source, tool, digest, coverage,
+constraint, unformalized-scope and fixture-expectation fields. `fixture_expectation`
+is null for an ordinary invocation; a negative control passing its test does not
+change the submitted graph's `data_conformance=fail`.
+
+Expected shape targets come from the producer's fixture counts; selected targets
+come from the graph. `checker_invocations_completed` counts returned child checker
+invocations with a supported definitive pass/fail report, matching the structural
+runner. An unsuccessful exit or unusable report completes no supported check;
+the process's `checker_returncode` is separate evidence. Unavailable checkers and
+timeouts also complete no check, and all internal engine evaluation counts remain null. Constraint
+records describe selected coverage; the combined verdict is not falsely copied
+into separate per-constraint verdicts. Outcome targets remain explicitly
+not_applicable for these incomplete scans.
+
+Raw stdout/stderr are saved separately as `engine.stdout` and `engine.stderr`;
+parseable worker reports are retained in `engine.json`. Timeout diagnostics retain
+any bytes actually returned. The normalized family reason does not replace these
+raw diagnostics. Use a fresh output directory for each invocation.
+
+Malformed JSON, unreadable input paths and invalid input objects emit an
+`undetermined` receipt and exit 2 whenever the requested output can be written.
+Missing identities or runtime data are not synthesized. The optional `--timeout`
+argument accepts a finite duration in `(0,600]` seconds. As before, a conforming
+graph exits 0 and detected nonconformance exits 1; none of these statuses evaluates
+the other three result families.
+
+`source` retains producer-supplied source commit/tree, producer digest, loaded
+Python/SQLite identity, imported-product source bindings, declared scope and
+expected extraction counts. `tool` identifies the runner checkout's commit/tree
+and dirty status. `digests` binds the exact retained `source-input.json`, graph,
+runner/worker/producer code, shape manifest, common result schema and lock inputs.
+These are consistency/provenance claims, not authentication of the producer.
