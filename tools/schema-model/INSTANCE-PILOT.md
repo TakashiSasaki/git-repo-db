@@ -117,10 +117,14 @@ parseable worker reports are retained in `engine.json`. Timeout diagnostics reta
 any bytes actually returned. The normalized family reason does not replace these
 raw diagnostics. Use a fresh output directory for each invocation.
 
-Malformed JSON, unreadable input paths and invalid input objects emit an
+Malformed JSON (including nonfinite numeric constants), unreadable input paths
+and invalid input objects emit an
 `undetermined` receipt and exit 2 whenever the requested output can be written.
 Missing identities or runtime data are not synthesized. The optional `--timeout`
-argument accepts a finite duration in `(0,600]` seconds. As before, a conforming
+argument accepts a finite duration in `(0,600]` seconds; malformed timeout text
+also emits a failure receipt when input/output paths are supplied. Receipt
+serialization rejects non-JSON values rather than copying them from rejected
+producer metadata. As before, a conforming
 graph exits 0 and detected nonconformance exits 1; none of these statuses evaluates
 the other three result families.
 

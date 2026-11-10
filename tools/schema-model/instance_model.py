@@ -201,9 +201,10 @@ def new_result():
 
 
 def write_result(result, output):
+    serialized = json.dumps(result, indent=2, allow_nan=False) + "\n"
     jsonschema.validate(result, json.loads(RESULT_SCHEMA.read_text()))
     output.mkdir(parents=True, exist_ok=True)
-    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    (output / "result.json").write_text(serialized)
     return result
 
 
@@ -241,10 +242,13 @@ def validate(data, output, timeout=30):
     result["engine_evaluation_count"] = None
     stage = "input admission"
     try:
+        timeout = float(timeout)
         if not math.isfinite(timeout) or not 0 < timeout <= 600:
             raise ValueError("timeout must be in (0,600] seconds")
         if not isinstance(data, dict):
             raise ValueError("instance input must be a JSON object")
+        # Reject non-JSON programmatic values before echoing any producer claims.
+        raw_input = (canonical(data) + "\n").encode()
         # Preserve available producer claims without inventing missing identities.
         result["source"] = {
             key: data[key]
@@ -283,7 +287,6 @@ def validate(data, output, timeout=30):
             "tree": git("rev-parse", "HEAD^{tree}"),
             "working_tree_dirty": bool(git("status", "--porcelain")),
         }
-        raw_input = (canonical(data) + "\n").encode()
         (output / "source-input.json").write_bytes(raw_input)
         result["digests"] = {"input": digest(raw_input)}
         for name in (
@@ -346,8 +349,10 @@ def validate(data, output, timeout=30):
         result["checker_returncode"] = checked.returncode
         if checked.returncode:
             raise ValueError(f"checker exited {checked.returncode}; see engine.stderr")
-        report = json.loads(checked.stdout)
-        (output / "engine.json").write_text(json.dumps(report, indent=2) + "\n")
+        report = json.loads(checked.stdout, parse_constant=reject_nonfinite_constant)
+        (output / "engine.json").write_text(
+            json.dumps(report, indent=2, allow_nan=False) + "\n"
+        )
         if (
             not isinstance(report, dict)
             or report.get("status") not in ("pass", "fail")
@@ -379,14 +384,20 @@ def validate(data, output, timeout=30):
     return write_result(result, output)
 
 
+def reject_nonfinite_constant(value):
+    raise ValueError(f"non-finite JSON constant: {value}")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path)
     parser.add_argument("output", type=Path)
-    parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument("--timeout", default=30)
     args = parser.parse_args(argv)
     try:
-        data = json.loads(args.input.read_bytes())
+        data = json.loads(
+            args.input.read_bytes(), parse_constant=reject_nonfinite_constant
+        )
     except (ValueError, OSError) as exc:
         result = new_result()
         result["families"]["data_conformance"]["reason"] = (
@@ -395,7 +406,7 @@ def main(argv=None):
         result = write_result(result, args.output)
     else:
         result = validate(data, args.output, args.timeout)
-    print(json.dumps(result, indent=2))
+    print(json.dumps(result, indent=2, allow_nan=False))
     return {"pass": 0, "fail": 1, "undetermined": 2}[
         result["families"]["data_conformance"]["status"]
     ]

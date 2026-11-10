@@ -29,7 +29,10 @@ class InstancePilotTests(unittest.TestCase):
     def receipt(self, data, timeout=30):
         with tempfile.TemporaryDirectory() as temp:
             result = validate(data, Path(temp), timeout)
-            saved = json.loads((Path(temp) / "result.json").read_text())
+            saved = json.loads(
+                (Path(temp) / "result.json").read_text(),
+                parse_constant=instance_model.reject_nonfinite_constant,
+            )
             self.assertEqual(result, saved)
             assert_contract(self, saved)
             return saved
@@ -211,7 +214,7 @@ class InstancePilotTests(unittest.TestCase):
         self.assertNotIn("engine", result)
 
     def test_invalid_timeout_produces_failure_receipt(self):
-        for timeout in (0, -1, 601, float("nan"), float("inf")):
+        for timeout in (0, -1, 601, float("nan"), float("inf"), "not-a-number"):
             with self.subTest(timeout=timeout):
                 result = self.receipt(self.fixture, timeout)
                 self.assertEqual(
@@ -226,6 +229,8 @@ class InstancePilotTests(unittest.TestCase):
             (0, b"[]"),
             (0, b'{"status":"pass"}'),
             (0, b'{"status":"unknown"}'),
+            (0, b'{"status":"pass","engine":{"x":NaN},"raw_report":"","reason":""}'),
+            (0, b'{"status":"pass","engine":{"x":1e999},"raw_report":"","reason":""}'),
         ):
             with self.subTest(returncode=code, report=raw):
                 process = subprocess.CompletedProcess(
@@ -267,7 +272,16 @@ class AdmissionReceiptTests(unittest.TestCase):
                 self.assertNotIn("source", result)
 
     def test_cli_input_failures_write_receipts(self):
-        for raw in (None, b"{", b"\xff", b"[]", b"null"):
+        for raw in (
+            None,
+            b"{",
+            b"\xff",
+            b"[]",
+            b"null",
+            b'{"source_commit":NaN}',
+            b'{"source_commit":Infinity}',
+            b'{"source_commit":-Infinity}',
+        ):
             with self.subTest(raw=raw), tempfile.TemporaryDirectory() as temp:
                 input_path, output = Path(temp) / "input.json", Path(temp) / "out"
                 if raw is not None:
@@ -282,11 +296,70 @@ class AdmissionReceiptTests(unittest.TestCase):
                     capture_output=True,
                 )
                 self.assertEqual(run.returncode, 2, run.stderr)
-                result = json.loads((output / "result.json").read_text())
+                result = json.loads(
+                    (output / "result.json").read_text(),
+                    parse_constant=instance_model.reject_nonfinite_constant,
+                )
                 assert_contract(self, result)
-                self.assertEqual(json.loads(run.stdout), result)
+                self.assertEqual(
+                    json.loads(
+                        run.stdout,
+                        parse_constant=instance_model.reject_nonfinite_constant,
+                    ),
+                    result,
+                )
                 self.assertNotIn("source", result)
                 self.assertNotIn("engine", result)
+
+    def test_cli_malformed_timeout_writes_strict_receipt(self):
+        with tempfile.TemporaryDirectory() as temp:
+            input_path, output = Path(temp) / "input.json", Path(temp) / "out"
+            input_path.write_text("{}")
+            run = subprocess.run(
+                [
+                    sys.executable,
+                    str(instance_model.HERE / "instance_model.py"),
+                    str(input_path),
+                    str(output),
+                    "--timeout",
+                    "not-a-number",
+                ],
+                capture_output=True,
+            )
+            self.assertEqual(run.returncode, 2, run.stderr)
+            result = json.loads(
+                (output / "result.json").read_text(),
+                parse_constant=instance_model.reject_nonfinite_constant,
+            )
+            assert_contract(self, result)
+            self.assertIn(
+                "not-a-number", result["families"]["data_conformance"]["reason"]
+            )
+            self.assertEqual(result["checker_invocations_completed"], 0)
+
+    def test_programmatic_non_json_source_claims_are_not_echoed(self):
+        for claim in (float("nan"), float("inf"), -float("inf"), object()):
+            with self.subTest(value=str(claim)), tempfile.TemporaryDirectory() as temp:
+                output = Path(temp)
+                result = validate({"source_commit": claim}, output)
+                assert_contract(self, result)
+                saved = json.loads(
+                    (output / "result.json").read_text(),
+                    parse_constant=instance_model.reject_nonfinite_constant,
+                )
+                self.assertEqual(result, saved)
+                self.assertEqual(
+                    result["families"]["data_conformance"]["status"], "undetermined"
+                )
+                self.assertNotIn("source", result)
+
+    def test_result_writer_rejects_nonfinite_json(self):
+        with tempfile.TemporaryDirectory() as temp:
+            result = instance_model.new_result()
+            result["source"] = {"source_commit": float("nan")}
+            with self.assertRaises(ValueError):
+                instance_model.write_result(result, Path(temp))
+            self.assertFalse((Path(temp) / "result.json").exists())
 
     def test_timeout_preserves_partial_engine_bytes(self):
         with tempfile.TemporaryDirectory() as temp:
