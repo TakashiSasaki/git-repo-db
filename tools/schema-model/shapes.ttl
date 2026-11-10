@@ -1,0 +1,24 @@
+@prefix m: <urn:git-repo-db:model:v1:> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+m:OWNER-01 a sh:NodeShape ; sh:targetClass m:SourceUnit ;
+ sh:property [ sh:path m:ownedByDistribution ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Distribution ] .
+m:FK-01 a sh:NodeShape ; sh:targetClass m:ForeignKey ;
+ sh:property [ sh:path m:sourceTable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Table ] ;
+ sh:property [ sh:path m:targetTable ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Table ] .
+m:BIND-01 a sh:NodeShape ; sh:targetClass m:ColumnBinding ;
+ sh:property [ sh:path m:sourceColumn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Column ] ;
+ sh:property [ sh:path m:targetColumn ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Column ] ;
+ sh:property [ sh:path m:foreignKey ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:ForeignKey ] ;
+ sh:property [ sh:path m:position ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+m:PK-01 a sh:NodeShape ; sh:targetClass m:PrimaryKeyPart ;
+ sh:property [ sh:path m:column ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Column ] ;
+ sh:property [ sh:path m:table ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Table ] ;
+ sh:property [ sh:path m:position ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+m:TABLE-01 a sh:NodeShape ; sh:targetClass m:Table ;
+ sh:property [ sh:path m:schema ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:SchemaDefinition ] .
+m:COL-01 a sh:NodeShape ; sh:targetClass m:Column ;
+ sh:property [ sh:path m:table ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:Table ] .
+m:FORMAT-01 a sh:NodeShape ; sh:targetClass m:SchemaDefinition ;
+ sh:property [ sh:path m:assembledBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class m:SourceUnit ] .
+m:BOUNDARY-01 a sh:NodeShape ; sh:targetClass m:ForeignKey ; sh:sparql [ sh:select """PREFIX m: <urn:git-repo-db:model:v1:> SELECT $this WHERE { $this m:sourceTable/m:schema ?s ; m:targetTable/m:schema ?t . FILTER (?s != ?t) }""" ] .
