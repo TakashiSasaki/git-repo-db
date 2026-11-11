@@ -398,7 +398,7 @@ def validate(data, output, timeout=30):
             "External-target resolution is not implemented; references remain unresolved.",
             "Terminal records describe retained observations, not atomic filesystem snapshots or every interruption path.",
             "No general SQL/trigger/UDF semantics, all WT physical FKs, exhaustive scanner races or concurrent transitions; digest syntax does not prove real-byte equality.",
-            "Exact digest lexical validation is stricter than current SQLite DDL/API for 64 hex characters followed by NUL or NUL plus a suffix; separate SQL-only differential controls preserve this boundary.",
+            "Current SQLite digest admission rejects NUL-suffixed/interior values; historical pre-fix SQL/API acceptance is preserved separately as review evidence, not current behavior.",
             "No specification satisfiability, operation-model or whole-implementation proof.",
         ]
         if not data["expected_counts"]["filesystem"]["scan_outcomes"]:

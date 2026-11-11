@@ -95,7 +95,16 @@ class HashPilotTests(unittest.TestCase):
         )
 
     def test_digest_null_and_lexical_negatives(self):
-        for digest in (None, "", "a" * 63, "g" * 64, "A" * 64, "a" * 64 + "\n"):
+        for digest in (
+            None,
+            "",
+            "a" * 63,
+            "g" * 64,
+            "A" * 64,
+            "a" * 64 + "\n",
+            "a" * 63 + "\0",
+            "a" * 32 + "\0" + "a" * 31,
+        ):
             with self.subTest(digest=digest):
                 data = self.synthetic()
                 self.row(data, "complete")["sha256"] = {
@@ -104,29 +113,35 @@ class HashPilotTests(unittest.TestCase):
                 }
                 self.assert_status(data, "fail")
 
-    def test_sqlite_nul_differentials_retain_full_text_but_fail_shapes(self):
-        # Observed source behavior, not a product promise to keep admitting NUL.
-        # A future SQL/API repair changes this side, not strict shape rejection.
-        controls = self.fixture["api"]["hash_sqlite_differentials"]
+    def test_sqlite_nul_rejections_and_strict_graph_controls(self):
+        controls = self.fixture["api"]["hash_sqlite_nul_rejections"]
+        self.assertEqual(self.fixture["api"]["hash_nul_rejection_catalog_verify"], "ok")
         expected = {
             "trailing_nul_digest": "a" * 64 + "\0",
             "nul_suffix_digest": "a" * 64 + "\0invalid",
+            "interior_nul_digest": "a" * 32 + "\0" + "a" * 31,
         }
         self.assertEqual(set(controls), set(expected))
-        for label, digest in expected.items():
+        for label, candidate in expected.items():
             with self.subTest(case=label):
                 control = controls[label]
-                self.assertEqual(control["sqlite_insert"], "accepted")
-                self.assertEqual(control["api_verify"], "ok")
-                self.assertEqual(control["stored_text"], digest)
-                self.assertEqual(control["stored_utf8_hex"], digest.encode().hex())
-                self.assertEqual(control["stored_byte_length"], len(digest.encode()))
-                self.assertEqual(control["sqlite_text_length"], 64)
+                self.assertEqual(control["sqlite_insert"], "rejected")
+                self.assertIn("CHECK", control["sqlite_error"])
+                self.assertEqual(control["attempted_text"], candidate)
+                self.assertEqual(
+                    control["attempted_utf8_hex"], candidate.encode("utf-8").hex()
+                )
+                self.assertEqual(
+                    control["attempted_byte_length"], len(candidate.encode("utf-8"))
+                )
+                self.assertEqual(
+                    control["sqlite_text_length"], len(candidate.split("\0", 1)[0])
+                )
                 self.assertEqual(control["expected_data_conformance"], "fail")
                 data = self.synthetic()
                 self.row(data, "complete")["sha256"] = {
                     "type": "text",
-                    "value": control["stored_text"],
+                    "value": control["attempted_text"],
                 }
                 self.assert_status(data, "fail")
 

@@ -34,7 +34,7 @@ CREATE TABLE entries (
  size INTEGER CHECK(size IS NULL OR size >= 0),
  mtime_ns TEXT, birthtime_ns TEXT, ctime_ns TEXT,
  attributes INTEGER, mode INTEGER,
- sha256 TEXT CHECK(sha256 IS NULL OR (length(sha256)=64 AND sha256 NOT GLOB '*[^0-9a-f]*')),
+ sha256 TEXT CHECK(sha256 IS NULL OR (length(CAST(sha256 AS BLOB))=64 AND instr(sha256,char(0))=0 AND sha256 NOT GLOB '*[^0-9a-f]*')),
  hash_status TEXT NOT NULL CHECK(hash_status IN ('complete','changed','not-applicable','error')),
  error TEXT, link_target BLOB, observed_us INTEGER CHECK(observed_us IS NULL OR observed_us > 0),
  CHECK((hash_status='complete' AND sha256 IS NOT NULL AND kind='file') OR (hash_status!='complete' AND sha256 IS NULL)),

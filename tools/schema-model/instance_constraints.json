@@ -7,7 +7,7 @@
     "packages/filesystem/src/repo_catalog/filesystem/store.py"
   ],
   "constraints": {
-    "EntryShape": "full composite entry key uniqueness and same-snapshot physical FK; preserves path BLOB; exact SQL non-NULL error presence; selected kind/size/hash/reason tuples plus exact 64-character lowercase-hex digest syntax; this lexical rule rejects embedded-NUL suffixes admitted by current SQLite DDL/API (not byte verification or universal SQL equivalence)",
+    "EntryShape": "full composite entry key uniqueness and same-snapshot physical FK; preserves path BLOB; exact SQL non-NULL error presence; selected kind/size/hash/reason tuples plus exact 64-character lowercase-hex digest syntax; the current SQLite DDL rejects embedded NUL and suffixes using byte length and explicit NUL exclusion; neither SQL nor the graph rule proves real-byte equality or universal SQL equivalence",
     "ScanShape": "optional unique outcome",
     "OutcomeShape": "same-snapshot scan FK, terminal enum, nonnegative per-scan entry/error counts, positive finish time and no complete-with-errors; SQLite DDL plus FilesystemCatalog.verify",
     "ReferenceShape": "WT physical FK and explicit unresolved external reference"

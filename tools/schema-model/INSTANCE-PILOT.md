@@ -193,8 +193,10 @@ All profiles now project required kind, hash status, size and digest cells.
 Selected SHACL tuple rules follow the current SQLite kind/state relationships:
 only complete regular files have digests; files have a known nonnegative size;
 failed/changed hashing has a non-NULL reason. The separate exact digest lexical
-rule requires 64 lowercase hex characters and is stricter than current SQLite
-DDL/API at the embedded-NUL boundary described below. Empty error text
+rule requires exactly 64 lowercase ASCII hexadecimal characters. The current
+product DDL counts encoded bytes and explicitly rejects embedded NUL; the
+selected SQL and graph controls therefore agree on these malformed values.
+This is not general SQL equivalence or real-byte verification. Empty error text
 is not NULL. Unknown is a file kind, not a hash state. Pending is not persisted.
 Non-file size is not universally forbidden, and a complete entry may carry an
 error, but the enclosing scan cannot claim complete while errors exist.
@@ -215,19 +217,23 @@ Fourteen SQLite invalid-tuple controls run with guards enabled. Explicit
 length constraints reject a trailing newline even when the pattern engine
 accepts its end anchor before that newline.
 
-Two separately recorded SQL-only differential controls insert 64 lowercase hex
-characters followed by NUL, and by NUL plus `invalid`, into another disposable
-catalog. Current SQLite `length()`/`GLOB` digest checks admit these values and the
-public verifier accepts them, while the complete TEXT/UTF-8 bytes retain the
-suffix. The producer records insertion, verification, full text/byte encoding,
-SQLite text length and an explicitly expected `data_conformance=fail` in
-`api.hash_sqlite_differentials`. The paired synthetic graph controls execute that
-shape rejection. These are neither additional SQLite rejection controls nor
-positive-profile/scanner witnesses. They document a known SQL/API-to-shape
-difference; no product DDL/API correction or universal equivalence is claimed.
-SQL admission here records the current source, not a product requirement to
-accept malformed hashes. A future DDL/verifier correction must update the
-SQL-side expectation while retaining strict SHACL rejection.
+Three separately recorded SQL-only controls attempt 64 lowercase hex
+characters followed by NUL, NUL plus `invalid`, and an interior NUL within
+exactly 64 encoded bytes. The current product DDL rejects all three through
+its encoded-byte-length, explicit NUL exclusion and lowercase-hex checks.
+The producer retains the attempted full TEXT and UTF-8 encoding, SQLite's
+text-length result, the actual CHECK rejection and a separate public verifier
+check of the unaffected catalog in `api.hash_sqlite_nul_rejections`.
+Paired synthetic graph controls independently require
+`data_conformance=fail`; these attempted values are not scanner traces,
+admitted entries or positive-profile witnesses.
+
+Before this product fix, F1-B independently observed that SQLite `length()`
+and `GLOB` admitted NUL-suffixed values while strict SHACL rejected them.
+The original raw differential evidence and source identities remain frozen
+under `review-evidence/f1-review-20261111/`; they document historical
+behavior, not current admission or new executions. The current SQL-side
+controls now require rejection without weakening the SHACL rule.
 
 The actual empty
 file digest is separately checked against known bytes. A syntactically valid but
