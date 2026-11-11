@@ -141,6 +141,7 @@ def populate(catalog, root, api, outcome_cases):
         "malformed_digest": {"sha256": "g" * 64},
         "uppercase_digest": {"sha256": "A" * 64},
         "short_digest": {"sha256": "a" * 63},
+        "trailing_newline_digest": {"sha256": "a" * 64 + "\n"},
         "digest_on_error": {"hash_status": "error", "error": "read"},
         "changed_without_reason": {"hash_status": "changed", "sha256": None},
         "error_without_reason": {"hash_status": "error", "sha256": None},

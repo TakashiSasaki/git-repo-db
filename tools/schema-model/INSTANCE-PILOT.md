@@ -204,7 +204,9 @@ they do not simultaneously claim to be a complete set of positive hash witnesses
 The same shapes apply to every profile. Missing required extraction is still
 undetermined; a correctly rejected counterexample has data_conformance=fail.
 
-Thirteen SQLite invalid-tuple controls run with guards enabled. The actual empty
+Fourteen SQLite invalid-tuple controls run with guards enabled. Explicit
+length constraints reject a trailing newline even when the pattern engine
+accepts its end anchor before that newline. The actual empty
 file digest is separately checked against known bytes. A syntactically valid but
 incorrect digest deliberately passes the shape-only control: graph conformance
 is not a real-byte equality proof. No general SQL/trigger proof, external target

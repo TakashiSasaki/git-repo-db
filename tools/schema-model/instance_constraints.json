@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "shapes_sha256": "2f90939c69f9dac2c873853b81271948f540c0e057b39e107b798421f02abffe",
+  "shapes_sha256": "3a78550a2e1949974c1685f47651fdff301a9a14737a1e9fe364a45760a2ea85",
   "authority": [
     "docs/architecture/local-catalog-contract.md",
     "docs/adr/0040-scoped-machine-readable-model-validation.md",

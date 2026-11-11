@@ -11,7 +11,7 @@ m:EntryShape a sh:NodeShape; sh:targetClass m:Entry;
  sh:property [sh:path m:size; sh:minCount 1; sh:maxCount 1;
    sh:or ( [sh:in (m:SqlNull)] [sh:datatype xsd:integer; sh:minInclusive 0] )];
  sh:property [sh:path m:sha256; sh:minCount 1; sh:maxCount 1;
-   sh:or ( [sh:in (m:SqlNull)] [sh:datatype xsd:string; sh:pattern "^[0-9a-f]{64}$"] )];
+   sh:or ( [sh:in (m:SqlNull)] [sh:datatype xsd:string; sh:minLength 64; sh:maxLength 64; sh:pattern "^[0-9a-f]{64}$"] )];
  sh:sparql [sh:message "Digest presence must agree with successful regular-file hashing"; sh:select """
  PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
  SELECT $this WHERE {

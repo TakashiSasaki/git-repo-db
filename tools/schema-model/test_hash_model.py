@@ -77,7 +77,7 @@ class HashPilotTests(unittest.TestCase):
             self.assertEqual(control["scan_status"], "partial")
             self.assertTrue(control["enumeration_complete"])
             self.assertFalse(control["hashing_complete"])
-        self.assertEqual(len(api["hash_sqlite_rejections"]), 13)
+        self.assertEqual(len(api["hash_sqlite_rejections"]), 14)
         self.assertTrue(
             all("CHECK" in s for s in api["hash_sqlite_rejections"].values())
         )
@@ -95,7 +95,7 @@ class HashPilotTests(unittest.TestCase):
         )
 
     def test_digest_null_and_lexical_negatives(self):
-        for digest in (None, "", "a" * 63, "g" * 64, "A" * 64):
+        for digest in (None, "", "a" * 63, "g" * 64, "A" * 64, "a" * 64 + "\n"):
             with self.subTest(digest=digest):
                 data = self.synthetic()
                 self.row(data, "complete")["sha256"] = {
