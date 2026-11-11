@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 from uuid import uuid4
 
+import hash_profile
 import outcome_profile
 
 from repo_catalog.filesystem import FilesystemCatalog, FilesystemError
@@ -54,9 +55,10 @@ def extract(path, tables):
 
 
 def produce(profile="values"):
-    if profile not in ("values", outcome_profile.PROFILE):
+    if profile not in ("values", outcome_profile.PROFILE, hash_profile.PROFILE):
         raise ValueError("unsupported fixture profile")
     outcome_cases = None
+    hash_cases = None
     with tempfile.TemporaryDirectory(prefix="schema-instance-pilot-") as temp:
         root = Path(temp)
         fs_path, wt_path = root / "fs.db", root / "wt.db"
@@ -132,8 +134,10 @@ def produce(profile="values"):
                 api["sqlite_orphan_rejection"] = str(exc)
             else:
                 raise AssertionError("SQLite accepted an orphan entry")
-            if profile == outcome_profile.PROFILE:
+            if profile in (outcome_profile.PROFILE, hash_profile.PROFILE):
                 outcome_cases = outcome_profile.populate(fs, root, api, scans[0])
+            if profile == hash_profile.PROFILE:
+                hash_cases = hash_profile.populate(fs, root, api, outcome_cases)
         with FilesystemCatalog.initialize(root / "invalid-ns.db") as bad:
             scan = occurrence_uuid()
             with bad._db:
@@ -224,15 +228,17 @@ def produce(profile="values"):
                     "path": relative,
                     "sha256": hashlib.sha256(actual).hexdigest(),
                 }
-        helper = Path(outcome_profile.__file__).resolve()
-        helper_relative = helper.relative_to(repo).as_posix()
-        if helper.read_bytes() != subprocess.check_output(
-            ["git", "-C", str(repo), "show", "HEAD:" + helper_relative]
-        ):
-            raise ValueError("producer helper differs from HEAD")
-        producer_inputs = {
-            helper_relative: hashlib.sha256(helper.read_bytes()).hexdigest()
-        }
+        producer_inputs = {}
+        for module in (outcome_profile, hash_profile):
+            helper = Path(module.__file__).resolve()
+            helper_relative = helper.relative_to(repo).as_posix()
+            if helper.read_bytes() != subprocess.check_output(
+                ["git", "-C", str(repo), "show", "HEAD:" + helper_relative]
+            ):
+                raise ValueError("producer helper differs from HEAD")
+            producer_inputs[helper_relative] = hashlib.sha256(
+                helper.read_bytes()
+            ).hexdigest()
         expected = {
             "filesystem": {
                 "catalog_metadata": 5,
@@ -250,6 +256,8 @@ def produce(profile="values"):
         }
         if profile == outcome_profile.PROFILE:
             expected["filesystem"] = dict(outcome_profile.EXPECTED_FS_COUNTS)
+        elif profile == hash_profile.PROFILE:
+            expected["filesystem"] = dict(hash_profile.EXPECTED_FS_COUNTS)
         if {
             s: {t: len(r) for t, r in ts.items()} for s, ts in tables.items()
         } != expected:
@@ -260,10 +268,13 @@ def produce(profile="values"):
             "version": 1,
             "profile": profile,
             "outcome_cases": outcome_cases,
+            "hash_cases": hash_cases,
             "producer_inputs": producer_inputs,
             "imported_product_sources": module_sources,
             "scope": (
-                "disposable real complete/partial/interrupted scanner witnesses plus explicit SQL-only value and empty-partial witnesses"
+                "real terminal and changed/read-error scanner witnesses plus explicitly SQL-only value, empty-partial and hash-boundary rows"
+                if profile == hash_profile.PROFILE
+                else "disposable real complete/partial/interrupted scanner witnesses plus explicit SQL-only value and empty-partial witnesses"
                 if profile == outcome_profile.PROFILE
                 else "disposable synthetic fixture, not scanner execution or retained data"
             ),
@@ -280,6 +291,8 @@ def produce(profile="values"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--profile", choices=("values", outcome_profile.PROFILE), default="values"
+        "--profile",
+        choices=("values", outcome_profile.PROFILE, hash_profile.PROFILE),
+        default="values",
     )
     print(json.dumps(produce(parser.parse_args().profile), sort_keys=True, indent=2))

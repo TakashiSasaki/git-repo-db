@@ -159,14 +159,16 @@ def populate(catalog, root, api, unfinished_scan):
     return {name: [catalog.namespace_uuid, scan] for name, scan in cases.items()}
 
 
-def check_coverage(data, decoded):
+def check_coverage(
+    data, decoded, *, profile=PROFILE, expected_counts=EXPECTED_FS_COUNTS
+):
     """Admit declared construction coverage independently of generated RDF."""
-    profile = data.get("profile", "values")
-    if profile == "values":
+    supplied_profile = data.get("profile", "values")
+    if supplied_profile == "values":
         return
-    if profile != PROFILE:
+    if supplied_profile != profile:
         raise ValueError("unsupported instance fixture profile")
-    if data["expected_counts"]["filesystem"] != EXPECTED_FS_COUNTS:
+    if data["expected_counts"]["filesystem"] != expected_counts:
         raise ValueError("F1-A fixed construction counts missing")
     cases = data["outcome_cases"]
     if not isinstance(cases, dict) or set(cases) != set(EXPECTED_STATUSES):

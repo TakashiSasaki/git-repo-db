@@ -169,3 +169,70 @@ and raw diagnostics are unchanged; these tests do not evaluate a state model,
 external-reference resolution, hash-state semantics or full implementation proof.
 The producer helper is checked against HEAD and hashed separately; source hashes
 are consistency bindings, not authentication. Use fresh output directories.
+
+## F1-B: hash-state profile
+
+`--profile filesystem-hash-v1` extends F1-A with real changed-during-read and
+controlled read-error scans. Both retain no successful digest; enumeration and
+hashing completion remain distinct. Three additional SQL-only rows cover a link,
+a special entry and a complete file entry with a non-NULL error. These last rows
+are DDL/API boundary witnesses, not claims of scanner execution. The fixed
+profile contains nine FS scans, fifteen entries and seven outcomes, with all
+five file kinds and all four persisted hash states selected.
+
+```sh
+scripts/local-run.sh python tools/schema-model/instance_fixture.py \
+  --profile filesystem-hash-v1 > /tmp/hashes.json
+uv run --project tools/schema-model --locked --offline python \
+  tools/schema-model/instance_model.py /tmp/hashes.json /tmp/hashes-result
+HASH_FIXTURE=/tmp/hashes.json uv run --project tools/schema-model --locked --offline \
+  python -m unittest discover -s tools/schema-model -p test_hash_model.py -q
+```
+
+All profiles now project required kind, hash status, size and digest cells.
+Selected SHACL tuple rules follow the current SQLite kind/state relationships:
+only complete regular files have digests; files have a known nonnegative size;
+failed/changed hashing has a non-NULL reason. The separate exact digest lexical
+rule requires 64 lowercase hex characters and is stricter than current SQLite
+DDL/API at the embedded-NUL boundary described below. Empty error text
+is not NULL. Unknown is a file kind, not a hash state. Pending is not persisted.
+Non-file size is not universally forbidden, and a complete entry may carry an
+error, but the enclosing scan cannot claim complete while errors exist.
+
+The positive hash profile checks fixed construction counts, state/kind coverage
+and qualified case occurrences before graph generation. Each declared case name
+must identify its required kind/state/size/digest/error tuple, including the
+empty-error and non-file-size boundary witnesses. Swapping case identities or
+removing a boundary cannot preserve positive-profile coverage merely because
+aggregate counts are unchanged. These are fixed fixture requirements, not extra
+universal catalog constraints. Synthetic negative tests
+use the existing `values` projection profile with explicit synthetic scope, so
+they do not simultaneously claim to be a complete set of positive hash witnesses.
+The same shapes apply to every profile. Missing required extraction is still
+undetermined; a correctly rejected counterexample has data_conformance=fail.
+
+Fourteen SQLite invalid-tuple controls run with guards enabled. Explicit
+length constraints reject a trailing newline even when the pattern engine
+accepts its end anchor before that newline.
+
+Two separately recorded SQL-only differential controls insert 64 lowercase hex
+characters followed by NUL, and by NUL plus `invalid`, into another disposable
+catalog. Current SQLite `length()`/`GLOB` digest checks admit these values and the
+public verifier accepts them, while the complete TEXT/UTF-8 bytes retain the
+suffix. The producer records insertion, verification, full text/byte encoding,
+SQLite text length and an explicitly expected `data_conformance=fail` in
+`api.hash_sqlite_differentials`. The paired synthetic graph controls execute that
+shape rejection. These are neither additional SQLite rejection controls nor
+positive-profile/scanner witnesses. They document a known SQL/API-to-shape
+difference; no product DDL/API correction or universal equivalence is claimed.
+SQL admission here records the current source, not a product requirement to
+accept malformed hashes. A future DDL/verifier correction must update the
+SQL-side expectation while retaining strict SHACL rejection.
+
+The actual empty
+file digest is separately checked against known bytes. A syntactically valid but
+incorrect digest deliberately passes the shape-only control: graph conformance
+is not a real-byte equality proof. No general SQL/trigger proof, external target
+resolution, atomic snapshot, exhaustive race verification, operation-state model,
+retained-catalog checking or mandatory CI gate is introduced. Both helper sources
+are checked against committed HEAD and retained in producer digest bindings.
