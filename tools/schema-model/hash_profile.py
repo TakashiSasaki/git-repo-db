@@ -202,62 +202,63 @@ def populate(catalog, root, api, outcome_cases):
         bad.verify()
     api["hash_sqlite_rejections"] = controls
 
-    # SQLite length()/GLOB stop at embedded NUL. The full TEXT is retained and
-    # verify() accepts it, whereas the optional exact digest lexical rule rejects
-    # it. Keep this differential separate from rejection/positive witnesses.
-    # This records current source behavior, not a requirement to admit malformed
-    # hashes: a future DDL/verifier repair must update the SQL-side expectation.
-    differentials = {}
-    with FilesystemCatalog.initialize(root / "hash-nul-differentials.db") as boundary:
+    # Product DDL rejects embedded NUL, including the exact-64-byte case.
+    # The earlier accepted SQL/API behavior is preserved only in historical
+    # F1-B review evidence; these are current SQL-only rejection controls.
+    nul_rejections = {}
+    with FilesystemCatalog.initialize(root / "hash-nul-rejections.db") as boundary:
         scan = occurrence_uuid()
         with boundary._db:
             boundary._db.execute(
                 "INSERT INTO scans VALUES (?,?,?,?,?)",
                 (boundary.namespace_uuid, scan, os.fsencode(root), 1, "[]"),
             )
-        for label, digest in (
+        for label, candidate in (
             ("trailing_nul_digest", "a" * 64 + "\0"),
             ("nul_suffix_digest", "a" * 64 + "\0invalid"),
+            ("interior_nul_digest", "a" * 32 + "\0" + "a" * 31),
         ):
-            path = label.encode("ascii")
-            with boundary._db:
-                boundary._db.execute(
-                    "INSERT INTO entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (
-                        boundary.namespace_uuid,
-                        scan,
-                        path,
-                        "file",
-                        0,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        digest,
-                        "complete",
-                        None,
-                        None,
-                        None,
-                    ),
-                )
-            retained, raw, text_length = boundary._db.execute(
-                "SELECT sha256,CAST(sha256 AS BLOB),length(sha256) FROM entries WHERE relative_path=?",
-                (path,),
-            ).fetchone()
-            assert retained == digest and raw == digest.encode("utf-8")
-            assert text_length == 64
-            differentials[label] = {
-                "origin": "SQL-only differential, not scanner or positive-profile evidence",
-                "sqlite_insert": "accepted",
-                "api_verify": boundary.verify()["integrity"],
-                "stored_text": retained,
-                "stored_utf8_hex": raw.hex(),
-                "stored_byte_length": len(raw),
-                "sqlite_text_length": text_length,
-                "expected_data_conformance": "fail",
-            }
-    api["hash_sqlite_differentials"] = differentials
+            try:
+                with boundary._db:
+                    boundary._db.execute(
+                        "INSERT INTO entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        (
+                            boundary.namespace_uuid,
+                            scan,
+                            label.encode("ascii"),
+                            "file",
+                            0,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            candidate,
+                            "complete",
+                            None,
+                            None,
+                            None,
+                        ),
+                    )
+            except sqlite3.IntegrityError as exc:
+                assert "CHECK" in str(exc)
+                nul_rejections[label] = {
+                    "origin": "SQL-only rejection, not scanner or positive-profile evidence",
+                    "sqlite_insert": "rejected",
+                    "sqlite_error": str(exc),
+                    "attempted_text": candidate,
+                    "attempted_utf8_hex": candidate.encode("utf-8").hex(),
+                    "attempted_byte_length": len(candidate.encode("utf-8")),
+                    "sqlite_text_length": boundary._db.execute(
+                        "SELECT length(?)", (candidate,)
+                    ).fetchone()[0],
+                    "expected_data_conformance": "fail",
+                }
+            else:
+                raise AssertionError("SQLite accepted NUL digest: " + label)
+        assert boundary._db.execute("SELECT count(*) FROM entries").fetchone()[0] == 0
+        api["hash_nul_rejection_catalog_verify"] = boundary.verify()["integrity"]
+    api["hash_sqlite_nul_rejections"] = nul_rejections
     return cases
 
 
