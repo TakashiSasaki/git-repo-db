@@ -5,12 +5,38 @@
 m:EntryShape a sh:NodeShape; sh:targetClass m:Entry;
  sh:property [sh:path m:pathBytes; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:base64Binary];
  sh:property [sh:path m:parent; sh:minCount 1; sh:maxCount 1; sh:class m:Scan];
+ sh:property [sh:path m:hasError; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean];
  sh:sparql [sh:message "Duplicate complete entry semantic key"; sh:select """
  PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
  SELECT $this WHERE { $this m:semanticKey ?key . ?other a m:Entry; m:semanticKey ?key . FILTER ($this != ?other) }
  """] .
 m:OutcomeShape a sh:NodeShape; sh:targetClass m:Outcome;
- sh:property [sh:path m:parent; sh:minCount 1; sh:maxCount 1; sh:class m:Scan] .
+ sh:property [sh:path m:parent; sh:minCount 1; sh:maxCount 1; sh:class m:Scan];
+ sh:property [sh:path m:status; sh:minCount 1; sh:maxCount 1; sh:in ("complete" "partial" "interrupted")];
+ sh:property [sh:path m:entryCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0];
+ sh:property [sh:path m:errorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0];
+ sh:property [sh:path m:finishedUs; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minExclusive 0];
+ sh:sparql [sh:message "Outcome entry count differs from its own scan observations"; sh:select """
+ PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
+ SELECT $this WHERE {
+   $this m:parent ?scan; m:entryCount ?declared .
+   OPTIONAL { ?entry a m:Entry; m:parent ?scan . }
+ } GROUP BY $this ?declared HAVING (COUNT(?entry) != ?declared)
+ """];
+ sh:sparql [sh:message "Outcome error count differs from SQL non-NULL errors"; sh:select """
+ PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
+ SELECT $this WHERE {
+   $this m:parent ?scan; m:errorCount ?declared .
+   OPTIONAL { ?entry a m:Entry; m:parent ?scan; m:hasError true . }
+ } GROUP BY $this ?declared HAVING (COUNT(?entry) != ?declared)
+ """];
+ sh:sparql [sh:message "Complete outcome has observed errors"; sh:select """
+ PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
+ SELECT $this WHERE {
+   $this m:parent ?scan; m:status "complete" .
+   ?entry a m:Entry; m:parent ?scan; m:hasError true .
+ }
+ """] .
 m:ScanShape a sh:NodeShape; sh:targetClass m:Scan;
  sh:property [sh:path m:outcome; sh:maxCount 1; sh:class m:Outcome] .
 m:ReferenceShape a sh:NodeShape; sh:targetClass m:ExternalReference;

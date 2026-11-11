@@ -134,3 +134,38 @@ expected extraction counts. `tool` identifies the runner checkout's commit/tree
 and dirty status. `digests` binds the exact retained `source-input.json`, graph,
 runner/worker/producer code, shape manifest, common result schema and lock inputs.
 These are consistency/provenance claims, not authentication of the producer.
+
+## F1-A: terminal outcome profile
+
+The default `values` profile above remains the original representation pilot.
+The additive `filesystem-outcomes-v1` profile retains its two unfinished scans
+and adds real `scan()` complete, missing-root partial and controlled-interruption
+witnesses. It also adds a SQL-only zero-entry partial witness; that case is not
+scanner execution. The profile has six FS scans, eight entries and four outcomes.
+
+```sh
+scripts/local-run.sh python tools/schema-model/instance_fixture.py \
+  --profile filesystem-outcomes-v1 > /tmp/outcomes.json
+uv run --project tools/schema-model --locked --offline python \
+  tools/schema-model/instance_model.py /tmp/outcomes.json /tmp/outcomes-result
+OUTCOME_FIXTURE=/tmp/outcomes.json uv run --project tools/schema-model --locked --offline \
+  python -m unittest discover -s tools/schema-model -p test_outcome_model.py -q
+```
+
+Construction counts and qualified scenario identities are checked before RDF
+coverage. Missing required outcome occurrences are not legitimate zero-target
+coverage for this profile. The original unfinished scans remain legitimate.
+Selected shapes check terminal enum, positive finish time, same-scan counts,
+SQL non-NULL error presence (including empty error strings), and complete-with-error
+contradictions. `partial` does not imply a positive error count. Clock ordering
+and atomic filesystem snapshots are not asserted. Original bytes, native times,
+NULL and row occurrences retain the existing encoding.
+
+The producer separately demonstrates SQLite rejection of invalid status and API
+rejection of inconsistent counts/complete-with-errors, with guards enabled.
+Counterexamples in `test_outcome_model.py` are mutations of extracted JSON, not
+claims that public scan() admitted invalid observations. Existing result families
+and raw diagnostics are unchanged; these tests do not evaluate a state model,
+external-reference resolution, hash-state semantics or full implementation proof.
+The producer helper is checked against HEAD and hashed separately; source hashes
+are consistency bindings, not authentication. Use fresh output directories.
