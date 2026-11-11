@@ -1,0 +1,154 @@
+name: Verify Filesystem NUL digest correction (disposable)
+on:
+  push:
+    branches: [verification/filesystem-nul-20261111-checked]
+permissions:
+  contents: read
+jobs:
+  focused:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      UV_PYTHON_DOWNLOADS: never
+      FEATURE_SHA: d4686c4522e719a11d96f6249e0ae5c418ee4229
+      EVIDENCE: artifacts/fs-nul-evidence
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          version: '0.12.19'
+      - name: Assert feature inputs and verification branch identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$FEATURE_SHA"
+          test "$(git diff --name-only "$FEATURE_SHA" HEAD)" = ".github/workflows/verify-filesystem-nul-20261111.yml"
+          test -z "$(git status --porcelain)"
+          git diff --check "$FEATURE_SHA" HEAD
+          echo "Feature $FEATURE_SHA; verification $(git rev-parse HEAD)"
+      - name: Bootstrap pinned project Python and SQLite
+        shell: bash
+        run: ./scripts/setup-local-python.sh
+      - name: Exercise product and optional-model boundary regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE"
+          root="$(mktemp -d /tmp/fs-nul-verify-XXXXXX)"
+          test ! -e "$root/.git"
+          test ! -e /tmp/.git
+          test ! -e /.git
+          export TMPDIR="$root"
+          scripts/local-run.sh python -c "import json,platform,sqlite3,sys; print(json.dumps({'python':sys.version,'sqlite':sqlite3.sqlite_version,'arch':platform.machine(),'executable':sys.executable}))" > "$EVIDENCE/runtime.json"
+          run() {
+            label="$1"; shift
+            printf '%q ' "$@" > "$EVIDENCE/$label.command"
+            printf '\n' >> "$EVIDENCE/$label.command"
+            set +e
+            "$@" > "$EVIDENCE/$label.log" 2>&1
+            rc=$?
+            set -e
+            printf '%s\n' "$rc" > "$EVIDENCE/$label.exit"
+            printf '%s exit=%s\n' "$label" "$rc"
+            tail -n 9 "$EVIDENCE/$label.log"
+            return "$rc"
+          }
+          run product scripts/local-run.sh pytest -q \
+            tests/filesystem/test_digest_constraints.py \
+            tests/filesystem/test_filesystem.py::test_full_hash_history_exclusions_and_offline_export \
+            tests/filesystem/test_filesystem.py::test_changed_during_hash_is_not_admitted \
+            tests/filesystem/test_filesystem.py::test_interruption_keeps_history_and_no_false_completion \
+            tests/filesystem/test_connection_guards.py \
+            --junitxml="$EVIDENCE/product.xml"
+          run tool-sync uv sync --project tools/schema-model --locked \
+            --python "$(scripts/local-run.sh python -c 'import sys; print(sys._base_executable)')"
+          run hash-fixture bash -c 'scripts/local-run.sh python tools/schema-model/instance_fixture.py --profile filesystem-hash-v1 > "$EVIDENCE/hashes.json"'
+          run hash-cli uv run --project tools/schema-model --locked --offline python \
+            tools/schema-model/instance_model.py "$EVIDENCE/hashes.json" "$EVIDENCE/hash-result"
+          export HASH_FIXTURE="$EVIDENCE/hashes.json"
+          run hash-unittest uv run --project tools/schema-model --locked --offline python \
+            -m unittest discover -s tools/schema-model -p test_hash_model.py -q
+          run lint scripts/local-run.sh ruff check \
+            packages/filesystem/src/repo_catalog/filesystem/store.py \
+            tests/filesystem/test_digest_constraints.py \
+            tools/schema-model/hash_profile.py \
+            tools/schema-model/test_hash_model.py \
+            tools/schema-model/instance_model.py
+          run format scripts/local-run.sh ruff format --check \
+            packages/filesystem/src/repo_catalog/filesystem/store.py \
+            tests/filesystem/test_digest_constraints.py \
+            tools/schema-model/hash_profile.py \
+            tools/schema-model/test_hash_model.py \
+            tools/schema-model/instance_model.py
+          run whitespace git diff --check "$FEATURE_SHA^" "$FEATURE_SHA"
+          scripts/local-run.sh python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path(os.environ["EVIDENCE"])
+          fixture = json.loads((root / "hashes.json").read_text())
+          result = json.loads((root / "hash-result" / "result.json").read_text())
+          api = fixture["api"]
+          assert api["hash_profile_verify"] == "ok"
+          assert api["hash_nul_rejection_catalog_verify"] == "ok"
+          assert len(api["hash_sqlite_rejections"]) == 14
+          assert len(api["hash_sqlite_nul_rejections"]) == 3
+          assert all(x["sqlite_insert"] == "rejected" for x in api["hash_sqlite_nul_rejections"].values())
+          assert result["families"]["data_conformance"]["status"] == "pass"
+          assert result["checker_invocations_completed"] == 1
+          assert all(result["families"][k]["status"] == "not_run" for k in
+                     ("spec_satisfiability", "operation_invariants", "implementation_conformance"))
+          store = Path("packages/filesystem/src/repo_catalog/filesystem/store.py")
+          sha = hashlib.sha256(store.read_bytes()).hexdigest()
+          assert sha == "0cbca336c74b5776068ca04feec4ebbfd5185f66301646a9262455f8dd5842b4"
+          assert sha in Path("docs/implementation/callsite-dependencies.json").read_text()
+          print(json.dumps({"product_verify":api["hash_profile_verify"],
+                            "nul_sql_rejections":len(api["hash_sqlite_nul_rejections"]),
+                            "data_conformance":"pass", "checker_invocations":1,
+                            "source":result["source"]},sort_keys=True))
+          PY
+          test -z "$(git status --porcelain)"
+      - name: Preserve source and verification receipts
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+          out = Path(os.environ["EVIDENCE"])
+          out.mkdir(parents=True, exist_ok=True)
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+          summary = {"feature": os.environ["FEATURE_SHA"],
+                     "verification_commit": git("rev-parse", "HEAD"),
+                     "verification_tree": git("rev-parse", "HEAD^{tree}"),
+                     "worktree_status": git("status", "--porcelain"),
+                     "run_id": os.environ["GITHUB_RUN_ID"],
+                     "feature_diff": git("diff", "--name-only", os.environ["FEATURE_SHA"], "HEAD"),
+                     "observed_exits": {p.stem:int(p.read_text()) for p in out.glob("*.exit")},
+                     "independent_agent_review": False}
+          result = out / "hash-result" / "result.json"
+          if result.exists():
+              r = json.loads(result.read_text())
+              summary["hash_result"] = {"families":r.get("families"),
+                                        "coverage":r.get("coverage"),
+                                        "source":r.get("source"),
+                                        "checker_invocations_completed":r.get("checker_invocations_completed")}
+          (out / "summary.json").write_text(json.dumps(summary,indent=2)+"\n")
+          (out / "index.json").write_text(json.dumps({
+            str(p.relative_to(out)):{"sha256":hashlib.sha256(p.read_bytes()).hexdigest(),"bytes":p.stat().st_size}
+            for p in sorted(out.rglob("*")) if p.is_file() and p.name!="index.json"},indent=2)+"\n")
+          print("FS_NUL_SUMMARY", json.dumps({k:v for k,v in summary.items() if k!="hash_result"}))
+          PY
+      - name: Upload bounded evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: filesystem-nul-fix
+          path: |
+            artifacts/fs-nul-evidence/
+            artifacts/local-python/
+          if-no-files-found: warn
+          retention-days: 14
