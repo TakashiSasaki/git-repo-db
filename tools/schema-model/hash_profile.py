@@ -23,16 +23,20 @@ EXPECTED_KIND_COUNTS = {
     "symlink": 1,
     "special": 1,
 }
-CASE_NAMES = {
-    "complete",
-    "changed",
-    "error",
-    "symlink",
-    "special",
-    "complete_with_error",
-    "unknown",
-    "directory",
+EMPTY_DIGEST = hashlib.sha256(b"").hexdigest()
+# Fixed positive witnesses, not universal restrictions on valid catalog rows.
+# Tuple fields: kind, hash status, size, digest, error-presence boundary.
+CASE_REQUIREMENTS = {
+    "complete": ("file", "complete", 0, EMPTY_DIGEST, "absent"),
+    "changed": ("file", "changed", 1024, None, "present"),
+    "error": ("file", "error", 1024, None, "present"),
+    "symlink": ("symlink", "not-applicable", None, None, "absent"),
+    "special": ("special", "not-applicable", 0, None, "absent"),
+    "complete_with_error": ("file", "complete", 0, EMPTY_DIGEST, "empty"),
+    "unknown": ("unknown", "not-applicable", None, None, "present"),
+    "directory": ("directory", "not-applicable", None, None, "absent"),
 }
+CASE_NAMES = set(CASE_REQUIREMENTS)
 
 
 def populate(catalog, root, api, outcome_cases):
@@ -86,7 +90,7 @@ def populate(catalog, root, api, outcome_cases):
     # DDL permits non-file size, and complete entry with an error. Do not invent
     # stronger universal rules; the scan itself must not claim complete on errors.
     boundary_scan = occurrence_uuid()
-    empty_digest = hashlib.sha256(b"").hexdigest()
+    empty_digest = EMPTY_DIGEST
     with catalog._db:
         catalog._db.execute(
             "INSERT INTO scans VALUES (?,?,?,?,?)",
@@ -197,6 +201,63 @@ def populate(catalog, root, api, outcome_cases):
         assert bad._db.execute("SELECT count(*) FROM entries").fetchone()[0] == 0
         bad.verify()
     api["hash_sqlite_rejections"] = controls
+
+    # SQLite length()/GLOB stop at embedded NUL. The full TEXT is retained and
+    # verify() accepts it, whereas the optional exact digest lexical rule rejects
+    # it. Keep this differential separate from rejection/positive witnesses.
+    # This records current source behavior, not a requirement to admit malformed
+    # hashes: a future DDL/verifier repair must update the SQL-side expectation.
+    differentials = {}
+    with FilesystemCatalog.initialize(root / "hash-nul-differentials.db") as boundary:
+        scan = occurrence_uuid()
+        with boundary._db:
+            boundary._db.execute(
+                "INSERT INTO scans VALUES (?,?,?,?,?)",
+                (boundary.namespace_uuid, scan, os.fsencode(root), 1, "[]"),
+            )
+        for label, digest in (
+            ("trailing_nul_digest", "a" * 64 + "\0"),
+            ("nul_suffix_digest", "a" * 64 + "\0invalid"),
+        ):
+            path = label.encode("ascii")
+            with boundary._db:
+                boundary._db.execute(
+                    "INSERT INTO entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (
+                        boundary.namespace_uuid,
+                        scan,
+                        path,
+                        "file",
+                        0,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        digest,
+                        "complete",
+                        None,
+                        None,
+                        None,
+                    ),
+                )
+            retained, raw, text_length = boundary._db.execute(
+                "SELECT sha256,CAST(sha256 AS BLOB),length(sha256) FROM entries WHERE relative_path=?",
+                (path,),
+            ).fetchone()
+            assert retained == digest and raw == digest.encode("utf-8")
+            assert text_length == 64
+            differentials[label] = {
+                "origin": "SQL-only differential, not scanner or positive-profile evidence",
+                "sqlite_insert": "accepted",
+                "api_verify": boundary.verify()["integrity"],
+                "stored_text": retained,
+                "stored_utf8_hex": raw.hex(),
+                "stored_byte_length": len(raw),
+                "sqlite_text_length": text_length,
+                "expected_data_conformance": "fail",
+            }
+    api["hash_sqlite_differentials"] = differentials
     return cases
 
 
@@ -215,7 +276,7 @@ def check_coverage(data, decoded):
     if Counter(r["kind"] for r in entries) != EXPECTED_KIND_COUNTS:
         raise ValueError("F1-B declared file-kind coverage missing")
     seen = set()
-    for key in cases.values():
+    for name, key in cases.items():
         if (
             not isinstance(key, list)
             or len(key) != 3
@@ -229,11 +290,26 @@ def check_coverage(data, decoded):
         if key in seen:
             raise ValueError("repeated F1-B case identity")
         seen.add(key)
-        if (
-            sum(
-                (r["namespace_uuid"], r["scan_uuid"], r["relative_path"]) == key
-                for r in entries
-            )
-            != 1
-        ):
+        rows = [
+            r
+            for r in entries
+            if (r["namespace_uuid"], r["scan_uuid"], r["relative_path"]) == key
+        ]
+        if len(rows) != 1:
             raise ValueError("F1-B case occurrence missing or repeated")
+        row = rows[0]
+        kind, status, size, digest, error_boundary = CASE_REQUIREMENTS[name]
+        if (row["kind"], row["hash_status"], row["size"], row["sha256"]) != (
+            kind,
+            status,
+            size,
+            digest,
+        ):
+            raise ValueError("F1-B declared case tuple not covered: " + name)
+        error = row["error"]
+        if (
+            (error_boundary == "absent" and error is not None)
+            or (error_boundary == "present" and type(error) is not str)
+            or (error_boundary == "empty" and error != "")
+        ):
+            raise ValueError("F1-B declared case error boundary not covered: " + name)

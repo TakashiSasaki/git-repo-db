@@ -104,6 +104,32 @@ class HashPilotTests(unittest.TestCase):
                 }
                 self.assert_status(data, "fail")
 
+    def test_sqlite_nul_differentials_retain_full_text_but_fail_shapes(self):
+        # Observed source behavior, not a product promise to keep admitting NUL.
+        # A future SQL/API repair changes this side, not strict shape rejection.
+        controls = self.fixture["api"]["hash_sqlite_differentials"]
+        expected = {
+            "trailing_nul_digest": "a" * 64 + "\0",
+            "nul_suffix_digest": "a" * 64 + "\0invalid",
+        }
+        self.assertEqual(set(controls), set(expected))
+        for label, digest in expected.items():
+            with self.subTest(case=label):
+                control = controls[label]
+                self.assertEqual(control["sqlite_insert"], "accepted")
+                self.assertEqual(control["api_verify"], "ok")
+                self.assertEqual(control["stored_text"], digest)
+                self.assertEqual(control["stored_utf8_hex"], digest.encode().hex())
+                self.assertEqual(control["stored_byte_length"], len(digest.encode()))
+                self.assertEqual(control["sqlite_text_length"], 64)
+                self.assertEqual(control["expected_data_conformance"], "fail")
+                data = self.synthetic()
+                self.row(data, "complete")["sha256"] = {
+                    "type": "text",
+                    "value": control["stored_text"],
+                }
+                self.assert_status(data, "fail")
+
     def test_failure_never_retains_success_digest(self):
         for state in ("changed", "error"):
             with self.subTest(state=state):
@@ -164,6 +190,44 @@ class HashPilotTests(unittest.TestCase):
         data = copy.deepcopy(self.fixture)
         self.row(data, "changed")["hash_status"]["value"] = "error"
         self.assert_status(data, "undetermined")
+
+    def test_rebound_cases_do_not_cover_named_witnesses(self):
+        for first, second in (
+            ("changed", "error"),
+            ("complete", "complete_with_error"),
+            ("symlink", "special"),
+            ("unknown", "directory"),
+        ):
+            with self.subTest(first=first, second=second):
+                data = copy.deepcopy(self.fixture)
+                cases = data["hash_cases"]
+                cases[first], cases[second] = cases[second], cases[first]
+                self.assert_status(data, "undetermined")
+
+    def test_missing_boundary_values_do_not_cover_positive_profile(self):
+        for name, field, kind, raw in (
+            ("complete_with_error", "error", "null", None),
+            ("complete_with_error", "error", "text", "reported"),
+            ("special", "size", "null", None),
+            ("symlink", "size", "integer", 0),
+        ):
+            with self.subTest(case=name, field=field, value=raw):
+                data = copy.deepcopy(self.fixture)
+                self.row(data, name)[field] = {"type": kind, "value": raw}
+                if field == "error" and raw is None:
+                    key = data["hash_cases"][name][:2]
+                    outcome = next(
+                        r
+                        for r in data["tables"]["filesystem"]["scan_outcomes"]
+                        if [value(r["namespace_uuid"]), value(r["scan_uuid"])] == key
+                    )
+                    outcome["error_count"]["value"] = 0
+                self.assert_status(data, "undetermined")
+                # These remain legitimate domain tuples; only the named fixed
+                # positive fixture has lost a required boundary witness.
+                data["profile"] = "values"
+                data["scope"] = "synthetic legitimate tuple, not positive hash coverage"
+                self.assert_status(data, "pass")
 
     def test_missing_case_or_occurrence_never_passes(self):
         for mode in ("case", "row", "kind"):

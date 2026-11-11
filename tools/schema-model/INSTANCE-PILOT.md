@@ -190,15 +190,22 @@ HASH_FIXTURE=/tmp/hashes.json uv run --project tools/schema-model --locked --off
 ```
 
 All profiles now project required kind, hash status, size and digest cells.
-Selected SHACL rules mirror the current SQLite tuples: only complete regular
-files have digests; digests use 64 lowercase hex characters; files have a known
-nonnegative size; failed/changed hashing has a non-NULL reason. Empty error text
+Selected SHACL tuple rules follow the current SQLite kind/state relationships:
+only complete regular files have digests; files have a known nonnegative size;
+failed/changed hashing has a non-NULL reason. The separate exact digest lexical
+rule requires 64 lowercase hex characters and is stricter than current SQLite
+DDL/API at the embedded-NUL boundary described below. Empty error text
 is not NULL. Unknown is a file kind, not a hash state. Pending is not persisted.
 Non-file size is not universally forbidden, and a complete entry may carry an
 error, but the enclosing scan cannot claim complete while errors exist.
 
 The positive hash profile checks fixed construction counts, state/kind coverage
-and qualified case occurrences before graph generation. Synthetic negative tests
+and qualified case occurrences before graph generation. Each declared case name
+must identify its required kind/state/size/digest/error tuple, including the
+empty-error and non-file-size boundary witnesses. Swapping case identities or
+removing a boundary cannot preserve positive-profile coverage merely because
+aggregate counts are unchanged. These are fixed fixture requirements, not extra
+universal catalog constraints. Synthetic negative tests
 use the existing `values` projection profile with explicit synthetic scope, so
 they do not simultaneously claim to be a complete set of positive hash witnesses.
 The same shapes apply to every profile. Missing required extraction is still
@@ -206,7 +213,23 @@ undetermined; a correctly rejected counterexample has data_conformance=fail.
 
 Fourteen SQLite invalid-tuple controls run with guards enabled. Explicit
 length constraints reject a trailing newline even when the pattern engine
-accepts its end anchor before that newline. The actual empty
+accepts its end anchor before that newline.
+
+Two separately recorded SQL-only differential controls insert 64 lowercase hex
+characters followed by NUL, and by NUL plus `invalid`, into another disposable
+catalog. Current SQLite `length()`/`GLOB` digest checks admit these values and the
+public verifier accepts them, while the complete TEXT/UTF-8 bytes retain the
+suffix. The producer records insertion, verification, full text/byte encoding,
+SQLite text length and an explicitly expected `data_conformance=fail` in
+`api.hash_sqlite_differentials`. The paired synthetic graph controls execute that
+shape rejection. These are neither additional SQLite rejection controls nor
+positive-profile/scanner witnesses. They document a known SQL/API-to-shape
+difference; no product DDL/API correction or universal equivalence is claimed.
+SQL admission here records the current source, not a product requirement to
+accept malformed hashes. A future DDL/verifier correction must update the
+SQL-side expectation while retaining strict SHACL rejection.
+
+The actual empty
 file digest is separately checked against known bytes. A syntactically valid but
 incorrect digest deliberately passes the shape-only control: graph conformance
 is not a real-byte equality proof. No general SQL/trigger proof, external target
