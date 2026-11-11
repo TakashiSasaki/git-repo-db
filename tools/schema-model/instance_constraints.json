@@ -1,14 +1,15 @@
 {
   "version": 1,
-  "shapes_sha256": "b440ddfa76fee970e9afcfa0c99ca1667ba7536bae48fceae18d692d07992a8f",
+  "shapes_sha256": "da8416ab358aaee6bfc46c7c5fddc34f14166c1882ca1fbee359f4f78e8fe9b3",
   "authority": [
     "docs/architecture/local-catalog-contract.md",
-    "docs/adr/0040-scoped-machine-readable-model-validation.md"
+    "docs/adr/0040-scoped-machine-readable-model-validation.md",
+    "packages/filesystem/src/repo_catalog/filesystem/store.py"
   ],
   "constraints": {
-    "EntryShape": "full composite entry key uniqueness and same-snapshot physical FK; preserves path BLOB",
+    "EntryShape": "full composite entry key uniqueness and same-snapshot physical FK; preserves path BLOB; exact SQL non-NULL error presence",
     "ScanShape": "optional unique outcome",
-    "OutcomeShape": "same-snapshot scan FK",
+    "OutcomeShape": "same-snapshot scan FK, terminal enum, nonnegative per-scan entry/error counts, positive finish time and no complete-with-errors; SQLite DDL plus FilesystemCatalog.verify",
     "ReferenceShape": "WT physical FK and explicit unresolved external reference"
   }
 }

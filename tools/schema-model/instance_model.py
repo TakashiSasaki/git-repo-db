@@ -14,13 +14,14 @@ from pathlib import Path
 from uuid import UUID
 
 import jsonschema
+import outcome_profile
 from model import FAMILIES, git
 from rdflib import RDF, XSD, Graph, Literal, Namespace, URIRef
 
 M = Namespace("urn:git-repo-db:instance-pilot:v1:")
 HERE = Path(__file__).resolve().parent
 RESULT_SCHEMA = HERE / "result.schema.json"
-SCOPE = "fixed disposable FS/WT Entry/Scan/Outcome/ExternalReference shapes; no external target resolution"
+SCOPE = "disposable FS/WT representation and selected Filesystem outcome constraints; no external target resolution"
 TARGETS = (
     ("EntryShape", M.Entry, "filesystem", "entries"),
     ("ScanShape", M.Scan, "filesystem", "scans"),
@@ -101,6 +102,7 @@ def project(data):
                 g.add((node, RDF.type, M.RowOccurrence))
                 g.add((node, M.record, Literal(canonical(row))))
                 g.add((node, M.table, Literal(store + "." + table)))
+    outcome_profile.check_coverage(data, decoded)
     scan_nodes = {}
     worktrees = {}
     for (store, table, index), row in decoded.items():
@@ -125,9 +127,28 @@ def project(data):
             g.add((node, RDF.type, cls))
             if parent is not None:
                 g.add((node, M.parent, parent))
-            if table == "scan_outcomes" and parent is not None:
-                g.add((parent, M.outcome, node))
+            if table == "scan_outcomes":
+                if parent is not None:
+                    g.add((parent, M.outcome, node))
+                if type(row["status"]) is not str:
+                    raise ValueError("outcome status must be SQLite TEXT")
+                g.add((node, M.status, Literal(row["status"])))
+                for field, predicate in (
+                    ("entry_count", M.entryCount),
+                    ("error_count", M.errorCount),
+                    ("finished_us", M.finishedUs),
+                ):
+                    if type(row[field]) is not int:
+                        raise ValueError("outcome count/time must be SQLite INTEGER")
+                    g.add((node, predicate, Literal(row[field], datatype=XSD.integer)))
             if table == "entries":
+                error = row["error"]
+                if error is not None and type(error) is not str:
+                    raise ValueError("entry error must be SQLite TEXT or NULL")
+                g.add(
+                    (node, M.hasError, Literal(error is not None, datatype=XSD.boolean))
+                )
+                g.add((node, M.error, M.SqlNull if error is None else Literal(error)))
                 path = row["relative_path"]
                 if not isinstance(path, bytes):
                     raise ValueError("path must remain BLOB")
@@ -260,6 +281,9 @@ def validate(data, output, timeout=30):
                 "imported_product_sources",
                 "scope",
                 "expected_counts",
+                "profile",
+                "outcome_cases",
+                "producer_inputs",
             )
             if key in data
         }
@@ -292,6 +316,7 @@ def validate(data, output, timeout=30):
         for name in (
             "instance_model.py",
             "instance_fixture.py",
+            "outcome_profile.py",
             "model.py",
             "worker.py",
             "instance_shapes.ttl",
@@ -336,10 +361,14 @@ def validate(data, output, timeout=30):
         ]
         result["unformalized"] = [
             "External-target resolution is not implemented; references remain unresolved.",
-            "Zero OutcomeShape targets are explicitly not_applicable; terminal scan behavior is not exercised.",
+            "Terminal records describe retained observations, not atomic filesystem snapshots or every interruption path.",
             "No general SQL/trigger/UDF semantics, all WT physical FKs, hash-state rules, scanner races or concurrent transitions.",
             "No specification satisfiability, operation-model or whole-implementation proof.",
         ]
+        if not data["expected_counts"]["filesystem"]["scan_outcomes"]:
+            result["unformalized"].append(
+                "Zero OutcomeShape targets are explicitly not_applicable; terminal scan behavior is not exercised."
+            )
         result["fixture_expectation"] = None
         nt = "\n".join(sorted(g.serialize(format="nt").splitlines())) + "\n"
         (output / "data.nt").write_text(nt)
