@@ -6,6 +6,35 @@ m:EntryShape a sh:NodeShape; sh:targetClass m:Entry;
  sh:property [sh:path m:pathBytes; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:base64Binary];
  sh:property [sh:path m:parent; sh:minCount 1; sh:maxCount 1; sh:class m:Scan];
  sh:property [sh:path m:hasError; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean];
+ sh:property [sh:path m:kind; sh:minCount 1; sh:maxCount 1; sh:in ("file" "directory" "symlink" "special" "unknown")];
+ sh:property [sh:path m:hashStatus; sh:minCount 1; sh:maxCount 1; sh:in ("complete" "changed" "error" "not-applicable")];
+ sh:property [sh:path m:size; sh:minCount 1; sh:maxCount 1;
+   sh:or ( [sh:in (m:SqlNull)] [sh:datatype xsd:integer; sh:minInclusive 0] )];
+ sh:property [sh:path m:sha256; sh:minCount 1; sh:maxCount 1;
+   sh:or ( [sh:in (m:SqlNull)] [sh:datatype xsd:string; sh:pattern "^[0-9a-f]{64}$"] )];
+ sh:sparql [sh:message "Digest presence must agree with successful regular-file hashing"; sh:select """
+ PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
+ SELECT $this WHERE {
+   $this m:kind ?kind; m:hashStatus ?status; m:sha256 ?digest .
+   FILTER ((?status = "complete" && (?kind != "file" || ?digest = m:SqlNull)) ||
+           (?status != "complete" && ?digest != m:SqlNull))
+ }
+ """];
+ sh:sparql [sh:message "Entry kind, size and hash state disagree with the SQLite contract"; sh:select """
+ PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
+ SELECT $this WHERE {
+   $this m:kind ?kind; m:hashStatus ?status; m:size ?size .
+   FILTER ((?kind = "file" && (?size = m:SqlNull || ?status NOT IN ("complete", "changed", "error"))) ||
+           (?kind != "file" && ?status != "not-applicable"))
+ }
+ """];
+ sh:sparql [sh:message "Changed or failed hashing requires a non-NULL reason"; sh:select """
+ PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
+ SELECT $this WHERE {
+   $this m:hashStatus ?status; m:hasError false .
+   FILTER (?status IN ("changed", "error"))
+ }
+ """];
  sh:sparql [sh:message "Duplicate complete entry semantic key"; sh:select """
  PREFIX m: <urn:git-repo-db:instance-pilot:v1:>
  SELECT $this WHERE { $this m:semanticKey ?key . ?other a m:Entry; m:semanticKey ?key . FILTER ($this != ?other) }

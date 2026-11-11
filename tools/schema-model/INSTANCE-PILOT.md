@@ -169,3 +169,45 @@ and raw diagnostics are unchanged; these tests do not evaluate a state model,
 external-reference resolution, hash-state semantics or full implementation proof.
 The producer helper is checked against HEAD and hashed separately; source hashes
 are consistency bindings, not authentication. Use fresh output directories.
+
+## F1-B: hash-state profile
+
+`--profile filesystem-hash-v1` extends F1-A with real changed-during-read and
+controlled read-error scans. Both retain no successful digest; enumeration and
+hashing completion remain distinct. Three additional SQL-only rows cover a link,
+a special entry and a complete file entry with a non-NULL error. These last rows
+are DDL/API boundary witnesses, not claims of scanner execution. The fixed
+profile contains nine FS scans, fifteen entries and seven outcomes, with all
+five file kinds and all four persisted hash states selected.
+
+```sh
+scripts/local-run.sh python tools/schema-model/instance_fixture.py \
+  --profile filesystem-hash-v1 > /tmp/hashes.json
+uv run --project tools/schema-model --locked --offline python \
+  tools/schema-model/instance_model.py /tmp/hashes.json /tmp/hashes-result
+HASH_FIXTURE=/tmp/hashes.json uv run --project tools/schema-model --locked --offline \
+  python -m unittest discover -s tools/schema-model -p test_hash_model.py -q
+```
+
+All profiles now project required kind, hash status, size and digest cells.
+Selected SHACL rules mirror the current SQLite tuples: only complete regular
+files have digests; digests use 64 lowercase hex characters; files have a known
+nonnegative size; failed/changed hashing has a non-NULL reason. Empty error text
+is not NULL. Unknown is a file kind, not a hash state. Pending is not persisted.
+Non-file size is not universally forbidden, and a complete entry may carry an
+error, but the enclosing scan cannot claim complete while errors exist.
+
+The positive hash profile checks fixed construction counts, state/kind coverage
+and qualified case occurrences before graph generation. Synthetic negative tests
+use the existing `values` projection profile with explicit synthetic scope, so
+they do not simultaneously claim to be a complete set of positive hash witnesses.
+The same shapes apply to every profile. Missing required extraction is still
+undetermined; a correctly rejected counterexample has data_conformance=fail.
+
+Thirteen SQLite invalid-tuple controls run with guards enabled. The actual empty
+file digest is separately checked against known bytes. A syntactically valid but
+incorrect digest deliberately passes the shape-only control: graph conformance
+is not a real-byte equality proof. No general SQL/trigger proof, external target
+resolution, atomic snapshot, exhaustive race verification, operation-state model,
+retained-catalog checking or mandatory CI gate is introduced. Both helper sources
+are checked against committed HEAD and retained in producer digest bindings.

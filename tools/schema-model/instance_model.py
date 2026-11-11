@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from uuid import UUID
 
+import hash_profile
 import jsonschema
 import outcome_profile
 from model import FAMILIES, git
@@ -21,7 +22,7 @@ from rdflib import RDF, XSD, Graph, Literal, Namespace, URIRef
 M = Namespace("urn:git-repo-db:instance-pilot:v1:")
 HERE = Path(__file__).resolve().parent
 RESULT_SCHEMA = HERE / "result.schema.json"
-SCOPE = "disposable FS/WT representation and selected Filesystem outcome constraints; no external target resolution"
+SCOPE = "disposable FS/WT representation and selected Filesystem outcome/hash constraints; no external target resolution or real-byte proof"
 TARGETS = (
     ("EntryShape", M.Entry, "filesystem", "entries"),
     ("ScanShape", M.Scan, "filesystem", "scans"),
@@ -102,7 +103,16 @@ def project(data):
                 g.add((node, RDF.type, M.RowOccurrence))
                 g.add((node, M.record, Literal(canonical(row))))
                 g.add((node, M.table, Literal(store + "." + table)))
-    outcome_profile.check_coverage(data, decoded)
+    if data.get("profile") == hash_profile.PROFILE:
+        outcome_profile.check_coverage(
+            data,
+            decoded,
+            profile=hash_profile.PROFILE,
+            expected_counts=hash_profile.EXPECTED_FS_COUNTS,
+        )
+        hash_profile.check_coverage(data, decoded)
+    else:
+        outcome_profile.check_coverage(data, decoded)
     scan_nodes = {}
     worktrees = {}
     for (store, table, index), row in decoded.items():
@@ -142,6 +152,29 @@ def project(data):
                         raise ValueError("outcome count/time must be SQLite INTEGER")
                     g.add((node, predicate, Literal(row[field], datatype=XSD.integer)))
             if table == "entries":
+                for field, predicate in (
+                    ("kind", M.kind),
+                    ("hash_status", M.hashStatus),
+                ):
+                    if type(row[field]) is not str:
+                        raise ValueError("entry kind/status must be SQLite TEXT")
+                    g.add((node, predicate, Literal(row[field])))
+                for field, predicate, expected, datatype in (
+                    ("size", M.size, int, XSD.integer),
+                    ("sha256", M.sha256, str, XSD.string),
+                ):
+                    raw = row[field]
+                    if raw is not None and type(raw) is not expected:
+                        raise ValueError("invalid SQLite size/digest type")
+                    g.add(
+                        (
+                            node,
+                            predicate,
+                            M.SqlNull
+                            if raw is None
+                            else Literal(raw, datatype=datatype),
+                        )
+                    )
                 error = row["error"]
                 if error is not None and type(error) is not str:
                     raise ValueError("entry error must be SQLite TEXT or NULL")
@@ -283,6 +316,7 @@ def validate(data, output, timeout=30):
                 "expected_counts",
                 "profile",
                 "outcome_cases",
+                "hash_cases",
                 "producer_inputs",
             )
             if key in data
@@ -317,6 +351,7 @@ def validate(data, output, timeout=30):
             "instance_model.py",
             "instance_fixture.py",
             "outcome_profile.py",
+            "hash_profile.py",
             "model.py",
             "worker.py",
             "instance_shapes.ttl",
@@ -362,7 +397,7 @@ def validate(data, output, timeout=30):
         result["unformalized"] = [
             "External-target resolution is not implemented; references remain unresolved.",
             "Terminal records describe retained observations, not atomic filesystem snapshots or every interruption path.",
-            "No general SQL/trigger/UDF semantics, all WT physical FKs, hash-state rules, scanner races or concurrent transitions.",
+            "No general SQL/trigger/UDF semantics, all WT physical FKs, exhaustive scanner races or concurrent transitions; digest syntax does not prove real-byte equality.",
             "No specification satisfiability, operation-model or whole-implementation proof.",
         ]
         if not data["expected_counts"]["filesystem"]["scan_outcomes"]:
