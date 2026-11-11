@@ -1,4 +1,4 @@
-name: ADR0040 disposable F1-B builder and verification
+name: ADR0040 disposable F1-B lexical correction
 on:
   push:
     branches: [verification/adr0040-f1b-20261111-7c91e2]
@@ -7,11 +7,10 @@ permissions:
 jobs:
   f1b:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 15
     env:
-      BASE: f6a6a3ca2dd64e92a6fc4decd460a62e44e01a25
-      BASE_TREE: 007749b955d156ee6a7a24a7798ed6f9dffc4e5f
-      MAIN: 3a5457af1e42c158641a73fe5172cad2dbe0718c
+      BASE: d18ecbf9705e47bdeda04eec439131bf70b7b7f5
+      BASE_TREE: a213cd56de07e6cbe546e794aa4129d11be523a8
       FEATURE: feat/adr0040-f1-hash-states-20261111
     defaults:
       run:
@@ -24,7 +23,7 @@ jobs:
           show-progress: false
       - uses: actions/checkout@v7
         with:
-          ref: f6a6a3ca2dd64e92a6fc4decd460a62e44e01a25
+          ref: d18ecbf9705e47bdeda04eec439131bf70b7b7f5
           path: source
           fetch-depth: 1
           show-progress: false
@@ -34,11 +33,11 @@ jobs:
           cache-dependency-glob: |
             source/uv.lock
             source/tools/schema-model/uv.lock
-      - name: Implement and verify bounded child source
+      - name: Reproduce boundary, correct and verify final source
         shell: bash
         run: |
           set -euo pipefail
-          export EVIDENCE="$RUNNER_TEMP/adr0040-f1b-evidence"
+          export EVIDENCE="$RUNNER_TEMP/adr0040-f1b-final-evidence"
           mkdir "$EVIDENCE"
           echo "EVIDENCE=$EVIDENCE" >> "$GITHUB_ENV"
           run() {
@@ -51,91 +50,89 @@ jobs:
             set -e
             printf '%s\n' "$rc" > "$EVIDENCE/$name.exit"
             printf '%s: exit %s\n' "$name" "$rc"
-            if [ "$rc" != 0 ]; then tail -n 40 "$EVIDENCE/$name.log"; fi
+            if [ "$rc" != 0 ]; then tail -n 35 "$EVIDENCE/$name.log"; fi
             return "$rc"
           }
           test "$(git rev-parse HEAD)" = "$BASE"
           test "$(git rev-parse HEAD^{tree})" = "$BASE_TREE"
           test -z "$(git status --porcelain)"
-          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$MAIN"
-          test "$(git ls-remote origin refs/heads/feat/adr0040-f1-outcomes-20261111 | cut -f1)" = "$BASE"
-          test -z "$(git ls-remote origin refs/heads/$FEATURE)"
+          test "$(git ls-remote origin refs/heads/$FEATURE | cut -f1)" = "$BASE"
           run bootstrap ./scripts/setup-local-python.sh
-          run apply python3 "$GITHUB_WORKSPACE/harness/.github/verification/implement_f1b.py"
-          PYFILES=(tools/schema-model/instance_fixture.py tools/schema-model/instance_model.py tools/schema-model/outcome_profile.py tools/schema-model/hash_profile.py tools/schema-model/test_hash_model.py)
-          run autofix scripts/local-run.sh ruff check --fix "${PYFILES[@]}"
-          run format scripts/local-run.sh ruff format "${PYFILES[@]}"
-          git switch -c "$FEATURE"
-          git add tools/schema-model/instance_fixture.py tools/schema-model/instance_model.py tools/schema-model/outcome_profile.py tools/schema-model/hash_profile.py tools/schema-model/test_hash_model.py tools/schema-model/instance_shapes.ttl tools/schema-model/instance_constraints.json tools/schema-model/INSTANCE-PILOT.md
-          python3 - <<'PY'
-          import subprocess
-          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
-          allowed={'instance_fixture.py','instance_model.py','outcome_profile.py','hash_profile.py','test_hash_model.py','instance_shapes.ttl','instance_constraints.json','INSTANCE-PILOT.md'}
-          assert set(paths)=={'tools/schema-model/'+p for p in allowed},paths
-          print('Scoped child changes:',len(paths))
-          PY
-          run commit git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'test(schema-model): validate Filesystem hash states and digest tuples'
-          export CANDIDATE="$(git rev-parse HEAD)"
-          echo "CANDIDATE=$CANDIDATE" >> "$GITHUB_ENV"
-          test "$(git rev-parse HEAD^)" = "$BASE"
-          run push git push origin "HEAD:refs/heads/$FEATURE"
-          git show -s --format=fuller HEAD > "$EVIDENCE/candidate.txt"
-          git rev-parse HEAD^{tree} >> "$EVIDENCE/candidate.txt"
           run tool-sync uv sync --project tools/schema-model --locked --python "$(scripts/local-run.sh python -c 'import sys; print(sys._base_executable)')"
           scripts/local-run.sh python - <<'PY' > "$EVIDENCE/runtime-isolation.json"
           import json,os,platform,sqlite3,sys,tempfile
           from pathlib import Path
           from repo_catalog.worktrees import discover_topology
-          root=Path(tempfile.mkdtemp(prefix='f1b-fixtures-',dir=os.environ['RUNNER_TEMP']))
+          root=Path(tempfile.mkdtemp(prefix='f1b-final-',dir=os.environ['RUNNER_TEMP']))
           markers=[str(p/'.git') for p in (root,*root.parents) if (p/'.git').exists()]
           observed=discover_topology(root)
-          assert not markers,markers
-          assert observed.status=='not_git',repr(observed)
-          print(json.dumps({'python':sys.version,'sqlite':sqlite3.sqlite_version,
-              'architecture':platform.machine(),'temp_root':str(root),
-              'ancestor_git_markers':markers,'product_git_discovery':observed.status}))
+          assert not markers and observed.status=='not_git'
+          print(json.dumps({'python':sys.version,'sqlite':sqlite3.sqlite_version,'architecture':platform.machine(),
+              'temp_root':str(root),'ancestor_git_markers':markers,'product_git_discovery':observed.status}))
           PY
           export TMPDIR="$(python3 -c 'import json,os; print(json.load(open(os.environ["EVIDENCE"]+"/runtime-isolation.json"))["temp_root"])')"
+          run before-fixture bash -c 'scripts/local-run.sh python tools/schema-model/instance_fixture.py --profile filesystem-hash-v1 > "$EVIDENCE/before.json"'
+          run reproduce-boundary uv run --project tools/schema-model --locked --offline python "$GITHUB_WORKSPACE/harness/.github/verification/check_digest_boundary.py" "$EVIDENCE/before.json" "$EVIDENCE/before-boundary" pass
+          run apply python3 "$GITHUB_WORKSPACE/harness/.github/verification/correct_f1b.py"
+          run autofix scripts/local-run.sh ruff check --fix tools/schema-model/hash_profile.py tools/schema-model/test_hash_model.py
+          run format scripts/local-run.sh ruff format tools/schema-model/hash_profile.py tools/schema-model/test_hash_model.py
+          git switch -c "$FEATURE"
+          git add tools/schema-model/hash_profile.py tools/schema-model/test_hash_model.py tools/schema-model/instance_shapes.ttl tools/schema-model/instance_constraints.json tools/schema-model/INSTANCE-PILOT.md
+          python3 - <<'PY'
+          import subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          expected={'hash_profile.py','test_hash_model.py','instance_shapes.ttl','instance_constraints.json','INSTANCE-PILOT.md'}
+          assert set(paths)=={'tools/schema-model/'+p for p in expected},paths
+          PY
+          run commit git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(schema-model): enforce exact SHA-256 lexical length'
+          export CANDIDATE="$(git rev-parse HEAD)"
+          echo "CANDIDATE=$CANDIDATE" >> "$GITHUB_ENV"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          test "$(git ls-remote origin refs/heads/$FEATURE | cut -f1)" = "$BASE"
+          run push git push origin "HEAD:refs/heads/$FEATURE"
+          run unchanged-product-inputs git diff --exit-code "$BASE" HEAD -- packages src tests scripts pyproject.toml uv.lock tools/schema-model/uv.lock tools/schema-model/worker.py
           run values-fixture bash -c 'scripts/local-run.sh python tools/schema-model/instance_fixture.py > "$EVIDENCE/values.json"'
           run outcomes-fixture bash -c 'scripts/local-run.sh python tools/schema-model/instance_fixture.py --profile filesystem-outcomes-v1 > "$EVIDENCE/outcomes.json"'
           run hashes-fixture bash -c 'scripts/local-run.sh python tools/schema-model/instance_fixture.py --profile filesystem-hash-v1 > "$EVIDENCE/hashes.json"'
           for label in values outcomes hashes; do
             run "$label-cli" uv run --project tools/schema-model --locked --offline python tools/schema-model/instance_model.py "$EVIDENCE/$label.json" "$EVIDENCE/$label-result"
           done
+          run corrected-boundary uv run --project tools/schema-model --locked --offline python "$GITHUB_WORKSPACE/harness/.github/verification/check_digest_boundary.py" "$EVIDENCE/hashes.json" "$EVIDENCE/after-boundary" fail
           export INSTANCE_FIXTURE="$EVIDENCE/values.json" OUTCOME_FIXTURE="$EVIDENCE/outcomes.json" HASH_FIXTURE="$EVIDENCE/hashes.json"
-          run instance-tests uv run --project tools/schema-model --locked --offline python -m unittest discover -s tools/schema-model -p test_instance_model.py -q
-          run outcome-tests uv run --project tools/schema-model --locked --offline python -m unittest discover -s tools/schema-model -p test_outcome_model.py -q
-          run hash-tests uv run --project tools/schema-model --locked --offline python -m unittest discover -s tools/schema-model -p test_hash_model.py -q
-          run product-tests scripts/local-run.sh python -m pytest -q -n 2 --basetemp="$TMPDIR/pytest-two" --junitxml="$EVIDENCE/product.xml" tests/filesystem/test_filesystem.py::test_changed_during_hash_is_not_admitted tests/filesystem/test_filesystem.py::test_lossless_path_symlink_fifo_and_non_utf8_export
-          run lint scripts/local-run.sh ruff check "${PYFILES[@]}"
-          run format-check scripts/local-run.sh ruff format --check "${PYFILES[@]}"
+          for suite in instance outcome hash; do
+            run "$suite-tests" uv run --project tools/schema-model --locked --offline python -m unittest discover -s tools/schema-model -p "test_${suite}_model.py" -q
+          done
+          run lint scripts/local-run.sh ruff check tools/schema-model/instance_fixture.py tools/schema-model/instance_model.py tools/schema-model/outcome_profile.py tools/schema-model/hash_profile.py tools/schema-model/test_hash_model.py
+          run format-check scripts/local-run.sh ruff format --check tools/schema-model/instance_fixture.py tools/schema-model/instance_model.py tools/schema-model/outcome_profile.py tools/schema-model/hash_profile.py tools/schema-model/test_hash_model.py
           run whitespace git diff --check "$BASE" HEAD
           test -z "$(git status --porcelain)"
-      - name: Retain source-bound summary
+      - name: Preserve correction and final evidence
         if: always()
         shell: bash
         run: |
           python3 - <<'PY'
-          import hashlib,json,os,subprocess,xml.etree.ElementTree as ET
+          import hashlib,json,os,subprocess
           from pathlib import Path
-          root=Path(os.environ.get('EVIDENCE',os.environ['RUNNER_TEMP']+'/adr0040-f1b-evidence'))
+          root=Path(os.environ.get('EVIDENCE',os.environ['RUNNER_TEMP']+'/adr0040-f1b-final-evidence'))
           root.mkdir(exist_ok=True)
           def git(*args): return subprocess.check_output(['git',*args],text=True).strip()
           summary={'candidate':os.environ.get('CANDIDATE'),'observed_head':git('rev-parse','HEAD'),
-              'tree':git('rev-parse','HEAD^{tree}'),'base':os.environ['BASE'],
-              'workflow_commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
-              'exits':{p.stem:int(p.read_text()) for p in root.glob('*.exit')},
-              'independent_agent_review':False,'final_git_status':git('status','--porcelain')}
-          for label in ('values','outcomes','hashes'):
-              path=root/(label+'-result')/'result.json'
+              'tree':git('rev-parse','HEAD^{tree}'),'base':os.environ['BASE'],'workflow_commit':os.environ['GITHUB_SHA'],
+              'run_id':os.environ['GITHUB_RUN_ID'],'exits':{p.stem:int(p.read_text()) for p in root.glob('*.exit')},
+              'independent_agent_review':False,'final_git_status':git('status','--porcelain'),
+              'product_test_evidence_reuse':{'source_commit':os.environ['BASE'],'run_id':42937529485,
+                  'nodes':2,'reason':'product, tests and runtime inputs unchanged; not rerun at final commit'}}
+          for label in ('values-result','outcomes-result','hashes-result','before-boundary','after-boundary'):
+              path=root/label/'result.json'
               if path.exists():
                   r=json.loads(path.read_text())
-                  summary[label]={'families':r.get('families'),'coverage':r.get('coverage'),'source':r.get('source'),
-                      'tool':r.get('tool'),'checker_invocations_completed':r.get('checker_invocations_completed'),
+                  summary[label]={'families':r.get('families'),'coverage':r.get('coverage'),
+                      'source':r.get('source'),'tool':r.get('tool'),
+                      'checker_invocations_completed':r.get('checker_invocations_completed'),
                       'result_sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
-          for name in ('instance-tests','outcome-tests','hash-tests'):
+          for name in ('instance-tests','outcome-tests','hash-tests','reproduce-boundary','corrected-boundary'):
               path=root/(name+'.log')
-              if path.exists(): summary[name]=path.read_text(errors='replace')[-1500:]
+              if path.exists(): summary[name]=path.read_text(errors='replace')[-1600:]
           path=root/'runtime-isolation.json'
           if path.exists(): summary['runtime']=json.loads(path.read_text())
           path=root/'hashes.json'
@@ -143,25 +140,19 @@ jobs:
               data=json.loads(path.read_text())
               summary['hash_api']=data.get('api')
               summary['hash_counts']=data.get('expected_counts')
-          path=root/'product.xml'
-          if path.exists():
-              cases=ET.parse(path).getroot().findall('.//testcase')
-              summary['product_tests']={'total':len(cases),'failures':sum(c.find('failure') is not None for c in cases),
-                  'errors':sum(c.find('error') is not None for c in cases),'skipped':sum(c.find('skipped') is not None for c in cases)}
           (root/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
           index={str(p.relative_to(root)):{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
                  for p in sorted(root.rglob('*')) if p.is_file() and p.name!='index.json'}
           (root/'index.json').write_text(json.dumps(index,indent=2)+'\n')
-          brief={k:v for k,v in summary.items() if k not in ('values','outcomes','hashes','hash_api')}
-          brief['families']={k:summary.get(k,{}).get('families') for k in ('values','outcomes','hashes')}
-          brief['hash_coverage']=summary.get('hashes',{}).get('coverage')
-          print('F1B_SUMMARY '+json.dumps(brief))
+          brief={k:v for k,v in summary.items() if k not in ('values-result','outcomes-result','hashes-result','before-boundary','after-boundary','hash_api')}
+          brief['families']={k:summary.get(k,{}).get('families') for k in ('values-result','outcomes-result','hashes-result','before-boundary','after-boundary')}
+          print('F1B_FINAL_SUMMARY '+json.dumps(brief))
           PY
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: adr0040-f1b-${{ github.run_id }}-${{ github.run_attempt }}
+          name: adr0040-f1b-final-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            ${{ runner.temp }}/adr0040-f1b-evidence/
+            ${{ runner.temp }}/adr0040-f1b-final-evidence/
             source/artifacts/local-python/
           retention-days: 14
