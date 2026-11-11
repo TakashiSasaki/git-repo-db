@@ -1,0 +1,101 @@
+{
+  "schema": "git-repo-db/f1-publication-binding-1",
+  "repository": "https://github.com/TakashiSasaki/git-repo-db",
+  "target_ref": "refs/heads/feat/adr0040-f1-hash-states-20261111",
+  "expected_old_ref_sha": "ac732094676f1c3ebc4330c25c2177538b72585d",
+  "failed_transport": {
+    "method": "ordinary Git push",
+    "exit_code": 128,
+    "error": "could not read Username for 'https://github.com'",
+    "target_ref_unchanged_at_observation": true,
+    "observed_ref_sha": "ac732094676f1c3ebc4330c25c2177538b72585d",
+    "classification": "transport authentication failure; not a source-validation failure"
+  },
+  "local_executed_correction": {
+    "commit": "a710c5880dd6404efc698b5962bad6266eae1a96",
+    "tree": "8b90a043296147353470769ba20b23bdb694e146",
+    "parents": [
+      "ac732094676f1c3ebc4330c25c2177538b72585d"
+    ]
+  },
+  "local_original_evidence_commit": {
+    "commit": "d0fa2c843922f528d184730972c1a0272b5632f7",
+    "tree": "1c9d0be4076189039d59c494cc3f2181beec55d7",
+    "parents": [
+      "a710c5880dd6404efc698b5962bad6266eae1a96"
+    ]
+  },
+  "remote_correction": {
+    "commit": "ad4774b43a0caad7526828341e69ef554cf16e6d",
+    "tree": "8b90a043296147353470769ba20b23bdb694e146",
+    "parents": [
+      "ac732094676f1c3ebc4330c25c2177538b72585d"
+    ],
+    "created_via": "authenticated GitHub connector",
+    "identity_observation": "coordinator-provided connector result",
+    "equal_to_executed_code_tree": true,
+    "new_execution_claimed": false
+  },
+  "original_history_bundle": {
+    "path": "local-source-history.bundle",
+    "bytes": 364591,
+    "sha256": "b28c905bb65c2bb75430875a6b25919960e8579c73fd31e8d23bd76693cc448f",
+    "prerequisite": "ac732094676f1c3ebc4330c25c2177538b72585d",
+    "tip": "d0fa2c843922f528d184730972c1a0272b5632f7",
+    "ref": "refs/heads/fix/adr0040-f1b-review-20261111",
+    "git_bundle_verify": "passed by coordinator",
+    "listed_tip_and_copy_hash": "checked by evidence reviewer"
+  },
+  "frozen_review_archive": {
+    "path": "review-evidence.zip",
+    "bytes": 468472,
+    "sha256": "e59191eda112637c123cfde1ac56d4e0da8248cf8ed51ffd9e691bf558b76dea",
+    "members": 99,
+    "unchanged": true
+  },
+  "frozen_manifest": {
+    "path": "manifest.json",
+    "bytes": 44188,
+    "sha256": "1146af46c205896ccb68ef1c66f2c29f8ec9882d2146caee2512ca8a8d71cae2",
+    "unchanged": true
+  },
+  "readme_supplement": {
+    "path": "README.md",
+    "original": {
+      "bytes": 8734,
+      "sha256": "fb0d37766731b27dd84929b6fafb3f23246f70378ffbb08982f42c0a945bf7fc"
+    },
+    "supplemented": {
+      "bytes": 11176,
+      "sha256": "7dd56bb6e4fdb06d0c71ed2a80e527ae5eba5d726e8317309dddc13967b87d8b"
+    },
+    "change": "append-only publication transport and original-history section"
+  },
+  "planned_remote_evidence_commit": {
+    "parent": "ad4774b43a0caad7526828341e69ef554cf16e6d",
+    "commit": null,
+    "tree": null,
+    "status": "not yet created in this preparation record",
+    "allowed_change_directory": "tools/schema-model/review-evidence/f1-review-20261111/",
+    "files": [
+      "README.md",
+      "manifest.json",
+      "review-evidence.zip",
+      "local-source-history.bundle",
+      "publication-binding.json"
+    ],
+    "required_check": "Tree outside the evidence directory equals remote correction code tree; no new execution claim."
+  },
+  "planned_ref_update": {
+    "ref": "refs/heads/feat/adr0040-f1-hash-states-20261111",
+    "expected_sha": "ac732094676f1c3ebc4330c25c2177538b72585d",
+    "force": false,
+    "authorization_scope": "publish existing F1 correction and evidence; no merge, release, tag or deployment"
+  },
+  "limits": [
+    "Hashes and tree equality establish consistency, not source authentication.",
+    "Original local commits are preserved in the Git bundle; they are not relabeled as the connector-created commits.",
+    "No product or optional-checker execution was added during publication preparation.",
+    "The product NUL-admission discrepancy remains unresolved outside F1."
+  ]
+}
