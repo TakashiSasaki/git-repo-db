@@ -88,6 +88,7 @@ def test_staging_allowlist_and_transformation():
         # 4. Development Guide
         assert not (staging_dir / "development").exists()
         assert (staging_dir / "design" / "index.html").is_file()
+        assert (staging_dir / "design" / "semantic" / "index.html").is_file()
 
         # 5. Schema section
         schema_dir = staging_dir / "schema"

@@ -6,6 +6,53 @@ The existing explicit staging/publication allowlist and rendering conventions in
 `documentation/tools/build_docs_site.py` and `documentation/tools/adr_publication.py` remain the only implementation; no duplicate MkDocs
 configuration, renderer or editable ADR source is introduced here.
 
+## Semantic explorer frontend and external editors
+
+The repository root has a private Node/Vite entry for editing the semantic
+data-model explorer. It is independent of the Python product and of this
+workspace's Python environment. From the repository root:
+
+```sh
+npm ci
+npm run dev
+npm run build
+npm run preview
+```
+
+Use a Node version supported by root `package.json`. The entry is root
+`index.html`; `web/main.js` imports the model and CSS and calls
+`web/app.js`'s `renderApp(model)`. Shared `web/style.css`, renderer and
+`content/design/semantic-model.json` also supply the MkDocs
+`/design/semantic/` page through `tools/semantic_viz.py`. UI changes belong in
+these shared sources, not generated copies. The npm build outputs only this
+frontend to root `dist/`; it does not replace the complete MkDocs pipeline below.
+The running frontend uses static repository data and needs no API keys, Python
+runtime, network service or user catalog. npm dependency installation may use
+the network.
+
+For an external website editor such as Google AI Studio, select the root npm
+entry and keep the requested edits scoped. An import prompt can be:
+
+> This repository contains a Python catalog application and its technical
+> documentation website. Edit only the semantic explorer UI using root
+> `index.html`, `documentation/web/`, and the root npm/Vite configuration when
+> needed. Read root `AGENTS.md`, `documentation/AGENTS.md` and
+> `documentation/web/AGENTS.md`. Reuse `app.js`'s `renderApp(model)` and the
+> existing semantic model. Preserve the MkDocs integration, pinned canonical
+> citations and the distinctions between implemented behavior, accepted targets
+> and partial RDF work. Do not modify Python product code, schemas, canonical
+> ADRs or modeling-pilot contracts for this UI task. Run `npm run build` and
+> report the actual checks performed.
+
+This is a conventional npm/Vite authoring entry; importing it into AI Studio
+has not been verified here. An external editor's preview or a frontend build
+does not prove product behavior, full-site publication or RDF completeness.
+Follow [frontend instructions](web/AGENTS.md) for scoped checks and
+[content refresh instructions](AGENTS.md#content-structure-and-refresh) for
+source-backed content changes. Deployment remains a separate action.
+
+## Python documentation workspace
+
 For the documented product-to-documentation workflow, first establish the
 verified product interpreter from the repository root, then create the separate
 documentation environment using that interpreter:

@@ -4,6 +4,10 @@ on:
     branches: [main]
     paths:
       - 'documentation/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.mjs'
       - 'docs/adr/0001-validation-lifecycle-architecture.md'
       - 'docs/adr/0002-three-store-boundary-architecture.md'
       - 'docs/adr/0004-metadata-only-git-core.md'
@@ -60,6 +64,10 @@ on:
   pull_request:
     paths:
       - 'documentation/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.mjs'
       - 'docs/adr/0001-validation-lifecycle-architecture.md'
       - 'docs/adr/0002-three-store-boundary-architecture.md'
       - 'docs/adr/0004-metadata-only-git-core.md'
@@ -141,10 +149,15 @@ jobs:
         with:
           version: '0.12.19'
 
-      - name: Set up Node.js for Mermaid CLI
+      - name: Set up Node.js for frontend and Mermaid CLI
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Check standalone website frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Prepare selected product producer
         run: |

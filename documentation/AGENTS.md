@@ -1,10 +1,20 @@
 # Isolated documentation workspace
 
 [Root AGENTS.md](../AGENTS.md) and accepted ADRs remain authoritative, including
-the current development-phase guidance. ADR 0035 was adopted 2026-10-26. This project is not a root uv workspace member. Use its
-own pyproject.toml, uv.lock and .venv for documentation-only work; never change the
+the current development-phase guidance. ADR 0035 was adopted 2026-10-26. This project is not a root uv workspace member. For Python documentation tooling, use its
+own pyproject.toml, uv.lock and .venv; never change the
 product environment, test selection or checks as a shortcut for documentation.
 Use the environment's loaded SQLite; never replace/build/spoof SQLite.
+
+The semantic explorer also has a Node/Vite authoring entry at repository-root
+`index.html` and `package.json`; its sources are under `documentation/web/`.
+Follow [the frontend instructions](web/AGENTS.md) for that scope. The frontend
+uses one `app.js` renderer, `style.css`, and cited semantic model for both the
+Vite entry and the MkDocs `/design/semantic/` page. Update those shared sources
+instead of maintaining a second UI in a generated page. `npm run build` checks
+the standalone frontend; the existing Python/MkDocs pipeline stages and builds
+the complete site. Website-only work does not require product runtime tests
+unless it changes product behavior or inputs.
 
 The renderer and documentation tests live in this workspace; neutral schema
 inventory and product checks remain outside it. Product changes take precedence;

@@ -51,6 +51,7 @@ markdown_extensions:
 
 nav:
   - ホーム: index.md
+  - 意味モデルとRDFの進捗: /design/semantic/
   - 5ストア設計を探索: /design/
   - アーキテクチャ:
       - 概要: architecture/index.md

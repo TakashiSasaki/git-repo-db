@@ -4,6 +4,23 @@
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永続化します。PR・文書・スレッド・Source、通常Issueとそのコメント、レビュー概要とレビューコメントは、必要な証拠を伴う各リソースの最新受理状態を保存します。
 通常ランタイムは catalog3、現在の schema version は **21** です。PR・文書・スレッド・Sourceの現在状態と、Git object・取得範囲の証拠を直接所有者に結び付けます。絶対時刻は Unix epoch マイクロ秒の INTEGER です。[現在のランタイム案内](documentation/current-runtime-reference.md)、[Schema 20の実装・検証記録（歴史資料）](docs/phase2/publication-free-implementation.md)、[Schema 21対応表（保存済み監査）](docs/phase2/publication-free-schema-map.json)、[packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)を参照してください。旧開発 DB と v2 importer は対応しません。過去の検証記録は新形式の最終受入を意味しません。
 
+このルートには Python 製品と、そのデータモデルを解説する静的ウェブサイトの両方があります。
+製品の開発・実行は `pyproject.toml` と下記の Python 手順、意味モデル可視化の UI 編集は
+`package.json` と [frontend ガイド](documentation/README.md#semantic-explorer-frontend-and-external-editors)を使います。
+
+```bash
+npm ci
+npm run dev       # 意味モデル可視化ページの開発サーバー
+npm run build     # この frontend を dist/ に出力
+npm run preview   # frontend のビルド結果を確認
+```
+
+この npm ビルドは製品やサイト全体のビルドではありません。既存の全体サイトは引き続き
+[独立した MkDocs ワークスペース](documentation/README.md)で作成します。
+
+`docs/` はADR・設計契約・検証証拠などの正本、`documentation/` は閲覧用サイトの
+解説・画面・ビルドツールです。サイトの説明は正本を参照する派生資料として管理します。
+
 ## ドキュメント・スキーマ可視化
 
 公式ドキュメントおよびインタラクティブなスキーマ可視化ワークベンチを公開しています：

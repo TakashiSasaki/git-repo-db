@@ -358,6 +358,8 @@ def stage_documentation(
         DOCS_SCHEMA_DIR,
         DOCS_ROOT / "overrides",
         DOCS_ADR_DIR,
+        ROOT / "index.html",
+        DOCS_ROOT / "web",
     ):
         if source.is_symlink() or any(p.is_symlink() for p in source.rglob("*")):
             raise ValueError("Symlink documentation source refused")
@@ -449,11 +451,15 @@ def stage_documentation(
     # Read-only projection of the owner-authorized current decision set.
     from tools.adr_publication import stage_adrs
     from tools.design_viz import generate_html as generate_design_html
+    from tools.semantic_viz import generate_html as generate_semantic_html
 
     stage_adrs(staging_dir, meta["commit_sha"])
     design = staging_dir / "design"
     design.mkdir(parents=True, exist_ok=True)
     (design / "index.html").write_text(generate_design_html(), encoding="utf-8")
+    semantic = design / "semantic"
+    semantic.mkdir(parents=True, exist_ok=True)
+    (semantic / "index.html").write_text(generate_semantic_html(), encoding="utf-8")
 
     # 5. Schema section
     schema_staging = staging_dir / "schema"
@@ -643,7 +649,7 @@ def include_standalone_viewer_in_sitemap(site_dir: Path, site_url: str) -> None:
     locations = {
         node.text for node in root.findall(f"{{{namespace}}}url/{{{namespace}}}loc")
     }
-    for route in ("schema/viewer/", "design/"):
+    for route in ("schema/viewer/", "design/", "design/semantic/"):
         if not (site_dir / route / "index.html").is_file():
             raise ValueError(f"Standalone viewer missing: {route}")
         location = urljoin(site_url, route)
@@ -774,6 +780,7 @@ def validate_critical_endpoints(output_dir: Path) -> List[str]:
         "adr/0001-validation-lifecycle-architecture/index.html",
         "adr/0002-three-store-boundary-architecture/index.html",
         "design/index.html",
+        "design/semantic/index.html",
         "manifest.webmanifest",
         "manifest.json",
         "sw.js",

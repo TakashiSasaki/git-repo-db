@@ -1,6 +1,31 @@
 # Coding agent guide
 
-This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese. Read the [ADR index](docs/adr/README.md), then the relevant accepted decisions and their scoped supersessions. For ADR lifecycle/triage/numbering/retirement, follow the owner-accepted [ADR 0011](docs/adr/0011-adr-governance.md) and single [ADR operating policy](docs/adr/policy.md); the optional [adr-workflow skill](.agents/skills/adr-workflow/SKILL.md) contains procedures, not additional authority. The policy's bounded pre-adoption migration exception preserves still-binding ADR 0001–0027 clauses; no automatic bulk retirement or re-opening of accepted design decisions.
+This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese. For product or semantic-content changes, read the [ADR index](docs/adr/README.md), then the relevant accepted decisions and their scoped supersessions. For ADR lifecycle/triage/numbering/retirement, follow the owner-accepted [ADR 0011](docs/adr/0011-adr-governance.md) and single [ADR operating policy](docs/adr/policy.md); the optional [adr-workflow skill](.agents/skills/adr-workflow/SKILL.md) contains procedures, not additional authority. The policy's bounded pre-adoption migration exception preserves still-binding ADR 0001–0027 clauses; no automatic bulk retirement or re-opening of accepted design decisions.
+
+## Route the task before choosing tools
+
+This repository root serves both the Python application and its technical
+documentation website. Choose the workflow from the requested change:
+
+| Task | Main sources and workflow |
+| --- | --- |
+| Product or data-model engineering | `src/`, `packages/`, canonical contracts in `docs/`, and their relevant tools/tests. Follow the accepted ADRs and the verified Python environment below. Isolated modeling pilots under `tools/schema-model/` retain their own environment and declared limits. |
+| Website content, layout or interaction | Root `index.html`, `documentation/web/`, `documentation/content/`, and documentation rendering tools/tests. Follow [documentation instructions](documentation/AGENTS.md) and [frontend instructions](documentation/web/AGENTS.md). |
+| A change spanning both | State the product and website scopes separately; update the authoritative contracts/inputs and their derived presentation as applicable, using each workspace's relevant checks. |
+
+Root `pyproject.toml`/`uv.lock` describe the Python product workspace;
+`package.json`/`package-lock.json` independently describe the private Node/Vite
+semantic explorer. Root `npm run dev`, `npm run build` and `npm run preview`
+operate on that static frontend, with build output in `dist/`. They neither run
+the product nor build the complete MkDocs site. The existing MkDocs build remains
+the full documentation-site workflow. Routine website-only changes need frontend
+and affected documentation checks, not product runtime setup or product test
+runs; use product validation when product behavior or its inputs change.
+
+Code, accepted ADRs and canonical contracts determine product meaning. Website
+models and diagrams are derived explanations with pinned citations; changing
+them does not implement or accept a product design. Keep implemented behavior,
+accepted targets and partial RDF formalization distinct.
 
 ## Current development phase
 

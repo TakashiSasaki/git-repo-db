@@ -11,3 +11,5 @@ artifacts/
 /site/
 .build/
 build/
+/node_modules/
+/dist/

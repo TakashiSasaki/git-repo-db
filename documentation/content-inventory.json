@@ -15,7 +15,9 @@
       "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0040: Scoped machine-readable models and validation evidence",
       "status_in_source": "accepted",
-      "static_consumer_references": ["docs/adr/README.md"]
+      "static_consumer_references": [
+        "docs/adr/README.md"
+      ]
     },
     "documentation/schema-model-inventory.md": {
       "status": "maintained-tool-reference",
@@ -26,7 +28,10 @@
       "consumers": "Contributors, schema-analysis tools and sqlite-schema-visualization skill.",
       "publication": "not staged",
       "source_heading": "# Implemented schema model inventory",
-      "static_consumer_references": ["scripts/schema_catalog.py", ".agents/skills/sqlite-schema-visualization/SKILL.md"]
+      "static_consumer_references": [
+        "scripts/schema_catalog.py",
+        ".agents/skills/sqlite-schema-visualization/SKILL.md"
+      ]
     },
     "documentation/tests/test_schema_profile.py": {
       "status": "documentation-test",
@@ -47,7 +52,10 @@
       "publication": "read-only current-decision staging; original source remains authoritative",
       "source_heading": "# ADR 0039: Independent filesystem and worktree catalogs",
       "status_in_source": "accepted",
-      "static_consumer_references": ["docs/adr/README.md", "docs/architecture/local-catalog-contract.md"]
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/architecture/local-catalog-contract.md"
+      ]
     },
     "docs/architecture/local-catalog-contract.md": {
       "status": "implementation-contract",
@@ -58,7 +66,11 @@
       "consumers": "Local catalog implementation, package guides, tests and independent reviewers.",
       "publication": "not staged",
       "source_heading": "# Independent local catalog operation contract",
-      "static_consumer_references": ["docs/adr/README.md", "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "README.md"]
+      "static_consumer_references": [
+        "docs/adr/README.md",
+        "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md",
+        "README.md"
+      ]
     },
     ".agents/skills/adr-workflow/SKILL.md": {
       "status": "agent-procedure",
@@ -11593,6 +11605,114 @@
       "static_consumer_references": [
         "docs/architecture/module-independence-contract.md"
       ]
+    },
+    "index.html": {
+      "status": "website-root-entry",
+      "owner": "repository-root",
+      "authority": "Shared browser HTML entry used by Vite and MkDocs.",
+      "source": "index.html",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "package.json": {
+      "status": "website-build-control",
+      "owner": "repository-root",
+      "authority": "Private npm/Vite scripts and website-only dependencies.",
+      "source": "package.json",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "package-lock.json": {
+      "status": "website-build-control",
+      "owner": "repository-root",
+      "authority": "Locked npm dependencies; no Python product dependency authority.",
+      "source": "package-lock.json",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "vite.config.mjs": {
+      "status": "website-build-control",
+      "owner": "repository-root",
+      "authority": "Root Vite UI authoring configuration; not the full MkDocs build.",
+      "source": "vite.config.mjs",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/content/design/semantic-model.json": {
+      "status": "derived-semantic-overview",
+      "owner": "documentation/content/design/",
+      "authority": "Curated, source-pinned seven-domain overview and RDF progress analysis; not a canonical ontology.",
+      "source": "documentation/content/design/semantic-model.json",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/web/AGENTS.md": {
+      "status": "agent-instructions",
+      "owner": "documentation/web/",
+      "authority": "Scoped website authoring instructions, subject to root instructions and accepted decisions.",
+      "source": "documentation/web/AGENTS.md",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/web/main.js": {
+      "status": "website-source",
+      "owner": "documentation/web/",
+      "authority": "Vite entry for the shared static semantic UI.",
+      "source": "documentation/web/main.js",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/web/app.js": {
+      "status": "website-source",
+      "owner": "documentation/web/",
+      "authority": "Single dependency-free UI implementation consumed by Vite and MkDocs.",
+      "source": "documentation/web/app.js",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/web/style.css": {
+      "status": "website-source",
+      "owner": "documentation/web/",
+      "authority": "Shared frontend stylesheet.",
+      "source": "documentation/web/style.css",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/tools/semantic_viz.py": {
+      "status": "documentation-tool",
+      "owner": "documentation/tools/",
+      "authority": "Curated-model validation and shared-source MkDocs renderer; no product/model extraction.",
+      "source": "documentation/tools/semantic_viz.py",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/tests/test_semantic_viz.py": {
+      "status": "documentation-test",
+      "owner": "documentation/tests/",
+      "authority": "Source-bound explanation, relation, trust-scope and shared-source rendering controls.",
+      "source": "documentation/tests/test_semantic_viz.py",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
+    },
+    "documentation/tools/test_semantic_browser.mjs": {
+      "status": "documentation-test",
+      "owner": "documentation/tools/",
+      "authority": "Optional real-browser interaction/accessibility/viewport checks; no retained catalog data.",
+      "source": "documentation/tools/test_semantic_browser.mjs",
+      "producer": "Derived website implementation and code investigation at selected product d6f9634cffdbeca1986d973245d7cc99b73fa408.",
+      "consumers": "Website authors, isolated documentation checks and technical readers.",
+      "publication": "Generated public HTML/CSS/JS only; no source files or private build inputs copied by widening canonical-document staging."
     }
   }
 }
