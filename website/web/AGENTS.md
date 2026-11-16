@@ -7,6 +7,9 @@ technical-documentation frontend, separate from the Python application.
 - Root `index.html` is the Vite entry. `main.js` imports the shared CSS and
   `../content/design/semantic-model.json`, then calls `renderApp(model)` from
   `app.js`. Keep presentation and interaction in `app.js`, styling in `style.css`.
+  Keep `app.js` dependency-free: module imports belong in `main.js`. Adding a
+  runtime library requires deliberately adapting both the Vite and MkDocs paths;
+  a successful Vite build alone does not validate the shared-source contract.
 - The MkDocs `/design/semantic/` page uses the same renderer, styling and model
   through `../tools/semantic_viz.py`. Change the shared sources rather than a
   generated `dist/`, `.build/` or `site/` copy. Preserve the rest of the MkDocs

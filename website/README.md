@@ -26,6 +26,10 @@ Use a Node version supported by root `package.json`. The entry is root
 `/design/semantic/` page through `tools/semantic_viz.py`. UI changes belong in
 these shared sources, not generated copies. The npm build outputs only this
 frontend to root `dist/`; it does not replace the complete MkDocs pipeline below.
+The two builds are independent: MkDocs inlines the same dependency-free
+`web/app.js` and CSS rather than consuming `dist/`. There is no Vite/MkDocs build
+order to maintain. Keep imports in `web/main.js`; if the UI gains runtime package
+imports, adapt and check both rendering paths together.
 The running frontend uses static repository data and needs no API keys, Python
 runtime, network service or user catalog. npm dependency installation may use
 the network.

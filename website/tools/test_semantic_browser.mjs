@@ -63,6 +63,18 @@ try {
   async function noOverflow() {
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "Page must not scroll horizontally");
   }
+  async function contextCoreArrow() {
+    const geometry = await page.evaluate(() => {
+      const path = document.querySelector('.graph-edges path[data-source="context"][data-target="core"]');
+      const endpoint = path.getPointAtLength(path.getTotalLength());
+      const point = new DOMPoint(endpoint.x, endpoint.y).matrixTransform(path.getScreenCTM());
+      const target = document.querySelector(".graph-node.core rect").getBoundingClientRect();
+      return { gap: point.x - target.right, targetWidth: target.width, insideVerticalSpan: point.y > target.top && point.y < target.bottom };
+    });
+    assert(geometry.insideVerticalSpan, "Context→Core must point toward the target's side");
+    assert(geometry.gap > 0.1 && geometry.gap < geometry.targetWidth * 0.2, "Context→Core endpoint must remain just outside Core, leaving its arrowhead visible");
+    return geometry.gap;
+  }
   async function capture(selector, label, width) {
     // Capture the intended section after scrolling, independently of smooth UI
     // animation. A screenshot taken immediately after scrollIntoView races it.
@@ -96,6 +108,7 @@ try {
     await page.goBack();
     await page.waitForFunction(() => location.hash === "");
     await selected("repository");
+    const contextCoreGapPx = await contextCoreArrow();
     await noOverflow();
     await capture("#overview", "overview", viewport.width);
 
@@ -134,7 +147,7 @@ try {
     assert.equal(await count(".concept-card"), model.concepts.filter((concept) => concept.domain === "worktrees").length);
     assert.equal(await page.$eval('.graph-node[data-domain="worktrees"]', (node) => node.classList.contains("active")), true);
     await noOverflow();
-    checks.push({ viewport, initialCounts: true, initialHistoryBack: true, filterAndEmptySearch: true, reset: true, semanticKeysAndConditions: true, pinnedCitations: true, crossDomainRelation: true, deepLink: true, back: true, svgKeyboard: true, noPageOverflow: true });
+    checks.push({ viewport, initialCounts: true, initialHistoryBack: true, contextCoreArrow: true, contextCoreGapPx, filterAndEmptySearch: true, reset: true, semanticKeysAndConditions: true, pinnedCitations: true, crossDomainRelation: true, deepLink: true, back: true, svgKeyboard: true, noPageOverflow: true });
   }
 } catch (error) {
   failures.push(error.stack || String(error));
