@@ -284,25 +284,15 @@ def find_mermaid_cli() -> List[str]:
     if mmdc_path:
         return [mmdc_path]
 
-    # Check bunx
-    bunx_candidates = [
-        shutil.which("bunx"),
-        "/home/ubuntu/.local/bin/bunx",
-        "/home/ubuntu/.bun/bin/bunx",
-    ]
-    for candidate in bunx_candidates:
-        if candidate and Path(candidate).is_file():
-            return [candidate, "@mermaid-js/mermaid-cli@12.0.0"]
-
-    # Check npx
-    npx_candidates = [
-        shutil.which("npx"),
-        "/home/ubuntu/.local/bin/npx",
-        "/home/ubuntu/.hermes/node/bin/npx",
-    ]
-    for candidate in npx_candidates:
-        if candidate and Path(candidate).is_file():
-            return [candidate, "--yes", "@mermaid-js/mermaid-cli@12.0.0"]
+    # shutil.which checks executability in this environment. Probing another
+    # user's home can fail before a valid PATH runner is considered.
+    for executable, arguments in (
+        ("bunx", ["@mermaid-js/mermaid-cli@12.0.0"]),
+        ("npx", ["--yes", "@mermaid-js/mermaid-cli@12.0.0"]),
+    ):
+        candidate = shutil.which(executable)
+        if candidate:
+            return [candidate, *arguments]
 
     raise RuntimeError(
         "Mermaid CLI runner not found. Please ensure '@mermaid-js/mermaid-cli' is accessible via mmdc, bunx, or npx."
