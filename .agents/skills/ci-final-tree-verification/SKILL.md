@@ -128,8 +128,8 @@ qualification. Frozen historical reports and execution input hashes stay intact.
 For assembled acceptance, collect `tests/` with `-o addopts=` before applying
 ordinary/live/benchmark markers. A green focused cohort does not cover omitted
 nodes. Use the verified product environment for product checks and the separate
-`documentation/.venv` with its own lock for documentation checks, as described in
-`documentation/README.md`; do not add rendering dependencies to the product
+`website/.venv` with its own lock for documentation checks, as described in
+`website/README.md`; do not add rendering dependencies to the product
 environment. Prepare the locked wheelhouse before offline packaging tests, and
 verify its manifest/lock and wheel digests. Dependency preparation is distinct
 from executing Provider acquisition.

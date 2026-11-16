@@ -76,17 +76,22 @@
     ".github/workflows/access-registry.yml"
   ],
   "documentation_inputs": [
-    "documentation/content/**",
-    "documentation/schema/**",
-    "documentation/overrides/**",
-    "documentation/tools/**",
-    "documentation/tests/**",
-    "documentation/pyproject.toml",
-    "documentation/uv.lock",
-    "documentation/mkdocs.yml",
-    "documentation/README.md",
-    "documentation/AGENTS.md",
-    "documentation/.gitignore",
+    "index.html",
+    "package.json",
+    "package-lock.json",
+    "vite.config.mjs",
+    "website/web/**",
+    "website/content/**",
+    "website/schema/**",
+    "website/overrides/**",
+    "website/tools/**",
+    "website/tests/**",
+    "website/pyproject.toml",
+    "website/uv.lock",
+    "website/mkdocs.yml",
+    "website/README.md",
+    "website/AGENTS.md",
+    "website/.gitignore",
     ".github/workflows/pages.yml"
   ]
 }

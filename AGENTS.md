@@ -10,7 +10,7 @@ documentation website. Choose the workflow from the requested change:
 | Task | Main sources and workflow |
 | --- | --- |
 | Product or data-model engineering | `src/`, `packages/`, canonical contracts in `docs/`, and their relevant tools/tests. Follow the accepted ADRs and the verified Python environment below. Isolated modeling pilots under `tools/schema-model/` retain their own environment and declared limits. |
-| Website content, layout or interaction | Root `index.html`, `documentation/web/`, `documentation/content/`, and documentation rendering tools/tests. Follow [documentation instructions](documentation/AGENTS.md) and [frontend instructions](documentation/web/AGENTS.md). |
+| Website content, layout or interaction | Root `index.html`, `website/web/`, `website/content/`, and documentation rendering tools/tests. Follow [documentation instructions](website/AGENTS.md) and [frontend instructions](website/web/AGENTS.md). |
 | A change spanning both | State the product and website scopes separately; update the authoritative contracts/inputs and their derived presentation as applicable, using each workspace's relevant checks. |
 
 Root `pyproject.toml`/`uv.lock` describe the Python product workspace;
@@ -51,7 +51,7 @@ meaningful verification. ADR 0035's product/documentation separation and accepte
 architecture and retirement decisions remain binding. These preferences do not
 authorize destructive operations, security-setting changes, merges or deployments.
 
-For documentation content refresh, see [documentation/AGENTS.md](documentation/AGENTS.md#content-structure-and-refresh).
+For documentation content refresh, see [website/AGENTS.md](website/AGENTS.md#content-structure-and-refresh).
 
 **Owner priority:** minimize avoidable token consumption and duplicate local or
 offline CI work. Apply the [efficient agent execution policy](#efficient-agent-execution).
@@ -77,7 +77,7 @@ offline CI work. Apply the [efficient agent execution policy](#efficient-agent-e
 - [Accepted design](docs/adr/0029-independent-access-store.md) defines five responsibility stores: Core, Context, Access, Operational and Search. This is a target boundary, not a count of databases opened by every startup.
 - The normal catalog path uses the implemented Core Schema 21, Operational 1 and Search 1; see [schema factories](src/repo_catalog/adapters/sqlite/schema.py) and [catalog initialization](src/repo_catalog/adapters/sqlite/store.py). P1 is opt-in: its [four-store factory subset](packages/runtime/src/repo_catalog/adapters/sqlite/p1_schema.py) and separate [Access factory](packages/access/src/repo_catalog/adapters/sqlite/access_schema.py) do not by themselves describe normal startup.
 - Reports must state what is counted (responsibility stores, factory entries, schemas, files or open connections), the source SHA, startup path and unverified scope. Do not equate these units.
-- Use the [task-oriented ADR index](docs/adr/README.md) and [documentation workspace](documentation/README.md). Authoritative contracts and machine inputs must track product changes; derived human documentation follows product work and does not block routine product checks ([ADR 0035](docs/adr/0035-independent-documentation-workspace.md)).
+- Use the [task-oriented ADR index](docs/adr/README.md) and [documentation workspace](website/README.md). Authoritative contracts and machine inputs must track product changes; derived human documentation follows product work and does not block routine product checks ([ADR 0035](docs/adr/0035-independent-documentation-workspace.md)).
 
 ## SQLite validation
 

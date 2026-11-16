@@ -20,7 +20,7 @@ def test_private_outputs_refuse_unsafe_targets_without_overwriting(tmp_path, att
     root.mkdir()
     outside = tmp_path / "product-state"
     outside.write_bytes(b"unchanged product sentinel")
-    parent = root / "documentation/.build/inputs"
+    parent = root / "website/.build/inputs"
     parent.mkdir(parents=True)
     target = parent / "documentation-inputs.json"
     if attack == "leaf-link":

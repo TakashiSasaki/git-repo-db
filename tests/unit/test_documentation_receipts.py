@@ -9,7 +9,7 @@ from scripts.documentation_receipts import DocumentationGap, complete_documentat
 
 
 @pytest.fixture
-def evidence(tmp_path):
+def evidence(tmp_path, request):
     root = tmp_path / "repository"
     root.mkdir()
 
@@ -45,9 +45,14 @@ def evidence(tmp_path):
     }
     mapping = root / "docs/implementation/documentation-separation-node-map.json"
     mapping.parent.mkdir(parents=True)
-    node = "documentation/tests/test_example.py::test_example"
-    mapping.write_text(json.dumps({"mapping": [{"current_nodes": [node]}]}))
-    lock = root / "documentation/uv.lock"
+    node = "website/tests/test_example.py::test_example"
+    mapping_node = (
+        node.replace("website/", "documentation/", 1)
+        if getattr(request, "param", "website") == "documentation"
+        else node
+    )
+    mapping.write_text(json.dumps({"mapping": [{"current_nodes": [mapping_node]}]}))
+    lock = root / "website/uv.lock"
     lock.parent.mkdir()
     lock.write_text("synthetic documentation lock")
     git("add", ".")
@@ -56,7 +61,7 @@ def evidence(tmp_path):
         "commit": git("rev-parse", "HEAD"),
         "tree": git("rev-parse", "HEAD^{tree}"),
     }
-    (root / "documentation/page.md").write_text("synthetic documentation")
+    (root / "website/page.md").write_text("synthetic documentation")
     git("add", ".")
     git("commit", "-qm", "synthetic documentation source")
     doc = {"commit": git("rev-parse", "HEAD"), "tree": git("rev-parse", "HEAD^{tree}")}
@@ -81,7 +86,7 @@ def evidence(tmp_path):
         (directory / "inventory.json").write_bytes(ir)
         (directory / "producer.json").write_bytes(producer)
         (directory / "tests.xml").write_text(
-            '<testsuite><testcase classname="documentation.tests.test_example" name="test_example"/></testsuite>'
+            '<testsuite><testcase classname="website.tests.test_example" name="test_example"/></testsuite>'
         )
         for i in range(6):
             (directory / f"command-{i}.log").write_text(
@@ -90,19 +95,19 @@ def evidence(tmp_path):
         commands = [
             [
                 "python",
-                "documentation/tools/build_docs_site.py",
+                "website/tools/build_docs_site.py",
                 "--product-source",
                 product["commit"],
                 "--documentation-source",
                 doc["commit"],
             ],
-            ["python", "-m", "pytest", "-q", "documentation/tests", "--collect-only"],
+            ["python", "-m", "pytest", "-q", "website/tests", "--collect-only"],
             [
                 "python",
                 "-m",
                 "pytest",
                 "-q",
-                "documentation/tests",
+                "website/tests",
                 "--junitxml=tests.xml",
             ],
             [
@@ -110,8 +115,8 @@ def evidence(tmp_path):
                 "-m",
                 "ruff",
                 "check",
-                "documentation/tools",
-                "documentation/tests",
+                "website/tools",
+                "website/tests",
             ],
             [
                 "python",
@@ -119,8 +124,8 @@ def evidence(tmp_path):
                 "ruff",
                 "format",
                 "--check",
-                "documentation/tools",
-                "documentation/tests",
+                "website/tools",
+                "website/tests",
             ],
         ]
         commands.append(
@@ -134,7 +139,7 @@ def evidence(tmp_path):
         value = {
             "schema_version": 1,
             "scope": "documentation",
-            "pytest_root": "documentation",
+            "pytest_root": "website",
             "full_acceptance": False,
             "status": "passed",
             "build_mode": "complete",
@@ -170,6 +175,11 @@ def verify(evidence, provider=lambda *args: None):
 def test_independent_matching_documentation_obligations_can_complete_conjunction(
     evidence,
 ):
+    assert verify(evidence)["status"] == "verified"
+
+
+@pytest.mark.parametrize("evidence", ["documentation"], indirect=True)
+def test_pinned_pre_rename_obligations_map_to_website_without_changing_source(evidence):
     assert verify(evidence)["status"] == "verified"
 
 
@@ -233,7 +243,7 @@ def test_missing_failed_changed_or_preview_evidence_cannot_complete_release(
         elif change == "changed-artifact":
             (path.parent / "tests.xml").write_text("altered evidence")
         elif change == "changed-command":
-            value["commands"][2][4] = "documentation/tests/one.py"
+            value["commands"][2][4] = "website/tests/one.py"
         elif change in {"missing-producer-input", "missing-executed-control"}:
             producer_path = path.parent / "producer.json"
             producer = json.loads(producer_path.read_text())
@@ -267,10 +277,10 @@ def test_nested_pytest_native_ids_are_canonically_mapped_without_dropping_nodes(
     for path in paths:
         value = json.loads(path.read_text())
         xml = path.parent / "tests.xml"
-        xml.write_text(xml.read_text().replace("documentation.tests.", "tests."))
+        xml.write_text(xml.read_text().replace("website.tests.", "tests."))
         collection = path.parent / "command-1.log"
         collection.write_text(
-            collection.read_text().replace("documentation/tests/", "tests/")
+            collection.read_text().replace("website/tests/", "tests/")
         )
         for name in ("tests.xml", "command-1.log"):
             value["artifact_sha256"][name] = sha((path.parent / name).read_bytes())

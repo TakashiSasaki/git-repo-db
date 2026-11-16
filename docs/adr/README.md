@@ -9,7 +9,7 @@ Read the current scope before implementation. This index describes accepted targ
 - **Context and Exchange:** [ADR 0030](0030-context-repository-relations-and-selective-exchange.md) and [ADR 0031](0031-generalized-context-resources.md).
 - **RefObservation, Claims and shared Notes Mapping:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md).
 - **Validation and distributions:** [ADR 0001](0001-validation-lifecycle-architecture.md), [ADR 0032](0032-environment-sqlite-validation.md), [ADR 0033](0033-minimal-product-sdist.md), and [ADR 0034](0034-repository-test-and-ci-efficiency.md).
-- **Documentation boundary:** [ADR 0035](0035-independent-documentation-workspace.md) and the [documentation workspace](../../documentation/README.md).
+- **Documentation boundary:** [ADR 0035](0035-independent-documentation-workspace.md) and the [documentation workspace](../../website/README.md).
 
 Accepted design, implementation and executed verification are distinct. Follow scoped supersessions and the actual startup path when reporting current behavior.
 

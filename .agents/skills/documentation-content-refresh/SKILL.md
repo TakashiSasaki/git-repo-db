@@ -5,7 +5,7 @@ description: Refresh derived project documentation against a selected product re
 
 # Bounded documentation content refresh
 
-Follow [documentation/AGENTS.md](../../../documentation/AGENTS.md), root AGENTS.md
+Follow [website/AGENTS.md](../../../website/AGENTS.md), root AGENTS.md
 and ADR 0035. This procedure grants no merge, publication, allowlist expansion,
 or change to product or design authority.
 
@@ -44,7 +44,7 @@ require every product change to wait for a documentation build.
 
 ## Directory reconciliation
 
-Before moving a guide, run `documentation/.venv/bin/python documentation/tools/inventory_content.py`
+Before moving a guide, run `website/.venv/bin/python website/tools/inventory_content.py`
 from the repository root to enumerate tracked roles. Map every changed path's imports, generated inputs, tests,
 workflow filters and links. Keep canonical contracts, machine-consumed inputs and
 historical evidence in their existing locations unless a separately reviewed

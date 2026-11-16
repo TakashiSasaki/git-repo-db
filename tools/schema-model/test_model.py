@@ -16,7 +16,7 @@ class ModelTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data, cls.producer = model.load_input(
-            model.ROOT / "documentation/.build/inputs/all-formats"
+            model.ROOT / "website/.build/inputs/all-formats"
         )
         cls.graph = model.project(cls.data, cls.producer)
         cls.catalog = json.loads((model.HERE / "constraints.json").read_text())
@@ -109,7 +109,7 @@ class ModelTests(unittest.TestCase):
             model.expected_targets(data, "x")
 
     def test_input_bindings(self):
-        original = model.ROOT / "documentation/.build/inputs/all-formats"
+        original = model.ROOT / "website/.build/inputs/all-formats"
         for field, value in [("ir_sha256", "0" * 64), ("inventory_profile", "normal")]:
             with self.subTest(field=field), tempfile.TemporaryDirectory() as d:
                 p = Path(d)
@@ -143,7 +143,7 @@ class ModelTests(unittest.TestCase):
         self.assertTrue(model.mapping_errors(graph, self.data, self.producer))
 
     def test_immutable_negative_source_binding(self):
-        original = model.ROOT / "documentation/.build/inputs/all-formats"
+        original = model.ROOT / "website/.build/inputs/all-formats"
         with tempfile.TemporaryDirectory() as d:
             p = Path(d)
             (p / "inventory.json").write_bytes(

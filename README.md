@@ -2,11 +2,11 @@
 
 任意のGit取得先とGitHubのPR・通常IssueをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
 Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永続化します。PR・文書・スレッド・Source、通常Issueとそのコメント、レビュー概要とレビューコメントは、必要な証拠を伴う各リソースの最新受理状態を保存します。
-通常ランタイムは catalog3、現在の schema version は **21** です。PR・文書・スレッド・Sourceの現在状態と、Git object・取得範囲の証拠を直接所有者に結び付けます。絶対時刻は Unix epoch マイクロ秒の INTEGER です。[現在のランタイム案内](documentation/current-runtime-reference.md)、[Schema 20の実装・検証記録（歴史資料）](docs/phase2/publication-free-implementation.md)、[Schema 21対応表（保存済み監査）](docs/phase2/publication-free-schema-map.json)、[packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)を参照してください。旧開発 DB と v2 importer は対応しません。過去の検証記録は新形式の最終受入を意味しません。
+通常ランタイムは catalog3、現在の schema version は **21** です。PR・文書・スレッド・Sourceの現在状態と、Git object・取得範囲の証拠を直接所有者に結び付けます。絶対時刻は Unix epoch マイクロ秒の INTEGER です。[現在のランタイム案内](website/current-runtime-reference.md)、[Schema 20の実装・検証記録（歴史資料）](docs/phase2/publication-free-implementation.md)、[Schema 21対応表（保存済み監査）](docs/phase2/publication-free-schema-map.json)、[packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)を参照してください。旧開発 DB と v2 importer は対応しません。過去の検証記録は新形式の最終受入を意味しません。
 
 このルートには Python 製品と、そのデータモデルを解説する静的ウェブサイトの両方があります。
 製品の開発・実行は `pyproject.toml` と下記の Python 手順、意味モデル可視化の UI 編集は
-`package.json` と [frontend ガイド](documentation/README.md#semantic-explorer-frontend-and-external-editors)を使います。
+`package.json` と [frontend ガイド](website/README.md#semantic-explorer-frontend-and-external-editors)を使います。
 
 ```bash
 npm ci
@@ -16,9 +16,9 @@ npm run preview   # frontend のビルド結果を確認
 ```
 
 この npm ビルドは製品やサイト全体のビルドではありません。既存の全体サイトは引き続き
-[独立した MkDocs ワークスペース](documentation/README.md)で作成します。
+[独立した MkDocs ワークスペース](website/README.md)で作成します。
 
-`docs/` はADR・設計契約・検証証拠などの正本、`documentation/` は閲覧用サイトの
+`docs/` はADR・設計契約・検証証拠などの正本、`website/` は閲覧用サイトの
 解説・画面・ビルドツールです。サイトの説明は正本を参照する派生資料として管理します。
 
 ## ドキュメント・スキーマ可視化
@@ -30,7 +30,7 @@ npm run preview   # frontend のビルド結果を確認
 - **Accepted target architecture (design-only, not yet fully activated)**: [ADR 0029 — independent Git Core, Context, Access, Operational and Search](docs/adr/0029-independent-access-store.md), preserving INSERT-only Core and durable Context while separating Access settings. ADR 0029 replaces historical ADR 0003; see the [transition plan](docs/architecture/git-core-context-transition-plan.md) and [retirement record](docs/implementation/adr-0029-accepted-retirement-20261019.md).
 - **Accepted ADR governance (not a runtime change)**: [ADR 0011](docs/adr/0011-adr-governance.md), [shared operating policy](docs/adr/policy.md) and [ADR index](docs/adr/README.md); the optional skill and templates are documented there.
 - **Currently implemented Three-Store baseline (ADR 0002)**: [docs/adr/0002-three-store-boundary-architecture.md](docs/adr/0002-three-store-boundary-architecture.md)
-- **サイト運用保守ガイド**: [documentation/README.md](documentation/README.md)
+- **サイト運用保守ガイド**: [website/README.md](website/README.md)
 
 ## 開発・導入
 
@@ -187,6 +187,6 @@ scripts/local-run.sh python scripts/demo.py \
 実アカウントを不要にし、親pytestと子Pythonプロセスの外部通信を遮断します。Gitはfile transportに限定します。
 demoは新規/空directoryにfixtureを生成し、収集、更新、clone実回収、offline照会、再索引、backup/別state復元を検証します。
 
-実装済みの通常ランタイムと opt-in 境界は[現行ランタイム案内](documentation/current-runtime-reference.md)を参照してください。[CLI の Schema 20 記録](docs/cli.md)、[旧データモデル](docs/data-model.md)、[実装状況の監査記録](docs/implementation-status.md)は日付・対象 revision を持つ履歴です。その他、[アーキテクチャ](docs/architecture.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)も参照してください。
+実装済みの通常ランタイムと opt-in 境界は[現行ランタイム案内](website/current-runtime-reference.md)を参照してください。[CLI の Schema 20 記録](docs/cli.md)、[旧データモデル](docs/data-model.md)、[実装状況の監査記録](docs/implementation-status.md)は日付・対象 revision を持つ履歴です。その他、[アーキテクチャ](docs/architecture.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)も参照してください。
 
 Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 20の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。

@@ -38,7 +38,7 @@ def checked_receipt(path, context, product, ir_hash, root):
     if (
         type(value.get("schema_version")) is not int
         or value.get("schema_version") != 1
-        or value.get("pytest_root") != "documentation"
+        or value.get("pytest_root") != "website"
         or value.get("full_acceptance") is not False
         or value.get("scope") != "documentation"
         or value.get("status") != "passed"
@@ -58,7 +58,7 @@ def checked_receipt(path, context, product, ir_hash, root):
         root, "rev-parse", commit + "^{tree}"
     ).decode().strip() != doc.get("tree"):
         raise DocumentationGap("Missing documentation source identity")
-    lock = git(root, "show", commit + ":documentation/uv.lock")
+    lock = git(root, "show", commit + ":website/uv.lock")
     if sha(lock) != value.get("documentation_lock_sha256"):
         raise DocumentationGap("Documentation dependency lock mismatch")
     artifacts = value.get("artifact_sha256", {})
@@ -119,7 +119,7 @@ def checked_receipt(path, context, product, ir_hash, root):
     cases = ET.parse(path.parent / "tests.xml").findall(".//testcase")
 
     def canonical(node):
-        return "documentation/" + node if node.startswith("tests/") else node
+        return "website/" + node if node.startswith("tests/") else node
 
     actual = [
         canonical(c.attrib["classname"].replace(".", "/") + ".py::" + c.attrib["name"])
@@ -128,7 +128,7 @@ def checked_receipt(path, context, product, ir_hash, root):
     collected = [
         canonical(x.strip())
         for x in (path.parent / "command-1.log").read_text().splitlines()
-        if x.startswith(("documentation/tests/", "tests/")) and "::" in x
+        if x.startswith(("website/tests/", "tests/")) and "::" in x
     ]
     if (
         not nodes
@@ -151,10 +151,14 @@ def checked_receipt(path, context, product, ir_hash, root):
         )
     )
     obligations = {
-        n
+        # A selected product revision may predate the workspace rename. Keep
+        # its pinned mapping intact while locating the same obligation now.
+        n.replace("documentation/", "website/", 1)
+        if n.startswith("documentation/")
+        else n
         for row in mapping["mapping"]
         for n in row["current_nodes"]
-        if n.startswith("documentation/")
+        if n.startswith(("website/", "documentation/"))
     }
     if not obligations or not obligations.issubset(nodes):
         raise DocumentationGap("Historical documentation obligations missing")
@@ -167,22 +171,22 @@ def checked_receipt(path, context, product, ir_hash, root):
         raise DocumentationGap("Incomplete documentation execution commands")
     expected = [
         [
-            "documentation/tools/build_docs_site.py",
+            "website/tools/build_docs_site.py",
             "--product-source",
             product["commit"],
             "--documentation-source",
             commit,
         ],
-        ["-m", "pytest", "-q", "documentation/tests", "--collect-only"],
+        ["-m", "pytest", "-q", "website/tests", "--collect-only"],
         None,
-        ["-m", "ruff", "check", "documentation/tools", "documentation/tests"],
+        ["-m", "ruff", "check", "website/tools", "website/tests"],
         [
             "-m",
             "ruff",
             "format",
             "--check",
-            "documentation/tools",
-            "documentation/tests",
+            "website/tools",
+            "website/tests",
         ],
         ["scripts/check_sqlite_validation_policy.py", "--scope", "documentation"],
     ]
@@ -190,7 +194,7 @@ def checked_receipt(path, context, product, ir_hash, root):
         if commands[i][1:] != expected[i]:
             raise DocumentationGap("Documentation execution scope changed")
     if (
-        commands[2][1:5] != ["-m", "pytest", "-q", "documentation/tests"]
+        commands[2][1:5] != ["-m", "pytest", "-q", "website/tests"]
         or commands[2][5:-1] not in ([], ["-n", "2", "--dist", "worksteal"])
         or not commands[2][-1].startswith("--junitxml=")
         or Path(commands[2][-1].split("=", 1)[1]).name != "tests.xml"
