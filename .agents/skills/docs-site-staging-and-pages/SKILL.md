@@ -161,3 +161,20 @@ This static check does not execute dynamic navigation. Run the optional
 `website/tools/test_design_browser.mjs` against a local preview to validate
 selection, relationship navigation, return paths and cited ADR routes at desktop
 and mobile widths. Preserve raw logs and record unverified browser scope.
+
+## 11. Find renderer executables through the current PATH
+
+A hosted Pages build may raise `PermissionError` while checking another user's
+home even though a working `npx` exists later in the search. Do not assume a
+local `/home/ubuntu` layout on GitHub-hosted or external-editor environments.
+Use `shutil.which` for `mmdc`, `bunx`, then `npx`; its executable check avoids
+unnecessary filesystem probes. Report missing tools rather than borrowing a
+foreign user's installation.
+
+The bounded regression is
+`website/.venv/bin/python -m pytest -q -n 2 website/tests/test_build_docs_site.py -k mermaid_runner`.
+It models an inaccessible foreign path with a valid PATH runner; the old finder
+fails before reaching that runner. This verifies discovery only, not package
+installation, diagram rendering, or publication. For hosted failures, inspect
+the failed command's retained private log before rerunning an unchanged job;
+a generic build failure message alone does not identify its cause.

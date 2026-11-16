@@ -15,6 +15,7 @@ from tools.build_docs_site import (
     DOCS_SCHEMA_DIR,
     MERMAID_DIAGRAM_SLUGS,
     check_schema_freshness,
+    find_mermaid_cli,
     get_git_metadata,
     stage_documentation,
     validate_critical_endpoints,
@@ -35,6 +36,26 @@ def test_git_metadata():
     assert "tree_sha" in meta and len(meta["tree_sha"]) >= 7
     assert "short_commit" in meta
     assert "short_tree" in meta
+
+
+def test_mermaid_runner_uses_path_without_probing_another_users_home(monkeypatch):
+    from tools import build_docs_site
+
+    monkeypatch.setattr(
+        build_docs_site.shutil,
+        "which",
+        lambda command: "/usr/bin/npx" if command == "npx" else None,
+    )
+
+    def inaccessible_home(path):
+        raise PermissionError("Another user's home is not a tool search path")
+
+    monkeypatch.setattr(Path, "is_file", inaccessible_home)
+    assert find_mermaid_cli() == [
+        "/usr/bin/npx",
+        "--yes",
+        "@mermaid-js/mermaid-cli@12.0.0",
+    ]
 
 
 def test_staging_allowlist_and_transformation():
