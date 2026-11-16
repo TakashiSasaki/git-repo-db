@@ -36,6 +36,7 @@ await new Promise((done) => server.listen(0, "127.0.0.1", done));
 const base = `http://127.0.0.1:${server.address().port}`;
 const failures = [];
 const checks = [];
+const narrowFitChecks = [];
 let browser;
 try {
   browser = await puppeteer.launch({ headless: true, executablePath: process.env.DOCS_BROWSER || "/usr/bin/chromium", args: ["--no-sandbox", "--disable-setuid-sandbox"] });
@@ -75,6 +76,71 @@ try {
     assert(geometry.gap > 0.1 && geometry.gap < geometry.targetWidth * 0.2, "Context→Core endpoint must remain just outside Core, leaving its arrowhead visible");
     return geometry.gap;
   }
+  async function applicationMap() {
+    assert.equal(await count(".semantic-cluster"), model.domains.length);
+    assert.equal(await count(".semantic-node"), model.concepts.length);
+    assert.equal(await count(".semantic-edge"), model.relations.length);
+    const ids = await page.$$eval(".semantic-node", (nodes) => nodes.map((node) => node.dataset.mapConcept).sort());
+    assert.deepEqual(ids, model.concepts.map((c) => c.id).sort());
+    // Arrow endpoints must stay outside their target cards at every angle.
+    const outside = await page.$$eval(".semantic-edge", (edges) => edges.every((edge) => {
+      const path = edge.querySelector(".edge-line");
+      const point = path.getPointAtLength(path.getTotalLength());
+      const screen = new DOMPoint(point.x, point.y).matrixTransform(path.getScreenCTM());
+      const rect = document.querySelector(`.semantic-node[data-map-concept="${edge.dataset.target}"] rect`).getBoundingClientRect();
+      return screen.x < rect.left || screen.x > rect.right || screen.y < rect.top || screen.y > rect.bottom;
+    }));
+    assert(outside, "Every semantic arrow must end outside its target card");
+    const path = model.reading_paths.find((p) => p.id === "access-request");
+    await page.select("#reading-path", path.id);
+    await selected(path.steps[0]);
+    assert.equal(await count("#path-guide [data-map-concept]"), path.steps.length);
+    assert.equal(await count(".semantic-node.in-path"), new Set(path.steps).size);
+    assert.equal(await count(".semantic-edge.emphasized"), path.steps.length - 1);
+    assert(await page.$eval("#path-guide", (node) => node.textContent.includes("読む順番")));
+    await page.select("#map-concept", "approval");
+    await selected("approval");
+    assert.equal(await page.$eval("#map-inspector > h3", (node) => node.textContent), model.concepts.find((c) => c.id === "approval").label);
+    assert(new URL(page.url()).hash.includes("view=map"));
+    await page.goBack();
+    await selected(path.steps[0]);
+    assert.equal(await page.$eval("#reading-path", (node) => node.value), path.id);
+    await page.goForward();
+    await selected("approval");
+    await page.select("#relation-filter", "execution");
+    assert.equal(await count(".semantic-edge:not(.is-hidden)"), model.relations.filter((r) => r.kind === "execution").length);
+    await click("#map-nearby");
+    assert.equal(await count(".semantic-edge:not(.is-hidden)"), model.relations.filter((r) => r.kind === "execution" && [r.source, r.target].includes("approval")).length);
+    // The complete inspector list remains available under a diagram filter.
+    assert.equal(await count("#map-inspector .map-relations > li"), model.relations.filter((r) => [r.source, r.target].includes("approval")).length);
+    const index = model.relations.findIndex((r) => r.source === "approval" && r.target === "acquisition-request");
+    await page.$eval(`.semantic-edge[data-relation="${index}"]`, (node) => node.focus());
+    await page.keyboard.press("Enter");
+    await page.waitForSelector(".selected-relation");
+    assert(await page.$eval(".selected-relation", (node, note) => node.textContent.includes(note), model.relations[index].note));
+    const citations = await page.$$eval(".selected-relation .sources a", (nodes) => nodes.map((node) => node.href));
+    assert(citations.length && citations.every((href) => href.includes(`/blob/${model.source_revision}/`)));
+    await click("#map-reset");
+    await selected("repository");
+    assert.equal(await count(".semantic-edge:not(.is-hidden)"), model.relations.length);
+    const fits = await page.evaluate(() => {
+      const graph = document.getElementById("semantic-graph"), view = document.getElementById("map-viewport");
+      return graph.getBoundingClientRect().width <= view.clientWidth + 1 && graph.getBoundingClientRect().height <= view.clientHeight + 1;
+    });
+    assert(fits, "Fit control must fit the full graph inside its scroll viewport");
+    const before = await page.$eval("#map-zoom", (node) => parseInt(node.value));
+    await click("#map-zoom-in");
+    assert(await page.$eval("#map-zoom", (node) => parseInt(node.value)) > before);
+    await page.$eval('.semantic-node[data-map-concept="git-claim"]', (node) => node.focus());
+    await page.keyboard.press("Space");
+    await selected("git-claim");
+    await page.select("#map-concept", "worktree-external-link");
+    const href = page.url();
+    await page.goto(href, { waitUntil: "networkidle0" });
+    await selected("worktree-external-link");
+    assert.equal(await page.$eval('.semantic-node[data-map-concept="worktree-external-link"]', (node) => node.getAttribute("aria-pressed")), "true");
+    await noOverflow();
+  }
   async function capture(selector, label, width) {
     // Capture the intended section after scrolling, independently of smooth UI
     // animation. A screenshot taken immediately after scrollIntoView races it.
@@ -102,6 +168,11 @@ try {
     assert.equal(await count(".result-grid article"), 4);
     // Returning to the initial empty hash must restore the initial selection,
     // rather than leave the last selected concept under an unrelated URL.
+    await selected("repository");
+    await applicationMap();
+    await capture("#model-map", "map", viewport.width);
+    // Start the pre-existing explorer checks from a fresh initial URL.
+    await page.goto(base + route, { waitUntil: "networkidle0" });
     await selected("repository");
     await click('.concept-card[data-concept="git-object"]');
     await selected("git-object");
@@ -147,7 +218,24 @@ try {
     assert.equal(await count(".concept-card"), model.concepts.filter((concept) => concept.domain === "worktrees").length);
     assert.equal(await page.$eval('.graph-node[data-domain="worktrees"]', (node) => node.classList.contains("active")), true);
     await noOverflow();
-    checks.push({ viewport, initialCounts: true, initialHistoryBack: true, contextCoreArrow: true, contextCoreGapPx, filterAndEmptySearch: true, reset: true, semanticKeysAndConditions: true, pinnedCitations: true, crossDomainRelation: true, deepLink: true, back: true, svgKeyboard: true, noPageOverflow: true });
+    checks.push({ viewport, initialCounts: true, wholeApplicationMap: true, semanticArrowGeometry: true, readingPath: true, relationFilter: true, mapHistory: true, mapKeyboard: true, mapZoomAndFit: true, mapDeepLink: true, initialHistoryBack: true, contextCoreArrow: true, contextCoreGapPx, filterAndEmptySearch: true, reset: true, semanticKeysAndConditions: true, pinnedCitations: true, crossDomainRelation: true, deepLink: true, back: true, svgKeyboard: true, noPageOverflow: true });
+  }
+  // These widths require <25% zoom; a fixed minimum can silently defeat Fit
+  // even while the wider phone interaction cohort passes.
+  for (const width of [320, 360]) {
+    await page.setViewport({ width, height: 800 });
+    await page.goto(base + route, { waitUntil: "networkidle0" });
+    await page.waitForSelector(".semantic-node");
+    await click("#map-fit");
+    const geometry = await page.evaluate(() => {
+      const graph = document.getElementById("semantic-graph").getBoundingClientRect();
+      const view = document.getElementById("map-viewport");
+      return { width: graph.width, height: graph.height, viewportWidth: view.clientWidth, viewportHeight: view.clientHeight, scrollWidth: view.scrollWidth };
+    });
+    assert(geometry.width <= geometry.viewportWidth + 1 && geometry.height <= geometry.viewportHeight + 1, `Fit must contain the graph at ${width}px`);
+    assert(geometry.scrollWidth <= geometry.viewportWidth + 1, `Fit must remove internal horizontal overflow at ${width}px`);
+    await noOverflow();
+    narrowFitChecks.push({ width, geometry, fit: true, noPageOverflow: true });
   }
 } catch (error) {
   failures.push(error.stack || String(error));
@@ -155,7 +243,7 @@ try {
   if (browser) await browser.close();
   await new Promise((done) => server.close(done));
 }
-const summary = { status: failures.length ? "fail" : "pass", variant, route, checks, failures };
+const summary = { status: failures.length ? "fail" : "pass", variant, route, checks, narrowFitChecks, failures };
 writeFileSync(join(evidence, `semantic-${variant}-summary.json`), JSON.stringify(summary, null, 2) + "\n");
 console.log(JSON.stringify({ status: summary.status, variant, viewports: checks.length, failures: failures.length, evidence: `website/.build/browser-evidence/semantic-${variant}-summary.json` }));
 if (failures.length) process.exitCode = 1;

@@ -61,6 +61,16 @@ def load_model(path: Path = MODEL) -> dict:
             "execution",
         }:
             raise ValueError("Unknown semantic relation kind")
+    paths = model["reading_paths"]
+    if not paths or len({p["id"] for p in paths}) != len(paths):
+        raise ValueError("Missing or duplicate reading path")
+    pairs = {frozenset((r["source"], r["target"])) for r in model["relations"]}
+    for path in paths:
+        steps = path["steps"]
+        if len(steps) < 2 or any(step not in concepts for step in steps):
+            raise ValueError("Unknown reading path concept")
+        if any(frozenset((a, b)) not in pairs for a, b in zip(steps, steps[1:])):
+            raise ValueError("Reading path must follow registered relations")
     for stream in model["workstreams"]:
         if stream["status"] not in {"implemented", "partial", "not-implemented"}:
             raise ValueError("Unknown RDF workstream status")
@@ -77,6 +87,7 @@ def load_model(path: Path = MODEL) -> dict:
     for item in [
         *model["domains"],
         *concepts.values(),
+        *model["relations"],
         *model["layers"],
         *model["workstreams"],
         *model["result_families"],
