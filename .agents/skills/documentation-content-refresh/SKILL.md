@@ -52,3 +52,24 @@ contract authorizes change. Preserve historical body bytes when updating navigat
 adding any new file, and run the ownership/link tests;
 never classify an unknown location by guessing. Review the final file inventory
 and any exception rather than assuming a directory name establishes authority.
+
+## Shared interactive diagrams
+
+For semantic explorer interaction/layout changes, check both the root Vite build
+and the MkDocs renderer. Use `website/tools/test_semantic_browser.mjs` with
+`DOCS_SITE_DIR=dist SEMANTIC_ROUTE=/` for Vite, and with `DOCS_SITE_DIR` pointing
+to the built site for MkDocs (default route `/design/semantic/`). Supply an
+available Chromium through `DOCS_BROWSER` and a separately installed Puppeteer
+through `DOCS_PUPPETEER_MODULE`; keep browser tooling out of the Python product.
+
+A verified narrow-screen failure let 375px pass while Fit clipped the SVG at
+360px: a fixed minimum zoom exceeded the scale required by the actual viewport.
+Keep the fit scale reachable below manual zoom defaults. Check the SVG's rendered
+width/height and the scroll viewport's internal overflow at 320px and 360px,
+in addition to wider interaction checks. Page-level overflow alone misses a
+clipped diagram inside an intentionally scrollable region. This procedure is
+for changed diagram behavior, not a browser gate on unrelated prose updates.
+
+Cite the meaning of a relation directly, rather than only the existence of its
+endpoints. For example, a typed Context-to-Git reference and the non-authority of
+a Search projection need their code/decision clauses, not just key/table shapes.

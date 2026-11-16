@@ -116,14 +116,16 @@ export function renderApp(model) {
 
   const viewport = document.getElementById("map-viewport");
   let mapScale = 1;
+  const minimumMapScale = () => Math.min(0.25, viewport.clientWidth / mapWidth, viewport.clientHeight / mapHeight);
   function setMapScale(value, keepCenter = true) {
     const cx = (viewport.scrollLeft + viewport.clientWidth / 2) / mapScale;
     const cy = (viewport.scrollTop + viewport.clientHeight / 2) / mapScale;
-    mapScale = Math.max(0.25, Math.min(1.75, value));
+    // Fit must remain possible even when a narrow viewport needs <25% zoom.
+    mapScale = Math.max(minimumMapScale(), Math.min(1.75, value));
     graph.style.width = `${mapWidth * mapScale}px`;
     graph.style.height = `${mapHeight * mapScale}px`;
     document.getElementById("map-zoom").textContent = `${Math.round(mapScale * 100)}%`;
-    document.getElementById("map-zoom-out").disabled = mapScale <= 0.25;
+    document.getElementById("map-zoom-out").disabled = mapScale <= minimumMapScale();
     document.getElementById("map-zoom-in").disabled = mapScale >= 1.75;
     if (keepCenter) viewport.scrollTo({ left: cx * mapScale - viewport.clientWidth / 2, top: cy * mapScale - viewport.clientHeight / 2, behavior: "instant" });
   }

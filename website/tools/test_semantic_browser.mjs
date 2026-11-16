@@ -36,6 +36,7 @@ await new Promise((done) => server.listen(0, "127.0.0.1", done));
 const base = `http://127.0.0.1:${server.address().port}`;
 const failures = [];
 const checks = [];
+const narrowFitChecks = [];
 let browser;
 try {
   browser = await puppeteer.launch({ headless: true, executablePath: process.env.DOCS_BROWSER || "/usr/bin/chromium", args: ["--no-sandbox", "--disable-setuid-sandbox"] });
@@ -219,13 +220,30 @@ try {
     await noOverflow();
     checks.push({ viewport, initialCounts: true, wholeApplicationMap: true, semanticArrowGeometry: true, readingPath: true, relationFilter: true, mapHistory: true, mapKeyboard: true, mapZoomAndFit: true, mapDeepLink: true, initialHistoryBack: true, contextCoreArrow: true, contextCoreGapPx, filterAndEmptySearch: true, reset: true, semanticKeysAndConditions: true, pinnedCitations: true, crossDomainRelation: true, deepLink: true, back: true, svgKeyboard: true, noPageOverflow: true });
   }
+  // These widths require <25% zoom; a fixed minimum can silently defeat Fit
+  // even while the wider phone interaction cohort passes.
+  for (const width of [320, 360]) {
+    await page.setViewport({ width, height: 800 });
+    await page.goto(base + route, { waitUntil: "networkidle0" });
+    await page.waitForSelector(".semantic-node");
+    await click("#map-fit");
+    const geometry = await page.evaluate(() => {
+      const graph = document.getElementById("semantic-graph").getBoundingClientRect();
+      const view = document.getElementById("map-viewport");
+      return { width: graph.width, height: graph.height, viewportWidth: view.clientWidth, viewportHeight: view.clientHeight, scrollWidth: view.scrollWidth };
+    });
+    assert(geometry.width <= geometry.viewportWidth + 1 && geometry.height <= geometry.viewportHeight + 1, `Fit must contain the graph at ${width}px`);
+    assert(geometry.scrollWidth <= geometry.viewportWidth + 1, `Fit must remove internal horizontal overflow at ${width}px`);
+    await noOverflow();
+    narrowFitChecks.push({ width, geometry, fit: true, noPageOverflow: true });
+  }
 } catch (error) {
   failures.push(error.stack || String(error));
 } finally {
   if (browser) await browser.close();
   await new Promise((done) => server.close(done));
 }
-const summary = { status: failures.length ? "fail" : "pass", variant, route, checks, failures };
+const summary = { status: failures.length ? "fail" : "pass", variant, route, checks, narrowFitChecks, failures };
 writeFileSync(join(evidence, `semantic-${variant}-summary.json`), JSON.stringify(summary, null, 2) + "\n");
 console.log(JSON.stringify({ status: summary.status, variant, viewports: checks.length, failures: failures.length, evidence: `website/.build/browser-evidence/semantic-${variant}-summary.json` }));
 if (failures.length) process.exitCode = 1;
