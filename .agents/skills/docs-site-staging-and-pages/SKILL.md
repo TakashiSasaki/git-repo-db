@@ -7,7 +7,7 @@ description: Stage, build, and publish developer documentation sites for multi-s
 
 This procedure grants no publication permission. Follow the explicit current
 task and the existing approved staging allowlist in
-[`documentation/tools/build_docs_site.py`](../../../documentation/tools/build_docs_site.py). New accepted
+[`website/tools/build_docs_site.py`](../../../website/tools/build_docs_site.py). New accepted
 ADRs, implementation reports, executable spikes or skill updates do not become
 public automatically. Do not broaden that allowlist or change Pages settings
 while merely reconciling accepted architecture or documenting experiments.
@@ -23,7 +23,7 @@ Directly pointing MkDocs `docs_dir` to the repository `docs/` or building the re
 
 ### Rule & Invariant
 - **Never publish unvetted repository files**: Build through an explicit staging directory (`.build/docs-source/`).
-- Preserve the approved public document set selected by the current staging code. The current ADR set is selected explicitly by `documentation/tools/adr_publication.py` and checked against the accepted index. The separately cited five-store model and normal three-store schema viewer have different inputs. A later ADR or implementation report does not automatically enter the public set.
+- Preserve the approved public document set selected by the current staging code. The current ADR set is selected explicitly by `website/tools/adr_publication.py` and checked against the accepted index. The separately cited five-store model and normal three-store schema viewer have different inputs. A later ADR or implementation report does not automatically enter the public set.
 - Validate the generated distribution (`site/`) with an automated allowlist checker verifying file extensions (`.html`, `.css`, `.js`, `.svg`, `.dbml`, `.json`) and rejecting forbidden patterns (`*.sqlite3`, `*.py`, `*.sh`, `*.key`, `*.pem`, `*.env*`).
 
 ---
@@ -31,12 +31,12 @@ Directly pointing MkDocs `docs_dir` to the repository `docs/` or building the re
 ## 2. Standalone HTML Viewer & Index Collision Avoidance
 
 ### Symptom
-A documentation directory contains both `documentation/schema/README.md` and `documentation/schema/index.html`. MkDocs transforms `README.md` into `index.html`, causing a filename collision that either overwrites the standalone workbench or breaks the directory index.
+A documentation directory contains both `website/schema/README.md` and `website/schema/index.html`. MkDocs transforms `README.md` into `index.html`, causing a filename collision that either overwrites the standalone workbench or breaks the directory index.
 
 ### Rule & Invariant
 - **Partition URLs during staging**:
-  - Stage `documentation/schema/README.md` as `schema/index.md` (serving the schema overview at `/schema/`).
-  - Stage `documentation/schema/index.html` as `schema/viewer/index.html` (serving the standalone viewer at `/schema/viewer/`).
+  - Stage `website/schema/README.md` as `schema/index.md` (serving the schema overview at `/schema/`).
+  - Stage `website/schema/index.html` as `schema/viewer/index.html` (serving the standalone viewer at `/schema/viewer/`).
 - Preserve the standalone viewer's self-contained HTML/CSS/JS without wrapping it in MkDocs theme templates.
 - Update internal navigation links in `schema/index.md` to reference `viewer/index.html`.
 
@@ -121,7 +121,7 @@ Writing `site/` without a leading slash in `.gitignore` causes Git to ignore any
 2. **Icons Specification**:
    - Vector master: SVG icon (`icon.svg`) and maskable SVG (`icon-maskable.svg` with 80% safe zone).
    - High-resolution PNGs: 192x192, 512x512, 180x180 (Apple touch icon), 32x32, 16x16.
-   - Generated reproducibly via `documentation/tools/generate_pwa_icons.js` using Puppeteer.
+   - Generated reproducibly via `website/tools/generate_pwa_icons.js` using Puppeteer.
 3. **Template & Viewer Injection**:
    - Inject `<link rel="manifest">`, `<link rel="apple-touch-icon">`, and `<meta name="theme-color">` via `overrides/main.html` for MkDocs pages.
    - Inject identical head tags during staging for the standalone schema viewer at `/schema/viewer/index.html`.
@@ -156,8 +156,8 @@ A standalone viewer builds links in JavaScript template strings. A regex over th
 entire HTML falsely reports `${route()}` as a missing file. Parse actual HTML
 `href` attributes with `HTMLParser`; script text is not an element. Keep a positive
 missing-HTML-link counterexample alongside the ignored-script counterexample:
-`documentation/.venv/bin/python -m pytest -q documentation/tests/test_build_docs_site.py -k link`.
+`website/.venv/bin/python -m pytest -q website/tests/test_build_docs_site.py -k link`.
 This static check does not execute dynamic navigation. Run the optional
-`documentation/tools/test_design_browser.mjs` against a local preview to validate
+`website/tools/test_design_browser.mjs` against a local preview to validate
 selection, relationship navigation, return paths and cited ADR routes at desktop
 and mobile widths. Preserve raw logs and record unverified browser scope.

@@ -133,13 +133,13 @@ Diagrams represent cross-store references (e.g. `operational_identity.catalog_db
 ### Verification Commands
 ```bash
 # Verify that generated outputs match authoritative DDL without writing to disk:
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check
+uv run --project website --no-sync python website/tools/schema_viz.py --ir website/.build/inputs/inventory.json --check
 
 # Regenerate all visual representations:
-uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --format all
+uv run --project website --no-sync python website/tools/schema_viz.py --ir website/.build/inputs/inventory.json --format all
 
 # Run focused structural tests:
-uv run --project documentation --no-sync pytest documentation/tests/test_schema_viz.py
+uv run --project website --no-sync pytest website/tests/test_schema_viz.py
 ```
 Outputs must be byte-for-byte reproducible with deterministic sorting, UTF-8 encoding, and no runtime timestamps.
 
@@ -174,7 +174,7 @@ formats expose only an opaque format ID, others only an integer schema version.
    with the separate documentation environment. Avoid adding reasoner packages to
    product dependencies for an optional analysis workflow.
 
-See [the inventory guide](../../../documentation/schema-model-inventory.md).
+See [the inventory guide](../../../website/schema-model-inventory.md).
 These checks are useful preparation for RDF/SHACL; they do not constitute ontology
 satisfiability, instance-data validation or a proof of implementation conformance.
 

@@ -13,10 +13,15 @@ from tests.support.ci_fixture import commit, context, repository, write
 @pytest.mark.parametrize(
     "path",
     [
-        "documentation/content/index.md",
-        "documentation/mkdocs.yml",
-        "documentation/uv.lock",
-        "documentation/tools/schema_viz.py",
+        "index.html",
+        "package.json",
+        "package-lock.json",
+        "vite.config.mjs",
+        "website/web/app.js",
+        "website/content/index.md",
+        "website/mkdocs.yml",
+        "website/uv.lock",
+        "website/tools/schema_viz.py",
         ".github/workflows/pages.yml",
     ],
 )
@@ -37,7 +42,7 @@ def test_classified_docs_changes_preserve_product_input_hash(tmp_path, path):
 @pytest.mark.parametrize(
     "path",
     [
-        "documentation/unknown-contract.json",
+        "website/unknown-contract.json",
         "docs/implementation/machine-contract.json",
         "src/changed.sql",
         "uv.lock",
@@ -55,7 +60,7 @@ def test_unknown_root_and_machine_inputs_remain_product_inputs(tmp_path, path):
 
 
 def test_relocated_sqlite_policy_page_still_rejects_forbidden_instructions(tmp_path):
-    path = "documentation/content/development/index.md"
+    path = "website/content/development/index.md"
     write(tmp_path, path, "```sh\nuv pip install pysqlite3\n```\n")
     assert sqlite_policy.scan(tmp_path, [path])
     (tmp_path / path).unlink()
@@ -69,11 +74,11 @@ def test_product_configuration_has_no_docs_dependencies():
     project = tomllib.loads((root / "pyproject.toml").read_text())
     assert "docs" not in project["dependency-groups"]
     assert not any("mkdocs" in x.lower() for x in project["project"]["dependencies"])
-    assert "documentation" not in json.dumps(project.get("tool", {}).get("uv", {}))
+    assert "website" not in json.dumps(project.get("tool", {}).get("uv", {}))
 
 
 def test_documentation_policy_obligations_remain_independent_of_product_scope(tmp_path):
-    path = "documentation/content/development/index.md"
+    path = "website/content/development/index.md"
     write(tmp_path, path, "```sh\nuv pip install pysqlite3\n```\n")
     paths = [path, ".github/workflows/pages.yml", "scripts/unknown.py"]
     assert sqlite_policy.scan(

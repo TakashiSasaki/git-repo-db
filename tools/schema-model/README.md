@@ -22,14 +22,14 @@ product commit, not a moving branch name:
 
 ```sh
 scripts/local-run.sh python scripts/schema_inventory.py --profile all \
-  --source "$(git rev-parse HEAD)" --output documentation/.build/inputs/all-formats
+  --source "$(git rev-parse HEAD)" --output website/.build/inputs/all-formats
 ```
 
 Run projection and validation together with a finite timeout:
 
 ```sh
 uv run --project tools/schema-model --locked --offline python \
-  tools/schema-model/model.py --input documentation/.build/inputs/all-formats \
+  tools/schema-model/model.py --input website/.build/inputs/all-formats \
   --output artifacts/schema-model/result --timeout 60
 ```
 
@@ -42,7 +42,7 @@ Keep `inventory.json` and `producer.json` together. The producer checks committe
 source bytes and records source commit/tree, input hashes, IR digest and actual
 Python/SQLite versions. A matching digest is consistency evidence, not a
 signature or proof of trusted execution. See the
-[inventory contract](../../documentation/schema-model-inventory.md).
+[inventory contract](../../website/schema-model-inventory.md).
 
 The initial measured inventory has ten implemented schema definitions, seven
 responsibility domains and fifteen distributions. These are source-bound

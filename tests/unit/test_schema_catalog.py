@@ -190,7 +190,7 @@ import importlib.abc, sys
 sys.path.insert(0, sys.argv[1])
 class RefuseOptional(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
-        if fullname.split(".")[0] in {"rdflib", "pyshacl", "yaml", "mkdocs", "documentation"}:
+        if fullname.split(".")[0] in {"rdflib", "pyshacl", "yaml", "mkdocs", "website"}:
             raise ImportError("unexpected optional dependency: " + fullname)
 sys.meta_path.insert(0, RefuseOptional())
 from scripts.schema_inventory import introspect_all, validate_inventory

@@ -14,8 +14,8 @@ def private_path(root: Path, path: Path) -> Path:
     root = root.absolute()
     path = Path(os.path.abspath(path))
     roots = [
-        root / "documentation/.build/inputs",
-        root / "documentation/.build/verification",
+        root / "website/.build/inputs",
+        root / "website/.build/verification",
     ]
     if not any(base in path.parents for base in roots):
         raise ValueError(
@@ -34,8 +34,7 @@ def private_path(root: Path, path: Path) -> Path:
         "pyvenv.cfg",
     }
     if any(
-        part in protected
-        for part in path.relative_to(root / "documentation/.build").parts
+        part in protected for part in path.relative_to(root / "website/.build").parts
     ):
         raise ValueError("Protected private-output location refused")
     if any(p.is_symlink() for p in (path, *path.parents)):
@@ -100,7 +99,7 @@ def write_private_json(root: Path, path: Path, value: dict) -> None:
 
 
 def private_attempt(root: Path) -> Path:
-    base = root / "documentation/.build/verification"
+    base = root / "website/.build/verification"
     probe = private_path(root, base / ".probe")
     fd = directory_fd(probe.parent)
     name = "attempt-" + secrets.token_hex(16)

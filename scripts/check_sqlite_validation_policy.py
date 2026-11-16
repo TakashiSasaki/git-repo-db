@@ -26,7 +26,7 @@ LIVE_DOCS = frozenset(
         "docs/change-aware-ci.md",
         "docs/ci-performance.md",
         "docs/test-suite-efficiency.md",
-        "documentation/content/development/index.md",
+        "website/content/development/index.md",
         "docs/architecture/git-core-context-transition-plan.md",
         "docs/implementation/context-resource-design-handoff.md",
         "docs/implementation/context-exchange-design-handoff.md",
@@ -52,7 +52,7 @@ def in_scope(path: str) -> bool:
         return False
     if (
         path in LIVE_DOCS
-        or path == "documentation/pyproject.toml"
+        or path == "website/pyproject.toml"
         or Path(path).name == "AGENTS.md"
     ):
         return True
@@ -60,7 +60,7 @@ def in_scope(path: str) -> bool:
         path.startswith(
             (
                 "scripts/",
-                "documentation/tools/",
+                "website/tools/",
                 ".agents/",
                 ".github/workflows/",
                 ".github/actions/",
@@ -345,9 +345,7 @@ def scan(root: Path, paths: list[str]) -> list[Finding]:
 
 def scope_paths(paths: list[str], scope: str) -> list[str]:
     def documentation(path):
-        return (
-            path.startswith("documentation/") or path == ".github/workflows/pages.yml"
-        )
+        return path.startswith("website/") or path == ".github/workflows/pages.yml"
 
     return [
         path

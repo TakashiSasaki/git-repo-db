@@ -3,7 +3,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'documentation/**'
+      - 'website/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.mjs'
       - 'docs/adr/0001-validation-lifecycle-architecture.md'
       - 'docs/adr/0002-three-store-boundary-architecture.md'
       - 'docs/adr/0004-metadata-only-git-core.md'
@@ -59,7 +63,11 @@ on:
       - '.github/workflows/pages.yml'
   pull_request:
     paths:
-      - 'documentation/**'
+      - 'website/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.mjs'
       - 'docs/adr/0001-validation-lifecycle-architecture.md'
       - 'docs/adr/0002-three-store-boundary-architecture.md'
       - 'docs/adr/0004-metadata-only-git-core.md'
@@ -141,18 +149,23 @@ jobs:
         with:
           version: '0.12.19'
 
-      - name: Set up Node.js for Mermaid CLI
+      - name: Set up Node.js for frontend and Mermaid CLI
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
+      - name: Check standalone website frontend
+        run: |
+          npm ci
+          npm run build
+
       - name: Prepare selected product producer
         run: |
           uv sync --locked --group dev --python "$CI_PRODUCT_PYTHON"
-          uv run --no-sync python scripts/schema_inventory.py --source "$(git rev-parse HEAD)" --output documentation/.build/inputs
+          uv run --no-sync python scripts/schema_inventory.py --source "$(git rev-parse HEAD)" --output website/.build/inputs
 
       - name: Install isolated documentation dependencies
-        run: uv sync --locked --project documentation --python "$CI_PRODUCT_PYTHON"
+        run: uv sync --locked --project website --python "$CI_PRODUCT_PYTHON"
 
       # The receipt-producing site build checks schema freshness against this IR;
       # a separate schema_viz --check here would repeat the same generation/check.
@@ -162,21 +175,21 @@ jobs:
           DOCS_PYTEST_WORKERS: '2'
         run: |
           source_sha=$(git rev-parse HEAD)
-          uv run --no-sync --project documentation python documentation/tools/verify_documentation.py --product-source "$source_sha" --documentation-source "$source_sha"
+          uv run --no-sync --project website python website/tools/verify_documentation.py --product-source "$source_sha" --documentation-source "$source_sha"
 
       - name: Retain private documentation verification evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: documentation-verification-${{ github.run_id }}-${{ github.run_attempt }}
-          path: documentation/.build/verification/
+          path: website/.build/verification/
           retention-days: 7
 
       - name: Retain preview artifact for review
         uses: actions/upload-artifact@v7
         with:
           name: pages-preview-${{ github.event.pull_request.number || github.sha }}
-          path: documentation/site/
+          path: website/site/
           retention-days: 7
 
       - name: Configure GitHub Pages
@@ -187,7 +200,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: documentation/site/
+          path: website/site/
 
   deploy:
     name: deploy-to-pages

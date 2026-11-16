@@ -104,7 +104,7 @@ def test_inventory_export_cannot_overwrite_verification_attempt_inputs(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(schema_inventory, "ROOT", tmp_path)
-    output = tmp_path / "documentation/.build/verification/attempt-retained"
+    output = tmp_path / "website/.build/verification/attempt-retained"
     output.mkdir(parents=True)
     marker = output / "inventory.json"
     marker.write_text("retained evidence")

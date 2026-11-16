@@ -302,7 +302,7 @@ def test_documentation_bytes_reuse_product_cache_but_root_edits_invalidate(
     cache = tmp_path / "cache"
     first = build_once(cache, products, inputs=inputs)
     identity = inputs()
-    docs = source / "documentation"
+    docs = source / "website"
     docs.mkdir()
     config = docs / "mkdocs.yml"
     config.write_text("broken: [documentation-only")

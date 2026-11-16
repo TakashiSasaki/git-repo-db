@@ -942,9 +942,9 @@ def export_inventory(
     )
 
     output = Path(os.path.abspath(output))
-    allowed = ROOT / "documentation/.build/inputs"
+    allowed = ROOT / "website/.build/inputs"
     if output != allowed and allowed not in output.parents:
-        raise ValueError("Producer output must remain in documentation/.build/inputs")
+        raise ValueError("Producer output must remain in website/.build/inputs")
     # Preflight both sinks before reading/executing inputs or publishing either.
     inventory_path = private_path(ROOT, output / "inventory.json")
     manifest_path = private_path(ROOT, output / "producer.json")

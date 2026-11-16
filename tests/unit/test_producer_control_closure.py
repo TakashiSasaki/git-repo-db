@@ -36,7 +36,7 @@ def checkout(tmp_path):
 def run_export(root, source):
     import sys
 
-    output = root / "documentation/.build/inputs"
+    output = root / "website/.build/inputs"
     output.mkdir(parents=True, exist_ok=True)
     (output / "inventory.json").write_text("retain previous inventory")
     (output / "producer.json").write_text("retain previous producer")

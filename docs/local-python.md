@@ -161,4 +161,4 @@ SQLite versions may differ.
 | `<python home>/.staging-*`, `.lock-*` | private staging, lock files | stale staging is removed automatically |
 | `~/.cache/uv` | `uv` wheel cache | yes (needs network next time) |
 
-Documentation uses its independent `documentation/.venv` and lock; product setup does not install rendering dependencies. See [workspace guide](../documentation/README.md).
+Documentation uses its independent `website/.venv` and lock; product setup does not install rendering dependencies. See [workspace guide](../website/README.md).

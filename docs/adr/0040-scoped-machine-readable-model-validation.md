@@ -123,7 +123,7 @@ mandatory startup files. The normal renderer still covers three formats.
 The first inventory commit, `9f0aea2f3c7d179a96060d375a75a1b0af8f42b5`, extracts
 156 table definitions across those formats, preserves normal-profile output and
 separates P1's Runtime assembler, domain DDL and Contracts coverage contribution.
-Its [guide](../../documentation/schema-model-inventory.md) states the structural
+Its [guide](../../website/schema-model-inventory.md) states the structural
 checks and remaining semantic gaps. It does not implement the semantic model specified by this decision.
 
 A request-scoped Open Ontologies experiment on that commit's ten composition
