@@ -34,6 +34,17 @@ The running frontend uses static repository data and needs no API keys, Python
 runtime, network service or user catalog. npm dependency installation may use
 the network.
 
+The application map groups the curated concepts by responsibility and draws all
+registered semantic relations in one SVG. Selecting a node or edge reveals
+identity, direction, meaning and pinned citations. Reading paths highlight walks
+through registered relations; their order is a reading aid, not an execution
+order. The concept selector and detailed list provide alternatives to navigating
+the scrollable, zoomable diagram. Relation filtering changes the diagram only;
+the inspector retains the selected concept's complete relation list.
+Update concepts, cited relations and `reading_paths` in the shared model; the
+renderer derives counts and layout. This explanatory graph does not expand the
+implemented RDF ontology or establish product validation results.
+
 For an external website editor such as Google AI Studio, select the root npm
 entry and keep the requested edits scoped. An import prompt can be:
 
