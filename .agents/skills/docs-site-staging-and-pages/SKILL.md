@@ -6,7 +6,7 @@ description: Stage, build, and publish developer documentation sites for multi-s
 # Documentation Staging, Build, and GitHub Pages Invariants
 
 Run these website commands on the orphan `web` branch. Canonical publication
-selection is `docs/web-source-policy.json` on the pinned product branch; the
+selection is `docs/web-source-policy.json` in the retrieved product snapshot; the
 web adapter reads it through the validated external product checkout.
 Main owns its inventory and frozen evidence (`scripts/content_inventory.py`).
 

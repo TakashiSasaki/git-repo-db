@@ -13,6 +13,36 @@ from scripts.check_web_boundary import check
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_web_tracking_config_needs_no_product_commit():
+    from scripts.documentation_receipts import verify_web_tracking_config
+
+    verify_web_tracking_config(
+        {
+            "schema_version": 2,
+            "repository": "https://github.com/TakashiSasaki/resource-atlas.git",
+            "ref": "main",
+        }
+    )
+
+
+@pytest.mark.parametrize("change", [{"ref": "web"}, {"commit": "0" * 40}])
+def test_web_tracking_config_rejects_wrong_branch_or_maintained_pin(change):
+    from scripts.documentation_receipts import (
+        DocumentationGap,
+        verify_web_tracking_config,
+    )
+
+    with pytest.raises(DocumentationGap, match="canonical main"):
+        verify_web_tracking_config(
+            {
+                "schema_version": 2,
+                "repository": "https://github.com/TakashiSasaki/resource-atlas.git",
+                "ref": "main",
+                **change,
+            }
+        )
+
+
 def test_product_tree_has_no_editable_website():
     assert not check(ROOT)
 

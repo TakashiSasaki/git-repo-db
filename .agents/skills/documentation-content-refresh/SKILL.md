@@ -5,22 +5,23 @@ description: Refresh derived project documentation against a selected product re
 
 # Bounded documentation content refresh
 
-Run website commands in the separate `web` checkout under ADR 0041. Product
+Run website commands in the separate `web` checkout under ADR 0042. Product
 canonical sources and the ownership inventory remain on `main`; its verifier
 is `scripts/content_inventory.py` and ownership tests live in `tests/unit/`.
 The product-owned `docs/web-source-policy.json` selects publication inputs.
-Pin the product and web commits separately and preserve both histories.
+Follow main without a maintained product SHA; resolve it once per preparation
+and record actual product/web/IR identities automatically. Preserve both histories.
 
 Follow [website/AGENTS.md](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/AGENTS.md), root AGENTS.md
 and ADR 0035. This procedure grants no merge, publication, allowlist expansion,
 or change to product or design authority.
 
-1. Pin the selected product commit and tree once; record the documentation
-   commit/tree separately. Inspect concurrent work. Do not chase moving main.
-   When the request says latest, compare the initial checkout with the remote
-   default branch before pinning it. A prepared environment can lag behind merged
-   work, including entire newly added modeling tools. Fetch and select the agreed
-   source safely; do not infer current tool absence from an older checkout.
+1. Prepare from main once at attempt start; use that snapshot throughout the
+   attempt. Record retrieved source IDs as diagnostic facts, not a manually
+   maintained pin or a promise that every explanation matches them. Do not restart
+   because main advances. An explicit local checkout override records its actual
+   HEAD and local-override mode without claiming remote freshness. A failed web
+   attempt or unfinished explanation never blocks main.
 2. Inventory entry pages and dated guides. Classify each consequential claim as
    actual normal runtime, implemented opt-in, accepted target, or historical
    evidence. Trace runtime/activation claims to parser, service, adapters and

@@ -8,13 +8,14 @@ The canonical repository is `TakashiSasaki/resource-atlas` (formerly `git-repo-d
 This branch owns product code, canonical ADRs/contracts, schema production and
 historical evidence. Website authoring lives only on the orphan
 [`web` branch](https://github.com/TakashiSasaki/resource-atlas/tree/web), with its
-own AGENTS.md and independent Node/Python environments under ADR 0041.
+own AGENTS.md and independent Node/Python environments under ADR 0042.
 Use that branch for Google AI Studio imports and UI/content changes; keep at most
 1,000 tracked web files. Do not merge the two trees for routine website updates.
 
-Product meaning is edited here. The web branch selects a full product commit and
-obtains canonical inputs from a separate verified checkout; its models remain
-derived presentation. See [ADR 0041](docs/adr/0041-independent-web-branch.md) and
+Product meaning is edited here. The web branch follows main asynchronously and obtains canonical inputs from a
+separate verified checkout. Each attempt records its actual inputs automatically;
+there is no maintained product SHA or current-main equality gate. Main never waits
+for website freshness. Its models remain derived presentation. See [ADR 0042](docs/adr/0042-asynchronous-web-main-tracking.md) and
 [the source selection](docs/web-source-policy.json). Ownership and frozen-evidence
 checks use `scripts/content_inventory.py` and `docs/content-inventory.json`.
 The maintained product runtime guide is `docs/current-runtime-reference.md`.
