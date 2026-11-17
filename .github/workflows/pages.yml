@@ -30,22 +30,22 @@ jobs:
           node scripts/check_web_tree.mjs
           npm ci
           npm run build
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
       - uses: astral-sh/setup-uv@v10.2.0
         with:
           version: '0.12.19'
       - name: Prepare exact external product inputs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python scripts/prepare_product.py
+        # Runner Python only orchestrates setup. The product bootstrap selects
+        # and verifies its own runtime; setup-python's LD_LIBRARY_PATH conflicts
+        # with that runtime's loader-override guard.
+        run: python3 scripts/prepare_product.py
       - name: Verify and retain website evidence
         env:
           CI_FEATURE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           COMPLETE_BUILD: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          product_sha=$(python -c 'import json; print(json.load(open("product-source.json"))["commit"])')
+          product_sha=$(python3 -c 'import json; print(json.load(open("product-source.json"))["commit"])')
           web_sha=$(git rev-parse HEAD)
           if [ "$COMPLETE_BUILD" = true ]; then
             website/.venv/bin/python website/tools/verify_documentation.py --product-source "$product_sha" --documentation-source "$web_sha"
