@@ -1,6 +1,6 @@
 """Mechanical implemented-store schema inventory, independent of renderers.
 
-Retains the existing normalized IR, including compatibility annotations.
+Preserves the complete DDL-derived IR for the current separated schemas.
 No documentation package is imported and no persistent database is opened.
 """
 
@@ -37,299 +37,6 @@ for source in (
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402
-    register_git_object_sql_function,
-)
-from repo_catalog.adapters.sqlite.schema import (  # noqa: E402
-    DDL_SHA256,
-    FORMAT_ID,
-    OPERATIONAL_DDL_SHA256,
-    OPERATIONAL_FORMAT_ID,
-    OPERATIONAL_SCHEMA_VERSION,
-    SCHEMA_VERSION,
-    SEARCH_DDL_SHA256,
-    SEARCH_FORMAT_ID,
-    SEARCH_SCHEMA_VERSION,
-    operational_schema_sql,
-    schema_sql,
-    search_schema_sql,
-)
-
-# Authoritative functional groups matching ADR 0002 and audit_publication_free.py
-CORE_GROUPS: dict[str, list[str]] = {
-    "portable_identity_and_registration": [
-        "service_instances",
-        "sources",
-        "repositories",
-        "repository_bindings",
-        "repository_endpoints",
-        "change_requests",
-        "documents",
-        "review_threads",
-        "source_repositories",
-        "repository_names",
-        "identity_relations",
-        "identity_relation_cancellations",
-        "identity_relation_staging",
-    ],
-    "current_api_values": [
-        "issue_resources",
-        "review_resources",
-        "change_request_state",
-        "document_state",
-        "review_thread_state",
-    ],
-    "domain_enumeration_and_coverage": [
-        "fetch_collections",
-        "collection_memberships",
-        "current_collection_pages",
-        "completion_markers",
-        "coverage_scopes",
-        "coverage_claims",
-        "coverage_claim_markers",
-        "code_listings",
-        "code_listing_progress",
-        "code_assessments",
-        "code_acquisitions",
-        "code_commits",
-        "code_file_changes",
-        "source_inventory_assessments",
-        "thread_collection_requirements",
-        "thread_collection_targets",
-        "change_request_events",
-        "resume_scopes",
-        "thread_collection_continuations",
-    ],
-    "git_identity_intrinsic_and_capture": [
-        "git_acquisitions",
-        "snapshots",
-        "acquisition_roots",
-        "root_origins",
-        "git_objects",
-        "commits",
-        "commit_parents",
-        "tree_objects",
-        "tree_entries",
-        "tag_objects",
-        "repository_object_sources",
-        "ref_observations",
-        "root_manifests",
-        "root_manifest_entries",
-        "git_commit_facts",
-        "git_text_facts",
-        "git_name_facts",
-        "git_object_payloads",
-        "contents",
-        "content_digests",
-        "blob_content_map",
-    ],
-    "retained_content_integrity": [
-        "text_bodies",
-        "stored_bytes",
-        "payloads",
-        "payload_quarantine",
-        "payload_admission_staging",
-        "unresolved_payloads",
-        "preservation_obligations",
-    ],
-    "exchange_staging_and_admissions": [
-        "exchange_local_identities",
-        "exchange_admissions",
-        "exchange_staging",
-        "exchange_blocked_coverage_claims",
-    ],
-    "local_physical_catalog": [
-        "database_identity",
-    ],
-}
-
-OPERATIONAL_GROUPS: dict[str, list[str]] = {
-    "operational_store": [
-        "operational_identity",
-        "jobs",
-        "job_attempts",
-        "cache_locators",
-        "active_cache_entries",
-        "cache_leases",
-        "space_reservations",
-        "acquisition_progress",
-        "collection_progress",
-        "search_rebuild_metrics",
-    ]
-}
-
-SEARCH_GROUPS: dict[str, list[str]] = {
-    "search_store": [
-        "search_identity",
-        "search_documents",
-        "index_generations",
-        "index_membership",
-    ]
-}
-
-# Group metadata labels for human presentation and Mermaid modules
-GROUP_METADATA: dict[str, dict[str, str]] = {
-    "portable_identity_and_registration": {
-        "title": "Portable Identity & Registration",
-        "slug": "core-identity",
-        "description": "Portable UUIDv4 identities, service instances, sources, repositories, bindings, change requests, and identity relations.",
-    },
-    "current_api_values": {
-        "title": "Current API Values & Projections",
-        "slug": "core-current-state",
-        "description": "Latest state projections for PRs, issues, documents, and review threads with JSON-contract provenance.",
-    },
-    "domain_enumeration_and_coverage": {
-        "title": "Domain Enumeration & Coverage Evidence",
-        "slug": "core-coverage",
-        "description": "Collections, memberships, completion markers, typed coverage scopes/claims, and code listing assessments.",
-    },
-    "git_identity_intrinsic_and_capture": {
-        "title": "Git Identity, Intrinsic DAG & Capture",
-        "slug": "core-git",
-        "description": "Immutable Git acquisitions, snapshots, objects, commits, trees, tags, ref observations, and byte facts.",
-    },
-    "retained_content_integrity": {
-        "title": "Retained Content Integrity & CAS",
-        "slug": "core-cas",
-        "description": "Shared CAS payload storage, quarantine, unreferenced bodies, and durable preservation obligations.",
-    },
-    "exchange_staging_and_admissions": {
-        "title": "Exchange Staging & Admissions",
-        "slug": "core-exchange",
-        "description": "Staging area for catalog synchronization, admission receipts, and conflicting candidate resolution.",
-    },
-    "local_physical_catalog": {
-        "title": "Local Physical Catalog Identity",
-        "slug": "core-identity",
-        "description": "Local SQLite database instance singleton and receiver-local revision counter.",
-    },
-    "operational_store": {
-        "title": "Operational Execution Store",
-        "slug": "operational",
-        "description": "Disposable jobs, attempts, packfile cache leases, reservations, and progress tracking (ADR 0002).",
-    },
-    "search_store": {
-        "title": "Search Projections & FTS5 Derivatives",
-        "slug": "search",
-        "description": "Rebuildable document projections, index generations, and trigram FTS5 virtual tables (ADR 0002).",
-    },
-}
-
-# Verified cross-store logical dependencies under ADR 0002
-LOGICAL_DEPENDENCIES: list[dict[str, Any]] = [
-    {
-        "id": "log_op_identity_catalog",
-        "source_store": "operational",
-        "source_table": "operational_identity",
-        "source_columns": ["catalog_db_instance_id"],
-        "target_store": "core",
-        "target_table": "database_identity",
-        "target_columns": ["db_instance_id"],
-        "cardinality": "1 to 1",
-        "adr_reference": "ADR 0002 §2 PF-P11, §3.2",
-        "description": "Strict 1:1 ownership binding between Operational database and Core Catalog instance. Operational DB is disposable without affecting Core domain facts.",
-    },
-    {
-        "id": "log_op_acq_progress_git_acq",
-        "source_store": "operational",
-        "source_table": "acquisition_progress",
-        "source_columns": ["git_acquisition_id"],
-        "target_store": "core",
-        "target_table": "git_acquisitions",
-        "target_columns": ["git_acquisition_id"],
-        "cardinality": "0..N to 1",
-        "adr_reference": "ADR 0002 §3.2, PF-P04",
-        "description": "Operational Git acquisition worker progress tracking associated Core Git acquisition entity. Interrupted/uncommitted progress is safely discarded.",
-    },
-    {
-        "id": "log_op_col_progress_fetch_col",
-        "source_store": "operational",
-        "source_table": "collection_progress",
-        "source_columns": ["fetch_collection_id"],
-        "target_store": "core",
-        "target_table": "fetch_collections",
-        "target_columns": ["fetch_collection_id"],
-        "cardinality": "0..N to 1",
-        "adr_reference": "ADR 0002 §3.2, PF-P03, PF-P04",
-        "description": "Operational API collection worker progress tracking associated Core fetch collection. Missing progress triggers fallback to fresh full acquisition.",
-    },
-    {
-        "id": "log_op_cache_locators_repo",
-        "source_store": "operational",
-        "source_table": "cache_locators",
-        "source_columns": ["repository_uuidv4"],
-        "target_store": "core",
-        "target_table": "repositories",
-        "target_columns": ["repository_uuidv4"],
-        "cardinality": "0..N to 1",
-        "adr_reference": "ADR 0002 §3.2, three-store-invariants §1",
-        "description": "Transient physical Git packfile cache locator mapped to Core repository UUID. Incomplete Core preservation obligations block cache GC even if locator disappears.",
-    },
-    {
-        "id": "log_search_identity_catalog",
-        "source_store": "search",
-        "source_table": "search_identity",
-        "source_columns": ["catalog_db_instance_id"],
-        "target_store": "core",
-        "target_table": "database_identity",
-        "target_columns": ["db_instance_id"],
-        "cardinality": "1 to 1",
-        "adr_reference": "ADR 0002 §2 PF-P14, §3.3",
-        "description": "Strict 1:1 ownership binding between Search database and Core Catalog instance. Search DB is excluded from backup and rebuildable at any time.",
-    },
-    {
-        "id": "log_search_identity_fence",
-        "source_store": "search",
-        "source_table": "search_identity",
-        "source_columns": ["core_revision_fence"],
-        "target_store": "core",
-        "target_table": "database_identity",
-        "target_columns": ["local_revision"],
-        "cardinality": "0..1 to 1",
-        "adr_reference": "ADR 0002 §3.3, §4, PF-P15",
-        "description": "Search database freshness fence tracking Core local_revision counter. Stale fence triggers direct-scan fallback or rebuild notification.",
-    },
-    {
-        "id": "log_search_gen_fence",
-        "source_store": "search",
-        "source_table": "index_generations",
-        "source_columns": ["core_revision_fence"],
-        "target_store": "core",
-        "target_table": "database_identity",
-        "target_columns": ["local_revision"],
-        "cardinality": "0..1 to 1",
-        "adr_reference": "ADR 0002 §3.3, §4, three-store-invariants §4",
-        "description": "Per-generation index snapshot fence recording Core local_revision at projection time for snapshot pinning.",
-    },
-    {
-        "id": "log_search_docs_git_objects",
-        "source_store": "search",
-        "source_table": "search_documents",
-        "source_columns": ["source_key"],
-        "target_store": "core",
-        "target_table": "git_objects",
-        "target_columns": ["git_object_id"],
-        "cardinality": "0..N to 1",
-        "adr_reference": "ADR 0002 §3.3, §4",
-        "description": "Code and commit search projections (kind IN ('code', 'commits')). The source_key is encoded as 'git:<git_object_id>' derived from Core git_objects.git_object_id via valid git facts. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key.",
-        "is_derivation": True,
-    },
-    {
-        "id": "log_search_docs_text_bodies",
-        "source_store": "search",
-        "source_table": "search_documents",
-        "source_columns": ["source_key"],
-        "target_store": "core",
-        "target_table": "text_bodies",
-        "target_columns": ["sha256"],
-        "cardinality": "0..N to 1",
-        "adr_reference": "ADR 0002 §3.3, §4",
-        "description": "PR and Issue search projections (kind IN ('pr', 'issue')). The source_key is derived from lower hex-encoded text_bodies.sha256 for domain text bodies, or SHA-256 hex digest of standalone issue titles. Disposable derivative; application-level polymorphic mapping, not an enforced foreign key.",
-        "is_derivation": True,
-    },
-]
-
 
 def introspect_store(
     store_slug: str,
@@ -341,7 +48,6 @@ def introspect_store(
     ddl: str,
     group_map: dict[str, list[str]],
     *,
-    register_udf: bool = False,
     prepare: Callable[[sqlite3.Connection], None] | None = None,
     include_runtime_details: bool = False,
 ) -> dict[str, Any]:
@@ -353,8 +59,6 @@ def introspect_store(
         )
     db = sqlite3.connect(":memory:")
     try:
-        if register_udf:
-            register_git_object_sql_function(db)
         db.execute("PRAGMA foreign_keys=ON")
         if prepare is not None:
             prepare(db)
@@ -596,9 +300,7 @@ def _read_store_schema(
             "name": t_name,
             "store": store_slug,
             "group": group,
-            "group_title": GROUP_METADATA.get(group, {}).get(
-                "title", group.replace("_", " ").title()
-            ),
+            "group_title": group.replace("_", " ").title(),
             "is_strict": "STRICT" in t_sql.upper(),
             "columns": columns,
             "primary_key": pk_cols,
@@ -652,107 +354,19 @@ def _read_store_schema(
 
 
 def introspect_all(
-    profile: str = "normal", *, include_runtime_details: bool = False
+    profile: str = "all", *, include_runtime_details: bool = False
 ) -> dict[str, Any]:
-    """Extract the normal renderer input, or the explicit all-format diagnostic IR."""
-    if profile == "all":
-        from scripts.schema_catalog import build_catalog
+    """Extract every current role, without opening any retained instance.
 
-        return build_catalog()
-    if profile != "normal":
+    The registry is a catalog of definitions, never a startup prescription.
+    Connection details are included for every role; the keyword is retained for
+    callers that explicitly request those observed extraction settings.
+    """
+    if profile != "all":
         raise ValueError("Unknown inventory profile: " + profile)
-    core = introspect_store(
-        "core",
-        "Core Store",
-        "catalog.sqlite3",
-        FORMAT_ID,
-        SCHEMA_VERSION,
-        DDL_SHA256,
-        schema_sql(),
-        CORE_GROUPS,
-        register_udf=True,
-        include_runtime_details=include_runtime_details,
-    )
-    operational = introspect_store(
-        "operational",
-        "Operational Store",
-        "operational.sqlite3",
-        OPERATIONAL_FORMAT_ID,
-        OPERATIONAL_SCHEMA_VERSION,
-        OPERATIONAL_DDL_SHA256,
-        operational_schema_sql(),
-        OPERATIONAL_GROUPS,
-        include_runtime_details=include_runtime_details,
-    )
-    search = introspect_store(
-        "search",
-        "Search Store",
-        "search.sqlite3",
-        SEARCH_FORMAT_ID,
-        SEARCH_SCHEMA_VERSION,
-        SEARCH_DDL_SHA256,
-        search_schema_sql(),
-        SEARCH_GROUPS,
-        include_runtime_details=include_runtime_details,
-    )
+    from scripts.schema_catalog import build_catalog
 
-    # Attach logical cross-store relationships to tables
-    for rel in LOGICAL_DEPENDENCIES:
-        src_store = rel["source_store"]
-        src_table = rel["source_table"]
-        store_obj = (
-            core
-            if src_store == "core"
-            else operational
-            if src_store == "operational"
-            else search
-        )
-        if src_table in store_obj["tables"]:
-            store_obj["tables"][src_table].setdefault("logical_outgoing", []).append(
-                rel
-            )
-
-        tgt_store = rel["target_store"]
-        tgt_table = rel["target_table"]
-        tgt_obj = (
-            core
-            if tgt_store == "core"
-            else operational
-            if tgt_store == "operational"
-            else search
-        )
-        if tgt_table in tgt_obj["tables"]:
-            tgt_obj["tables"][tgt_table].setdefault("logical_incoming", []).append(rel)
-
-    return {
-        "stores": {
-            "core": core,
-            "operational": operational,
-            "search": search,
-        },
-        "logical_dependencies": LOGICAL_DEPENDENCIES,
-        "groups": {
-            **CORE_GROUPS,
-            **OPERATIONAL_GROUPS,
-            **SEARCH_GROUPS,
-        },
-        "group_metadata": GROUP_METADATA,
-        "summary": {
-            "core_tables": core["table_count"],
-            "core_views": core["view_count"],
-            "core_triggers": core["trigger_count"],
-            "core_fks": core["foreign_key_count"],
-            "operational_tables": operational["table_count"],
-            "operational_triggers": operational["trigger_count"],
-            "operational_fks": operational["foreign_key_count"],
-            "search_tables": search["table_count"],
-            "search_triggers": search["trigger_count"],
-            "search_fks": search["foreign_key_count"],
-            "total_product_tables": core["table_count"]
-            + operational["table_count"]
-            + search["table_count"],
-        },
-    }
+    return build_catalog()
 
 
 def validate_logical_dependencies(ir: dict[str, Any]) -> list[str]:
@@ -806,41 +420,10 @@ def validate_logical_dependencies(ir: dict[str, Any]) -> list[str]:
     return errors
 
 
-def validate_functional_groups_consistency() -> list[str]:
-    """Verify that CORE_GROUPS, OPERATIONAL_GROUPS, SEARCH_GROUPS match audit_publication_free.py."""
-    errors = []
-    try:
-        from scripts.audit_publication_free import (
-            CORE_GROUPS as AUDIT_CORE,
-        )
-        from scripts.audit_publication_free import (
-            OPERATIONAL_GROUPS as AUDIT_OP,
-        )
-        from scripts.audit_publication_free import (
-            SEARCH_GROUPS as AUDIT_SEARCH,
-        )
-
-        if CORE_GROUPS != AUDIT_CORE:
-            errors.append(
-                "CORE_GROUPS classification differs from audit_publication_free.py"
-            )
-        if OPERATIONAL_GROUPS != AUDIT_OP:
-            errors.append(
-                "OPERATIONAL_GROUPS classification differs from audit_publication_free.py"
-            )
-        if SEARCH_GROUPS != AUDIT_SEARCH:
-            errors.append(
-                "SEARCH_GROUPS classification differs from audit_publication_free.py"
-            )
-    except Exception as exc:
-        errors.append(f"Could not verify audit_publication_free consistency: {exc}")
-    return errors
-
-
 PRODUCER_CONTROLS = frozenset(
     {
         "scripts/schema_inventory.py",
-        "scripts/audit_publication_free.py",
+        "scripts/schema_catalog.py",
         "scripts/verification_outputs.py",
         "pyproject.toml",
         "uv.lock",
@@ -912,20 +495,15 @@ def executed_producer_inputs(root: Path, inputs: list[str]) -> list[str]:
     return sorted(executed)
 
 
-def validate_inventory(inventory: dict[str, Any], profile: str) -> list[str]:
-    if profile == "all":
-        from scripts.schema_catalog import validate_catalog
+def validate_inventory(inventory: dict[str, Any], profile: str = "all") -> list[str]:
+    if profile != "all":
+        return ["Unknown inventory profile: " + profile]
+    from scripts.schema_catalog import validate_catalog
 
-        return validate_catalog(inventory)
-    return (
-        validate_logical_dependencies(inventory)
-        + validate_functional_groups_consistency()
-    )
+    return validate_catalog(inventory)
 
 
-def export_inventory(
-    output: Path, source: str, profile: str = "normal"
-) -> dict[str, Any]:
+def export_inventory(output: Path, source: str, profile: str = "all") -> dict[str, Any]:
     """Export complete IR from this exact committed producer checkout."""
     import json
     import os
@@ -977,8 +555,7 @@ def export_inventory(
             "sqlite": sqlite3.sqlite_version,
         },
     }
-    if profile != "normal":
-        manifest["inventory_profile"] = profile
+    manifest["inventory_profile"] = profile
     write_private(ROOT, inventory_path, raw)
     write_private_json(ROOT, manifest_path, manifest)
     return manifest
@@ -991,7 +568,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--source")
-    parser.add_argument("--profile", choices=("normal", "all"), default="normal")
+    parser.add_argument("--profile", choices=("all",), default="all")
     args = parser.parse_args()
     if args.check:
         ir = introspect_all(args.profile)

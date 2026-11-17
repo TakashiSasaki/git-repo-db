@@ -24,7 +24,7 @@ def evidence(tmp_path, request):
     source.write_text("synthetic SQL")
     for name in (
         "scripts/schema_inventory.py",
-        "scripts/audit_publication_free.py",
+        "scripts/schema_catalog.py",
         "scripts/verification_outputs.py",
         "pyproject.toml",
         "uv.lock",
@@ -37,7 +37,7 @@ def evidence(tmp_path, request):
         for name in (
             "src/repo_catalog/source.sql",
             "scripts/schema_inventory.py",
-            "scripts/audit_publication_free.py",
+            "scripts/schema_catalog.py",
             "scripts/verification_outputs.py",
             "pyproject.toml",
             "uv.lock",
@@ -74,7 +74,7 @@ def evidence(tmp_path, request):
             "input_sha256": input_hashes,
             "executed_python_inputs": [
                 "scripts/schema_inventory.py",
-                "scripts/audit_publication_free.py",
+                "scripts/schema_catalog.py",
                 "scripts/verification_outputs.py",
             ],
         }
@@ -248,7 +248,7 @@ def test_missing_failed_changed_or_preview_evidence_cannot_complete_release(
             producer_path = path.parent / "producer.json"
             producer = json.loads(producer_path.read_text())
             if change == "missing-producer-input":
-                producer["input_sha256"].pop("scripts/audit_publication_free.py")
+                producer["input_sha256"].pop("scripts/schema_catalog.py")
             else:
                 producer.pop("executed_python_inputs")
             producer_path.write_text(json.dumps(producer))

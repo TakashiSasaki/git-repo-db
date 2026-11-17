@@ -12,6 +12,7 @@ from contextlib import closing
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.admission_transaction import rollback_after_failure
 from repo_catalog.adapters.sqlite.core_coordination import (
     catalog_completion,
     catalog_gate,
@@ -1860,12 +1861,12 @@ def admit_ref_unit_atomic(directory: Path, kind, payload, work):
                     raise
                 return result
             except _WorkCallbackFailure as failure:
-                if db.in_transaction:
-                    db.rollback()
+                for note in getattr(failure, "__notes__", ()):
+                    failure.original.add_note(note)
+                rollback_after_failure(db, failure.original)
                 raise failure.original from None
-            except BaseException:
-                if db.in_transaction:
-                    db.rollback()
+            except BaseException as error:
+                rollback_after_failure(db, error)
                 raise
 
 

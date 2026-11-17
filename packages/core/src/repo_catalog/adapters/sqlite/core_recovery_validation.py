@@ -496,7 +496,17 @@ def validate_stored_checks(
         if kind != "table" or (table in body_tables) != retained_bytes:
             continue
         for expression in _packaged_checks(sql):
-            if work is not None and role == "core" and table in _REF_AUTHORITY_TABLES:
+            if work is not None and (
+                role == "core"
+                and table in _REF_AUTHORITY_TABLES
+                or table
+                in {
+                    "repository_identity_assertions",
+                    "repository_identity_cancellations",
+                    "service_identity_assertions",
+                    "service_identity_cancellations",
+                }
+            ):
                 column_names = [
                     row[1]
                     for row in connection.execute(f'PRAGMA table_xinfo("{table}")')
@@ -640,3 +650,86 @@ def bounded_domain_exists(connection, sql, parameters, work, scope):
         connection.set_progress_handler(None, 0)
         work.charge("metadata_units", min(cap, ticks + 1))
     return found
+
+
+def validate_stored_identity_authority(connection, role, row_types, work, budget):
+    """Recheck canonical current identity authority under finite metadata budgets.
+
+    Trusted DDL/row classes supply shape. Source flags, stored SQL and endpoint
+    presence never substitute for original typed evidence validation. Missing
+    endpoints and cancellation targets remain admissible unresolved reports.
+    """
+    from repo_catalog.adapters.sqlite.identity_salvage import (
+        IDENTITY_CANDIDATES,
+        decode_identity_candidate,
+    )
+
+    remaining = budget.max_input_records
+    for candidate, (entity, _kind, table) in IDENTITY_CANDIDATES.items():
+        if ("core" if entity == "repository" else "context") != role:
+            continue
+        names = row_types[table].COLUMNS
+        size_sql = "+".join(f'coalesce(octet_length("{name}"),0)' for name in names)
+        sizes = connection.execute(f'SELECT {size_sql} FROM "{table}" NOT INDEXED')
+        projection = ",".join(
+            f'CASE WHEN ({size_sql})<=? THEN "{name}" END' for name in names
+        )
+        rows = connection.execute(
+            f'SELECT {projection} FROM "{table}" NOT INDEXED',
+            (budget.max_payload_bytes,) * len(names),
+        )
+        try:
+            while True:
+                work.require("metadata_units", 1)
+                length = sizes.fetchone()
+                work.charge("metadata_units", int(length is not None))
+                if length is None:
+                    break
+                if remaining <= 0:
+                    raise RefValidationBudgetError(
+                        "Finite stored identity record limit"
+                    )
+                remaining -= 1
+                size = length[0]
+                if type(size) is not int or size < 0:
+                    raise StoredAuthorityInvariantError(
+                        "Invalid stored identity input length"
+                    )
+                if size > budget.max_payload_bytes:
+                    raise RefValidationBudgetError(
+                        "Stored identity exceeds finite metadata payload limit"
+                    )
+                work.require("input_bytes", size)
+                try:
+                    row = rows.fetchone()
+                except BaseException:
+                    work.abandon("input_bytes")
+                    raise
+                work.charge("input_bytes", size if row is not None else 0)
+                if row is None:
+                    raise StoredAuthorityInvariantError(
+                        "Stored identity scan changed shape"
+                    )
+                payload = dict(zip(names, row, strict=True))
+                decode_identity_candidate(candidate, payload, row_types, work)
+        except sqlite3.OperationalError as error:
+            if str(error).startswith("Could not decode to UTF-8"):
+                raise StoredAuthorityInvariantError(
+                    f"Invalid stored {role} identity UTF-8: {table}"
+                ) from error
+            raise
+        except CoreFailure as error:
+            if error.code in ("BUDGET", "QUERY_BUDGET"):
+                raise RefValidationBudgetError(
+                    "Finite stored identity validation work limit"
+                ) from error
+            raise StoredAuthorityInvariantError(
+                f"Invalid stored {role} identity authority: {table}"
+            ) from error
+        except (ValueError, TypeError, KeyError, IndexError, UnicodeError) as error:
+            raise StoredAuthorityInvariantError(
+                f"Invalid stored {role} identity authority: {table}"
+            ) from error
+        finally:
+            sizes.close()
+            rows.close()

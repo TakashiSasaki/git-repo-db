@@ -3,8 +3,6 @@ from pathlib import Path
 import pytest
 
 from scripts import ci_journal
-from tests.support.cli import add_local, run
-from tests.support.git_fixture import GitFixture
 
 
 def pytest_addoption(parser):
@@ -60,24 +58,3 @@ def offline_test_environment(monkeypatch, request):
             _cleanup_isolated_fixtures()
         except Exception:
             pass
-
-
-@pytest.fixture
-def catalog(tmp_path):
-    fixture = GitFixture(tmp_path / "remotes")
-    state = tmp_path / "state"
-    run(
-        state,
-        "init",
-        "--profile",
-        "catalog-text-v1",
-        "--cache-max-bytes",
-        67108864,
-        "--min-free-bytes",
-        0,
-    )
-    repos = {
-        name: add_local(state, name, getattr(fixture, name).url)
-        for name in ("alpha", "beta", "empty")
-    }
-    return state, fixture, repos

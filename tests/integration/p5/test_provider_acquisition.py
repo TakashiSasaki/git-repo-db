@@ -296,7 +296,8 @@ def test_reviews_threads_comments_and_relations(tmp_path: Path) -> None:
         thread_id="PRRT_kwDOABC123",
     )
     assert (
-        json.loads(comment_unit.primary_resource.provider_resource_id)[2] == "comment"
+        json.loads(comment_unit.primary_resource.provider_resource_id)[2]
+        == "review_comment"
     )
     assert len(comment_unit.relations) >= 2  # review/parent/thread relations
     assert len(comment_unit.core_references) == 2  # target_commit, original_commit

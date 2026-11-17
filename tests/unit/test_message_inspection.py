@@ -1,17 +1,20 @@
 """Saved message inspection cannot invoke provider parsing or domain admission."""
 
 import json
+import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.github import current_parser
+from repo_catalog.adapters.github import production_intake
 from repo_catalog.adapters.github.transport import GitHubTransport
-from repo_catalog.adapters.recording import LocalArchiveReader, LocalFileRecorder
-from repo_catalog.application import parser_service
-from repo_catalog.application.parser_service import ParserService
-from repo_catalog.cli.main import parser
-from repo_catalog.domain.models import CatalogError
-from tests.support.cli import run
+from repo_catalog.adapters.recording import (
+    LocalArchiveReader,
+    LocalFileRecorder,
+    RecordingError,
+)
+from repo_catalog.application.recording_inspection import inspect_message
+from repo_catalog.cli.main import main
+from repo_catalog.cli.separated_recording import parser
 
 
 def recorded(tmp_path, value):
@@ -54,21 +57,25 @@ def test_saved_message_parsing_is_absent_before_any_application_access(
 
     monkeypatch.setattr(LocalArchiveReader, "read", forbidden)
     monkeypatch.setattr(GitHubTransport, "request", forbidden)
-    monkeypatch.setattr(parser_service, "Store", forbidden)
-    monkeypatch.setattr(parser_service, "FileLock", forbidden)
-    for name in ("issue", "issue_comment", "review", "review_comment"):
-        monkeypatch.setattr(current_parser, name, forbidden)
-    with pytest.raises(CatalogError, match="Unknown parser action") as error:
-        ParserService(state).execute(
-            action,
-            {
-                "archive_reference": reference,
-                "max_bytes": 65536,
-                "context": str(tmp_path / "missing-context.json"),
-                "input": str(tmp_path / "missing-input.json"),
-            },
+    monkeypatch.setattr(sqlite3, "connect", forbidden)
+    for name in (
+        "normalize_issue",
+        "normalize_issue_comment",
+        "normalize_review",
+        "normalize_review_comment",
+    ):
+        monkeypatch.setattr(production_intake, name, forbidden)
+    with pytest.raises(SystemExit) as error:
+        main(
+            [
+                "recording",
+                action,
+                reference,
+                "--archive-root",
+                str(state / "transport-archive"),
+            ]
         )
-    assert error.value.code == "INVALID_ARGUMENT"
+    assert error.value.code == 2
     assert {
         path: path.read_bytes() for path in state.rglob("*") if path.is_file()
     } == before
@@ -89,21 +96,29 @@ def test_retired_message_cli_routes_and_context_option_have_no_side_effects(
     tmp_path, arguments
 ):
     state = tmp_path / "absent-catalog-state"
-    result = run(state, "parser", *arguments, expected=2)
-    assert result["error"]["code"] == "INVALID_ARGUMENT"
+    with pytest.raises(SystemExit) as error:
+        main(
+            [
+                "recording",
+                *arguments,
+                "--archive-root",
+                str(state / "transport-archive"),
+            ]
+        )
+    assert error.value.code == 2
     assert not state.exists()
 
 
 def test_parser_help_exposes_inspection_without_saved_message_parsing(capsys):
     with pytest.raises(SystemExit) as exit_status:
-        parser().parse_args(["parser", "--help"])
+        parser().parse_args(["--help"])
     assert exit_status.value.code == 0
     help_text = capsys.readouterr().out
     assert "inspect-message" in help_text
     assert "reparse-message" not in help_text
     assert "replay-message" not in help_text
     with pytest.raises(SystemExit) as exit_status:
-        parser().parse_args(["parser", "inspect-message", "--help"])
+        parser().parse_args(["inspect-message", "--help"])
     assert exit_status.value.code == 0
     assert "--context" not in capsys.readouterr().out
 
@@ -117,25 +132,25 @@ def test_inspection_and_bounded_failure_do_not_parse_or_create_catalog(
         pytest.fail("Inspection accessed transport, provider parser or catalog")
 
     monkeypatch.setattr(GitHubTransport, "request", forbidden)
-    monkeypatch.setattr(parser_service, "Store", forbidden)
-    monkeypatch.setattr(parser_service, "FileLock", forbidden)
-    for name in ("issue", "issue_comment", "review", "review_comment"):
-        monkeypatch.setattr(current_parser, name, forbidden)
-    result = ParserService(state).execute(
-        "inspect-message", {"archive_reference": reference, "max_bytes": 1000}
-    )
-    assert set(result.data) == {
+    monkeypatch.setattr(sqlite3, "connect", forbidden)
+    for name in (
+        "normalize_issue",
+        "normalize_issue_comment",
+        "normalize_review",
+        "normalize_review_comment",
+    ):
+        monkeypatch.setattr(production_intake, name, forbidden)
+    result = inspect_message(state / "transport-archive", reference, max_bytes=1000)
+    assert set(result) == {
         "archive_reference",
         "context",
         "body_bytes",
         "admitted",
     }
-    assert result.data["body_bytes"] > 100
-    assert result.data["context"]["observed_at_us"] == -123
-    assert result.data["admitted"] is False
-    with pytest.raises(CatalogError) as exc:
-        ParserService(state).execute(
-            "inspect-message", {"archive_reference": reference, "max_bytes": 20}
-        )
+    assert result["body_bytes"] > 100
+    assert result["context"]["observed_at_us"] == -123
+    assert result["admitted"] is False
+    with pytest.raises(RecordingError) as exc:
+        inspect_message(state / "transport-archive", reference, max_bytes=20)
     assert exc.value.code == "ARCHIVE_LIMIT"
     assert not (state / "catalog.sqlite3").exists()

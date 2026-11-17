@@ -9330,7 +9330,7 @@
     }
   },
   "registration_routing_override": "docs/implementation/access-a3-routing.json",
-  "status": "Executable isolated target representation contract, not an implemented legacy migration or production runtime switch",
+  "status": "Current separated representation with historical normal-format disposition evidence; no compatibility conversion or retained-data migration",
   "target_contracts": {
     "context.collection_terminals": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9435,6 +9435,22 @@
       "mutation": "Current candidate/configuration mutation under provenance/latest-clock contracts; immutable evidence tables have guards",
       "retention": "Provider text and allowlisted Context evidence/configuration only; no ordinary Git-file body archive.",
       "semantic_key": "Direct full semantic tuple: service_instance_uuidv4, resource_kind, provider_resource_id. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
+    },
+    "context.service_identity_assertions": {
+      "cross_store": "Context owns these service assertions independently; unresolved endpoints and cancellation targets require no invented cross-store FK",
+      "domain": "Original attributed service identity assertions; portable unresolved endpoints and cancellation-first delivery survive",
+      "durability": "authoritative",
+      "mutation": "INSERT-only; exact replay does not merge nominal identities or rewrite original facts",
+      "retention": "Normalized typed identity evidence only; no API originals, secrets, physical merge or authenticity claim",
+      "semantic_key": "Full immutable assertion/cancellation UUID, canonical typed record_json and original six-part provenance; UUID collisions retain independent original alternatives"
+    },
+    "context.service_identity_cancellations": {
+      "cross_store": "Context owns these service assertions independently; unresolved endpoints and cancellation targets require no invented cross-store FK",
+      "domain": "Original attributed service identity cancellations; portable unresolved endpoints and cancellation-first delivery survive",
+      "durability": "authoritative",
+      "mutation": "INSERT-only; exact replay does not merge nominal identities or rewrite original facts",
+      "retention": "Normalized typed identity evidence only; no API originals, secrets, physical merge or authenticity claim",
+      "semantic_key": "Full immutable assertion/cancellation UUID, canonical typed record_json and original six-part provenance; UUID collisions retain independent original alternatives"
     },
     "context.source_coverage_proofs": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
@@ -9644,6 +9660,22 @@
       "retention": "Only exact commit/tree/tag and receiver-role-proven note blobs. Ordinary repository-file body/text and opaque raw-provider replicas are forbidden.",
       "semantic_key": "Direct full semantic tuple: repository_uuidv4, field, value, provenance. Whole JSON values are canonical lossless actual coordinates/membership, never hashes or generated row aliases. Real occurrence UUIDs identify captures, requests, attempts, or physical copies only."
     },
+    "core.repository_identity_assertions": {
+      "cross_store": "Core owns these repository assertions independently; unresolved endpoints and cancellation targets require no invented cross-store FK",
+      "domain": "Original attributed repository identity assertions; portable unresolved endpoints and cancellation-first delivery survive",
+      "durability": "authoritative",
+      "mutation": "INSERT-only; exact replay does not merge nominal identities or rewrite original facts",
+      "retention": "Normalized typed identity evidence only; no API originals, secrets, physical merge or authenticity claim",
+      "semantic_key": "Full immutable assertion/cancellation UUID, canonical typed record_json and original six-part provenance; UUID collisions retain independent original alternatives"
+    },
+    "core.repository_identity_cancellations": {
+      "cross_store": "Core owns these repository assertions independently; unresolved endpoints and cancellation targets require no invented cross-store FK",
+      "domain": "Original attributed repository identity cancellations; portable unresolved endpoints and cancellation-first delivery survive",
+      "durability": "authoritative",
+      "mutation": "INSERT-only; exact replay does not merge nominal identities or rewrite original facts",
+      "retention": "Normalized typed identity evidence only; no API originals, secrets, physical merge or authenticity claim",
+      "semantic_key": "Full immutable assertion/cancellation UUID, canonical typed record_json and original six-part provenance; UUID collisions retain independent original alternatives"
+    },
     "core.retained_metadata": {
       "cross_store": "No cross-database SQLite FK. Context portable typed OIDs require explicit Core-first dependency validation under cooperating gate; paired reads pin both snapshots. Core never depends on Context. Disposable stores never establish authoritative validity.",
       "domain": "Checked native commit/tree/tag representation at a real physical copy occurrence",
@@ -9759,7 +9791,7 @@
   },
   "target_schemas": {
     "context": {
-      "ddl_sha256": "4465f77fa11d18526632e38bd516d2e2a3dbb564b90e5117dff66747f9bd4681",
+      "ddl_sha256": "8009b078694df2127bb9c9799119216b8e187f225219bba62ff2b82153d352f0",
       "tables": {
         "collection_terminals": {
           "columns": [
@@ -9874,8 +9906,9 @@
             "terminal_state",
             "members_json"
           ],
-          "sql": "CREATE TABLE collection_terminals(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n collection_kind TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n terminal_state TEXT NOT NULL CHECK(terminal_state IN('complete','partial','unknown')),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,observed_at_us,terminal_state,members_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json) REFERENCES collections\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE collection_terminals(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n collection_kind TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n terminal_state TEXT NOT NULL CHECK(terminal_state IN('complete','partial','unknown')),\n members_json TEXT NOT NULL CHECK(p1_collection_members_v1(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,members_json)=1),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,observed_at_us,terminal_state,members_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json) REFERENCES collections\n) STRICT, WITHOUT ROWID",
           "triggers": {
+            "collection_terminal_members_owner": "CREATE TRIGGER collection_terminal_members_owner BEFORE INSERT ON collection_terminals\nWHEN CASE WHEN p1_collection_members_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.collection_kind,NEW.members_json)=1\nTHEN EXISTS(SELECT 1 FROM json_each(NEW.members_json) j WHERE NOT EXISTS(\n SELECT 1 FROM resources r\n WHERE r.service_instance_uuidv4=json_extract(j.value,'$[0]')\n AND r.resource_kind=json_extract(j.value,'$[1]')\n AND r.provider_resource_id=json_extract(j.value,'$[2]')\n AND (NEW.collection_kind NOT IN('reviews','comments','threads','documents') OR\n  (r.identifier_namespace_kind=NEW.resource_kind AND r.identifier_namespace_id=NEW.provider_resource_id)))) ELSE 0 END\nBEGIN SELECT RAISE(ABORT,'Collection member namespace/resource mismatch'); END",
             "collection_terminals_no_delete": "CREATE TRIGGER collection_terminals_no_delete BEFORE DELETE ON collection_terminals BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END",
             "collection_terminals_no_update": "CREATE TRIGGER collection_terminals_no_update BEFORE UPDATE ON collection_terminals BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
           },
@@ -10161,7 +10194,7 @@
             "observed_at_us",
             "coverage_state"
           ],
-          "sql": "CREATE TABLE coverage_claims(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n details_json TEXT CHECK(details_json IS NULL OR p1_json(details_json)),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(owner_kind,owner_coordinates_json) REFERENCES coverage_scopes\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE coverage_claims(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n details_json TEXT CHECK(details_json IS NULL OR p1_coverage_details(details_json)=1),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(owner_kind,owner_coordinates_json) REFERENCES coverage_scopes\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "coverage_claim_no_delete": "CREATE TRIGGER coverage_claim_no_delete BEFORE DELETE ON coverage_claims BEGIN SELECT RAISE(ABORT,'immutable Coverage claim'); END",
             "coverage_claim_no_replace": "CREATE TRIGGER coverage_claim_no_replace BEFORE INSERT ON coverage_claims WHEN EXISTS(\n SELECT 1 FROM coverage_claims WHERE owner_kind=NEW.owner_kind AND owner_coordinates_json=NEW.owner_coordinates_json AND observed_at_us=NEW.observed_at_us AND coverage_state=NEW.coverage_state)\n BEGIN SELECT RAISE(ABORT,'Coverage exact replay must be compared before insert'); END",
@@ -10391,9 +10424,8 @@
             "terminal_state",
             "members_json"
           ],
-          "sql": "CREATE TABLE coverage_proofs(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL,\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n collection_kind TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n terminal_observed_at_us INTEGER NOT NULL CHECK(typeof(terminal_observed_at_us)='integer' AND terminal_observed_at_us>0),\n terminal_state TEXT NOT NULL,\n members_json TEXT NOT NULL,\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json) REFERENCES collection_terminals,\n CHECK(terminal_observed_at_us<=observed_at_us),\n CHECK(coverage_state!='complete' OR terminal_state='complete')\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE coverage_proofs(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL,\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n collection_kind TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n terminal_observed_at_us INTEGER NOT NULL CHECK(typeof(terminal_observed_at_us)='integer' AND terminal_observed_at_us>0),\n terminal_state TEXT NOT NULL,\n members_json TEXT NOT NULL CHECK(p1_collection_members_v1(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,members_json)=1),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json) REFERENCES collection_terminals,\n CHECK(terminal_observed_at_us<=observed_at_us),\n CHECK(coverage_state!='complete' OR terminal_state='complete')\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "coverage_proof_current_terminal": "CREATE TRIGGER coverage_proof_current_terminal BEFORE INSERT ON coverage_proofs\nWHEN NEW.terminal_observed_at_us!=(SELECT MAX(t.observed_at_us) FROM collection_terminals t\n WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json)\n OR EXISTS(SELECT 1 FROM collection_terminals t WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json AND t.observed_at_us=NEW.terminal_observed_at_us AND t.terminal_state!='unknown' AND (t.terminal_state!=NEW.terminal_state OR t.members_json!=NEW.members_json))\nBEGIN SELECT RAISE(ABORT,'Coverage proof terminal is superseded or conflicting'); END",
             "coverage_proof_owner": "CREATE TRIGGER coverage_proof_owner BEFORE INSERT ON coverage_proofs WHEN NOT EXISTS(\n SELECT 1 FROM coverage_scopes s JOIN collections c ON\n c.service_instance_uuidv4=NEW.service_instance_uuidv4 AND c.resource_kind=NEW.resource_kind AND c.provider_resource_id=NEW.provider_resource_id AND c.collection_kind=NEW.collection_kind AND c.provenance_json=NEW.provenance_json\n WHERE s.owner_kind=NEW.owner_kind AND s.owner_coordinates_json=NEW.owner_coordinates_json\n AND CASE s.owner_kind\n WHEN 'repository' THEN json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind)\n WHEN 'source' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND json_extract(c.scope_json,'$.repository_uuidv4')=s.repository_uuidv4 AND json_extract(c.scope_json,'$.source_registration_uuidv4')=s.source_registration_uuidv4 AND EXISTS(SELECT 1 FROM sources src WHERE src.source_registration_uuidv4=s.source_registration_uuidv4 AND src.service_instance_uuidv4=NEW.service_instance_uuidv4)\n WHEN 'resource' THEN s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind)\n WHEN 'field' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND json_extract(c.scope_json,'$.field_name')=s.field_name\n WHEN 'collection' THEN s.coverage_kind=COALESCE(json_extract(c.scope_json,'$.coverage_kind'),NEW.collection_kind) AND s.service_instance_uuidv4=NEW.service_instance_uuidv4 AND s.resource_kind=NEW.resource_kind AND s.provider_resource_id=NEW.provider_resource_id AND s.collection_kind=NEW.collection_kind AND s.collection_provenance_json=NEW.provenance_json\n ELSE 0 END)\n BEGIN SELECT RAISE(ABORT,'Coverage proof owner mismatch'); END",
             "coverage_proofs_no_delete": "CREATE TRIGGER coverage_proofs_no_delete BEFORE DELETE ON coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END",
             "coverage_proofs_no_update": "CREATE TRIGGER coverage_proofs_no_update BEFORE UPDATE ON coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
@@ -10757,7 +10789,9 @@
             "provenance_json"
           ],
           "sql": "CREATE TABLE field_candidates(\n service_instance_uuidv4 TEXT NOT NULL,\n resource_kind TEXT NOT NULL,\n provider_resource_id TEXT NOT NULL,\n field_name TEXT NOT NULL CHECK(length(field_name)>0),\n value_json TEXT NOT NULL CHECK(p1_json(value_json)),\n clock_json TEXT NOT NULL CHECK(p1_json(clock_json) AND json_type(clock_json)='object'\n   AND COALESCE(json_type(clock_json,'$.domain')='text',0) AND length(json_extract(clock_json,'$.domain'))>0\n   AND COALESCE(json_type(clock_json,'$.at_us') IN('integer','null'),0) AND typeof(json_extract(clock_json,'$.at_us')) IN('integer','null') AND (json_type(clock_json,'$.at_us')='null' OR json_extract(clock_json,'$.at_us')>0) AND json_remove(clock_json,'$.domain','$.at_us')='{}'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n observed_at_us INTEGER CHECK(observed_at_us IS NULL OR (typeof(observed_at_us)='integer' AND observed_at_us>0)),\n clock_domain TEXT GENERATED ALWAYS AS(json_extract(clock_json,'$.domain')) VIRTUAL,\n source_clock_us INTEGER GENERATED ALWAYS AS(json_extract(clock_json,'$.at_us')) VIRTUAL,\n text_body_sha256 TEXT GENERATED ALWAYS AS(CASE WHEN field_name='text_body_sha256' THEN json_extract(value_json,'$') END) VIRTUAL REFERENCES text_bodies(sha256),\n CHECK(field_name!='text_body_sha256' OR json_type(value_json)='null' OR (json_type(value_json)='text' AND length(json_extract(value_json,'$'))=64 AND json_extract(value_json,'$') NOT GLOB '*[^0-9a-f]*')),\n CHECK(field_name!='repository_uuidv4'),\n PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json),\n FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources\n) STRICT, WITHOUT ROWID",
-          "triggers": {},
+          "triggers": {
+            "field_original_no_update": "CREATE TRIGGER field_original_no_update BEFORE UPDATE ON field_candidates\nBEGIN SELECT RAISE(ABORT,'immutable original field candidate'); END"
+          },
           "unique": [
             {
               "columns": [
@@ -11967,6 +12001,102 @@
             }
           ]
         },
+        "service_identity_assertions": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "relation_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "record_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provenance",
+              "notnull": true,
+              "type": "TEXT"
+            }
+          ],
+          "foreign_keys": [],
+          "primary_key": [
+            "relation_uuidv4",
+            "record_json",
+            "provenance"
+          ],
+          "sql": "CREATE TABLE service_identity_assertions (\n relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),\n record_json TEXT NOT NULL CHECK(p1_json(record_json)),\n provenance TEXT NOT NULL,\n CHECK(p1_identity_evidence_v1('relation','service',record_json,provenance)=1),\n CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),\n PRIMARY KEY(relation_uuidv4,record_json,provenance)\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "service_identity_assertions_no_delete": "CREATE TRIGGER service_identity_assertions_no_delete BEFORE DELETE ON service_identity_assertions BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END",
+            "service_identity_assertions_no_update": "CREATE TRIGGER service_identity_assertions_no_update BEFORE UPDATE ON service_identity_assertions BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "relation_uuidv4",
+                "record_json",
+                "provenance"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
+        "service_identity_cancellations": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "cancellation_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "relation_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "record_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provenance",
+              "notnull": true,
+              "type": "TEXT"
+            }
+          ],
+          "foreign_keys": [],
+          "primary_key": [
+            "cancellation_uuidv4",
+            "relation_uuidv4",
+            "record_json",
+            "provenance"
+          ],
+          "sql": "CREATE TABLE service_identity_cancellations (\n cancellation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(cancellation_uuidv4)),\n relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),\n record_json TEXT NOT NULL CHECK(p1_json(record_json)),\n provenance TEXT NOT NULL,\n CHECK(p1_identity_evidence_v1('cancellation','service',record_json,provenance)=1),\n CHECK(json_extract(record_json,'$.cancellation_uuidv4')=cancellation_uuidv4),\n CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),\n PRIMARY KEY(cancellation_uuidv4,relation_uuidv4,record_json,provenance)\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "service_identity_cancellations_no_delete": "CREATE TRIGGER service_identity_cancellations_no_delete BEFORE DELETE ON service_identity_cancellations BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END",
+            "service_identity_cancellations_no_update": "CREATE TRIGGER service_identity_cancellations_no_update BEFORE UPDATE ON service_identity_cancellations BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "cancellation_uuidv4",
+                "relation_uuidv4",
+                "record_json",
+                "provenance"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
         "source_coverage_proofs": {
           "columns": [
             {
@@ -12032,6 +12162,12 @@
             {
               "generated": 0,
               "name": "provenance_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provider_repositories_json",
               "notnull": true,
               "type": "TEXT"
             }
@@ -12108,6 +12244,16 @@
               "NONE"
             ],
             [
+              0,
+              7,
+              "source_inventory_evidence",
+              "provider_repositories_json",
+              null,
+              "NO ACTION",
+              "NO ACTION",
+              "NONE"
+            ],
+            [
               1,
               0,
               "coverage_claims",
@@ -12159,11 +12305,11 @@
             "inventory_state",
             "terminal",
             "members_json",
-            "provenance_json"
+            "provenance_json",
+            "provider_repositories_json"
           ],
-          "sql": "CREATE TABLE source_coverage_proofs(\n owner_kind TEXT NOT NULL CHECK(owner_kind='source_inventory'),\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL,\n source_registration_uuidv4 TEXT NOT NULL,\n scope_json TEXT NOT NULL,\n inventory_observed_at_us INTEGER NOT NULL CHECK(typeof(inventory_observed_at_us)='integer' AND inventory_observed_at_us>0),\n inventory_state TEXT NOT NULL,\n terminal INTEGER NOT NULL CHECK(terminal=1),\n members_json TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,\n FOREIGN KEY(source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json) REFERENCES source_inventory_evidence,\n CHECK(inventory_observed_at_us<=observed_at_us),\n CHECK(coverage_state!='complete' OR inventory_state='complete')\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE source_coverage_proofs(\n owner_kind TEXT NOT NULL CHECK(owner_kind='source_inventory'),\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL,\n source_registration_uuidv4 TEXT NOT NULL,\n scope_json TEXT NOT NULL,\n inventory_observed_at_us INTEGER NOT NULL CHECK(typeof(inventory_observed_at_us)='integer' AND inventory_observed_at_us>0),\n inventory_state TEXT NOT NULL,\n terminal INTEGER NOT NULL CHECK(terminal=1),\n members_json TEXT NOT NULL,\n provenance_json TEXT NOT NULL,\n provider_repositories_json TEXT NOT NULL DEFAULT '[]',\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json,provider_repositories_json),\n FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,\n FOREIGN KEY(source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json,provider_repositories_json) REFERENCES source_inventory_evidence,\n CHECK(inventory_observed_at_us<=observed_at_us),\n CHECK(coverage_state!='complete' OR inventory_state='complete')\n) STRICT, WITHOUT ROWID",
           "triggers": {
-            "source_coverage_current_terminal": "CREATE TRIGGER source_coverage_current_terminal BEFORE INSERT ON source_coverage_proofs\nWHEN NEW.inventory_observed_at_us!=(SELECT MAX(i.observed_at_us) FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json)\n OR EXISTS(SELECT 1 FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json AND i.observed_at_us=NEW.inventory_observed_at_us AND i.coverage_state!='unknown' AND (i.coverage_state!=NEW.inventory_state OR i.members_json!=NEW.members_json OR i.terminal!=NEW.terminal))\nBEGIN SELECT RAISE(ABORT,'Source Coverage terminal is superseded or conflicting'); END",
             "source_coverage_no_delete": "CREATE TRIGGER source_coverage_no_delete BEFORE DELETE ON source_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Source Coverage proof'); END",
             "source_coverage_no_update": "CREATE TRIGGER source_coverage_no_update BEFORE UPDATE ON source_coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Source Coverage proof'); END",
             "source_coverage_owner": "CREATE TRIGGER source_coverage_owner BEFORE INSERT ON source_coverage_proofs WHEN NOT EXISTS(\n SELECT 1 FROM coverage_scopes WHERE owner_kind=NEW.owner_kind AND owner_coordinates_json=NEW.owner_coordinates_json\n AND source_registration_uuidv4=NEW.source_registration_uuidv4 AND source_scope_json=NEW.scope_json AND json_extract(NEW.scope_json,'$.coverage_kind')=coverage_kind)\n BEGIN SELECT RAISE(ABORT,'Source Coverage proof owner mismatch'); END"
@@ -12181,7 +12327,8 @@
                 "inventory_state",
                 "terminal",
                 "members_json",
-                "provenance_json"
+                "provenance_json",
+                "provider_repositories_json"
               ],
               "origin": "pk",
               "partial": false
@@ -12231,6 +12378,12 @@
               "name": "provenance_json",
               "notnull": true,
               "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provider_repositories_json",
+              "notnull": true,
+              "type": "TEXT"
             }
           ],
           "foreign_keys": [
@@ -12252,12 +12405,15 @@
             "coverage_state",
             "terminal",
             "members_json",
-            "provenance_json"
+            "provenance_json",
+            "provider_repositories_json"
           ],
-          "sql": "CREATE TABLE source_inventory_evidence(\n source_registration_uuidv4 TEXT NOT NULL REFERENCES sources,\n scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n terminal INTEGER NOT NULL CHECK(terminal IN(0,1)),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n PRIMARY KEY(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json)\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE source_inventory_evidence(\n source_registration_uuidv4 TEXT NOT NULL REFERENCES sources,\n scope_json TEXT NOT NULL CHECK(p1_json(scope_json)),\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n terminal INTEGER NOT NULL CHECK(terminal IN(0,1)),\n members_json TEXT NOT NULL CHECK(p1_json(members_json) AND p1_source_git_members_v1(members_json)),\n provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),\n provider_repositories_json TEXT NOT NULL DEFAULT '[]' CHECK(p1_json(provider_repositories_json) AND json_type(provider_repositories_json)='array'),\n PRIMARY KEY(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json,provider_repositories_json)\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "source_inventory_evidence_no_delete": "CREATE TRIGGER source_inventory_evidence_no_delete BEFORE DELETE ON source_inventory_evidence BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END",
-            "source_inventory_evidence_no_update": "CREATE TRIGGER source_inventory_evidence_no_update BEFORE UPDATE ON source_inventory_evidence BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END"
+            "source_inventory_evidence_no_update": "CREATE TRIGGER source_inventory_evidence_no_update BEFORE UPDATE ON source_inventory_evidence BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END",
+            "source_inventory_provider_members": "CREATE TRIGGER source_inventory_provider_members BEFORE INSERT ON source_inventory_evidence BEGIN\n SELECT CASE WHEN EXISTS(\n  SELECT 1 FROM json_each(NEW.provider_repositories_json) member\n  WHERE CASE WHEN member.type='array' THEN\n   json_array_length(member.value)!=3\n   OR json_type(member.value,'$[0]') IS NOT 'text'\n   OR json_type(member.value,'$[1]') IS NOT 'text'\n   OR json_type(member.value,'$[2]') IS NOT 'text'\n   OR json_extract(member.value,'$[1]')!='repository'\n   OR json_extract(member.value,'$[0]')!=(SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=NEW.source_registration_uuidv4)\n   OR NOT EXISTS(SELECT 1 FROM resources resource\n    WHERE resource.service_instance_uuidv4=json_extract(member.value,'$[0]')\n     AND resource.resource_kind='repository'\n     AND resource.provider_resource_id=json_extract(member.value,'$[2]')\n     AND resource.identifier_namespace_kind IS NULL AND resource.document_kind IS NULL)\n  ELSE 1 END)\n  OR EXISTS(SELECT 1 FROM json_each(NEW.provider_repositories_json) member\n   GROUP BY CASE WHEN member.type='array' THEN json_extract(member.value,'$[0]') END,\n    CASE WHEN member.type='array' THEN json_extract(member.value,'$[1]') END,\n    CASE WHEN member.type='array' THEN json_extract(member.value,'$[2]') END HAVING count(*)>1)\n THEN RAISE(ABORT,'invalid Source Provider repository membership') END;\nEND",
+            "source_inventory_scope": "CREATE TRIGGER source_inventory_scope BEFORE INSERT ON source_inventory_evidence\nWHEN p1_source_inventory_scope_v1(NEW.scope_json,NEW.source_registration_uuidv4,\n (SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=NEW.source_registration_uuidv4))!=1\nBEGIN SELECT RAISE(ABORT,'Source inventory scope owner mismatch'); END"
           },
           "unique": [
             {
@@ -12268,7 +12424,8 @@
                 "coverage_state",
                 "terminal",
                 "members_json",
-                "provenance_json"
+                "provenance_json",
+                "provider_repositories_json"
               ],
               "origin": "pk",
               "partial": false
@@ -12465,7 +12622,7 @@
       }
     },
     "core": {
-      "ddl_sha256": "d7b4802144952b3b7a17cde06003427c46a69c94c56a809a8745b0933572268f",
+      "ddl_sha256": "7b33bbbfb8977f59f3d1db338fd9148d65645f6c75ec8d73bff95c5431290cc6",
       "tables": {
         "core_coverage_proofs": {
           "columns": [
@@ -12639,7 +12796,7 @@
             "observed_at_us",
             "coverage_state"
           ],
-          "sql": "CREATE TABLE coverage_claims(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n details_json TEXT CHECK(details_json IS NULL OR p1_json(details_json)),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(owner_kind,owner_coordinates_json) REFERENCES coverage_scopes\n) STRICT, WITHOUT ROWID",
+          "sql": "CREATE TABLE coverage_claims(\n owner_kind TEXT NOT NULL,\n owner_coordinates_json TEXT NOT NULL,\n observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),\n coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),\n details_json TEXT CHECK(details_json IS NULL OR p1_coverage_details(details_json)=1),\n PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),\n FOREIGN KEY(owner_kind,owner_coordinates_json) REFERENCES coverage_scopes\n) STRICT, WITHOUT ROWID",
           "triggers": {
             "coverage_claim_no_delete": "CREATE TRIGGER coverage_claim_no_delete BEFORE DELETE ON coverage_claims BEGIN SELECT RAISE(ABORT,'immutable Coverage claim'); END",
             "coverage_claim_no_replace": "CREATE TRIGGER coverage_claim_no_replace BEFORE INSERT ON coverage_claims WHEN EXISTS(\n SELECT 1 FROM coverage_claims WHERE owner_kind=NEW.owner_kind AND owner_coordinates_json=NEW.owner_coordinates_json AND observed_at_us=NEW.observed_at_us AND coverage_state=NEW.coverage_state)\n BEGIN SELECT RAISE(ABORT,'Coverage exact replay must be compared before insert'); END",
@@ -15555,6 +15712,102 @@
                 "repository_uuidv4",
                 "field",
                 "value",
+                "provenance"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
+        "repository_identity_assertions": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "relation_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "record_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provenance",
+              "notnull": true,
+              "type": "TEXT"
+            }
+          ],
+          "foreign_keys": [],
+          "primary_key": [
+            "relation_uuidv4",
+            "record_json",
+            "provenance"
+          ],
+          "sql": "CREATE TABLE repository_identity_assertions (\n relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),\n record_json TEXT NOT NULL CHECK(p1_json(record_json)),\n provenance TEXT NOT NULL,\n CHECK(p1_identity_evidence_v1('relation','repository',record_json,provenance)=1),\n CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),\n PRIMARY KEY(relation_uuidv4,record_json,provenance)\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "p1_immutable_repository_identity_assertions_delete": "CREATE TRIGGER p1_immutable_repository_identity_assertions_delete BEFORE DELETE ON repository_identity_assertions BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
+            "p1_immutable_repository_identity_assertions_update": "CREATE TRIGGER p1_immutable_repository_identity_assertions_update BEFORE UPDATE ON repository_identity_assertions BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "relation_uuidv4",
+                "record_json",
+                "provenance"
+              ],
+              "origin": "pk",
+              "partial": false
+            }
+          ]
+        },
+        "repository_identity_cancellations": {
+          "columns": [
+            {
+              "generated": 0,
+              "name": "cancellation_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "relation_uuidv4",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "record_json",
+              "notnull": true,
+              "type": "TEXT"
+            },
+            {
+              "generated": 0,
+              "name": "provenance",
+              "notnull": true,
+              "type": "TEXT"
+            }
+          ],
+          "foreign_keys": [],
+          "primary_key": [
+            "cancellation_uuidv4",
+            "relation_uuidv4",
+            "record_json",
+            "provenance"
+          ],
+          "sql": "CREATE TABLE repository_identity_cancellations (\n cancellation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(cancellation_uuidv4)),\n relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),\n record_json TEXT NOT NULL CHECK(p1_json(record_json)),\n provenance TEXT NOT NULL,\n CHECK(p1_identity_evidence_v1('cancellation','repository',record_json,provenance)=1),\n CHECK(json_extract(record_json,'$.cancellation_uuidv4')=cancellation_uuidv4),\n CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),\n PRIMARY KEY(cancellation_uuidv4,relation_uuidv4,record_json,provenance)\n) STRICT, WITHOUT ROWID",
+          "triggers": {
+            "p1_immutable_repository_identity_cancellations_delete": "CREATE TRIGGER p1_immutable_repository_identity_cancellations_delete BEFORE DELETE ON repository_identity_cancellations BEGIN SELECT RAISE(ABORT,'immutable core fact'); END",
+            "p1_immutable_repository_identity_cancellations_update": "CREATE TRIGGER p1_immutable_repository_identity_cancellations_update BEFORE UPDATE ON repository_identity_cancellations BEGIN SELECT RAISE(ABORT,'immutable core fact'); END"
+          },
+          "unique": [
+            {
+              "columns": [
+                "cancellation_uuidv4",
+                "relation_uuidv4",
+                "record_json",
                 "provenance"
               ],
               "origin": "pk",

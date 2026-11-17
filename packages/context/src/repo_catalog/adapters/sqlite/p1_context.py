@@ -70,10 +70,32 @@ from repo_catalog.domain.time import validate_observation_us
 
 
 def register_functions(db: sqlite3.Connection) -> None:
+    from repo_catalog.domain.collection_members import collection_members_sql
     from repo_catalog.domain.context_registration import registration_json
+    from repo_catalog.domain.identity_assertions import identity_evidence_sql
     from repo_catalog.domain.parent_report import parent_report_sql
+    from repo_catalog.domain.source_inventory_members import (
+        source_inventory_members_sql,
+    )
+    from repo_catalog.domain.source_inventory_scope import source_inventory_scope_sql
     from repo_catalog.domain.transfer_sql import endpoint_sql, event_sql, value_sql
 
+    db.create_function(
+        "p1_identity_evidence_v1", 4, identity_evidence_sql, deterministic=True
+    )
+    db.create_function(
+        "p1_source_git_members_v1", 1, source_inventory_members_sql, deterministic=True
+    )
+    db.create_function(
+        "p1_source_inventory_scope_v1",
+        3,
+        source_inventory_scope_sql,
+        deterministic=True,
+    )
+
+    db.create_function(
+        "p1_collection_members_v1", 5, collection_members_sql, deterministic=True
+    )
     db.create_function("p1_transfer_event_v1", 7, event_sql, deterministic=True)
     db.create_function("p1_transfer_value_v1", 2, value_sql, deterministic=True)
     db.create_function("p1_transfer_endpoint_v1", 4, endpoint_sql, deterministic=True)
@@ -127,6 +149,41 @@ class ContextStore(AdmissionTransactions):
     def __init__(self, connection: sqlite3.Connection, *, authorization=None):
         self.db = connection
         self._init_admission(authorization)
+
+    def admit_identity_evidence(
+        self, kind, record_json, provenance, *, with_insertion=False
+    ):
+        """Admit only service identity evidence under the current commit-owned lease."""
+        from repo_catalog.domain.identity_assertions import identity_values
+        from repo_catalog.domain.shared_values import Provenance
+
+        # Primitive encoded input lets dependency extraction and input charging
+        # precede validation and every existence-sensitive diagnostic.
+        original = Provenance(*json.loads(provenance))
+        if original.encoded != provenance:
+            raise ValueError("canonical reported provenance required")
+        values = identity_values(kind, "service", record_json, original)
+        table = (
+            "service_identity_assertions"
+            if kind == "relation"
+            else "service_identity_cancellations"
+        )
+        key = "relation_uuidv4" if kind == "relation" else "cancellation_uuidv4"
+        row_type = ROW_TYPES[table]
+        columns, bound = row_type.insert_bindings(
+            dict(zip(row_type.WRITE_COLUMNS, values, strict=True))
+        )
+        cursor = self.db.execute(
+            f"INSERT INTO {table}({','.join(columns)}) VALUES({','.join('?' for _ in bound)}) ON CONFLICT DO NOTHING",
+            bound,
+        )
+        variants = self.db.execute(
+            f"SELECT count(DISTINCT record_json) FROM {table} WHERE {key}=?",
+            (values[0],),
+        ).fetchone()[0]
+        inserted = bool(cursor.rowcount)
+        state = "conflict" if variants > 1 else "accepted" if inserted else "duplicate"
+        return (state, inserted) if with_insertion else state
 
     def resource(
         self,
@@ -271,15 +328,14 @@ class ContextStore(AdmissionTransactions):
                 )
             except sqlite3.IntegrityError as error:
                 if "stale current repository relation candidate" in str(error):
-                    self.db.execute("ROLLBACK TO p1_repository_relation")
-                    self.db.execute("RELEASE p1_repository_relation")
+                    self._rollback_unit("p1_repository_relation", error)
+                    self._raise_failed_cleanup()
                     return "stale"
                 raise
             self.db.execute("RELEASE p1_repository_relation")
             return "insert"
-        except BaseException:
-            self.db.execute("ROLLBACK TO p1_repository_relation")
-            self.db.execute("RELEASE p1_repository_relation")
+        except BaseException as error:
+            self._rollback_unit("p1_repository_relation", error)
             raise
 
     def admit_repository_relation_result(
@@ -382,9 +438,8 @@ class ContextStore(AdmissionTransactions):
             )
             self.db.execute("RELEASE p1_mapping_disposition")
             return "insert"
-        except BaseException:
-            self.db.execute("ROLLBACK TO p1_mapping_disposition")
-            self.db.execute("RELEASE p1_mapping_disposition")
+        except BaseException as error:
+            self._rollback_unit("p1_mapping_disposition", error)
             raise
 
     def admit_transfer_event(self, report: TransferEventReport) -> str:
@@ -674,9 +729,8 @@ class ContextStore(AdmissionTransactions):
 
             self.db.execute("RELEASE p1_transfer_event")
             return "insert"
-        except BaseException:
-            self.db.execute("ROLLBACK TO p1_transfer_event")
-            self.db.execute("RELEASE p1_transfer_event")
+        except BaseException as error:
+            self._rollback_unit("p1_transfer_event", error)
             raise
 
     def _validate_transfer_qualification(self, report):
@@ -1357,9 +1411,8 @@ class ContextStore(AdmissionTransactions):
             )
             self.db.execute("RELEASE p1_field")
             return "insert"
-        except BaseException:
-            self.db.execute("ROLLBACK TO p1_field")
-            self.db.execute("RELEASE p1_field")
+        except BaseException as error:
+            self._rollback_unit("p1_field", error)
             raise
 
     def scope(self, scope: CoverageScope) -> None:
@@ -1475,15 +1528,27 @@ class ContextStore(AdmissionTransactions):
                 (scope.owner_kind, scope.encoded, rows[0][0], "complete"),
             ).fetchall()
             source_proofs = self.db.execute(
-                "SELECT members_json,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state FROM source_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
+                "SELECT members_json,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,provider_repositories_json FROM source_coverage_proofs WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
                 (scope.owner_kind, scope.encoded, rows[0][0], "complete"),
             ).fetchall()
             dependencies: dict[tuple, list[tuple[str, str]]] = {}
             for proof in proofs:
+                from repo_catalog.adapters.sqlite.collection_members import (
+                    validate_stored_collection_members,
+                )
+
+                validate_stored_collection_members(
+                    self.db, ResourceKey(*proof[1:4]), proof[4], proof[0]
+                )
                 current = self.db.execute(
                     """SELECT observed_at_us,terminal_state,members_json,1 FROM collection_terminals WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=? AND observed_at_us=(SELECT MAX(observed_at_us) FROM collection_terminals WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=?)""",
                     (*proof[1:6], *proof[1:6]),
                 ).fetchall()
+                for terminal in current:
+                    if terminal[2] != proof[0]:
+                        validate_stored_collection_members(
+                            self.db, ResourceKey(*proof[1:4]), proof[4], terminal[2]
+                        )
                 dependencies.setdefault(("collection", *proof[1:6]), []).append(
                     (
                         self._proof_qualification(
@@ -1494,15 +1559,28 @@ class ContextStore(AdmissionTransactions):
                 )
             for proof in source_proofs:
                 current = self.db.execute(
-                    """SELECT observed_at_us,coverage_state,members_json,terminal FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=? AND observed_at_us=(SELECT MAX(observed_at_us) FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=?)""",
+                    """SELECT observed_at_us,coverage_state,members_json,terminal,provider_repositories_json FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=? AND observed_at_us=(SELECT MAX(observed_at_us) FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=?)""",
                     (*proof[1:3], *proof[1:3]),
                 ).fetchall()
+                # Git Repository UUIDs and Provider Repository ResourceKeys are
+                # separate typed members; both participate in proof coherence
+                # and emptiness, without creating a cross-authority mapping.
+                membership = canonical(json.loads(proof[0]) + json.loads(proof[5]))
+                current = [
+                    (
+                        row[0],
+                        row[1],
+                        canonical(json.loads(row[2]) + json.loads(row[4])),
+                        row[3],
+                    )
+                    for row in current
+                ]
                 dependencies.setdefault(("source", *proof[1:3]), []).append(
                     (
                         self._proof_qualification(
-                            proof[3], proof[4], proof[0], current
+                            proof[3], proof[4], membership, current
                         ),
-                        proof[0],
+                        membership,
                     )
                 )
             qualifications = []

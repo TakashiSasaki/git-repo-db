@@ -142,7 +142,7 @@ def checked_receipt(path, context, product, ir_hash, root):
         or not executed
         or len(executed) != len(set(executed))
         or not set(executed).issubset(expected_inputs)
-        or "scripts/audit_publication_free.py" not in executed
+        or "scripts/schema_catalog.py" not in executed
     ):
         raise DocumentationGap("Executed producer closure missing or changed")
     for name, digest in producer["input_sha256"].items():

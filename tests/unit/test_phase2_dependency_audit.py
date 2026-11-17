@@ -4,10 +4,6 @@ import json
 import sqlite3
 from pathlib import Path
 
-import pytest
-
-from repo_catalog.adapters.sqlite.cas_integrity import register_git_object_sql_function
-from repo_catalog.adapters.sqlite.schema import schema_sql
 from scripts.audit_phase2_dependencies import (
     cli_inventory,
     prepare,
@@ -163,105 +159,87 @@ def unrelated():
     )
 
 
-@pytest.fixture(scope="module")
-def production_readers(tmp_path_factory):
-    root = tmp_path_factory.mktemp("production-reader-audit")
-    for relative in (
-        "application/issue_queries.py",
-        "application/query_service.py",
-        "adapters/sqlite/current_resources.py",
-        "application/git_query_context.py",
-        "adapters/git/parsing.py",
-    ):
-        target = root / "src/repo_catalog" / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text((ROOT / "src/repo_catalog" / relative).read_text())
-    with sqlite3.connect(":memory:", isolation_level=None, cached_statements=0) as db:
-        register_git_object_sql_function(db)
-        db.executescript(schema_sql())
-        changes = db.total_changes
-        names = {row[0] for row in db.execute("SELECT name FROM sqlite_schema")}
-        report = source_inventory(root, db, names)
-        assert db.total_changes == changes
-        assert db.execute("SELECT count(*) FROM issue_resources").fetchone() == (0,)
-    return report
+def test_current_role_audit_has_separate_authority_definitions_without_legacy_driver():
+    from scripts.audit_phase2_dependencies import build_report
+
+    report = build_report()
+    assert set(report["stores"]) == {
+        "p1.core",
+        "p1.context",
+        "p1.operational",
+        "p1.search",
+        "access",
+        "filesystem",
+        "worktrees",
+    }
+    core, context = report["stores"]["p1.core"], report["stores"]["p1.context"]
+    assert "resources" in context["tables"] and "resources" not in core["tables"]
+    assert "text_bodies" in context["tables"] and "text_bodies" not in core["tables"]
+    assert "git_objects" in core["tables"] and "git_objects" not in context["tables"]
+    modules = report["source"]["modules"]
+    assert any("production_context.py" in module["path"] for module in modules)
+    assert any("p1_core.py" in module["path"] for module in modules)
+    assert "not operation reachability" in report["limits"][0]
 
 
-def accesses_for(report, symbol, sql_fragment):
-    for site in report["sql_sites"]:
-        if site["caller"].endswith(":" + symbol):
-            statement = report["sql_statements"][site["statement"]]
-            if statement["literal"] and sql_fragment in statement["literal"]:
-                assert statement["preparation"]["status"] == "compiled"
-                return {
-                    (item["operation"], item["object"], item["column"])
-                    for item in statement["preparation"]["accesses"]
-                }
-    pytest.fail(f"Missing SQL dependency for {symbol}: {sql_fragment}")
+def test_native_preparation_keeps_current_field_conflict_and_exact_source_scope_dependencies():
+    from repo_catalog.adapters.sqlite import p1_schema
 
-
-def test_actual_issue_eligibility_reader_includes_body_and_conflict_dependencies(
-    production_readers,
-):
-    accesses = accesses_for(production_readers, "_eligible", "eligible_issue_resources")
-    assert ("read", "issue_resources", "provider_resource_id") in accesses
-    assert ("read", "text_bodies", "body") in accesses
-    assert ("read", "exchange_staging", "record_json") in accesses
-
-
-def test_actual_source_coverage_reader_includes_source_and_inventory_dependencies(
-    production_readers,
-):
-    sources = accesses_for(
-        production_readers, "QueryService.prepare_coverage", "sources"
-    )
-    inventory = accesses_for(
-        production_readers,
-        "QueryService.prepare_coverage",
-        "source_inventory_assessments",
-    )
-    assert ("read", "sources", "source_id") in sources
-    assert ("read", "source_inventory_assessments", "state") in inventory
-
-
-def test_actual_git_name_reader_includes_explicit_decoder_evidence(production_readers):
-    accesses = accesses_for(production_readers, "decoded_name", "git_name_facts")
-    assert ("read", "git_name_facts", "decoder_key") in accesses
-    assert ("read", "git_name_facts", "metadata_encoding") in accesses
-    assert ("read", "git_name_facts", "parser_module") in accesses
-    assert ("read", "git_name_facts", "parser_version") in accesses
-
-
-def test_actual_decoder_candidate_queries_report_dynamic_sql_honestly(
-    production_readers,
-):
-    sites = [
-        site
-        for site in production_readers["sql_sites"]
-        if site["caller"].endswith(":decoded_fact")
-        or site["caller"].endswith(":decoder_settings")
-    ]
-    assert sites
-    for site in sites:
-        assert (
-            production_readers["sql_statements"][site["statement"]]["preparation"][
-                "status"
-            ]
-            == "dynamic_or_non_dml"
+    with sqlite3.connect(":memory:", isolation_level=None) as db:
+        p1_schema.register_functions(db, "context")
+        p1_schema.configure(db, "context")
+        ddl = p1_schema.compose("context")
+        db.executescript(ddl)
+        before = db.total_changes
+        report = schema_inventory(db, ddl)
+        assert db.total_changes == before
+        tables = report["tables"]
+        assert "field_candidates" in tables and "text_bodies" in tables
+        assert "source_coverage_proofs" in tables
+        assert "source_inventory_evidence" in tables
+        assert "local_revision" not in {
+            column["name"] for table in tables.values() for column in table["columns"]
+        }
+        assert all(
+            item["status"] in {"compiled", "not_compiled"}
+            for item in report["prepared_mutations"].values()
         )
-    refs = production_readers["static_object_references"]
-    assert not any(
-        ref.get("object") in {"parser_profiles", "parsed_results"} for ref in refs
-    )
 
 
-def test_actual_local_forwarders_preserve_revision_and_git_content_boundaries(
-    production_readers,
+def test_actual_context_readers_compile_body_conflict_and_source_scope_dependencies(
+    tmp_path,
 ):
-    current = accesses_for(
-        production_readers, "CurrentResources.capture_context", "local_revision"
-    )
-    git = accesses_for(production_readers, "GitParsing.object", "git_object_payloads")
-    assert ("read", "database_identity", "local_revision") in current
-    assert ("read", "git_objects", "verified") in git
-    assert ("read", "git_object_payloads", "") in git
+    from repo_catalog.adapters.sqlite import p1_schema
+
+    source = tmp_path / "src"
+    source.mkdir()
+    for name in ("p1_context.py", "production_context.py"):
+        origin = ROOT / "packages/context/src/repo_catalog/adapters/sqlite" / name
+        (source / name).write_bytes(origin.read_bytes())
+    db = sqlite3.connect(":memory:", isolation_level=None)
+    try:
+        p1_schema.register_functions(db, "context")
+        p1_schema.configure(db, "context")
+        db.executescript(p1_schema.compose("context"))
+        report = source_inventory(
+            tmp_path, db, set(schema_inventory(db, "context")["objects"])
+        )
+        reads = {
+            (access["object"], access["column"])
+            for statement in report["sql_statements"].values()
+            if statement["preparation"]["status"] == "compiled"
+            for access in statement["preparation"].get("accesses", ())
+            if access["operation"] == "read"
+        }
+        assert ("text_bodies", "text_value") in reads
+        assert {
+            ("field_candidates", column)
+            for column in ("value_json", "clock_json", "provenance_json")
+        } <= reads
+        assert {
+            ("source_inventory_evidence", column)
+            for column in ("source_registration_uuidv4", "scope_json", "observed_at_us")
+        } <= reads
+        assert db.total_changes == 0
+    finally:
+        db.close()

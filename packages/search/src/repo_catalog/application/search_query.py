@@ -151,6 +151,62 @@ class SearchReader:
         except _QueryWorkError as error:
             raise error.original from None
 
+    def search_projection_status(
+        self, projection_kinds=SEARCH_PROJECTION_KINDS, *, work=None
+    ):
+        """Verify each derivative against one current bounded authority snapshot."""
+        kinds = self._checked_projection_kinds(projection_kinds)
+        guarded = _QueryWorkBoundary(
+            work if work is not None else UnlimitedWorkBudget()
+        )
+        try:
+            with self.open_snapshot() as snap:
+                token = snap.token.encode()
+                result = {}
+                for kind in kinds:
+                    if (
+                        kind in ("git_metadata", "notes")
+                        and getattr(snap, "core", None) is None
+                        or kind == "context_text"
+                        and getattr(snap, "context", None) is None
+                    ):
+                        result[kind] = {
+                            "fresh": False,
+                            "status": "authority_unavailable",
+                            "document_count": None,
+                        }
+                        continue
+                    docs, _ = self._extract_documents(
+                        snap,
+                        kind,
+                        guarded,
+                        mapping_evidence=getattr(self, "mapping_evidence", None),
+                    )
+                    candidates = self._index_call(
+                        "query_candidates",
+                        kind,
+                        token,
+                        "",
+                        expected_doc_count=len(docs),
+                    )
+                    fresh = candidates is not None and candidates == docs
+                    result[kind] = {
+                        "fresh": fresh,
+                        "status": "ready" if fresh else "unavailable_or_stale",
+                        "document_count": len(docs),
+                    }
+                return {
+                    "status": "ready"
+                    if all(item["fresh"] for item in result.values())
+                    else "partial"
+                    if any(item["fresh"] for item in result.values())
+                    else "unavailable_or_stale",
+                    "kinds": result,
+                    "snapshot_token": token,
+                }
+        except _QueryWorkError as error:
+            raise error.original from None
+
     def _rebuild_search(
         self,
         projection_kinds: Sequence[str],
@@ -241,11 +297,17 @@ class SearchReader:
                     snap, kind, work, mapping_evidence=mapping_evidence
                 )
 
-                expected_matches = {
-                    doc_key: text
-                    for doc_key, text in auth_docs.items()
-                    if query.query_text in text
-                }
+                from repo_catalog.application.literal_search import literal_summary
+
+                matched_summaries = {}
+                expected_matches = {}
+                for doc_key, text in auth_docs.items():
+                    summary = literal_summary(
+                        text, auth_summaries[doc_key], query.query_text, work
+                    )
+                    if summary is not None:
+                        expected_matches[doc_key] = text
+                        matched_summaries[doc_key] = summary
 
                 self.last_costs_ns["authority_search_validation:" + kind] = (
                     time.perf_counter_ns() - authority_started
@@ -258,6 +320,14 @@ class SearchReader:
                     query.query_text,
                     expected_doc_count=len(auth_docs),
                 )
+                if candidates is not None:
+                    candidates = {
+                        key: value
+                        for key, value in candidates.items()
+                        if key not in auth_docs
+                        or value != auth_docs[key]
+                        or key in expected_matches
+                    }
                 self.last_costs_ns["projection_scan:" + kind] = (
                     time.perf_counter_ns() - projection_started
                 )
@@ -274,7 +344,7 @@ class SearchReader:
                             projection_kind=kind,
                             document_key=tuple(json.loads(doc_key_json)),
                             matched_text=matched_text,
-                            authoritative_summary=auth_summaries[doc_key_json],
+                            authoritative_summary=matched_summaries[doc_key_json],
                             snapshot_token=token_str,
                         )
                     )

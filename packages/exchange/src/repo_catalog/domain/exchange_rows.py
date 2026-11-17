@@ -235,6 +235,15 @@ ROW_KEYS = {
                 "provenance_json",
                 "value_json",
             ),
+            (
+                "authority",
+                "field",
+                "object_format",
+                "object_oid",
+                "provenance_json",
+                "value_ascii",
+                "value_encoding",
+            ),
         ),
     },
 }
@@ -361,6 +370,32 @@ for _section, _fields in {
 }.items():
     ROW_KEYS["core"][_section] = (tuple(sorted(_fields)),)
 
+for _store, _prefix in (("core", "repository"), ("context", "service")):
+    ROW_KEYS[_store][_prefix + "_identity_assertions"] = (
+        ("provenance", "record_json", "relation_uuidv4"),
+    )
+    ROW_KEYS[_store][_prefix + "_identity_cancellations"] = (
+        ("cancellation_uuidv4", "provenance", "record_json", "relation_uuidv4"),
+    )
+
+ROW_KEYS["context"]["source_inventories"] += (
+    tuple(
+        sorted(
+            (
+                *ROW_KEYS["context"]["source_inventories"][0],
+                "provider_repositories_json",
+            )
+        )
+    ),
+)
+ROW_KEYS["context"]["coverage_proofs"] += (
+    tuple(
+        sorted(
+            (*ROW_KEYS["context"]["coverage_proofs"][1], "provider_repositories_json")
+        )
+    ),
+)
+
 
 def validate_rows(core, context):
     # Local import keeps envelope validation independent of application services.
@@ -383,6 +418,18 @@ def validate_rows(core, context):
                     raise ExchangeError(
                         "MALFORMED_ROW", [store, section], "exact v8 keys required"
                     )
+                if section.endswith(
+                    ("_identity_assertions", "_identity_cancellations")
+                ):
+                    from repo_catalog.domain.identity_exchange import (
+                        decode_identity_row,
+                    )
+
+                    decode_identity_row(section, row)
+                if store == "core" and section == "scalar_claims":
+                    from repo_catalog.domain.scalar_wire import scalar_value_json
+
+                    scalar_value_json(row)
                 if store == "context" and section == "resources":
                     is_staged_paired = (
                         core is not None
@@ -487,6 +534,13 @@ def validate_rows(core, context):
                             )
                 if store == "context":
                     try:
+                        if "provider_repositories_json" in row:
+                            _resource_members(row["provider_repositories_json"])
+                            from repo_catalog.domain.selective_exchange import (
+                                inventory_resources,
+                            )
+
+                            inventory_resources(row)
                         resource_columns = (
                             "service_instance_uuidv4",
                             "resource_kind",

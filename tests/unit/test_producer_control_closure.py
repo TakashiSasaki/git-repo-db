@@ -60,7 +60,7 @@ def run_export(root, source):
 def test_uncommitted_audit_control_cannot_change_ir_under_old_pin(checkout):
     root, git = checkout
     source = git("rev-parse", "HEAD")
-    audit = root / "scripts/audit_publication_free.py"
+    audit = root / "scripts/schema_catalog.py"
     audit.write_text(
         audit.read_text()
         + "\nimport sys\nsys.modules['__main__'].GROUP_METADATA['portable_identity_and_registration']['title']='uncommitted probe'\n"
@@ -73,7 +73,7 @@ def test_uncommitted_audit_control_cannot_change_ir_under_old_pin(checkout):
 
 def test_control_side_effect_after_preflight_is_rechecked_before_publication(checkout):
     root, git = checkout
-    audit = root / "scripts/audit_publication_free.py"
+    audit = root / "scripts/schema_catalog.py"
     audit.write_text(
         audit.read_text()
         + "\n(ROOT/'packages/contracts/src/repo_catalog/_version.py').write_text('# mutated during control import\\n')\n"
@@ -87,7 +87,7 @@ def test_control_side_effect_after_preflight_is_rechecked_before_publication(che
 
 def test_executed_unbound_repository_helper_is_refused(checkout):
     root, git = checkout
-    audit = root / "scripts/audit_publication_free.py"
+    audit = root / "scripts/schema_catalog.py"
     audit.write_text(audit.read_text() + "\nimport unbound_control\n")
     git("add", ".")
     git("commit", "-qm", "synthetic external control import")

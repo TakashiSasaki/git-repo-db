@@ -103,14 +103,6 @@ def test_required_udfs_and_actual_generated_column_behavior():
     db.close()
 
 
-def test_baseline_initializer_remains_isolated():
-    from repo_catalog.adapters.sqlite import schema as production
-
-    assert production.SCHEMA_VERSION == 21
-    assert "p1_" not in production.schema_sql()
-    assert "store_identity" not in production.schema_sql()
-
-
 @pytest.mark.parametrize("value", [0, -1, -(2**63), 2**63 - 1])
 def test_sqlite_signed_epoch_microsecond_boundaries(value):
     # Target typed contracts additionally reject bool; SQLite enforces int64/STRICT.

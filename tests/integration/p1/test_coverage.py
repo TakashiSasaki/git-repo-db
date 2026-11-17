@@ -11,6 +11,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
+from repo_catalog.domain.resource_identification import ResourceIdentification
 from tests.integration.p1.test_context import (
     KEY,
     PROVENANCE,
@@ -288,9 +289,12 @@ def test_known_empty_source_inventory_has_exact_source_proof(context):
         "[]",
         PROVENANCE,
     )
-    db.execute("INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)", inventory)
     db.execute(
-        "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO source_inventory_evidence(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json) VALUES(?,?,?,?,?,?,?)",
+        inventory,
+    )
+    db.execute(
+        "INSERT INTO source_coverage_proofs(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
         (scope.owner_kind, scope.encoded, 3, "complete", *inventory),
     )
     assert store.coverage(scope).known_empty
@@ -383,13 +387,33 @@ def test_proof_read_rechecks_latest_terminal_candidates(
     context, stamp, state, members, expected
 ):
     db, store, _ = context
-    scope = CoverageScope.resource(KEY, "reviews")
+    parent = ResourceKey.from_native(SERVICE, "pull_request", "10")
+    store.resource(parent)
+    scope = CoverageScope.resource(parent, "reviews")
     store.scope(scope)
     claim = CoverageClaim(scope, 20, "complete")
     store.admit_coverage(claim)
-    terminal = collection(db)
+    terminal = collection(db, key=parent)
     proof(db, claim, terminal)
     assert store.coverage(scope).known_empty
+    values = json.loads(members)
+    for value in values:
+        member = ResourceKey.document(parent, "review", "review_summary", value)
+        store.resource(
+            member,
+            identification=ResourceIdentification.scoped(
+                member, parent, "review_summary", value
+            ),
+        )
+    if values:
+        members = canonical(
+            [
+                ResourceKey.document(
+                    parent, "review", "review_summary", value
+                ).coordinates()
+                for value in values
+            ]
+        )
     db.execute(
         "INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)",
         (*terminal[:5], stamp, state, members),
@@ -409,21 +433,43 @@ def test_proof_read_rechecks_latest_terminal_candidates(
         (10, "complete", '["other"]'),
     ],
 )
-def test_proof_insert_rejects_superseded_or_conflicting_terminal(
+def test_historical_proof_keeps_original_without_qualifying_superseded_terminal(
     context, new_stamp, new_state, new_members
 ):
     db, store, _ = context
-    scope = CoverageScope.resource(KEY, "reviews")
+    parent = ResourceKey.from_native(SERVICE, "pull_request", "10")
+    store.resource(parent)
+    scope = CoverageScope.resource(parent, "reviews")
     store.scope(scope)
     claim = CoverageClaim(scope, 20, "complete")
     store.admit_coverage(claim)
-    terminal = collection(db)
+    terminal = collection(db, key=parent)
+    values = json.loads(new_members)
+    for value in values:
+        member = ResourceKey.document(parent, "review", "review_summary", value)
+        store.resource(
+            member,
+            identification=ResourceIdentification.scoped(
+                member, parent, "review_summary", value
+            ),
+        )
+    if values:
+        new_members = canonical(
+            [
+                ResourceKey.document(
+                    parent, "review", "review_summary", value
+                ).coordinates()
+                for value in values
+            ]
+        )
     db.execute(
         "INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?)",
         (*terminal[:5], new_stamp, new_state, new_members),
     )
-    with pytest.raises(sqlite3.IntegrityError, match="superseded or conflicting"):
-        proof(db, claim, terminal)
+    proof(db, claim, terminal)
+    assert db.execute("SELECT count(*) FROM coverage_proofs").fetchone()[0] == 1
+    assert not store.coverage(scope).known_empty
+    assert store.coverage(scope).state in {"unknown", "conflict"}
 
 
 def test_source_proof_rechecks_latest_inventory_with_original_scope(context):
@@ -434,25 +480,26 @@ def test_source_proof_rechecks_latest_inventory_with_original_scope(context):
     claim = CoverageClaim(scope, 20, "complete")
     store.admit_coverage(claim)
     original = (SOURCE, actual_scope, 10, "complete", 1, "[]", PROVENANCE)
-    db.execute("INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)", original)
     db.execute(
-        "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO source_inventory_evidence(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json) VALUES(?,?,?,?,?,?,?)",
+        original,
+    )
+    db.execute(
+        "INSERT INTO source_coverage_proofs(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
         (scope.owner_kind, scope.encoded, 20, "complete", *original),
     )
     assert store.coverage(scope).known_empty
     later_provenance = canonical({"source": "provider.example", "evidence": "event-19"})
     db.execute(
-        "INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)",
-        (SOURCE, actual_scope, 19, "partial", 1, '["not-empty"]', later_provenance),
+        "INSERT INTO source_inventory_evidence(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json) VALUES(?,?,?,?,?,?,?)",
+        (SOURCE, actual_scope, 19, "partial", 1, canonical([REPO]), later_provenance),
     )
     result = store.coverage(scope)
     assert result.state == "unknown" and not result.known_empty
     assert result.claims == (claim,)
-    with pytest.raises(sqlite3.IntegrityError, match="superseded or conflicting"):
-        db.execute(
-            "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-            (scope.owner_kind, scope.encoded, 20, "complete", *original),
-        )
+    # Replay retains a historical witness without making the newer partial complete.
+    assert db.execute("SELECT count(*) FROM source_coverage_proofs").fetchone()[0] == 1
+    assert store.coverage(scope).state == "unknown"
 
 
 def test_source_inventory_proof_cannot_change_actual_kind(context):
@@ -463,10 +510,13 @@ def test_source_inventory_proof_cannot_change_actual_kind(context):
     claim = CoverageClaim(scope, 20, "complete")
     store.admit_coverage(claim)
     terminal = (SOURCE, actual_scope, 10, "complete", 1, "[]", PROVENANCE)
-    db.execute("INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?)", terminal)
+    db.execute(
+        "INSERT INTO source_inventory_evidence(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json) VALUES(?,?,?,?,?,?,?)",
+        terminal,
+    )
     with pytest.raises(sqlite3.IntegrityError, match="owner mismatch"):
         db.execute(
-            "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO source_coverage_proofs(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
             (scope.owner_kind, scope.encoded, 20, "complete", *terminal),
         )
 

@@ -84,6 +84,9 @@ class SourceView:
                     "observed_at_us": inv.observed_at_us,
                     "provenance": json.loads(inv.provenance_json),
                     "repositories": list(inv.repositories),
+                    "provider_repositories": [
+                        list(key.coordinates()) for key in inv.provider_repositories
+                    ],
                     "scope": json.loads(inv.scope_json),
                     "source_registration_uuidv4": inv.source_registration_uuidv4,
                     "state": inv.state,
@@ -92,6 +95,16 @@ class SourceView:
                 for inv in self.inventories
             ],
             "repositories": list(self.repositories),
+            "provider_repositories": [
+                list(key)
+                for key in sorted(
+                    {
+                        key.coordinates()
+                        for inv in self.inventories
+                        for key in inv.provider_repositories
+                    }
+                )
+            ],
             "service_instance_uuidv4": self.service_instance_uuidv4,
             "source_registration_uuidv4": self.source_registration_uuidv4,
         }

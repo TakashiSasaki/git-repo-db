@@ -1,0 +1,524 @@
+{
+  "format": "repo-catalog/separated-cli-capability-map-v1",
+  "legacy_source_commit": "6bec53af1ac381975cb7bfd7a5f11211b1d2bd56",
+  "verification": "Named tests are obligations, not claims of executed passing verification. Coordinator runs the integrated verified environment.",
+  "wire_input": {
+    "typed_value": {
+      "$type": "PublicDTOName",
+      "fields": {}
+    },
+    "bytes": {
+      "$bytes": "RFC4648 base64"
+    },
+    "authority": "Explicit tagged DependencySet grants plus tagged AdmissionSelection and optional AdmissionBudget; no inference of grants from attempted input."
+  },
+  "records": [
+    {
+      "legacy_commands": [
+        "init"
+      ],
+      "replacement_commands": [
+        "init --scope core",
+        "init --scope context",
+        "init --scope paired",
+        "init --scope access",
+        "init --scope operational",
+        "init --scope search",
+        "init --scope filesystem",
+        "init --scope worktrees"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_init_requires_explicit_role_and_does_not_create_defaults",
+        "tests/e2e/test_separated_cli.py::test_init_rejects_existing_legacy_or_mismatched_identity_unchanged",
+        "tests/e2e/test_separated_cli.py::test_init_refuses_mismatched_identities_before_creating_any_role",
+        "tests/e2e/test_separated_cli.py::test_independent_role_init_only_reuses_its_own_database[filesystem]",
+        "tests/e2e/test_separated_cli.py::test_independent_role_init_only_reuses_its_own_database[worktrees]"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Explicit role mandatory; compatible selected stores reused read-only; create only missing selected roles, no normal conversion."
+    },
+    {
+      "legacy_commands": [
+        "doctor",
+        "db check"
+      ],
+      "replacement_commands": [
+        "doctor --catalog DIR"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_init_rejects_existing_legacy_or_mismatched_identity_unchanged",
+        "tests/e2e/test_separated_cli.py::test_doctor_verifies_permitted_bytes_without_initializing_optional_stores"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Separated physical schema, SQLite integrity and role pairing diagnostics; no missing role creation."
+    },
+    {
+      "legacy_commands": [
+        "sources add",
+        "sources configure",
+        "instances add",
+        "repos bind"
+      ],
+      "replacement_commands": [
+        "context provider",
+        "context repository",
+        "context source",
+        "context associate-source",
+        "access configure-connection",
+        "acquire batch --input FROZEN_PLAN --authority GRANTS"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_context_registration_requires_finite_authority_and_access_is_separate",
+        "tests/e2e/test_separated_cli.py::test_access_route_configuration_remains_unapproved_and_backup_is_scoped",
+        "tests/e2e/test_separated_cli_batch.py::test_normal_cli_mixed_batch_resumes_only_original_partial_source_with_shared_usage"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Portable Provider, Repository and Source facts live in Context under service-issued finite local authorization; transport/credential settings belong to Access."
+    },
+    {
+      "legacy_commands": [
+        "endpoints add",
+        "endpoints prefer"
+      ],
+      "replacement_commands": [
+        "access register-scope",
+        "access register-locator",
+        "access configure-scope",
+        "access bind-repository",
+        "access configure-connection",
+        "access assign-connection",
+        "access set-preference",
+        "access review",
+        "access approve"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_access_route_configuration_remains_unapproved_and_backup_is_scoped"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Explicit Access configuration replaces normal endpoint rows; route configuration never grants local execution. Existing interactive approval requirement retained."
+    },
+    {
+      "legacy_commands": [
+        "discover",
+        "sync pr",
+        "sync issue",
+        "sync all"
+      ],
+      "replacement_commands": [
+        "acquire github --input REQUEST --authority GRANTS",
+        "acquire paired --input TYPED_INPUT --authority GRANTS",
+        "acquire github --input REQUEST_WITH_EXPLICIT_GIT_SOURCE --authority GRANTS",
+        "acquire batch --input FROZEN_SOURCE_PLAN [--authority GRANTS]"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_context_registration_requires_finite_authority_and_access_is_separate",
+        "tests/e2e/test_separated_cli.py::test_provider_intake_and_paired_filtering_preserve_documents",
+        "tests/integration/p5/test_separated_github_fetch.py::test_http_pagination_admits_pages_and_complete_exact_scope",
+        "tests/integration/p5/test_separated_github_fetch.py::test_budget_stop_retains_page_prefix_and_reports_partial",
+        "tests/integration/p5/test_separated_github_fetch.py::test_cross_origin_next_page_does_not_receive_credentials",
+        "tests/e2e/test_separated_cli_github_git_roles.py::test_normal_cli_live_git_ref_race_stays_partial_even_with_retained_expected_head",
+        "tests/e2e/test_separated_cli_github_git_roles.py::test_normal_cli_final_provider_check_cannot_borrow_another_captured_head_listing",
+        "tests/e2e/test_separated_cli_provider_crash.py::test_normal_cli_retry_after_real_process_kill_keeps_committed_http_prefix_and_original_budget",
+        "tests/e2e/test_separated_cli_graphql_comparison.py::test_normal_cli_partial_graphql_merge_target_is_retained_without_coobserved_comparison"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Live GitHub discovery/intake delegated to canonical provider_fetch service; explicit request identity, durable cumulative work, normalized admission. HTTP credentials injected as local transport settings. Optional explicit Git Source/permanent repository/ref templates compose actual Provider inputs with local or remote native ref checks, verified metadata closure, review/merge targets and a final real Provider recheck under the same cumulative request. Contrary actual refs or changed Provider anchors report PR_CODE_RACE; no-response preserves matching originals without invented checks. Fresh bounded HTTP traversal replaces ETag/per-PR skip/since reuse and charges extra actual work; completed frozen Sources still skip on resume. A real SIGKILL control preserves committed originals and resumes by genuine fresh reads."
+    },
+    {
+      "legacy_commands": [
+        "sync git"
+      ],
+      "replacement_commands": [
+        "acquire git",
+        "acquire git-remote",
+        "acquire git-metadata"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search",
+        "tests/integration/p5/test_separated_remote_git.py::test_smart_http_actual_bytes_and_original_capture_retry",
+        "tests/integration/p5/test_separated_remote_git.py::test_remote_transport_username_and_refspec_change_rejected_before_network",
+        "tests/integration/p5/test_separated_remote_git.py::test_ssh_argv_protocol_meter_and_strict_host_verification"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Local approved Access execution, remote explicit acquisition and normalized typed metadata intake preserve native identity/metadata/notes without ordinary file-body archival."
+    },
+    {
+      "legacy_commands": [
+        "repos list",
+        "repos show",
+        "instances list",
+        "instances show",
+        "endpoints list"
+      ],
+      "replacement_commands": [
+        "query repository",
+        "query providers",
+        "query sources",
+        "access history",
+        "access binding",
+        "access configuration"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_context_registration_requires_finite_authority_and_access_is_separate",
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Qualified authoritative identities and complete attributed alternatives; no global normal database or storage surrogate identity."
+    },
+    {
+      "legacy_commands": [
+        "snapshots list",
+        "snapshots show",
+        "refs list"
+      ],
+      "replacement_commands": [
+        "query git-observations",
+        "query ref-observations",
+        "query ref-observation",
+        "query ref-enumeration"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Immutable capture and actual ref observation/enumeration keys replace mutable normal snapshot selection; originals and conflicting Claims remain visible."
+    },
+    {
+      "legacy_commands": [
+        "tree list",
+        "file show",
+        "search path"
+      ],
+      "replacement_commands": [
+        "query tree",
+        "query path",
+        "query path-history"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search",
+        "tests/e2e/test_separated_cli.py::test_metadata_only_paths_remain_attributed_and_do_not_invent_byte_verification",
+        "tests/e2e/test_separated_cli_offline_metadata.py::test_normal_cli_explicit_tree_roots_and_raw_paths_never_union_other_recorded_roots"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Bounded raw-byte paths and modes/target OIDs from intrinsic metadata; no file-body read. Incomplete traversal reports partial rather than absence."
+    },
+    {
+      "legacy_commands": [
+        "commits list",
+        "commits show",
+        "commits compare"
+      ],
+      "replacement_commands": [
+        "query log",
+        "query git-object",
+        "query compare",
+        "query diff"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Bounded graph traversal, metadata projections and ancestry set comparisons; unknown ancestry cannot establish negative membership."
+    },
+    {
+      "legacy_commands": [
+        "pr list",
+        "pr show",
+        "pr timeline",
+        "issue list",
+        "issue show",
+        "issue comments",
+        "search pr",
+        "search issue"
+      ],
+      "replacement_commands": [
+        "query resources",
+        "query resource",
+        "query paired-resources",
+        "query paired-resource",
+        "query pr-list --service-instance UUID --provider-resource-id CANONICAL_JSON_ID [--assessment documents|code] [--parent-id CANONICAL_JSON_ID]"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_provider_intake_and_paired_filtering_preserve_documents",
+        "tests/e2e/test_separated_cli.py::test_context_browse_cursor_binds_extra_filters_and_snapshot",
+        "tests/e2e/test_separated_cli_pr_list.py::test_normal_cli_pr_list_cannot_infer_repository_roster_from_standalone_parent_facts",
+        "tests/e2e/test_separated_cli_pr_list.py::test_normal_cli_pr_list_preflights_hidden_parent_gaps_and_positive_selection"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Typed namespace/parent/repository browse and any-candidate field/text filters preserve Provider documents, relations, coverage and qualified Core dependencies. Dedicated repository PR assessment uses an actual repository-owned pull_requests roster, preflights every requested parent before pagination or filters, and permits exact positive parent selection; standalone facts or Source inventory cannot manufacture that roster. Generic browse alone is not a completeness assessment."
+    },
+    {
+      "legacy_commands": [
+        "search commits",
+        "index rebuild",
+        "index status"
+      ],
+      "replacement_commands": [
+        "query search",
+        "query search-rebuild",
+        "query search-status"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search",
+        "tests/e2e/test_separated_cli.py::test_query_budgets_and_cursor_errors_do_not_enter_recovery",
+        "tests/e2e/test_separated_cli_search_maintenance.py::test_normal_cli_search_status_and_rebuild_report_actual_counts_and_duration",
+        "tests/e2e/test_separated_cli_search_maintenance.py::test_normal_cli_search_remains_usable_without_optional_operational_telemetry",
+        "tests/e2e/test_separated_cli_literal_bytes.py::test_normal_cli_literal_bytes_survive_reparse_and_index_without_escape_matches",
+        "tests/e2e/test_separated_cli_offline_metadata.py::test_normal_cli_offline_metadata_documents_reindex_fallback_and_cursor_fence"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Derivative Git metadata/notes/Context-text Search with authority-scan fallback and explicit optional Search initialization. Bounded per-kind status verifies actual current authority projections without initializing missing Search; rebuild reports actual counts, duration, snapshot and estimates from recorded runs. Optional Operational telemetry absence/corruption does not invalidate Search or initialize/overwrite Operational. Literal queries check original retained metadata/Notes bytes and preserve exact byte spans, not renderer escapes or decoder replacement text. Actual source deletion/process-network tripwires prove offline read/rebuild; derivative rebuild preserves cursors, genuine authority changes invalidate them."
+    },
+    {
+      "legacy_commands": [
+        "search code",
+        "content hydrate",
+        "content show"
+      ],
+      "replacement_commands": [
+        "query note-bytes",
+        "query git-object --include-bytes",
+        "query text"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_no_ordinary_file_archive_or_legacy_fallback"
+      ],
+      "status": "accepted-scope-replacement",
+      "semantic_mapping": "ADR0014 excludes ordinary file-body archival/hydration/search; permitted verified metadata/notes and Context text remain readable; removed generic content-ID routes fail without fallback."
+    },
+    {
+      "legacy_commands": [
+        "search hash"
+      ],
+      "replacement_commands": [
+        "query digest",
+        "query git-object",
+        "query note-bytes"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_metadata_digest_uses_actual_permitted_bytes",
+        "tests/e2e/test_separated_cli.py::test_no_ordinary_file_archive_or_legacy_fallback"
+      ],
+      "status": "accepted-scope-replacement",
+      "semantic_mapping": "Actual retained commit/tree/tag byte digests support MD5/SHA1/SHA256 lookup independent of native OID; ordinary-file-content archive checksums are excluded by ADR0014. Verified note byte reads return actual digest."
+    },
+    {
+      "legacy_commands": [
+        "coverage",
+        "status"
+      ],
+      "replacement_commands": [
+        "query coverage",
+        "query context-coverage",
+        "query status"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Role-qualified authoritative Coverage and snapshot fences; no success ledger or inferred physical health."
+    },
+    {
+      "legacy_commands": [
+        "jobs list",
+        "jobs show",
+        "jobs cancel",
+        "jobs resume"
+      ],
+      "replacement_commands": [
+        "operations list",
+        "operations show",
+        "operations cancel",
+        "operations resume",
+        "operations increase-limit",
+        "acquire batch --input ORIGINAL_ORDERED_SOURCE_PLAN [--authority EXPLICIT_CONTEXT_AUTHORITY]"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_operations_cancel_resume_preserves_existing_work_and_reparse",
+        "tests/e2e/test_separated_cli_batch.py::test_normal_cli_native_only_batch_needs_no_context_authority_and_replays_frozen_order",
+        "tests/e2e/test_separated_cli_batch.py::test_normal_cli_mixed_batch_resumes_only_original_partial_source_with_shared_usage"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Request UUID pair and cumulative accounting replace job surrogate; stopping blocks further permits, explicit resume verifies existing checkpoints. Acquisition continuation reuses original request/capture/input. Frozen multi-source acquisition preserves original ordered source/settings/credential references, shares one genuine cumulative parent request and attempt across actual Git/Notes and HTTP dispatch, skips already completed sources on retry, and ignores changed caller plans. Native-only batches open no Context and require no Context authority; Provider dispatch requires explicit finite admission authority and local credential references."
+    },
+    {
+      "legacy_commands": [
+        "cache status",
+        "cache gc"
+      ],
+      "replacement_commands": [
+        "operations cache-status --max-cache-bytes N --cache-ttl-seconds N",
+        "operations cache-register",
+        "operations cache-touch",
+        "operations cache-reuse",
+        "operations cache-reserve",
+        "operations cache-monitor",
+        "operations cache-release",
+        "operations cache-gc --max-cache-bytes N --cache-ttl-seconds N [--apply]"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_cache_gc_preserves_resumable_work_and_never_follows_links"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Explicit finite byte/free-space/TTL/entry policy, exact parent request+attempt disk reservations and checked registration of managed Git directories; reuse remains an unverified candidate requiring Git verification. Active/stopped durable requests and unreleased reservations protect cache data. Only registered expired regular Git directories are collectible, preview is non-mutating, orphan/unregistered/symlink data and accounting evidence survive."
+    },
+    {
+      "legacy_commands": [
+        "db verify-payloads",
+        "db backup",
+        "db restore",
+        "db repair-payload"
+      ],
+      "replacement_commands": [
+        "doctor --verify-retained --scope git_only|paired",
+        "recovery backup",
+        "recovery stop",
+        "recovery salvage",
+        "recovery restore",
+        "recovery merge",
+        "recovery activate"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_backup_stop_salvage_fresh_restore_and_activation"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "ADR0038 replaces known-corrupt in-place repair with immediate stop, preserved source, typed untrusted salvage, fresh verified restore/merge and activation; explicit git_only/paired scope."
+    },
+    {
+      "legacy_commands": [
+        "exchange export",
+        "exchange import",
+        "exchange staging"
+      ],
+      "replacement_commands": [
+        "exchange export",
+        "exchange import"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_exchange_core_roundtrip_has_explicit_selection",
+        "tests/e2e/test_separated_cli_collection_exchange.py::test_normal_cli_collection_import_keeps_local_selection_separate_from_packet_roots"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Explicit typed bounded selection, receiver validation, repeat/reverse/late dependency promotion; normal staging rows retired, unresolved semantic candidates remain domain-owned. Exact natural collection_keys select a whole original collection/member dependency unit. Caller-supplied finite local AdmissionSelection remains separate from packet root scope, and missing member grants/selection refuse atomically; no grants are inferred from packet data."
+    },
+    {
+      "legacy_commands": [
+        "parser reparse"
+      ],
+      "replacement_commands": [
+        "reparse --text-encoding utf-8|latin-1 --metadata-encoding utf-8|latin-1 --metadata-errors strict|replace|backslashreplace|surrogateescape"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_operations_cancel_resume_preserves_existing_work_and_reparse",
+        "tests/e2e/test_separated_cli.py::test_notes_reparse_requires_current_receiver_role_proof",
+        "tests/e2e/test_separated_cli_reparse_repository.py::test_reparse_selected_repository_preserves_the_physical_catalog_identity"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Retained commit/tree/tag and receiver-revalidated notes representations reparse to append-only attributed claims with finite durable actual work, exact original note scope and frozen decoder intent; arbitrary blob decoding fails the notes role check. Per-entry decoded tree names are paired with exact raw bytes and full original decoder settings; queries expose all valid renderings without a preferred decoder. Body-free retained-copy selection pins request intent; original bytes are checked once per reparse attempt, with unchanged finite intent limit."
+    },
+    {
+      "legacy_commands": [
+        "identity relation",
+        "identity cancellation",
+        "identity status"
+      ],
+      "replacement_commands": [
+        "identity relation",
+        "identity cancellation",
+        "identity status"
+      ],
+      "replacement_test_nodes": [
+        "tests/integration/auxiliary_rows/test_identity_assertions.py::test_transitive_equivalence_cancellation_first_and_no_physical_merge[repository]",
+        "tests/integration/auxiliary_rows/test_identity_assertions.py::test_transitive_equivalence_cancellation_first_and_no_physical_merge[service]",
+        "tests/integration/auxiliary_rows/test_identity_assertions.py::test_service_cancellation_requires_exact_target_grant_and_revocation_rolls_back"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Responsibility-owned immutable repository/service assertion/cancellation reports; scoped reads, cancellations may precede originals, no physical authority merge."
+    },
+    {
+      "legacy_commands": [
+        "target repos",
+        "target refs",
+        "target commits",
+        "target tree",
+        "target file",
+        "target search"
+      ],
+      "replacement_commands": [
+        "query repository",
+        "query ref-observations",
+        "query log",
+        "query tree",
+        "query path",
+        "query search"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli.py::test_acquire_history_tree_diff_raw_paths_and_search"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Prototype target DB routes replaced by ordinary separated authoritative queries; legacy target-format/allow-building interfaces are not retained."
+    },
+    {
+      "legacy_commands": [
+        "parser inspect-message"
+      ],
+      "replacement_commands": [
+        "recording inspect-message"
+      ],
+      "replacement_test_nodes": [
+        "tests/unit/test_message_inspection.py::test_inspection_and_bounded_failure_do_not_parse_or_create_catalog",
+        "tests/unit/test_message_inspection.py::test_retired_message_cli_routes_and_context_option_have_no_side_effects"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Coordinator commit69f499cb preserves bounded external HTTP recording inspection through pure recording_inspection with exact byte/header preview; this command never parses or admits saved messages and needs no catalog/transport/parser service. Retained Git/notes byte queries are not replacements for external recording inspection."
+    },
+    {
+      "legacy_commands": [
+        "pr code",
+        "pr documents",
+        "pr thread"
+      ],
+      "replacement_commands": [
+        "query pr-code",
+        "query pr-documents --kind reviews|review_comments|review_threads|issue_comments",
+        "query pr-documents --thread-id ID [--path PATH] [--commit OID --object-format sha1|sha256]",
+        "query pr-list --assessment documents|code [--parent-id CANONICAL_JSON_ID]",
+        "query pr-documents [--document-state VALUE] [--document-author VALUE] [--resolved|--no-resolved] [--outdated|--no-outdated] [--document-filters JSON]",
+        "query pr-code --listing-kind pr_commits|pr_files",
+        "query pr-list --assessment code --listing-kind pr_commits|pr_files",
+        "query pr-code-capture --kind pr_commits|pr_files --provenance-file ORIGINAL_JSON"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli_pr_assessment.py::test_normal_cli_pr_assessment_requires_actual_listing_and_respects_finite_work",
+        "tests/e2e/test_separated_cli_pr_assessment.py::test_normal_cli_pr_documents_preflights_all_thread_children_before_pagination",
+        "tests/e2e/test_separated_cli_pr_assessment.py::test_normal_cli_selected_thread_remains_complete_when_unrelated_sibling_fails",
+        "tests/e2e/test_separated_cli_pr_list.py::test_normal_cli_pr_list_preflights_hidden_parent_gaps_and_positive_selection",
+        "tests/e2e/test_separated_cli_thread_anchors.py::test_live_thread_root_and_child_keep_actual_captured_head_when_later_detail_changes",
+        "tests/e2e/test_separated_cli_graphql_prefix.py::test_cli_graphql_comment_page_keeps_valid_prefix_and_retries_same_request",
+        "tests/e2e/test_separated_cli_code_scopes.py::test_normal_cli_selects_listing_and_exact_original_capture_without_current_borrowing",
+        "tests/e2e/test_separated_cli_document_selectors.py::test_normal_cli_document_path_and_commit_queries_need_exact_provider_scope_without_git_bytes",
+        "tests/e2e/test_separated_cli_provider_cap.py::test_cli_capped_commit_prefix_is_partial_without_discarding_independent_files"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "Exact current head/base-scoped code listing, selected listing kinds, whole repository parent-set assessment and selected-thread/document completeness use dedicated PRQueryService routes. Explicit immutable capture lookup preserves original membership/anchors/attributes after current-head changes and clearly asserts captured scope rather than current Provider state. Actual observed roots retain original anchors/producers; no-response does not relabel them. Document metadata filters preserve unknown/conflict gaps even if output is empty; exact Provider path/commit document selectors work without native byte availability, while incomplete current listings remain scoped gaps. Native ref checks/current-byte qualification remain separate: a contrary fresh ref or final Provider recheck cannot borrow another head assessment, even if both native bodies are retained. Independent multi-page files remain usable beside capped commits with truthful whole-scope status."
+    },
+    {
+      "legacy_commands": [
+        "discover Provider inventory private/selected/partial scope"
+      ],
+      "replacement_commands": [
+        "acquire github (operation=discover, explicit service/source/request identity and finite authority)",
+        "query sources",
+        "query context-coverage"
+      ],
+      "replacement_test_nodes": [
+        "tests/e2e/test_separated_cli_provider_inventory.py::test_normal_cli_provider_inventory_proves_only_actual_private_selected_scope[private]",
+        "tests/e2e/test_separated_cli_provider_inventory.py::test_normal_cli_provider_inventory_proves_only_actual_private_selected_scope[empty]",
+        "tests/e2e/test_separated_cli_provider_inventory.py::test_selected_provider_inventory_reuses_descriptions_without_storing_transport_config",
+        "tests/e2e/test_separated_cli_provider_inventory.py::test_inventory_interruption_keeps_exact_admitted_prefix_and_retries_original_request[budget]"
+      ],
+      "status": "implemented",
+      "semantic_mapping": "SourceInventory now explicitly carries typed Provider Repository keys separately from Git Repository UUID membership. Actual owner public/private counts or exact explicit selection prove only that captured scope; unknown/mismatched counts, organizations, malformed pages, interruption and finite limits retain exact positives with truthful unknown/partial coverage. Discovery never creates a Git repository identity or mapping from a Provider ID, and identity reuse preserves existing descriptive Source/Provider metadata."
+    }
+  ]
+}

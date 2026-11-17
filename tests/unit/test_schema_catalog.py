@@ -18,7 +18,7 @@ def catalog():
 
 def test_actual_formats_domains_and_distribution_ownership(catalog):
     assert validate_catalog(catalog) == []
-    assert len(catalog["stores"]) == 10
+    assert len(catalog["stores"]) == 7
     assert len(catalog["authority_domains"]) == 7
     assert len(catalog["distributions"]) == 15
     assert catalog["configurations"]["local"]["owned_stores"] == []
@@ -152,7 +152,7 @@ def test_inventory_is_deterministic_and_creates_no_persistent_databases(
     monkeypatch.chdir(tmp_path)
     assert introspect_all("all") == catalog
     assert list(tmp_path.iterdir()) == []
-    assert set(introspect_all()["stores"]) == {"core", "operational", "search"}
+    assert introspect_all() == catalog
     with pytest.raises(ValueError, match="Unknown inventory profile"):
         introspect_all("missing")
 

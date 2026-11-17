@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from repo_catalog.application.core_query import CoreQueryService
+from repo_catalog.application.literal_search import RAW_SEGMENTS
 from repo_catalog.application.query_encoding import encode_metered
 from repo_catalog.application.search_query import SearchReader
 from repo_catalog.domain.core_query import ref_projection_json
@@ -208,15 +209,26 @@ class CoreSearchReader:
                             "role_verified": role_verified,
                             "note_retained": retained,
                             "note_text": body if retained else None,
+                            "literal_source": "checked_ref_note_bytes"
+                            if retained
+                            else "reported_ref_bytes",
                         }
                         encoded = encode_metered(work, summary, 1024 * 1024)
-                        summary_bytes += len(encoded)
+                        raw_segments = (
+                            subject.ref_name_bytes,
+                            fmt.encode("ascii"),
+                            target.encode("ascii"),
+                            mapping.note_object_oid.object_oid.encode("ascii"),
+                            *((raw,) if retained else ()),
+                        )
+                        summary_bytes += len(encoded) + sum(map(len, raw_segments))
                         if summary_bytes > BoundedDocuments.max_total_bytes:
                             raise QueryError(
                                 "QUERY_BUDGET",
                                 "ref-notes-search",
                                 "finite summary scope",
                             )
+                        summary[RAW_SEGMENTS] = raw_segments
                         upper = (
                             len(doc_key)
                             + 4 * (len(ref) + len(body))

@@ -2,16 +2,9 @@ import json
 import sys
 from argparse import Namespace
 
-import jsonschema
 import pytest
 
 from scripts import ci_profile
-from tests.support.cli import response_validator
-
-
-def test_cached_cli_validator_still_rejects_invalid_envelope():
-    with pytest.raises(jsonschema.ValidationError):
-        response_validator().validate({"status": "ok"})
 
 
 def test_junit_aggregation_preserves_failures(tmp_path):

@@ -178,6 +178,24 @@ When launching from the root environment, select `website/.venv/bin/python`
 explicitly (or clear `UV_PROJECT_ENVIRONMENT` before `uv --project website`)
 so the root launcher's environment does not select its Python for docs tests.
 
+## Probe rollback failures at the caller boundary
+
+Use an actual paired callback that catches a failed Context unit and returns
+normally when testing SAVEPOINT cleanup. Inject the initiating failure after a
+real first-field INSERT, refuse rollback/release, then attempt a second unit and
+outer completion. Reopen the database to check the failed resource and fields,
+alongside capability expiry and the original exception identity. A Context probe
+found that a raised cleanup error still left the connection live and allowed the
+outer Pair to commit the partial observation.
+
+Check physical connection discard, borrowed/owned transaction finalizers and the
+outer completion fence together; keep a successful rollback control that permits
+an independent sibling unit. Preserve the original failing probe separately from
+the fixed recheck. The executable controls are in
+[`test_failed_context_cleanup.py`](../../../tests/integration/p3/test_failed_context_cleanup.py):
+run `scripts/local-run.sh pytest -q -n 2 tests/integration/p3/test_failed_context_cleanup.py`
+in the verified primary environment, with its controlled product lane available.
+
 ## Probe supplied metadata before its first serialization
 
 When testing an input boundary that accepts frozen dataclasses, construct valid
@@ -302,3 +320,21 @@ the old implementation acquired real data. Observe source.metadata or the truste
 subprocess boundary; require the positive control to register work before claiming
 the corrected refusal happens before input. Preserve incorrect instrumentation
 results as test-harness failures rather than treating zero as verified absence.
+
+## Isolate SQLite work growth before changing indexes
+
+When a bounded scaling control fails, measure the early and late windows with
+SQLite progress callbacks and normalize the traced SQL statements. Retain the
+full profile on disk; compare only each statement's VM steps and delta. A shared
+schema fence can dominate both windows while contributing no growth. Attribute
+the regression to the statement whose work grows before choosing an index.
+
+Check the actual predicate and collation with `EXPLAIN QUERY PLAN`. An index for
+a nearby foreign-key lookup does not establish indexed access for a separate
+`WHERE relation_kind COLLATE BINARY=? LIMIT 1` existence probe. The latter needs
+an applicable leading key with the same collation. Keep useful independent
+indexes, remove ineffective trial indexes, regenerate current fingerprints and
+row metadata when required, and rerun the original scaling control. Preserve
+its SQL-only and cumulative-work assertions; do not raise the threshold to hide
+unrelated-history scans. A finite refusal proves a budget boundary, not constant
+work with unrelated retained history.

@@ -1,5 +1,11 @@
 # P1仕上げ: 完了一覧と単調補完
 
+> **Historical implementation record:** The reviewed DDL, demo commands and
+> execution results below describe their recorded commits. `scripts/demo.py`
+> belongs to the retired normal runtime. Use
+> [Current runtime reference](../current-runtime-reference.md) for current
+> acquisition, offline queries and recovery; historical evidence remains intact.
+
 対象branchは `design/schema-v2-hardening`、レビューHEADは `62692a85b110e025d781523037ff88f2a1dee3fe`、mainは `9a4110185d7e7abffc291f9cfd118ca71587f998`。
 開始時のremote/PR HEADはレビューHEADと一致。最新PR CI run **37337326501** とpush run **37337320713** は成功しており、指摘後の重複修正はなかった。
 未改修 `target-schema.sql` のblobは **977a0caa152a4c2046f529bdfdfa50c502abaa52**、SHA-256は `f5e6fdfe1a0c22e9f7b6f4618d6b93fbd02ee44ac96cb90f49e98fbf3ae67b7d`。

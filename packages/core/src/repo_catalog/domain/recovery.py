@@ -14,8 +14,14 @@ class BackupScope(str, enum.Enum):
 
 class CandidateType(str, enum.Enum):
     GIT_METADATA = "git_metadata"
+    REPOSITORY_IDENTITY_ASSERTION = "repository_identity_assertion"
+    REPOSITORY_IDENTITY_CANCELLATION = "repository_identity_cancellation"
+    SERVICE_IDENTITY_ASSERTION = "service_identity_assertion"
+    SERVICE_IDENTITY_CANCELLATION = "service_identity_cancellation"
     RETAINED_BODY = "retained_body"
     CONTEXT_RESOURCE = "context_resource"
+    SOURCE_INVENTORY = "source_inventory"
+    SOURCE_INVENTORY_PROOF = "source_inventory_proof"
     CONTEXT_DOCUMENT = "context_document"
     REF_SUBJECT = "ref_subject"
     REF_CLAIM = "ref_claim"

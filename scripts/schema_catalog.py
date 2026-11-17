@@ -1,4 +1,4 @@
-"""Read-only, all-format schema catalog; not a semantic reasoner or DB validator.
+"""Read-only catalog of the current separated schemas; not a semantic reasoner or DB validator.
 
 The registry identifies composition entry points, not one distribution owning all
 tables in a composed schema. Source ownership is checked separately against the
@@ -15,17 +15,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SQLITE = "repo_catalog/adapters/sqlite/"
 P1_FACTORY = "packages/runtime/src/" + SQLITE + "p1_schema.py"
-NORMAL_FACTORY = "src/" + SQLITE + "schema.py"
 ACCESS_FACTORY = "packages/access/src/" + SQLITE + "access_schema.py"
 FILESYSTEM_FACTORY = "packages/filesystem/src/repo_catalog/filesystem/store.py"
 WORKTREES_FACTORY = "packages/worktrees/src/repo_catalog/worktrees/catalog.py"
 
 # These are implementation entry points and applicable accepted design domains.
-# Normal Catalog3 is mixed; its historical name "core" is not a domain claim.
+# Internal p1 identifiers name the canonical separated factories; they do not
+# imply opt-in startup or a requirement to initialize every registered role.
 STORE_LAYOUT = {
-    "normal.core": (NORMAL_FACTORY, ["core", "context", "access"]),
-    "normal.operational": (NORMAL_FACTORY, ["operational"]),
-    "normal.search": (NORMAL_FACTORY, ["search"]),
     "p1.core": (P1_FACTORY, ["core"]),
     "p1.context": (P1_FACTORY, ["context"]),
     "p1.operational": (P1_FACTORY, ["operational"]),
@@ -115,40 +112,11 @@ def build_catalog() -> dict:
     from repo_catalog.adapters.sqlite import access_schema, p1_schema
     from repo_catalog.filesystem import store as filesystem
     from repo_catalog.worktrees import catalog as worktrees
-    from scripts.schema_inventory import introspect_all, introspect_store
+    from scripts.schema_inventory import introspect_store
 
     distributions, owners = workspace_sources()
-    normal = introspect_all(include_runtime_details=True)
     stores = {}
     sources = {}
-    for role, store in normal["stores"].items():
-        key = "normal." + role
-        store["slug"] = key
-        for table in store["tables"].values():
-            table["store"] = key
-            table.pop("logical_incoming", None)
-            table.pop("logical_outgoing", None)
-        stores[key] = store
-        resources = (
-            [
-                "catalog3",
-                "git_domain",
-                "git_facts",
-                "cas_integrity",
-                "exchange",
-                "identity_relations",
-                "current_resources",
-                "current_api",
-                "current_collections",
-                "json_contracts",
-            ]
-            if role == "core"
-            else [role]
-        )
-        sources[key] = [
-            NORMAL_FACTORY,
-            *["src/repo_catalog/resources/" + name + ".sql" for name in resources],
-        ]
 
     # Compare the committed P1 manifest as well as inspecting the actual DDL.
     p1_schema.verify_declared()
@@ -220,6 +188,8 @@ def build_catalog() -> dict:
 
     for key, store in stores.items():
         entrypoint, domains = STORE_LAYOUT[key]
+        for table in store["tables"].values():
+            table.update(group=domains[0], group_title=domains[0].title())
         store.update(
             authority_domains=domains,
             composition_entrypoint=entrypoint,
@@ -234,14 +204,6 @@ def build_catalog() -> dict:
             ),
         )
 
-    normal_relationships = [
-        {
-            **rel,
-            "source_store": "normal." + rel["source_store"],
-            "target_store": "normal." + rel["target_store"],
-        }
-        for rel in normal["logical_dependencies"]
-    ]
     return {
         "inventory_schema_version": 1,
         "profile": "all",
@@ -250,12 +212,8 @@ def build_catalog() -> dict:
             for domain, distribution in DOMAIN_DISTRIBUTIONS.items()
         },
         "configurations": {
-            "normal": {
-                "kind": "normal-cli-schema-family",
-                "stores": ["normal.core", "normal.operational", "normal.search"],
-            },
             "p1": {
-                "kind": "opt-in-factory-schema-family",
+                "kind": "separated-factory-schema-family",
                 "stores": ["p1." + role for role in p1_schema.STORES],
             },
             "access": {"kind": "independent-store", "stores": ["access"]},
@@ -270,7 +228,6 @@ def build_catalog() -> dict:
         "distributions": distributions,
         "source_ownership": owners,
         "stores": stores,
-        "normal_logical_dependencies": normal_relationships,
         "optional_references": [
             {
                 "id": "worktrees.filesystem-scan",
@@ -306,7 +263,6 @@ def build_catalog() -> dict:
                 "Python admission, validation and recovery behavior",
                 "operation prerequisites and state transitions",
                 "runtime-created virtual tables and retained instance contents",
-                "per-table semantic authority within the mixed normal catalog",
             ],
             "connection_details": "extraction settings and registered UDFs only; not persistent-DB runtime requirements",
         },
@@ -404,7 +360,6 @@ def validate_catalog(catalog: dict) -> list[str]:
         errors.append("configuration coverage missing")
     else:
         expected_configs = {
-            "normal": [key for key in STORE_LAYOUT if key.startswith("normal.")],
             "p1": [key for key in STORE_LAYOUT if key.startswith("p1.")],
             **{key: [key] for key in ("access", "filesystem", "worktrees")},
             "local": ["filesystem", "worktrees"],

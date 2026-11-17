@@ -24,10 +24,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from repo_catalog.adapters.sqlite import exchange, json_contracts, schema  # noqa: E402
-from repo_catalog.adapters.sqlite.cas_integrity import (  # noqa: E402
-    register_git_object_sql_function,
-)
 from repo_catalog.cli.main import parser as cli_parser  # noqa: E402
 
 SQL_METHODS = frozenset({"execute", "executemany", "executescript", "one", "all"})
@@ -359,7 +355,7 @@ def source_inventory(root, db, object_names):
                         }
                     )
 
-    for base in (root / "src", root / "tests"):
+    for base in (root / "src", *(root / "packages").glob("*/src"), root / "tests"):
         for path in sorted(base.rglob("*.py")):
             relative = str(path.relative_to(root))
             source = path.read_text()
@@ -433,34 +429,22 @@ def cli_inventory(parser, prefix=()):
 
 
 def build_report(root=ROOT):
-    ddl = schema.schema_sql()
-    with sqlite3.connect(":memory:", isolation_level=None, cached_statements=0) as db:
-        register_git_object_sql_function(db)
-        db.executescript(ddl)
-        physical = schema_inventory(db, ddl)
-        source = source_inventory(root, db, set(physical["objects"]))
-        graph = exchange.Graph(db)
-        wire = {table: sorted(graph.expected_columns(table)) for table in graph.columns}
-        registry = json_contracts.inventory(db)
-    packaged = root / "src/repo_catalog/resources/json_contracts.sql"
-    composer = ast.parse(
-        (root / "src/repo_catalog/adapters/sqlite/schema.py").read_text()
-    )
-    composition = [
-        node.value
-        for node in ast.walk(composer)
-        if isinstance(node, ast.Constant)
-        and isinstance(node.value, str)
-        and node.value.endswith(".sql")
-    ]
+    """Report current role definitions and lexical product dependencies.
+
+    Historical Phase 2 receipts remain pinned evidence; this driver no longer
+    reconstructs or imports the retired normal format.
+    """
+    from scripts.audit_callsite_dependencies import build
+    from scripts.schema_catalog import build_catalog
 
     def git(*args):
         return subprocess.check_output(
             ["git", "-C", str(root), *args], text=True
         ).strip()
 
+    catalog = build_catalog()
     return {
-        "format": "git-repo-db/phase2-dependency-audit-v1",
+        "format": "resource-atlas/separated-dependency-audit-v2",
         "revision": {
             "head": git("rev-parse", "HEAD"),
             "head_tree": git("rev-parse", "HEAD^{tree}"),
@@ -470,34 +454,13 @@ def build_report(root=ROOT):
             "python": platform.python_version(),
             "sqlite": sqlite3.sqlite_version,
         },
-        "loaded_modules": {
-            module.__name__: str(Path(module.__file__).resolve().relative_to(root))
-            for module in (schema, exchange, json_contracts)
-        },
-        "composition": composition,
-        "schema_version": schema.SCHEMA_VERSION,
-        "schema": physical,
-        "source": source,
+        "stores": catalog["stores"],
+        "source": build(),
         "cli_commands": cli_inventory(cli_parser()),
-        "json": {
-            "inventory": registry,
-            "reference_targets": json_contracts.REFERENCE_TARGETS,
-            "reference_lists": json_contracts.REFERENCE_LISTS,
-            "local_reference_keys": sorted(json_contracts.LOCAL_REFERENCE_KEYS),
-            "generated_guards_equal": json_contracts.guard_sql()
-            == packaged.read_text(),
-        },
-        "exchange": {
-            "wire_columns": wire,
-            "excluded": sorted(exchange.EXCLUDED),
-            "original_proof_tables": sorted(exchange.ORIGINAL_PROOF_TABLES),
-        },
         "limits": [
-            "SQL preparation proves syntactic access, not a reachable product operation.",
-            "AST literals and locally resolved calls are static evidence; dispatch, fixture execution and workstream traces supply runtime evidence.",
-            "Dynamic SQL and unsuccessful preparation are listed, never inferred to be dead.",
-            "Store/target one/all and local AST SQL-forwarding methods are included; receiver aliases, external/custom interfaces and argument indirection can remain unresolved.",
-            "Fresh integrity checks cover the composed schema, not retained catalog contents.",
+            "DDL and lexical imports/calls describe definitions, not operation reachability or semantic correctness.",
+            "Roles are a catalog of independent definitions, never a seven-database startup requirement.",
+            "Historical normal-format receipts are preserved; no retained catalog is opened or converted.",
         ],
     }
 
@@ -529,9 +492,7 @@ def main(argv=None):
     print(
         json.dumps(
             {
-                "schema_version": report["schema_version"],
-                "ddl_sha256": report["schema"]["ddl_sha256"],
-                "counts": report["schema"]["counts"],
+                "roles": sorted(report["stores"]),
                 "output": str(args.output),
             }
         )

@@ -27,6 +27,7 @@ from tests.integration.p1.test_coordination import (
     context_unit,
     core_unit,
 )
+from tests.support.context_reader_probe import field_original_update_fault
 
 
 @pytest.mark.parametrize("damaged", ["provider", "field"])
@@ -55,11 +56,12 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capabili
         # This produces real invalid UTF-8 TEXT, so integrity_check cannot run
         # the registered semantic CHECK UDF. SQLite reports SQLITE_ERROR, not
         # SQLITE_CORRUPT; treating only the latter as corruption misses the stop.
-        db.execute("PRAGMA ignore_check_constraints=ON")
         if damaged == "provider":
+            db.execute("PRAGMA ignore_check_constraints=ON")
             db.execute("UPDATE providers SET configuration_json=CAST(X'ff' AS TEXT)")
         else:
-            db.execute("UPDATE field_candidates SET value_json=CAST(X'ff' AS TEXT)")
+            with field_original_update_fault(db):
+                db.execute("UPDATE field_candidates SET value_json=CAST(X'ff' AS TEXT)")
     if capability:
         # Exercise owner notification before a caller can swallow the error.
         # Trusted test connections avoid initial validation intercepting this

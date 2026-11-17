@@ -219,10 +219,25 @@ class GitNativeSource:
             if len(pieces) != 5:
                 raise CoreFailure("GIT_INPUT", "refs", "malformed ref record")
             name, target, kind, peeled, symbolic = pieces
+            object_oid = OID(self.object_format, target.decode("ascii"))
+            if kind == b"tag":
+                # for-each-ref's starred fields dereference only one tag level.
+                # Read the terminal peel of this immutable enumerated OID, not
+                # a ref name that may have moved since the original scan. The
+                # shared output helper prepays each attempted command/read and
+                # enforces its byte cap and deadline without lazy fetching.
+                terminal = source._output(
+                    ("rev-parse", "--verify", object_oid.object_oid + "^{}"),
+                    len(target) + 1,
+                    active,
+                )
+                if len(terminal) != len(target) + 1 or not terminal.endswith(b"\n"):
+                    raise CoreFailure("GIT_INPUT", "refs", "malformed peeled target")
+                peeled = terminal[:-1]
             result.append(
                 NativeRef(
                     name,
-                    OID(self.object_format, target.decode("ascii")),
+                    object_oid,
                     kind.decode("ascii"),
                     OID(self.object_format, peeled.decode("ascii")) if peeled else None,
                     symbolic or None,

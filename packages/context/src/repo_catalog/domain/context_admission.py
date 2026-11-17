@@ -29,6 +29,7 @@ _DIMENSIONS = (
     "mapping_claims",
     "dispositions",
     "provider_registrations",
+    "identity_assertions",
     "object_oids",
 )
 
@@ -65,6 +66,7 @@ class DependencySet:
     mapping_claims: frozenset = frozenset()
     dispositions: frozenset = frozenset()
     provider_registrations: frozenset[str] = frozenset()
+    identity_assertions: frozenset[str] = frozenset()
     object_oids: frozenset = frozenset()
 
     def __post_init__(self):
@@ -86,7 +88,12 @@ class DependencySet:
         ):
             if any(not isinstance(value, cls) for value in getattr(self, name)):
                 raise AdmissionRefused("INVALID_DEPENDENCY")
-        for name in ("repositories", "sources", "provider_registrations"):
+        for name in (
+            "repositories",
+            "sources",
+            "provider_registrations",
+            "identity_assertions",
+        ):
             for value in getattr(self, name):
                 _uuid(value)
         for pair in self.source_repository_pairs:
@@ -128,6 +135,7 @@ class AdmissionSelection:
     repository_uuidv4s: frozenset[str] | None = None
     source_uuidv4s: frozenset[str] | None = None
     object_oids: frozenset | None = None
+    identity_assertion_uuidv4s: frozenset[str] | None = None
     all_selected: bool = False
     include_dependencies: bool = False
     max_depth: int = 8
@@ -162,7 +170,14 @@ class AdmissionSelection:
                     raise AdmissionRefused("OMITTED_BY_SELECTION")
             else:
                 object.__setattr__(self, name, frozenset(value))
+        if self.identity_assertion_uuidv4s is not None:
+            object.__setattr__(
+                self,
+                "identity_assertion_uuidv4s",
+                frozenset(self.identity_assertion_uuidv4s),
+            )
         DependencySet(
+            identity_assertions=self.identity_assertion_uuidv4s or (),
             resources=self.resource_keys or (),
             repositories=self.repository_uuidv4s or (),
             sources=self.source_uuidv4s or (),
@@ -203,6 +218,12 @@ class AdmissionSelection:
             (self.object_oids, deps.object_oids),
         ):
             if selected is not None and not required <= selected:
+                raise AdmissionRefused("OMITTED_BY_SELECTION")
+        if deps.identity_assertions:
+            selected = self.identity_assertion_uuidv4s
+            if selected is None and not self.all_selected:
+                raise AdmissionRefused("OMITTED_BY_SELECTION")
+            if selected is not None and not deps.identity_assertions <= selected:
                 raise AdmissionRefused("OMITTED_BY_SELECTION")
         if len(deps) > self.max_units:
             raise AdmissionRefused("INPUT_LIMIT")
@@ -914,6 +935,7 @@ class LocalAuthorizationPolicy:
                     or dependencies.sources
                     or dependencies.mapping_claims
                     or dependencies.dispositions
+                    or dependencies.identity_assertions
                 ):
                     raise AdmissionRefused("PERMISSION_DENIED")
             for dimension in _DIMENSIONS:

@@ -10,6 +10,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
+from repo_catalog.domain.collection_members import validate_collection_members
 from repo_catalog.domain.p1_context import (
     ADMISSION_OUTCOMES as ADMISSION_OUTCOMES,
 )
@@ -167,7 +168,15 @@ from repo_catalog.domain.resource_identification import (
     ResourceIdentification,
     require_identification,
 )
-from repo_catalog.domain.shared_values import OID
+from repo_catalog.domain.shared_values import OID, uuid4_value
+from repo_catalog.domain.source_inventory_members import (
+    DuplicateSourceInventoryMember,
+    validate_source_inventory_members,
+)
+from repo_catalog.domain.source_inventory_scope import (
+    SourceInventoryScopeError,
+    validate_source_inventory_scope,
+)
 from repo_catalog.domain.time import (
     validate_observation_us,
     validate_required_observation_us,
@@ -263,6 +272,9 @@ class CollectionObservation:
 
     def __post_init__(self):
         validate_required_observation_us(self.observed_at_us)
+        validate_collection_members(
+            self.resource, self.collection_kind, self.members_json
+        )
         ResourceRelation(
             self.resource,
             self.collection_kind,
@@ -299,22 +311,48 @@ class SourceInventory:
     terminal: bool
     repositories: tuple[str, ...]
     provenance_json: str
+    provider_repositories: tuple[ResourceKey, ...] = ()
 
     def __post_init__(self):
         validate_required_observation_us(self.observed_at_us)
         json_value(self.scope_json)
         json_value(self.provenance_json, provenance=True)
+        uuid4_value(self.source_registration_uuidv4)
+        try:
+            validate_source_inventory_scope(
+                self.scope_json, self.source_registration_uuidv4
+            )
+        except SourceInventoryScopeError as error:
+            raise ContextError(error.code, "source_inventory") from error
+        try:
+            validate_source_inventory_members(self.repositories)
+        except DuplicateSourceInventoryMember as error:
+            raise ContextError("DUPLICATE_MEMBER", "source_inventory") from error
+        if type(self.provider_repositories) is not tuple or any(
+            type(repository) is not ResourceKey
+            or repository.resource_kind != "repository"
+            for repository in self.provider_repositories
+        ):
+            raise ContextError("INVALID_MEMBER", "source_inventory")
         if self.state not in {"complete", "partial", "unknown", "not_applicable"}:
             raise ContextError("INVALID_STATE", "source_inventory")
         if type(self.terminal) is not bool:
             raise ContextError("INVALID_TERMINAL", "source_inventory")
-        if len(set(self.repositories)) != len(self.repositories):
+        if len(set(self.repositories)) != len(self.repositories) or len(
+            set(self.provider_repositories)
+        ) != len(self.provider_repositories):
             raise ContextError("DUPLICATE_MEMBER", "source_inventory")
 
     @property
     def members_json(self) -> str:
         # A Source inventory is a set. Arrival order creates no new evidence.
         return canonical(sorted(self.repositories))
+
+    @property
+    def provider_repositories_json(self) -> str:
+        return canonical(
+            sorted(member.coordinates() for member in self.provider_repositories)
+        )
 
     @property
     def values(self) -> tuple:
@@ -326,6 +364,7 @@ class SourceInventory:
             int(self.terminal),
             self.members_json,
             self.provenance_json,
+            self.provider_repositories_json,
         )
 
 

@@ -1,73 +1,73 @@
-> Website editing and Google AI Studio imports use the [`web` branch](https://github.com/TakashiSasaki/resource-atlas/tree/web). This branch owns the application and canonical design documents.
-
-> GitHub Actions の `pages` を手動実行するときは、ブランチに `web` を選択してください。`main` には手動実行を登録するための案内だけを残しています。通常のプッシュではサイトを公開しません。
-
 # Resource Atlas
 
-任意のGit取得先とGitHubのPR・通常IssueをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。
-Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永続化します。PR・文書・スレッド・Source、通常Issueとそのコメント、レビュー概要とレビューコメントは、必要な証拠を伴う各リソースの最新受理状態を保存します。
-通常ランタイムは catalog3、現在の schema version は **21** です。PR・文書・スレッド・Sourceの現在状態と、Git object・取得範囲の証拠を直接所有者に結び付けます。絶対時刻は Unix epoch マイクロ秒の INTEGER です。[現在のランタイム案内](docs/current-runtime-reference.md)、[Schema 20の実装・検証記録（歴史資料）](docs/phase2/publication-free-implementation.md)、[Schema 21対応表（保存済み監査）](docs/phase2/publication-free-schema-map.json)、[packaged DDL](src/repo_catalog/adapters/sqlite/schema.py)を参照してください。旧開発 DB と v2 importer は対応しません。過去の検証記録は新形式の最終受入を意味しません。
+Resource Atlas は、Git リポジトリとファイルシステムのカタログを作るアプリケーションです。
+Git の構造・参照・履歴・Notes、GitHub の PR・Issue・レビュー、ファイルの属性・ダイジェスト・走査履歴を SQLite に記録し、取得元に接続できないときも照会できます。
 
-アプリケーションと設計正本はこのブランチで管理します。ウェブページの編集、
-Google AI Studioへのインポート、Node/Viteの起動は
-[`web` ブランチ](https://github.com/TakashiSasaki/resource-atlas/tree/web)で行います。
-サイトは固定した本体コミットの原文・スキーマ情報を読み取り、表示を作成します。
-[分離と受け渡しの規約](docs/adr/0042-asynchronous-web-main-tracking.md)を参照してください。
+通常 CLI は責任ごとに分離した保存形式を使います。Git の commit/tree/tag の実際に検証した表現と、受信側で Notes の役割を検証した本文を保持できます。一般の Git ファイル本文を保存するアーカイブ機能はありません。PR などのテキストは Context が所有し、ファイルシステムの走査は属性とダイジェストを記録します。
 
-## ドキュメント・スキーマ可視化
+## 保存先とクラス
 
-公式ドキュメントおよびインタラクティブなスキーマ可視化ワークベンチを公開しています：
+| 責任 | 所有する内容 |
+| --- | --- |
+| Core | Git の恒久的な同一性、観測・主張、構造、許可された検証済み表現 |
+| Context | Provider のリソース・テキスト・取得元・項目別の根拠と競合 |
+| Access | 接続先・Scope・接続設定・ローカルな承認 |
+| Operational | 再開可能な取得要求、累積予算、実行・キャッシュの状態 |
+| Search | 元のデータから再構築できる検索投影 |
+| Filesystem | ファイルシステムのルート、走査、エントリーとダイジェスト |
+| Worktrees | Git 格納場所・作業ツリーの観測と明示的な関連 |
 
-- **開発者ドキュメント**: [https://git-repo-db.moukaeritai.work/](https://git-repo-db.moukaeritai.work/)
-- **インタラクティブ スキーマビューアー**: [https://git-repo-db.moukaeritai.work/schema/viewer/](https://git-repo-db.moukaeritai.work/schema/viewer/)
-- **Accepted target architecture (design-only, not yet fully activated)**: [ADR 0029 — independent Git Core, Context, Access, Operational and Search](docs/adr/0029-independent-access-store.md), preserving INSERT-only Core and durable Context while separating Access settings. ADR 0029 replaces historical ADR 0003; see the [transition plan](docs/architecture/git-core-context-transition-plan.md) and [retirement record](docs/implementation/adr-0029-accepted-retirement-20261019.md).
-- **Accepted ADR governance (not a runtime change)**: [ADR 0011](docs/adr/0011-adr-governance.md), [shared operating policy](docs/adr/policy.md) and [ADR index](docs/adr/README.md); the optional skill and templates are documented there.
-- **Currently implemented Three-Store baseline (ADR 0002)**: [docs/adr/0002-three-store-boundary-architecture.md](docs/adr/0002-three-store-boundary-architecture.md)
-- **サイト運用保守ガイド**: [website/README.md](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/README.md)
-
-## 開発・導入
+必要な役割だけを初期化します。これは 7 個の DB を毎回開くという意味ではありません。
+[クラスとテーブルの対応](docs/architecture/persistence-model.json)には、各テーブルの所有者と専用の生成行クラスを定義しています。入力 DTO・値・照会結果は行クラスと区別します。列・キー・外部キーは実際の DDL から読み取れます。
 
 ```bash
-./scripts/setup-local-python.sh   # 検証済みPython配布物 + .venv + lock依存 + preflight + receipt
+scripts/local-run.sh python scripts/persistence_model.py --check
+scripts/local-run.sh python scripts/persistence_model.py --format markdown
+```
+
+## 開発環境と初期化
+
+```bash
+./scripts/setup-local-python.sh
 scripts/local-run.sh repo-catalog --help
-scripts/local-run.sh repo-catalog --format json doctor
+scripts/local-run.sh repo-catalog init --scope core --catalog /path/to/new-catalog
+scripts/local-run.sh repo-catalog doctor --catalog /path/to/new-catalog
 ```
 
-手順・診断・offline運用は [docs/local-python.md](docs/local-python.md) が唯一の正本です。システムのPython/SQLiteは製品検証に使いません。
-
-`doctor`は未初期化でもruntime能力を診断し、stateやDBを作成しません。
-PythonへリンクされたSQLiteはSTRICT対応が必要です。FTS5 trigramは任意で、なくても原文scan検索が使えます。
-
-通常利用向けには、checkoutでwheelを作り、Python 3.12以上の別venvへ導入します。依存は既存のlockに固定します。以下のbuild/installは依存の取得に通信を使う場合があります。導入後のCLIはcheckoutを必要としません。
+`--catalog` は新しい保存先を指定します。`--scope` は `core`、`context`、`paired`、`access`、`operational`、`search`、`filesystem`、`worktrees` から選びます。`paired` は同じカタログの Core と Context を初期化します。取得の再開・予算管理には Operational を明示的に追加します。
 
 ```bash
-uv build --wheel --out-dir artifacts/dist
-uv export --locked --no-dev --no-emit-project --format requirements-txt \
-  --output-file artifacts/runtime-requirements.txt
-uv venv /path/to/venv --python 3.12
-uv pip install --python /path/to/venv/bin/python \
-  --constraint artifacts/runtime-requirements.txt \
-  artifacts/dist/repo_catalog-0.2.0-py3-none-any.whl
-/path/to/venv/bin/repo-catalog --state-dir /path/to/new-state doctor
-/path/to/venv/bin/repo-catalog --state-dir /path/to/new-state init \
-  --profile catalog-text-v1 --cache-max-bytes 67108864 --min-free-bytes 0
-/path/to/venv/bin/repo-catalog --state-dir /path/to/new-state repos list
+scripts/local-run.sh repo-catalog init --scope operational --catalog /path/to/new-catalog
 ```
 
-`/path/to/new-state`は確認用の新規保存先です。この容量設定は小さな動作確認用で、実データの容量は別途決めます。実データ試行の入力・許可とbackupの保管要件は[運用](docs/operations.md)を参照してください。
+互換性のない既存 DB は上書き・変換しません。以前の通常形式の DB を利用するには、その形式に対応する過去のチェックアウトを使ってください。開発環境の準備・診断・オフライン運用は [docs/local-python.md](docs/local-python.md) を参照してください。
 
-## 初期化と収集
+## 取得・照会・管理
 
-### 独立したファイル・ワークツリーカタログ
+コマンドは用途別です。各コマンドの `--help` が現在の引数を示します。
 
-追加の `repo-catalog-filesystem` と `repo-catalog-worktrees` は、それぞれ独立した
-SQLite DBを持ちます。通常ディレクトリのファイル属性・SHA-256・スキャン履歴と、
-Gitワークツリーの配置・HEAD・明示的なRepository関連を別々に保存します。
-ファイル本文は保存しません。既存のSchema 21 DBの初期化は不要です。
+```bash
+scripts/local-run.sh repo-catalog acquire --help
+scripts/local-run.sh repo-catalog query --help
+scripts/local-run.sh repo-catalog context --help
+scripts/local-run.sh repo-catalog access --help
+scripts/local-run.sh repo-catalog operations --help
+scripts/local-run.sh repo-catalog exchange --help
+scripts/local-run.sh repo-catalog recovery --help
+scripts/local-run.sh repo-catalog reparse --help
+```
 
-開発環境では `./scripts/setup-local-python.sh` で追加CLIも導入されます。
-単独導入には各パッケージを、両方を連携させる場合は `repo-catalog-local` を使います。
-既存製品への追加導入は `repo-catalog[local]` でも選択できます。
+取得要求は `acquire` の `--input` に渡す明示的な JSON で指定します。ローカル Git、HTTPS/SSH Git、GitHub の REST/GraphQL、複数取得元のバッチを扱います。承認が必要な Context 操作には、対象を限定した `--authority` を指定します。Source は恒久 UUID、Provider リソースはサービスと種類を含む完全なキーで選択し、表示名から同一性や権限を推測しません。資格情報は参照として指定し、再開時に解決します。
+
+一つの取得要求の予算は、再試行・再開・バッチ内の取得元を通して累積します。途中で止まっても独立して受理できる結果を保持し、未完了の範囲を完全とは扱いません。通常の照会は保存済みデータを読み、取得元への接続や本文の自動取得を行いません。
+
+PR の `query pr-code`、`query pr-documents`、`query pr-list` は、実際の親一覧・対象の head/base・選択した文書やスレッドに範囲を限定します。ページやフィルターの外にある不足も確認し、古い完全な取得で新しい不完全な観測を補いません。項目の欠落と明示的な null は異なり、比較できない更新や同時刻の異なる値は、元の取得元・時刻を持つ候補として残します。
+
+ページングは件数とスナップショットに基づき、別途有限のバイト数・SQL・出力予算を使います。旧形式の固定 8 MiB による自動ページ分割は引き継ぎません。新しい HTTP 走査は取得範囲を改めて取得するため、旧形式の自動 `since` 最適化よりリクエストが増える場合があります。
+
+## 独立したファイル・作業ツリーのカタログ
+
+Git や Provider の DB を初期化せずに利用できます。
 
 ```bash
 scripts/local-run.sh repo-catalog-local init \
@@ -80,106 +80,14 @@ scripts/local-run.sh repo-catalog-local export \
   --scan SCAN_UUID --output files.efu
 ```
 
-`scan` は同じGitリポジトリの登録済みワークツリーも走査します。別置き・bareの
-Git格納場所に対応し、未追跡・ignore対象も含めます。Git管理領域は既定で除外し、
-`--include-git-admin` で含められます。リンク先は追跡しません。
-ハッシュは毎回通常ファイルの実内容から計算し、変更中・読取失敗は履歴に残します。
+走査は通常ファイルを毎回ハッシュし、変更中・読取失敗を履歴に残します。リンク先は追跡しません。EFU/CSV の出力は保存済み観測だけで行えます。部分走査には明示的な出力許可が必要です。[操作契約](docs/architecture/local-catalog-contract.md)と[連携 CLI](packages/local/README.md)を参照してください。
 
-Git不要の通常ディレクトリは `repo-catalog-filesystem --database PATH init` と
-`repo-catalog-filesystem --database PATH scan ROOT` で収集できます。
-EFU/CSV出力は保存済み観測だけで完結し、元のファイルが失われても利用できます。
-部分スキャンの出力には `--allow-partial` が必要です。標準5列に `SHA256` と
-選択した追加情報を付けます。詳細は[操作契約](docs/architecture/local-catalog-contract.md)と
-[連携CLI](packages/local/README.md)を参照してください。
+## 交換・復旧とドキュメント
 
-### 既存Git・Providerカタログ
+Exchange は選んだ型付きリソースと依存・元の根拠を交換します。受信した主張は送信者の認証や受信側の検証成功を意味しません。原本の補助的な HTTP 記録はドメインデータから独立し、その削除や記録障害でカタログの照会・交換・復旧を無効にしません。
 
-global optionはsubcommandより前へ置きます。以下の容量は操作例であり、300repo向けの推奨値ではありません。
+保存済みの権威あるデータに破損を検出した場合は通常利用を停止します。疑わしい元データを変更せず、明示的な診断・サルベージ、新しい保存先へのバックアップ復元、型と根拠を再検証したマージ、検証後の有効化を行います。Core の事実を更新・削除して修復する操作や、旧形式の隔離件数による継続はありません。
 
-```bash
-repo-catalog --state-dir /path/to/state init \
-  --profile catalog-text-v1 --cache-max-bytes 5368709120 --min-free-bytes 2147483648
-repo-catalog --state-dir /path/to/state sources add local-git \
-  --name example --url file:///path/to/repo.git
-repo-catalog --state-dir /path/to/state discover
-repo-catalog --state-dir /path/to/state sync git
-```
+[現行ランタイム案内](docs/current-runtime-reference.md)、[ADR 一覧](docs/adr/README.md)、[生成スキーマ監査](docs/implementation/separated-persistence-boundary.md)を現在の入口にしてください。Schema 20/21 の文書や保存済み検証結果は、それぞれの revision の履歴です。開発中のプロトタイプであり、通常の開発 CI の成功はリリース受入や全環境の検証を意味しません。
 
-GitHubは` sources add github --owner OWNER`で登録します。APIの認証は既定の`GH_TOKEN`、または`catalog.toml`の`github.token_env_var`で指定した環境変数を利用します。Gitの認証は既存のSSH/credential helper/クラウドGit proxyを利用し、API認証とは独立です。資格情報は環境設定等で供給し、設定ファイル・URL・コマンド引数へ埋め込まないでください。
-
-認証ユーザーの所有repoはprivate/fork/archivedを含め列挙し、PRは全状態、通常Issueはopen/closedの両方を対象にします。`sync issue` は通常Issueとコメントを収集し、`sync all` はGit・PR・通常Issueを収集します。少数対象のpilotは`--include-repo NAME`を繰り返して明示対象だけに限定できます。
-GitHub sourceの`--clone-url-override REPO_ID=URL`は、明示的なテスト設定や既存ローカル取得元への接続に使えます。
-
-catalog3 はRepo IDとサービスの `service_instance_uuidv4` 名前空間、native ID、取得URL、sourceを分離します。PR履歴文書は自然キーで識別し、観測から本文のSHA-256を直接参照します。通常Issue/コメントは `issue_resources`、レビュー/レビューコメントは `review_resources` の各共有物理テーブルを使い、最新状態から正確な本文を参照します。Issueの恒久IDと現在の所属repo・番号は別です。
-部分応答で未提供の値には、それを実際に観測した時刻・取得元の根拠を保持します。古い完全応答が後着しても未観測の項目を補完でき、同時刻に実際に観測した異なる値は競合として残します。Issue移動時はコメントの現在所属を更新し、過去の取得元とendpointを保持します。最終確認時刻は受信側の正常なlive取得だけで更新し、importや再解析で新しい確認を装いません。
-SSHとHTTPS、ローカルとネットワークのマウントpathを同じRepo IDの取得先として明示登録できます。
-Sourceにはローカルな `source_id` と恒久的な `source_registration_uuidv4` があります。`--source` はどちらでも指定でき、曖昧な場合は `local:ID` / `registration:UUID` で区別します。service名の重複は許容しますが、同名が複数あれば `--instance UUID` を指定してください。
-
-GitLab/Gitea/GitoliteなどのGitデータは` sources add git-url`で登録できます。GitLab/Giteaの自動列挙・MR/PR API adapterは後続範囲です。
-登録例は[リポジトリ識別と取得先](docs/repository-identity.md)を参照してください。
-
-HTTPメッセージの補助記録は `catalog.toml` の `github.record_messages = false` が既定です。有効時は `transport-archive/` に記録します。記録障害のコードは許可された値へ制限し、transport診断は最新100件まで保持します。警告表示の失敗やwarnings-as-errorsでも有効な収集を続けます。通常Issue/レビューの照会・検索・交換・復元は、このarchiveを必要としません。記録表現、秘密情報の除外、読取り制限は[通信記録](docs/latest-state-transport.md)を参照してください。
-
-## 照会
-
-```bash
-repo-catalog --state-dir /path/to/state repos list
-repo-catalog --state-dir /path/to/state refs list --repo REPO_ID
-repo-catalog --state-dir /path/to/state tree list --repo REPO_ID --ref refs/heads/main
-repo-catalog --state-dir /path/to/state search code --literal 認証
-repo-catalog --state-dir /path/to/state search pr --literal 認証
-repo-catalog --state-dir /path/to/state issue list --repo REPO_ID
-repo-catalog --state-dir /path/to/state issue show --repo REPO_ID --provider-issue-number 7
-repo-catalog --state-dir /path/to/state issue comments --repo REPO_ID --provider-issue-number 7
-repo-catalog --state-dir /path/to/state search issue --literal 認証
-repo-catalog --state-dir /path/to/state --format json search hash \
-  --algorithm raw-sha256 --digest ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
-```
-
-`current`は明示選択された公開snapshotのheads先端、`history`は選択snapshotのheads/tagsから到達する履歴、`recorded`は過去の公開取得rootも含む範囲です。
-PR rootは明示選択します。通常照会はDBの読取りだけで完結し、通信・Git実行・自動migration・原文再取得を行いません。
-PRタイトル・本文・会話コメント・レビューは各リソースの最新受理状態を検索し、編集前の本文を通常検索へ出しません。順序を証明できない更新は競合として示し、受信順やparser versionで最新値を決めません。
-
-`catalog-text-v1`は全heads先端のUTF-8 strict・NULなし・8 MiB以下の本文を可逆保存します。
-全取得対象Blobのdigestはbinaryや巨大Blobも含め記録しますが、全履歴・全binaryの原文保存ではありません。
-履歴の未保存本文は検索coverageに不足として出し、原文不在を空bytesへ置換しません。
-
-保存された coverage は scope ごとの最新観測時刻にある claim 集合から導出します。保存状態は `complete`、`partial`、`unknown`、`not_applicable` です。同時刻の `unknown` は他の状態を妨げませんが、他の状態が複数あれば `conflict` と表示します。新しい `unknown` から古い `complete` へは戻りません。`coverage`、`status`、snapshot の JSON は各 claim とその `details_json` を個別に返します。重複・古い claim の登録は NO-OP で、既存の claim と詳細を変更しません。
-
-## 解析履歴・交換・完全性
-
-PR・文書・独立スレッド・Sourceは現在状態と項目別根拠を保持します。通常Issue・レビューのtransfer、missing/null、衝突処理も維持します。Gitは実際の取得・ref・objectとデコーダー候補を保持し、独立したPublicationやparser profileを通常参照の前提にしません。
-
-```bash
-repo-catalog --state-dir /path/to/state parser reparse GIT_ACQUISITION_UUID
-repo-catalog --state-dir /path/to/state parser inspect-message ARCHIVE_REF --max-bytes 1048576
-repo-catalog --state-dir /path/to/state exchange export --repo REPO_UUID --output repository.json
-repo-catalog --state-dir /path/to/receiver exchange import --input repository.json
-repo-catalog --state-dir /path/to/receiver exchange staging
-repo-catalog --state-dir /path/to/state db verify-payloads
-repo-catalog --state-dir /path/to/state db repair-payload --sha256 HEX --input verified-bytes.bin
-repo-catalog --state-dir /path/to/state db backup --output catalog-backup.sqlite3
-repo-catalog --state-dir /path/to/new-state db restore --input catalog-backup.sqlite3
-```
-
-Git の再解析は取得ID・取得時刻を保持し、objectにデコーダー候補と実際のmodule/versionを結び付けます。候補が異なる値を持つ場合は競合として示し、`--decoder-key`で実在する候補を明示できます。API原本のcore保存・再解析・replayは廃止済みです。`inspect-message`は任意の外部記録の診断読取りです。部分受理GraphQLは必要なthread・child・code対象だけを正規化し、原本を残しません。Exchangeは一つのrepositoryと実際の依存・本文・範囲証拠を交換し、`--git-acquisition`／`--collection`で選べます。Source全体のinventory、ローカル隔離・運用設定・通信archiveは含みません。
-
-破損した物理 bytes は永続診断と隔離で扱い、明示修復だけが隔離を解除します。修復には実在するGit object payload参照と全対応objectのformat/OID/type/sizeに一致するreplacementが必要で、共有digestの整合性も検証します。API原本の登録・修復は廃止済みですが、全物理bytesの検証・隔離・backup/restoreは維持します。バックアップは隔離済み bytes と診断も保持し、manifest に active 物理隔離件数 `quarantined_payload_count` を保存します。復元は件数照合と全bytes検証を行い、正の一致件数も許容します。復元先は未作成のパスを指定し、失敗した stage は保存します。実装・判断対応・検証結果は [統合 handoff](docs/model-integration-handoff.md)、[独立監査](docs/model-integration-audit.md)、[旧判断対応表（Schema 18時点）](docs/model-integration-status.md) を参照してください。LFSはGit pointer bytes、添付は本文と埋込みURLまで保存し、本体取得やURLの自動巡回は行いません。
-
-## テスト・再現demo
-
-```bash
-scripts/local-run.sh python scripts/prepare_wheelhouse.py  # 依存のonline準備
-scripts/local-run.sh python scripts/ci_execute.py current --lane tests
-scripts/local-run.sh python scripts/ci_execute.py current --lane packaging
-scripts/local-run.sh python scripts/demo.py \
-  --work-dir artifacts/demo-run-001 --scenario offline-recovery
-```
-
-標準試験は実Git、loopback合成API、dummy credential、SQLite実ファイル、実CLI subprocessで行います。
-実アカウントを不要にし、親pytestと子Pythonプロセスの外部通信を遮断します。Gitはfile transportに限定します。
-demoは新規/空directoryにfixtureを生成し、収集、更新、clone実回収、offline照会、再索引、backup/別state復元を検証します。
-
-実装済みの通常ランタイムと opt-in 境界は[現行ランタイム案内](docs/current-runtime-reference.md)を参照してください。[CLI の Schema 20 記録](docs/cli.md)、[旧データモデル](docs/data-model.md)、[実装状況の監査記録](docs/implementation-status.md)は日付・対象 revision を持つ履歴です。その他、[アーキテクチャ](docs/architecture.md)、[列の用途と保持量](docs/current-state-schema-liveness.md)、[Phase 1実装とinventory](docs/phase1-api-original-retirement-implementation.md)、[運用](docs/operations.md)、[テスト](docs/testing.md)も参照してください。
-
-Phase 2は最新状態と必要な証拠を保持し、独立したPublicationを置かない設計が採択されています。[Schema 20の実装](docs/phase2/publication-free-implementation.md)は、PR・文書・スレッド・Sourceを直接所有者に結び付け、取得範囲の完全性とGit/CASの整合性を別々に検証します。独立レビューと最終検証の状況は実装記録を参照してください。
+ウェブページの編集・Google AI Studio へのインポートは [`web` ブランチ](https://github.com/TakashiSasaki/resource-atlas/tree/web)で行います。正本の設計・スキーマは `main` が所有し、ウェブは `main` を非同期に追跡します。固定した本体 SHA の維持や同時更新は不要です。[受け渡し規約](docs/adr/0042-asynchronous-web-main-tracking.md)と[サイト運用](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/README.md)を参照してください。

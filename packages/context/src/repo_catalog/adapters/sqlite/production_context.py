@@ -15,6 +15,7 @@ from contextlib import ExitStack, closing, contextmanager
 from functools import wraps
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.admission_transaction import rollback_after_failure
 from repo_catalog.adapters.sqlite.catalog_runtime import (
     catalog_completion,
     catalog_gate,
@@ -25,6 +26,7 @@ from repo_catalog.adapters.sqlite.context_row_bindings import context_write_valu
 from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
+from repo_catalog.domain.collection_members import COLLECTION_CHILD_KINDS
 from repo_catalog.domain.context_registration import registration_json
 from repo_catalog.domain.p1_context import (
     RELATION_KINDS,
@@ -74,8 +76,74 @@ from repo_catalog.domain.resource_stage import (
     validate_stage_storage,
 )
 from repo_catalog.domain.shared_values import OID, uuid4_value
+from repo_catalog.domain.source_inventory_scope import (
+    SourceInventoryScopeError,
+    validate_source_inventory_scope,
+)
+
+
+def _export_selection_query(query, key_columns, keys, prefixes, work):
+    """Bind fixed metadata keys; never accept caller SQL or body projections."""
+    if keys is None and prefixes is None:
+        return query, ()
+    values = keys if keys is not None else prefixes
+    width = len(key_columns) if keys is not None else 3
+    if (
+        type(values) is not tuple
+        or len(values) > 1_000_000
+        or any(
+            type(row) is not tuple
+            or len(row) != width
+            or any(type(value) is not str for value in row)
+            for row in values
+        )
+        or keys is not None
+        and prefixes is not None
+    ):
+        raise ValueError("fixed typed export keys required")
+    # These are bounded local selection coordinates, not authoritative payloads.
+    size = sum(len(value.encode("utf-8")) for row in values for value in row)
+    work.require("input_bytes", 6 * size + 4 * len(values) * (width + 1) + 2)
+    try:
+        encoded = json.dumps(values, ensure_ascii=False, separators=(",", ":"))
+    except BaseException:
+        work.abandon("input_bytes")
+        raise
+    work.charge("input_bytes", len(encoded.encode("utf-8")))
+    base, order = query.rsplit(" ORDER BY ", 1)
+    if keys is not None:
+        selected = ",".join(
+            "json_extract(value,'$[" + str(index) + "]')" for index in range(width)
+        )
+        predicate = (
+            "("
+            + ",".join(key_columns)
+            + ") IN (SELECT "
+            + selected
+            + " FROM json_each(?))"
+        )
+    else:
+        # Canonical JSON coordinates have a stable comma-terminated prefix.
+        # CROSS JOIN fixes the small request set outside the indexed PK ranges.
+        base = base.replace(
+            "FROM coverage_scopes",
+            "FROM json_each(?) AS selection CROSS JOIN coverage_scopes",
+        )
+        predicate = "owner_kind=json_extract(selection.value,'$[0]') AND owner_coordinates_json>=json_extract(selection.value,'$[1]') AND owner_coordinates_json<json_extract(selection.value,'$[2]')"
+    return base + (
+        " AND " if " WHERE " in base.rsplit(" FROM ", 1)[-1] else " WHERE "
+    ) + predicate + " ORDER BY " + order, (encoded,)
+
 
 _EXPORT_CONTEXT_ROWS = {
+    "service_identity_assertions": (
+        "SELECT relation_uuidv4,record_json,provenance FROM service_identity_assertions ORDER BY relation_uuidv4,record_json,provenance",
+        ("relation_uuidv4", "record_json", "provenance"),
+    ),
+    "service_identity_cancellations": (
+        "SELECT cancellation_uuidv4,relation_uuidv4,record_json,provenance FROM service_identity_cancellations ORDER BY cancellation_uuidv4,relation_uuidv4,record_json,provenance",
+        ("cancellation_uuidv4", "relation_uuidv4", "record_json", "provenance"),
+    ),
     "providers": (
         "SELECT service_instance_uuidv4,provider_kind,configuration_json FROM providers ORDER BY service_instance_uuidv4",
         ("service_instance_uuidv4", "provider_kind", "configuration_json"),
@@ -93,7 +161,7 @@ _EXPORT_CONTEXT_ROWS = {
         ("source_registration_uuidv4", "repository_uuidv4", "attributes_json"),
     ),
     "source_inventories": (
-        "SELECT source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json FROM source_inventory_evidence ORDER BY source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json",
+        "SELECT source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json,provider_repositories_json FROM source_inventory_evidence ORDER BY source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json,provider_repositories_json",
         (
             "source_registration_uuidv4",
             "scope_json",
@@ -102,6 +170,7 @@ _EXPORT_CONTEXT_ROWS = {
             "terminal",
             "members_json",
             "provenance_json",
+            "provider_repositories_json",
         ),
     ),
     "resources": (
@@ -239,7 +308,7 @@ _EXPORT_CONTEXT_ROWS = {
         ),
     ),
     "source_proofs": (
-        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json FROM source_coverage_proofs ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json",
+        "SELECT owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json,provider_repositories_json FROM source_coverage_proofs ORDER BY owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json,provider_repositories_json",
         (
             "owner_kind",
             "owner_coordinates_json",
@@ -252,6 +321,7 @@ _EXPORT_CONTEXT_ROWS = {
             "terminal",
             "members_json",
             "provenance_json",
+            "provider_repositories_json",
         ),
     ),
 }
@@ -260,6 +330,8 @@ _EXPORT_CONTEXT_ROWS = {
 # Bind codecs only for selections that already materialize complete table rows.
 # Resource, field, text and relation projections retain their narrower contracts.
 _EXPORT_CONTEXT_FULL_ROWS = {
+    "service_identity_assertions": ROW_TYPES["service_identity_assertions"],
+    "service_identity_cancellations": ROW_TYPES["service_identity_cancellations"],
     "providers": ROW_TYPES["providers"],
     "repositories": ROW_TYPES["repository_context"],
     "sources": ROW_TYPES["sources"],
@@ -271,6 +343,7 @@ _EXPORT_CONTEXT_FULL_ROWS = {
     "proofs": ROW_TYPES["coverage_proofs"],
     "source_proofs": ROW_TYPES["source_coverage_proofs"],
 }
+_EXPORT_CONTEXT_ROWS["collections_exact"] = _EXPORT_CONTEXT_ROWS["collections"]
 
 
 class _GuardedCursor:
@@ -288,6 +361,11 @@ class _GuardedCursor:
         except BaseException as error:
             self._on_error(error)
             raise
+
+    @property
+    def rowcount(self):
+        """Delegate only statement metadata from SQLite/coordinator cursors."""
+        return self._call(lambda: self._cursor.rowcount)
 
     def fetchone(self):
         row = self._call(self._cursor.fetchone)
@@ -461,6 +539,7 @@ class Context(ContextStore):
         capability = cls(db, directory, writable=True, authorization=authorization)
         try:
             yield capability
+            capability._raise_failed_cleanup()
             capability._read_complete()
         except BaseException as error:
             cls._record_corruption(Path(directory), error)
@@ -510,6 +589,7 @@ class Context(ContextStore):
                         try:
                             with capability._commit_scope(admission):
                                 yield capability
+                                capability._raise_failed_cleanup()
                                 capability._read_complete()
                                 capability._precommit_admission()
                                 with catalog_completion(directory):
@@ -518,7 +598,7 @@ class Context(ContextStore):
                             capability._active = False
                     except BaseException as error:
                         cls._record_corruption(directory, error)
-                        db.rollback()
+                        rollback_after_failure(db, error)
                         raise
             except BaseException as error:
                 cls._record_corruption(directory, error)
@@ -551,14 +631,14 @@ class Context(ContextStore):
                 )
                 with capability._commit_scope(admission):
                     yield capability
+                    capability._raise_failed_cleanup()
                     capability._read_complete()
                     capability._precommit_admission()
                     with catalog_completion(Path(directory)):
                         db.execute("COMMIT")
             except BaseException as error:
                 cls._record_corruption(Path(directory), error)
-                if db.in_transaction:
-                    db.execute("ROLLBACK")
+                rollback_after_failure(db, error)
                 raise
             finally:
                 if capability is not None:
@@ -630,9 +710,8 @@ class Context(ContextStore):
             self._read_complete()
             self._check(write=True)
             self.db.execute("RELEASE p3_unit")
-        except BaseException:
-            self.db.execute("ROLLBACK TO p3_unit")
-            self.db.execute("RELEASE p3_unit")
+        except BaseException as error:
+            self._rollback_unit("p3_unit", error)
             raise
 
     @contextmanager
@@ -731,15 +810,89 @@ class Context(ContextStore):
         with self._stored("registration"):
             return registration_json(kind, encoded)
 
-    def provider(self, service: str, kind: str, configuration_json: str = "{}"):
+    def admit_identity_evidence(
+        self, kind, record_json, provenance, *, with_insertion=False
+    ):
+        self._check(write=True)
+        return super().admit_identity_evidence(
+            kind, record_json, provenance, with_insertion=with_insertion
+        )
+
+    def identity_evidence_snapshot(
+        self, *, max_evidence=10000, max_bytes=16 * 1024 * 1024
+    ):
+        """Service-only snapshot from this Context capability; never opens Core."""
+        from repo_catalog.domain.identity_assertions import identity_values
+        from repo_catalog.domain.shared_values import Provenance
+
+        self._check()
+        for limit in (max_evidence, max_bytes):
+            if type(limit) is not int or limit <= 0:
+                raise ValueError("positive finite identity read limits required")
+        result = {}
+        for kind, table, output in (
+            ("relation", "service_identity_assertions", "relations"),
+            ("cancellation", "service_identity_cancellations", "cancellations"),
+        ):
+            count, size = self.db.execute(
+                f"SELECT count(*),coalesce(sum(octet_length(record_json)+octet_length(provenance)),0) FROM {table}"
+            ).fetchone()
+            if count > max_evidence or size > max_bytes:
+                raise ContextError(
+                    "QUERY_BUDGET", "identity", "finite identity evidence read limit"
+                )
+            max_evidence -= count
+            max_bytes -= size
+            rows = []
+            for row in self.db.execute(
+                f"SELECT * FROM {table} ORDER BY {','.join(ROW_TYPES[table].KEY_COLUMNS)}"
+            ):
+                record = dict(zip(ROW_TYPES[table].COLUMNS, row, strict=True))
+                with self._stored("identity"):
+                    ROW_TYPES[table].from_record(record)
+                    decoded = identity_values(
+                        kind,
+                        "service",
+                        record["record_json"],
+                        Provenance(*json.loads(record["provenance"])),
+                    )
+                    if tuple(row) != decoded:
+                        raise ValueError("row coordinates differ from original record")
+                rows.append(record)
+            result[output] = rows
+        providers = self.db.execute(
+            "SELECT service_instance_uuidv4 FROM providers ORDER BY service_instance_uuidv4 LIMIT ?",
+            (max_evidence + 1,),
+        ).fetchall()
+        if len(providers) > max_evidence:
+            raise ContextError(
+                "QUERY_BUDGET", "identity", "finite nominal identity read limit"
+            )
+        with self._stored("provider identity"):
+            result["service_uuids"] = [uuid4_value(row[0]) for row in providers]
+        return result
+
+    def provider(
+        self,
+        service: str,
+        kind: str,
+        configuration_json: str = "{}",
+        *,
+        ensure_only=False,
+    ):
         self._check(write=True)
         registration_json("provider", configuration_json)
         prior = self.db.execute(
-            "SELECT provider_kind FROM providers WHERE service_instance_uuidv4=?",
+            "SELECT provider_kind,configuration_json FROM providers WHERE service_instance_uuidv4=?",
             (service,),
         ).fetchone()
         if prior and prior[0] != kind:
             raise ContextError("IDENTITY_REBIND", "provider", service)
+        if type(ensure_only) is not bool:
+            raise ValueError("strict registration mode required")
+        if prior and ensure_only:
+            self.registration_metadata("provider", prior[1])
+            return
         self.db.execute(
             "INSERT INTO providers VALUES(?,?,?) ON CONFLICT(service_instance_uuidv4) DO UPDATE SET configuration_json=excluded.configuration_json",
             context_write_values(
@@ -761,15 +914,27 @@ class Context(ContextStore):
             ),
         )
 
-    def source(self, source: str, service: str, configuration_json: str = "{}"):
+    def source(
+        self,
+        source: str,
+        service: str,
+        configuration_json: str = "{}",
+        *,
+        ensure_only=False,
+    ):
         self._check(write=True)
         registration_json("source", configuration_json)
         prior = self.db.execute(
-            "SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=?",
+            "SELECT service_instance_uuidv4,configuration_json FROM sources WHERE source_registration_uuidv4=?",
             (source,),
         ).fetchone()
         if prior and prior[0] != service:
             raise ContextError("IDENTITY_REBIND", "source", source)
+        if type(ensure_only) is not bool:
+            raise ValueError("strict registration mode required")
+        if prior and ensure_only:
+            self.registration_metadata("source", prior[1])
+            return
         self.db.execute(
             "INSERT INTO sources VALUES(?,?,?) ON CONFLICT(source_registration_uuidv4) DO UPDATE SET configuration_json=excluded.configuration_json",
             context_write_values(
@@ -790,12 +955,25 @@ class Context(ContextStore):
         )
 
     def associate_source(
-        self, source: str, repository: str, attributes_json: str = "{}"
+        self,
+        source: str,
+        repository: str,
+        attributes_json: str = "{}",
+        *,
+        ensure_only=False,
     ):
         self._check(write=True)
         registration_json("membership", attributes_json)
+        if type(ensure_only) is not bool:
+            raise ValueError("explicit ensure-only boolean required")
+        conflict = (
+            "DO NOTHING"
+            if ensure_only
+            else "DO UPDATE SET attributes_json=excluded.attributes_json"
+        )
         self.db.execute(
-            "INSERT INTO source_repositories VALUES(?,?,?) ON CONFLICT(source_registration_uuidv4,repository_uuidv4) DO NOTHING",
+            "INSERT INTO source_repositories VALUES(?,?,?) ON CONFLICT(source_registration_uuidv4,repository_uuidv4) "
+            + conflict,
             context_write_values(
                 ROW_TYPES["source_repositories"],
                 ROW_TYPES["source_repositories"].WRITE_COLUMNS,
@@ -803,30 +981,43 @@ class Context(ContextStore):
             ),
         )
 
+    def _inventory_subject(self, observation):
+        if type(observation) is not SourceInventory:
+            raise ValueError("typed Source inventory required")
+        SourceInventory.__post_init__(observation)
+        service = self.db.execute(
+            "SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=?",
+            (observation.source_registration_uuidv4,),
+        ).fetchone()
+        if service is None:
+            raise ContextError("SOURCE_UNAVAILABLE", "source_inventory")
+        try:
+            validate_source_inventory_scope(
+                observation.scope_json,
+                observation.source_registration_uuidv4,
+                service[0],
+            )
+        except SourceInventoryScopeError as error:
+            raise ContextError(error.code, "source_inventory") from error
+        for repository in observation.provider_repositories:
+            if repository.service_instance_uuidv4 != service[0]:
+                raise ContextError("MEMBER_OWNER", "source_inventory")
+            identified = self.identification(repository)
+            if identified.document_kind is not None:
+                raise ContextError("MEMBER_OWNER", "source_inventory")
+
     def inventory(self, observation: SourceInventory):
         """Append actual terminal evidence; positives survive every later scan."""
         with self._unit():
-            scope = json_value(observation.scope_json)
-            service = self.db.execute(
-                "SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=?",
-                (observation.source_registration_uuidv4,),
-            ).fetchone()
-            if service is None:
-                raise ContextError("SOURCE_UNAVAILABLE", "source_inventory")
-            if (
-                isinstance(scope, dict)
-                and "service_instance_uuidv4" in scope
-                and scope["service_instance_uuidv4"] != service[0]
-            ):
-                raise ContextError("SOURCE_SERVICE", "source_inventory")
+            self._inventory_subject(observation)
             for repository in observation.repositories:
                 self.associate_source(
                     observation.source_registration_uuidv4,
                     repository,
-                    observation.provenance_json,
+                    ensure_only=True,
                 )
             self.db.execute(
-                "INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                "INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
                 context_write_values(
                     ROW_TYPES["source_inventory_evidence"],
                     ROW_TYPES["source_inventory_evidence"].WRITE_COLUMNS,
@@ -925,12 +1116,7 @@ class Context(ContextStore):
             raise ContextError("RESOURCE_UNAVAILABLE", "context", str(key))
 
     def _members(self, owner: ResourceKey, kind: str, members: Sequence[ResourceKey]):
-        child_kind = {
-            "reviews": "review",
-            "comments": "comment",
-            "threads": "thread",
-            "documents": "document",
-        }.get(kind)
+        child_kind = COLLECTION_CHILD_KINDS.get(kind)
         for member in members:
             self._require_resource(member)
             if child_kind is not None and (
@@ -1050,7 +1236,9 @@ class Context(ContextStore):
                         "SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=?",
                         (scope["source_registration_uuidv4"],),
                     ).fetchone()
-                    if source != (observation.resource.service_instance_uuidv4,):
+                    if source is not None and source != (
+                        observation.resource.service_instance_uuidv4,
+                    ):
                         raise ContextError("SOURCE_SERVICE", "collection")
             self._members(
                 observation.resource, observation.collection_kind, observation.members
@@ -1108,6 +1296,89 @@ class Context(ContextStore):
             )
         )
 
+    def _current_collection(self, observation):
+        key = (
+            *observation.resource.coordinates(),
+            observation.collection_kind,
+            observation.provenance_json,
+        )
+        latest = self.db.execute(
+            "SELECT MAX(observed_at_us) FROM collection_terminals WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=?",
+            key,
+        ).fetchone()[0]
+        conflict = self.db.execute(
+            "SELECT 1 FROM collection_terminals WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND collection_kind=? AND provenance_json=? AND observed_at_us=? AND terminal_state!='unknown' AND (terminal_state!=? OR members_json!=?) LIMIT 1",
+            (
+                *key,
+                observation.observed_at_us,
+                observation.state,
+                observation.members_json,
+            ),
+        ).fetchone()
+        if latest != observation.observed_at_us or conflict is not None:
+            raise sqlite3.IntegrityError(
+                "Coverage proof terminal is superseded or conflicting"
+            )
+
+    def admit_collection_history(
+        self, observation: CollectionObservation, claim: CoverageClaim | None = None
+    ):
+        """Retain whole typed originals independently of their delivery order.
+
+        Permanent Source/member/owner/provenance checks and current local leases
+        still apply. Only readers decide whether a retained proof is current.
+        """
+        from repo_catalog.adapters.sqlite.context_row_bindings import (
+            context_write_values,
+        )
+        from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
+
+        with self._unit():
+            if type(observation) is not CollectionObservation:
+                raise ContextError("PROOF_SCOPE", "collection")
+            CollectionObservation.__post_init__(observation)
+            self.collection(observation)
+            if claim is None:
+                return
+            if (
+                type(claim) is not CoverageClaim
+                or type(claim.scope) is not CoverageScope
+            ):
+                raise ContextError("PROOF_SCOPE", "collection")
+            CoverageClaim.__post_init__(claim)
+            self.scope(claim.scope)
+            key = (
+                claim.scope.owner_kind,
+                claim.scope.encoded,
+                claim.observed_at_us,
+                claim.state,
+            )
+            # Advisory details are not a second claim identity. Preserve the
+            # first admitted original; exact replay must not execute INSERT
+            # because the permanent no-replace trigger precedes ON CONFLICT.
+            previous = self.db.execute(
+                "SELECT details_json FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
+                key,
+            ).fetchone()
+            if previous is None:
+                self.db.execute(
+                    "INSERT INTO coverage_claims VALUES(?,?,?,?,?)",
+                    context_write_values(
+                        ROW_TYPES["coverage_claims"],
+                        ROW_TYPES["coverage_claims"].WRITE_COLUMNS,
+                        (*key, claim.details_json),
+                    ),
+                )
+            # Permanent SQL owner/member/terminal FKs check the entire original.
+            self.db.execute(
+                "INSERT INTO coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                context_write_values(
+                    ROW_TYPES["coverage_proofs"],
+                    ROW_TYPES["coverage_proofs"].WRITE_COLUMNS,
+                    (*key, *observation.terminal),
+                ),
+            )
+
     def prove_collection(
         self,
         claim: CoverageClaim,
@@ -1130,6 +1401,7 @@ class Context(ContextStore):
             ).fetchone()
             if persisted is None or persisted[0] != required_scope_json:
                 raise ContextError("PROOF_SCOPE", "coverage")
+            self._current_collection(observation)
             self.scope(claim.scope)
             if self.admit_coverage(claim) == "stale":
                 raise ContextError("STALE_CLAIM", "coverage")
@@ -1148,13 +1420,113 @@ class Context(ContextStore):
                 ),
             )
 
+    def _current_inventory(self, observation):
+        self._inventory_subject(observation)
+        latest = self.db.execute(
+            "SELECT MAX(observed_at_us) FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=?",
+            (observation.source_registration_uuidv4, observation.scope_json),
+        ).fetchone()[0]
+        conflict = self.db.execute(
+            "SELECT 1 FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=? AND observed_at_us=? AND coverage_state!='unknown' AND (coverage_state!=? OR members_json!=? OR provider_repositories_json!=? OR terminal!=?) LIMIT 1",
+            (
+                observation.source_registration_uuidv4,
+                observation.scope_json,
+                observation.observed_at_us,
+                observation.state,
+                observation.members_json,
+                observation.provider_repositories_json,
+                int(observation.terminal),
+            ),
+        ).fetchone()
+        if latest != observation.observed_at_us or conflict is not None:
+            raise sqlite3.IntegrityError("Source terminal is superseded or conflicting")
+
+    def admit_inventory_history(
+        self, observation: SourceInventory, claim: CoverageClaim | None = None
+    ):
+        """Retain typed immutable originals; latest truth remains a read projection.
+
+        This is a scoped admission unit, not an import flag or a SQL bypass.
+        Permanent Source/Provider/member checks and current local leases apply.
+        Existing mutable registrations/membership attributes are never rewritten.
+        """
+        with self._unit():
+            self._inventory_subject(observation)
+            changed = False
+            for repository in observation.repositories:
+                if (
+                    self.db.execute(
+                        "SELECT 1 FROM source_repositories WHERE source_registration_uuidv4=? AND repository_uuidv4=?",
+                        (observation.source_registration_uuidv4, repository),
+                    ).fetchone()
+                    is None
+                ):
+                    self.associate_source(
+                        observation.source_registration_uuidv4,
+                        repository,
+                        ensure_only=True,
+                    )
+                    changed = True
+            inserted = self.db.execute(
+                "INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                context_write_values(
+                    ROW_TYPES["source_inventory_evidence"],
+                    ROW_TYPES["source_inventory_evidence"].WRITE_COLUMNS,
+                    observation.values,
+                ),
+            ).rowcount
+            changed |= bool(inserted)
+            if claim is not None:
+                if (
+                    type(claim) is not CoverageClaim
+                    or claim.scope.owner_kind != "source_inventory"
+                    or tuple(claim.scope.coordinates[:2])
+                    != (observation.source_registration_uuidv4, observation.scope_json)
+                ):
+                    raise ContextError("PROOF_SCOPE", "source_inventory")
+                CoverageClaim.__post_init__(claim)
+                self.scope(claim.scope)
+                key = (
+                    claim.scope.owner_kind,
+                    claim.scope.encoded,
+                    claim.observed_at_us,
+                    claim.state,
+                )
+                previous = self.db.execute(
+                    "SELECT details_json FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?",
+                    key,
+                ).fetchone()
+                if previous is not None and previous[0] != claim.details_json:
+                    raise ContextError("IMMUTABLE_CLAIM_CONFLICT", "source_inventory")
+                claim_inserted = 0
+                if previous is None:
+                    claim_inserted = self.db.execute(
+                        "INSERT INTO coverage_claims VALUES(?,?,?,?,?)",
+                        context_write_values(
+                            ROW_TYPES["coverage_claims"],
+                            ROW_TYPES["coverage_claims"].WRITE_COLUMNS,
+                            (*key, claim.details_json),
+                        ),
+                    ).rowcount
+                proof_inserted = self.db.execute(
+                    "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                    context_write_values(
+                        ROW_TYPES["source_coverage_proofs"],
+                        ROW_TYPES["source_coverage_proofs"].WRITE_COLUMNS,
+                        (*key, *observation.values),
+                    ),
+                ).rowcount
+                changed |= bool(claim_inserted or proof_inserted)
+            return "insert" if changed else "duplicate"
+
     def prove_inventory(self, claim: CoverageClaim, observation: SourceInventory):
         with self._unit():
+            self._current_inventory(observation)
             self.scope(claim.scope)
             if self.admit_coverage(claim) == "stale":
                 raise ContextError("STALE_CLAIM", "coverage")
             self.db.execute(
-                "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+                "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
                 context_write_values(
                     ROW_TYPES["source_coverage_proofs"],
                     ROW_TYPES["source_coverage_proofs"].WRITE_COLUMNS,
@@ -1461,7 +1833,7 @@ class Context(ContextStore):
         self._check(write=True)
         return super().admit_coverage(claim)
 
-    def _exchange_metadata_rows(self, selector, work):
+    def _exchange_metadata_rows(self, selector, work, *, keys=None, prefixes=None):
         """Fetch fixed Context metadata after per-row reservations."""
         self._check()
         spec = _EXPORT_CONTEXT_ROWS.get(selector) if type(selector) is str else None
@@ -1470,6 +1842,67 @@ class Context(ContextStore):
                 "QUERY_BUDGET", "exchange-metadata", "fixed selector required"
             )
         query, columns = spec
+        key_columns = {
+            "resources": (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+            ),
+            "relations": (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+            ),
+            "collections_exact": (
+                "c.service_instance_uuidv4",
+                "c.resource_kind",
+                "c.provider_resource_id",
+                "c.collection_kind",
+                "c.provenance_json",
+            ),
+            "collections": (
+                "c.service_instance_uuidv4",
+                "c.resource_kind",
+                "c.provider_resource_id",
+            ),
+            "repository_relations": (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+            ),
+            "mapping_dispositions": (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+            ),
+            "field_candidates": (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+            ),
+            "core_references": (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+            ),
+            "text_bodies": ("sha256",),
+            "scopes": ("owner_kind", "owner_coordinates_json"),
+            "claims": ("owner_kind", "owner_coordinates_json"),
+            "proofs": ("owner_kind", "owner_coordinates_json"),
+            "source_proofs": ("owner_kind", "owner_coordinates_json"),
+            "sources": ("source_registration_uuidv4",),
+            "source_repositories": ("source_registration_uuidv4",),
+            "source_inventories": ("source_registration_uuidv4",),
+        }.get(selector)
+        if (keys is not None and key_columns is None) or (
+            prefixes is not None and selector != "scopes"
+        ):
+            raise ContextError(
+                "QUERY_BUDGET", "exchange-metadata", "fixed selection required"
+            )
+        query, parameters = _export_selection_query(
+            query, key_columns, keys, prefixes, work
+        )
         projection = ",".join('octet_length("' + column + '")' for column in columns)
 
         def fixed_read(operation):
@@ -1484,9 +1917,11 @@ class Context(ContextStore):
                 raise
 
         measured = fixed_read(
-            lambda: self.db.execute("SELECT " + projection + " FROM (" + query + ")")
+            lambda: self.db.execute(
+                "SELECT " + projection + " FROM (" + query + ")", parameters
+            )
         )
-        values = fixed_read(lambda: self.db.execute(query))
+        values = fixed_read(lambda: self.db.execute(query, parameters))
         result = []
         while True:
             work.require("metadata_units", 1)
@@ -1532,6 +1967,30 @@ class Context(ContextStore):
                 except (ValueError, TypeError):
                     with self._stored("exchange metadata row"):
                         raise
+            if selector in {
+                "service_identity_assertions",
+                "service_identity_cancellations",
+            }:
+                from repo_catalog.domain.identity_assertions import identity_values
+                from repo_catalog.domain.shared_values import Provenance
+
+                record = dict(zip(columns, row, strict=True))
+                kind = "relation" if selector.endswith("assertions") else "cancellation"
+                work.require("input_bytes", size)
+                try:
+                    with self._stored("identity exchange metadata"):
+                        expected = identity_values(
+                            kind,
+                            "service",
+                            record["record_json"],
+                            Provenance(*json.loads(record["provenance"])),
+                        )
+                        if tuple(row) != expected:
+                            raise ValueError(
+                                "identity coordinates differ from original record"
+                            )
+                finally:
+                    work.charge("input_bytes", size)
             result.append(row)
         return result
 

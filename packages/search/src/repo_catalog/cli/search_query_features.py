@@ -37,6 +37,16 @@ def add_commands(sub, _add_common_args, _add_page_args):
         default=",".join(SEARCH_PROJECTION_KINDS),
         help="Comma-separated projection kinds",
     )
+    status = sub.add_parser(
+        "search-status",
+        help="Verify derivative projection freshness and report actual rebuild telemetry",
+    )
+    _add_common_args(status)
+    status.add_argument(
+        "--kinds",
+        default=",".join(SEARCH_PROJECTION_KINDS),
+        help="Comma-separated projection kinds",
+    )
 
     # search
     p_search = sub.add_parser(
@@ -86,7 +96,7 @@ def query_service(directory, *, mode):
 
 
 def query_payload(service, args, page_from_args):
-    if args.command not in ("search", "search-rebuild"):
+    if args.command not in ("search", "search-rebuild", "search-status"):
         if _pair_available():
             from repo_catalog.cli import paired_query_features
 
@@ -98,14 +108,18 @@ def query_payload(service, args, page_from_args):
         raise QueryError("MISSING_CAPABILITY", "cli", args.command)
     cmd = args.command
     _page_from_args = page_from_args
-    if cmd == "search-rebuild":
+    if cmd in ("search-rebuild", "search-status"):
+        from repo_catalog.application.search_maintenance import SearchMaintenance
+
         kinds = tuple(k.strip() for k in args.kinds.split(",") if k.strip())
-        counts = service.rebuild_search(kinds)
-        token = service.snapshot_token()
-        payload = {
-            "indexed_counts": counts,
-            "snapshot_token": token.encode(),
-        }
+        maintenance = SearchMaintenance(service)
+        payload = (
+            maintenance.rebuild(kinds)
+            if cmd == "search-rebuild"
+            else maintenance.status(kinds)
+        )
+        if cmd == "search-rebuild":
+            payload["indexed_counts"] = payload["counts"]
     elif cmd == "search":
         kinds = tuple(k.strip() for k in args.kinds.split(",") if k.strip())
         resp = service.search(

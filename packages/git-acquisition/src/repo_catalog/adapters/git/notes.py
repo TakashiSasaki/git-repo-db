@@ -73,6 +73,23 @@ class GitNotesSource:
 
     @property
     def scope(self):
+        declared = getattr(self.source, "acquisition_scope", None)
+        if declared is not None:
+            # Trusted remote adapters bind original explicit source coordinates,
+            # never their disposable native cache directory. Canonical framing
+            # is checked here before it becomes durable request identity.
+            try:
+                import json
+
+                if type(declared) is not str or len(declared) > 65536:
+                    raise ValueError
+                if encode(json.loads(declared)) != declared:
+                    raise ValueError
+            except (ValueError, TypeError, RecursionError):
+                raise CoreFailure(
+                    "NOTES_SCOPE", "source", "canonical adapter scope required"
+                ) from None
+            return declared
         return encode(
             ["local-git", os.fsencode(self.source.path).hex(), self.object_format]
         )

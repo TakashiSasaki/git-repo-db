@@ -1,10 +1,11 @@
 # CLI契約 — Schema 20
 
-> **Current navigation:** This document is a dated historical snapshot; its
-> present-tense statements describe that snapshot. For the implemented Schema 21
-> runtime and the distinction from opt-in and accepted target design, see
-> [Current runtime reference](current-runtime-reference.md). Original body and
-> historical evidence remain unchanged.
+> **Historical CLI reference:** The Schema 20/21 normal-format commands,
+> `--state-dir` workflow and `cli-v1.schema.json` envelope below have been retired.
+> Ordinary commands now use explicitly selected separated stores. Use
+> [Current runtime reference](current-runtime-reference.md) and current command
+> help for the implemented interface. The original body below describes its
+> historical snapshot; it is not a current command or migration guide.
 
 現在の構造と検証状況は[Publication非依存の実装記録](phase2/publication-free-implementation.md)を参照してください。
 

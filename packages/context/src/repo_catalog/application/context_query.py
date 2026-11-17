@@ -122,8 +122,9 @@ class ContextReader:
                 terminal,
                 members_json,
                 provenance,
+                provider_members_json,
             ) in context.db.execute(
-                "SELECT scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json "
+                "SELECT scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json,provider_repositories_json "
                 "FROM source_inventory_evidence WHERE source_registration_uuidv4=? "
                 "ORDER BY observed_at_us,scope_json,provenance_json",
                 (source,),
@@ -137,6 +138,19 @@ class ContextReader:
                     raise ValueError("invalid stored Source inventory shape")
                 for member in members:
                     uuid4_value(member)
+                provider_members = json.loads(provider_members_json)
+                if type(provider_members) is not list:
+                    raise ValueError("invalid stored Provider inventory shape")
+                provider_members = tuple(
+                    ResourceKey(*member) for member in provider_members
+                )
+                if any(
+                    member.service_instance_uuidv4 != provider
+                    for member in provider_members
+                ):
+                    raise ValueError("invalid stored Source Provider ownership")
+                for member in provider_members:
+                    context.identification(member)
                 inventories.append(
                     SourceInventory(
                         source,
@@ -146,6 +160,7 @@ class ContextReader:
                         bool(terminal),
                         tuple(members),
                         provenance,
+                        provider_members,
                     )
                 )
             views.append(

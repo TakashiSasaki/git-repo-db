@@ -1,7 +1,6 @@
-"""Explicit opt-in Access review/approval/local-directory preflight.
+"""Explicit Access review/approval/local-directory preflight.
 
-Run with python -m repo_catalog.cli.access_workflow. This module is NOT imported
-by the normal CLI. No --yes, imported consent, credentials, shell or Git execution.
+Run with repo-catalog access or python -m repo_catalog.cli.access_workflow. No --yes, imported consent, credentials, shell or Git execution.
 """
 
 from __future__ import annotations

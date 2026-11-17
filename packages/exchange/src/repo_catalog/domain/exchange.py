@@ -214,6 +214,12 @@ def _wire_child_role(role, key, row):
         return "resource_members"
     if role.startswith("row:"):
         section = role[4:]
+        if key == "provider_repositories_json" and (
+            section == "source_inventories"
+            or section == "coverage_proofs"
+            and row.get("proof_kind") == "source_inventory"
+        ):
+            return "resource_members"
         if key == "members_json" and (
             section in ("resource_relations", "collections")
             or section == "coverage_proofs"
@@ -428,6 +434,8 @@ CORE_SECTION_KEYS = (
     "coverage_scopes",
     "coverage_claims",
     "coverage_proofs",
+    "repository_identity_assertions",
+    "repository_identity_cancellations",
 )
 
 CONTEXT_SECTION_KEYS = (
@@ -447,6 +455,8 @@ CONTEXT_SECTION_KEYS = (
     "coverage_scopes",
     "coverage_claims",
     "coverage_proofs",
+    "service_identity_assertions",
+    "service_identity_cancellations",
 )
 
 
@@ -478,6 +488,8 @@ class ExchangeSelectionScope:
     resource_keys: tuple[ResourceKey, ...] | None = None
     source_uuidv4s: tuple[str, ...] | None = None
     ref_observation_keys: tuple[RefObservationKey, ...] | None = None
+    identity_assertion_uuidv4s: tuple[str, ...] | None = None
+    collection_keys: tuple[tuple[str, str, str, str, str], ...] | None = None
 
     def __post_init__(self) -> None:
         for value in (
@@ -510,6 +522,7 @@ class ExchangeSelectionScope:
             (self.object_oids, OID),
             (self.notes_refs, str),
             (self.source_uuidv4s, str),
+            (self.identity_assertion_uuidv4s, str),
         ):
             if values is not None and (
                 not isinstance(values, tuple)
@@ -530,6 +543,32 @@ class ExchangeSelectionScope:
                     raise ExchangeError(
                         "INVALID_SELECTION", "selection_scope", "typed tuple required"
                     )
+        if self.collection_keys is not None:
+            require_context()
+            from repo_catalog.domain.p1_context import ResourceKey
+            from repo_catalog.domain.production_context import json_value
+
+            if type(self.collection_keys) is not tuple or any(
+                type(key) is not tuple
+                or len(key) != 5
+                or any(type(part) is not str or not part for part in key)
+                for key in self.collection_keys
+            ):
+                raise ExchangeError(
+                    "INVALID_SELECTION",
+                    "collection_keys",
+                    "exact natural Collection keys required",
+                )
+            try:
+                for key in self.collection_keys:
+                    ResourceKey(*key[:3])
+                    json_value(key[4], provenance=True)
+            except (TypeError, ValueError) as error:
+                raise ExchangeError(
+                    "INVALID_SELECTION",
+                    "collection_keys",
+                    "typed original Collection key required",
+                ) from error
         if self.ref_observation_keys is not None:
             from repo_catalog.domain.ref_observation import RefObservationKey
 
@@ -540,11 +579,33 @@ class ExchangeSelectionScope:
                 raise ExchangeError(
                     "INVALID_SELECTION", "ref_observation_keys", "typed tuple required"
                 )
-        for value in (*(self.source_uuidv4s or ()), *(self.repository_uuidv4s or ())):
+        for value in (
+            *(self.source_uuidv4s or ()),
+            *(self.repository_uuidv4s or ()),
+            *(self.identity_assertion_uuidv4s or ()),
+        ):
             uuid4_value(value)
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            **(
+                {
+                    "collection_keys": [
+                        list(key) for key in sorted(set(self.collection_keys))
+                    ]
+                }
+                if self.collection_keys is not None
+                else {}
+            ),
+            **(
+                {
+                    "identity_assertion_uuidv4s": sorted(
+                        set(self.identity_assertion_uuidv4s)
+                    )
+                }
+                if self.identity_assertion_uuidv4s is not None
+                else {}
+            ),
             "repository_uuidv4s": None
             if self.repository_uuidv4s is None
             else sorted(set(self.repository_uuidv4s)),
@@ -603,7 +664,7 @@ class ExchangeSelectionScope:
         for key in ("include_core", "include_context", "include_retained_bytes"):
             if type(data.get(key)) is not bool:
                 raise ExchangeError("INVALID_SELECTION", key, "boolean required")
-        if set(data) != {
+        if set(data) - {"identity_assertion_uuidv4s", "collection_keys"} != {
             "repository_uuidv4s",
             "all_selected",
             "max_depth",
@@ -621,6 +682,13 @@ class ExchangeSelectionScope:
         }:
             raise ExchangeError(
                 "INVALID_SELECTION", "selection_scope", "exact keys required"
+            )
+        if (
+            "identity_assertion_uuidv4s" in data
+            and type(data["identity_assertion_uuidv4s"]) is not list
+        ):
+            raise ExchangeError(
+                "INVALID_SELECTION", "identity_assertion_uuidv4s", "array required"
             )
         for key in (
             "repository_uuidv4s",
@@ -646,6 +714,18 @@ class ExchangeSelectionScope:
                 raise ExchangeError(
                     "INVALID_SELECTION", key, "exact typed coordinates required"
                 )
+        if "collection_keys" in data and (
+            type(data["collection_keys"]) is not list
+            or any(
+                type(key) is not list
+                or len(key) != 5
+                or any(type(part) is not str for part in key)
+                for key in data["collection_keys"]
+            )
+        ):
+            raise ExchangeError(
+                "INVALID_SELECTION", "collection_keys", "natural key arrays required"
+            )
         raw_oids = data.get("object_oids")
         raw_refs = data.get("notes_refs")
         raw_rks = data.get("resource_keys")
@@ -687,6 +767,12 @@ class ExchangeSelectionScope:
             resource_keys=rks,
             source_uuidv4s=srcs,
             ref_observation_keys=ref_keys,
+            collection_keys=None
+            if "collection_keys" not in data
+            else tuple(tuple(key) for key in data["collection_keys"]),
+            identity_assertion_uuidv4s=None
+            if "identity_assertion_uuidv4s" not in data
+            else tuple(data["identity_assertion_uuidv4s"]),
             repository_uuidv4s=None
             if data["repository_uuidv4s"] is None
             else tuple(data["repository_uuidv4s"]),
@@ -823,8 +909,14 @@ def validate_package_envelope(package: ExchangePackage) -> None:
             "INVALID_SELECTION", package.package_id, "ExchangeSelectionScope required"
         )
     if package.core is not None:
-        if not isinstance(package.core, dict) or set(package.core.keys()) != set(
-            CORE_SECTION_KEYS
+        optional = {
+            "repository_identity_assertions",
+            "repository_identity_cancellations",
+        }
+        if not isinstance(package.core, dict) or not (
+            set(CORE_SECTION_KEYS) - optional
+            <= set(package.core)
+            <= set(CORE_SECTION_KEYS)
         ):
             raise ExchangeError(
                 "MALFORMED_CORE_SECTION",
@@ -859,8 +951,11 @@ def validate_package_envelope(package: ExchangePackage) -> None:
                     "retained_metadata requires commit, tree, or tag",
                 )
     if package.context is not None:
-        if not isinstance(package.context, dict) or set(package.context.keys()) != set(
-            CONTEXT_SECTION_KEYS
+        optional = {"service_identity_assertions", "service_identity_cancellations"}
+        if not isinstance(package.context, dict) or not (
+            set(CONTEXT_SECTION_KEYS) - optional
+            <= set(package.context)
+            <= set(CONTEXT_SECTION_KEYS)
         ):
             raise ExchangeError(
                 "MALFORMED_CONTEXT_SECTION",
