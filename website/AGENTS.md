@@ -20,9 +20,11 @@ The renderer and documentation tests live in this workspace; neutral schema
 inventory and product checks remain outside it. Product changes take precedence;
 adapt this workspace to a selected product revision without freezing another
 branch. Keep documentation source SHA/tree, selected product SHA/tree and full
-neutral IR digest separate. Pin explicit commits, not moving latest HEAD.
+neutral IR digest separate. Use one prepared snapshot within an attempt; main may advance independently.
+Source IDs are automatic diagnostic records, not maintained pins or a promise
+that every handwritten explanation reflects the recorded product commit.
 
-Canonical ADRs/contracts/machine evidence stay on main. Read them through the pinned external product checkout. Never
+Canonical ADRs/contracts/machine evidence stay on main. Read them through the external snapshot prepared from main for this attempt. Never
 create an editable second ADR source. Build staging may copy only the
 explicit publication allowlist from website/tools/build_docs_site.py
 and website/tools/adr_publication.py; schema
@@ -59,8 +61,8 @@ runtime claim or treat four P1 factories as the total architecture. Existing
 site allowlist alone decides published inputs. External links to exact canonical
 source revisions do not publish additional repository files.
 
-Use [documentation-content-refresh](https://github.com/TakashiSasaki/resource-atlas/blob/c7dda4ecd97bbf53e83c8ce2762facede2fdb4fc/.agents/skills/documentation-content-refresh/SKILL.md)
-for the bounded procedure: pin product and documentation sources, inventory
+Use [documentation-content-refresh](https://github.com/TakashiSasaki/resource-atlas/blob/main/.agents/skills/documentation-content-refresh/SKILL.md)
+for the bounded procedure: prepare main once and record actual inputs, inventory
 claims and unknowns, map them to code and ADRs, update derived explanations and
 navigation, preserve dates/provenance and historical evidence, test within the
 independent documentation workspace, then obtain independent review. Documentation

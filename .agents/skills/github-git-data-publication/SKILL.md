@@ -10,6 +10,13 @@ container's GH_TOKEN can have different authentication states; reconnecting the
 app need not replace a running container's token. Never print credentials, ask
 for tokens in chat, disable TLS, or claim a failed CLI login succeeded.
 
+Git commands such as ls-remote run inside an actions/checkout worktree inherit
+its local Authorization extraheader. Adding a second header produced HTTP 400
+Duplicate header: Authorization. Reset the scoped multivalue with an empty
+environment-only Git config entry before adding the requested token entry. Keep
+credentials out of arguments and disk config. prepare_product.py implements this;
+test_main_tracking.py checks the headers actually sent by Git to a local server.
+
 For an already authorized publication, the connected Git-data tools can upload
 UTF-8 tree entries and base64 binary blobs. Preserve modes and paths. Check every
 binary blob ID and require the resulting remote tree ID to equal the tested
@@ -27,12 +34,16 @@ Git-data commit with the connected GET tool. An unsigned commit may be imported
 locally only after reconstructing its exact bytes and reproducing its SHA. The
 API normalizes date fields to UTC and loses the original offset: this migration's
 client timezone produced +0900 headers. Verify the object ID rather than assuming
-that offset for other users. Signed or otherwise unreproducible objects need an
-exact supported representation; never relabel a local commit as the remote one.
+that offset for other users. A signed merge can be reconstructed from the returned verification.payload
+and verification.signature only when its exact bytes reproduce the object ID.
+Preserve the signature's final newline as an indented header continuation;
+stripping it failed the exact-ID check in the verified migration. Otherwise use
+an exact supported representation; never relabel a local commit as the remote one.
 
 Preserve existing local branches before switching to equivalent API-created
-commits. Pin product-source.json to the actual published product commit and
-prepare its inputs again. Keep product/web/IR identities separate and compare
+commits. Keep product-source.json on ref main under ADR 0042; preparation resolves it
+once and records actual source IDs automatically. Do not reintroduce a maintained
+SHA pin to publish through this fallback. Keep product/web/IR identities separate and compare
 working executable bytes with the committed product closure before imports and
 before/after execution; git-diff alone can miss hidden index flags.
 
@@ -40,4 +51,4 @@ Create refs only after reviewing the candidate, check expected existing heads,
 and verify refs afterward. Preserve the user's merge/publication authorization
 boundaries. For this migration, web must be preserved remotely before the main
 removal is integrated; pushing the branch does not authorize site deployment.
-Canonical branch responsibilities are specified by ADR 0041 on main.
+Canonical branch responsibilities are specified by ADR 0042 on main.

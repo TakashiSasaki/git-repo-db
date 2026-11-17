@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "repository": "https://github.com/TakashiSasaki/resource-atlas.git",
-  "commit": "c7dda4ecd97bbf53e83c8ce2762facede2fdb4fc"
+  "ref": "main"
 }
