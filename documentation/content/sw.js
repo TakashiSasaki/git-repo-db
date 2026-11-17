@@ -1,5 +1,5 @@
-// Service Worker for git-repo-db Developer Documentation PWA
-const CACHE_NAME = 'git-repo-db-v1';
+// Service Worker for resource-atlas Developer Documentation PWA
+const CACHE_NAME = 'resource-atlas-v1';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
           if (cached) return cached;
           const rootCached = await caches.match('/');
           if (rootCached) return rootCached;
-          return new Response('Offline - git-repo-db Documentation', {
+          return new Response('Offline - resource-atlas Documentation', {
             status: 503,
             statusText: 'Service Unavailable',
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },

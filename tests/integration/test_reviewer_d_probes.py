@@ -47,7 +47,7 @@ def test_reviewer_d_integrated_multistage_transition_probe(github_runtime, tmp_p
     receipt = {
         "reviewer": "Reviewer D",
         "verdict": "PENDING",
-        "target_pr": "https://github.com/TakashiSasaki/git-repo-db/pull/28",
+        "target_pr": "https://github.com/TakashiSasaki/resource-atlas/pull/28",
         "pipeline": "collection -> exchange -> query/CLI -> coverage v2",
         "harness_fixes": [
             "Registered native UDF register_git_object_sql_function on all raw sqlite3 connections",

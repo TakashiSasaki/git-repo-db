@@ -59,7 +59,7 @@ def test_staging_allowlist_and_transformation():
         home_md = staging_dir / "index.md"
         assert home_md.is_file()
         content = home_md.read_text(encoding="utf-8")
-        assert "git-repo-db" in content
+        assert "resource-atlas" in content
         assert "Three-Store Boundary" in content
         assert "Schema 21" in content
         assert "ビルド・リビジョン情報" in content
@@ -83,7 +83,7 @@ def test_staging_allowlist_and_transformation():
             encoding="utf-8"
         )
         assert "../../AGENTS.md" not in adr1_text
-        assert "github.com/TakashiSasaki/git-repo-db/blob/" in adr1_text
+        assert "github.com/TakashiSasaki/resource-atlas/blob/" in adr1_text
 
         # 4. Development Guide
         assert not (staging_dir / "development").exists()
@@ -131,7 +131,7 @@ def test_staging_allowlist_and_transformation():
             assert f"{slug}.svg" in slug_text
             assert "Mermaid 構文ソースコードを表示" in slug_text
             commit = get_git_metadata()["commit_sha"]
-            expected = f"https://github.com/TakashiSasaki/git-repo-db/blob/{commit}/documentation/schema/mermaid/{slug}.md"
+            expected = f"https://github.com/TakashiSasaki/resource-atlas/blob/{commit}/documentation/schema/mermaid/{slug}.md"
             assert expected in slug_text
             subprocess.run(
                 [

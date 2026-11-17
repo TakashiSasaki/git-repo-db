@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and validate the developer documentation website for git-repo-db.
+"""Build and validate the developer documentation website for resource-atlas.
 
 Implements the publication allowlist, schema freshness verification,
 build-time Mermaid SVG rendering, standalone viewer staging, MkDocs build,
@@ -416,10 +416,10 @@ def stage_documentation(
     metadata_banner = (
         f"\n\n---\n\n"
         f"### ビルド・リビジョン情報 (Build Metadata)\n"
-        f"- **Documentation Commit**: [`{meta['commit_sha']}`](https://github.com/TakashiSasaki/git-repo-db/commit/{meta['commit_sha']})\n"
+        f"- **Documentation Commit**: [`{meta['commit_sha']}`](https://github.com/TakashiSasaki/resource-atlas/commit/{meta['commit_sha']})\n"
         f"- **Documentation Tree**: `{meta['tree_sha']}`\n"
         f"- **Documentation commit time (committer)**: {documentation_time}\n"
-        f"- **Design source**: このドキュメントのコミットの [ADR 原本](https://github.com/TakashiSasaki/git-repo-db/tree/{meta['commit_sha']}/docs/adr) と [アーキテクチャ解説](https://github.com/TakashiSasaki/git-repo-db/tree/{meta['commit_sha']}/documentation/content/architecture)（同一リビジョン）\n"
+        f"- **Design source**: このドキュメントのコミットの [ADR 原本](https://github.com/TakashiSasaki/resource-atlas/tree/{meta['commit_sha']}/docs/adr) と [アーキテクチャ解説](https://github.com/TakashiSasaki/resource-atlas/tree/{meta['commit_sha']}/documentation/content/architecture)（同一リビジョン）\n"
         f"- **Build time**: {build_time}（公開時刻ではありません）\n"
     )
     if provenance is None:
@@ -427,7 +427,7 @@ def stage_documentation(
     else:
         product = provenance["selected_product_source"]
         metadata_banner += (
-            f"- **Selected Product Commit**: [`{product['commit']}`](https://github.com/TakashiSasaki/git-repo-db/commit/{product['commit']})\n"
+            f"- **Selected Product Commit**: [`{product['commit']}`](https://github.com/TakashiSasaki/resource-atlas/commit/{product['commit']})\n"
             f"- **Selected Product Tree**: `{product['tree']}`\n"
             f"- **Selected Product commit time (committer)**: {product_time}\n"
             f"- **Neutral IR SHA-256**: `{provenance['neutral_ir_sha256']}`\n"
@@ -490,7 +490,7 @@ def stage_documentation(
         '  <meta name="theme-color" content="#0f172a">\n'
         '  <meta name="mobile-web-app-capable" content="yes">\n'
         '  <meta name="apple-mobile-web-app-capable" content="yes">\n'
-        '  <meta name="apple-mobile-web-app-title" content="git-repo-db">\n'
+        '  <meta name="apple-mobile-web-app-title" content="resource-atlas">\n'
         '  <script src="/pwa.js"></script>'
     )
     if "</head>" in viewer_raw:
@@ -566,7 +566,7 @@ def stage_documentation(
 
 <div class="diagram-actions" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
   <a href="{svg_filename}" target="_blank" class="md-button md-button--primary">🔍 フルサイズSVGを開く</a>
-  <a href="https://github.com/TakashiSasaki/git-repo-db/blob/{meta["commit_sha"]}/documentation/schema/mermaid/{slug}.md" target="_blank" class="md-button">🐙 GitHubでソースを表示</a>
+  <a href="https://github.com/TakashiSasaki/resource-atlas/blob/{meta["commit_sha"]}/documentation/schema/mermaid/{slug}.md" target="_blank" class="md-button">🐙 GitHubでソースを表示</a>
 </div>
 
 ??? info "Mermaid 構文ソースコードを表示"
@@ -858,7 +858,7 @@ def main() -> int:
     write_private_json(ROOT, metadata_path, record)
 
     print("=================================================================")
-    print(" git-repo-db Developer Documentation Site Builder")
+    print(" resource-atlas Developer Documentation Site Builder")
     print("=================================================================")
 
     # 1. Freshness Check

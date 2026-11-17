@@ -1,6 +1,6 @@
 ---
 name: efficient-repository-investigation
-description: Reduce context output when locating Python code or inspecting large git-repo-db evidence, JSONL journals, JUnit files and compressed logs. Use scoped ripgrep, structural ast-grep queries and bounded summaries before reading complete files.
+description: Reduce context output when locating Python code or inspecting large resource-atlas evidence, JSONL journals, JUnit files and compressed logs. Use scoped ripgrep, structural ast-grep queries and bounded summaries before reading complete files.
 ---
 
 # Inspect narrowly, retain complete evidence
@@ -50,9 +50,9 @@ explicit command name: a pre-existing system `sg` may be a different program.
 Keep optional tools outside the checkout and its Python environment. If missing:
 
 ```sh
-npm install --prefix "$HOME/.local/share/git-repo-db-agent-tools" \
+npm install --prefix "$HOME/.local/share/resource-atlas-agent-tools" \
   --save-exact --no-audit --no-fund @ast-grep/cli@0.51.0
-"$HOME/.local/share/git-repo-db-agent-tools/node_modules/.bin/ast-grep" --version
+"$HOME/.local/share/resource-atlas-agent-tools/node_modules/.bin/ast-grep" --version
 ```
 
 Use the explicit installed path if `ast-grep` is absent from PATH. Run from the

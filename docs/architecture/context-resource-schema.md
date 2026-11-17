@@ -84,7 +84,7 @@ cannot infer Provider-side singleton or namespace completeness.
 
 Reuse the compatible **identity subset** of the project's existing
 `domain/p1_context.py:canonical` and `_parse_canonical_json` profile at the
-[fixed product source](https://github.com/TakashiSasaki/git-repo-db/blob/efb55af84ccbf1183d47547d22bb6c57d8fbc8f9/src/repo_catalog/domain/p1_context.py#L178).
+[fixed product source](https://github.com/TakashiSasaki/resource-atlas/blob/efb55af84ccbf1183d47547d22bb6c57d8fbc8f9/src/repo_catalog/domain/p1_context.py#L178).
 It uses `json.dumps(..., ensure_ascii=True, sort_keys=True,
 separators=(",", ":"), allow_nan=False)`. Object sorting is irrelevant to the
 identity grammar; it does not permit objects here. No RFC 8785 conformance claim

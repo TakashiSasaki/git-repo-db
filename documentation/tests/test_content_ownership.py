@@ -102,7 +102,7 @@ def test_current_guide_product_links_match_declared_revision():
         ["git", "rev-parse", f"{revision}^{{tree}}"], cwd=ROOT, text=True
     ).strip()
     assert actual_tree == tree
-    prefix = "https://github.com/TakashiSasaki/git-repo-db/blob/"
+    prefix = "https://github.com/TakashiSasaki/resource-atlas/blob/"
     source_paths = set()
     for target in re.findall(r"\]\(([^)]+)\)", text):
         parsed = urlsplit(target)

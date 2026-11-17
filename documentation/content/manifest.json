@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/web-manifest.json",
-  "name": "git-repo-db Developer Documentation",
-  "short_name": "git-repo-db",
-  "description": "Developer documentation, Three-Store schema visualizer, and architecture for git-repo-db",
+  "name": "resource-atlas Developer Documentation",
+  "short_name": "resource-atlas",
+  "description": "Developer documentation, Three-Store schema visualizer, and architecture for resource-atlas",
   "id": "/",
   "start_url": "/",
   "scope": "/",

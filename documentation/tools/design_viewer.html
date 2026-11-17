@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>5ストア設計を探索 — git-repo-db</title>
+    <title>5ストア設計を探索 — resource-atlas</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/assets/images/icons/icon.svg" />
     <meta name="theme-color" content="#15263c" />
@@ -235,7 +235,7 @@
   </head>
   <body>
     <header>
-      <a href="/">git-repo-db</a> / <a href="/adr/">設計決定の全文</a> /
+      <a href="/">resource-atlas</a> / <a href="/adr/">設計決定の全文</a> /
       <a href="/schema/viewer/">通常3ストアの実装スキーマ</a>
       <h1>5ストアの設計を、関係から読む</h1>
       <p>ストア間の責務から、エンティティ・意味キー・制約へ。</p>
@@ -313,7 +313,7 @@
         const path = source.path;
         const dest = path.startsWith("docs/adr/")
           ? "/adr/" + path.split("/").pop().replace(/\.md$/, "/")
-          : "https://github.com/TakashiSasaki/git-repo-db/blob/" +
+          : "https://github.com/TakashiSasaki/resource-atlas/blob/" +
             model.source_revision +
             "/" +
             path;
@@ -439,7 +439,7 @@
       }
       document.getElementById("scope").textContent = model.scope;
       document.getElementById("revision").innerHTML =
-        `設計根拠: <a href="https://github.com/TakashiSasaki/git-repo-db/tree/${model.source_revision}">${model.source_revision.slice(0, 8)}</a> / tree <code>${model.source_tree}</code>。<a href="/adr/">部分置換を含む現在の ADR 索引</a>。通常3ストア IR とは独立した文書モデルです。`;
+        `設計根拠: <a href="https://github.com/TakashiSasaki/resource-atlas/tree/${model.source_revision}">${model.source_revision.slice(0, 8)}</a> / tree <code>${model.source_tree}</code>。<a href="/adr/">部分置換を含む現在の ADR 索引</a>。通常3ストア IR とは独立した文書モデルです。`;
       document.getElementById("back").addEventListener("click", () => {
         if (history.length > 1) history.back();
         else location.hash = url({});

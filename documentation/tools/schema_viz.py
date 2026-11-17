@@ -1,4 +1,4 @@
-"""Non-destructive Three-Store Schema Visualization Workbench for git-repo-db.
+"""Non-destructive Three-Store Schema Visualization Workbench for resource-atlas.
 
 Generates authoritative schema visualizations across the Three-Store Boundary (ADR 0002):
 1. Mermaid ER diagrams (Markdown viewers and GitHub native)
@@ -645,16 +645,16 @@ def generate_dbml(ir: dict[str, Any]) -> dict[str, str]:
     search = ir["stores"]["search"]
 
     # 1. dbml/core.dbml
-    core_dbml = f"""// git-repo-db Core Store Schema (catalog.sqlite3)
+    core_dbml = f"""// resource-atlas Core Store Schema (catalog.sqlite3)
 // Schema Version: {core["schema_version"]}
 // DDL SHA-256: {core["ddl_sha256"]}
 // Authoritative domain facts, entities, observations, and evidence.
 // Compatible with https://dbdiagram.io/ and https://dbdocs.io/
 
-Project git_repo_db_core {{
+Project resource_atlas_core {{
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Core Store (catalog.sqlite3)
+    # resource-atlas Core Store (catalog.sqlite3)
     Schema Version: {core["schema_version"]}
     Tables: {core["table_count"]}
     Physical Foreign Keys: {core["foreign_key_count"]}
@@ -678,16 +678,16 @@ Project git_repo_db_core {{
     outputs["dbml/core.dbml"] = core_dbml.strip() + "\n"
 
     # 2. dbml/operational.dbml
-    op_dbml = f"""// git-repo-db Operational Store Schema (operational.sqlite3)
+    op_dbml = f"""// resource-atlas Operational Store Schema (operational.sqlite3)
 // Schema Version: {op["schema_version"]}
 // DDL SHA-256: {op["ddl_sha256"]}
 // Disposable jobs, attempts, packfile cache leases, reservations, and progress.
 // Compatible with https://dbdiagram.io/ and https://dbdocs.io/
 
-Project git_repo_db_operational {{
+Project resource_atlas_operational {{
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Operational Store (operational.sqlite3)
+    # resource-atlas Operational Store (operational.sqlite3)
     Schema Version: {op["schema_version"]}
     Tables: {op["table_count"]}
     Physical Foreign Keys: {op["foreign_key_count"]}
@@ -716,16 +716,16 @@ Project git_repo_db_operational {{
     outputs["dbml/operational.dbml"] = op_dbml.strip() + "\n"
 
     # 3. dbml/search.dbml
-    search_dbml = f"""// git-repo-db Search Store Schema (search.sqlite3)
+    search_dbml = f"""// resource-atlas Search Store Schema (search.sqlite3)
 // Schema Version: {search["schema_version"]}
 // DDL SHA-256: {search["ddl_sha256"]}
 // Rebuildable FTS5 search projections and index generations.
 // Compatible with https://dbdiagram.io/ and https://dbdocs.io/
 
-Project git_repo_db_search {{
+Project resource_atlas_search {{
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Search Store (search.sqlite3)
+    # resource-atlas Search Store (search.sqlite3)
     Schema Version: {search["schema_version"]}
     Fixed Tables: {search["table_count"]}
     Physical Foreign Keys: {search["foreign_key_count"]}
@@ -763,16 +763,16 @@ Project git_repo_db_search {{
     outputs["dbml/search.dbml"] = search_dbml.strip() + "\n"
 
     # 4. dbml/combined.dbml (Conceptual combined export)
-    combined_dbml = f"""// git-repo-db Combined Conceptual Schema (Three-Store Boundary)
+    combined_dbml = f"""// resource-atlas Combined Conceptual Schema (Three-Store Boundary)
 // Core Schema {core["schema_version"]} ({core["table_count"]} tables)
 // Operational Schema {op["schema_version"]} ({op["table_count"]} tables)
 // Search Schema {search["schema_version"]} ({search["table_count"]} tables)
 // ADR 0002 Three-Store Boundary Architecture
 
-Project git_repo_db_three_store {{
+Project resource_atlas_three_store {{
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Three-Store Conceptual Model
+    # resource-atlas Three-Store Conceptual Model
     Total Product Tables: {ir["summary"]["total_product_tables"]}
     - Core: catalog.sqlite3 (Version {core["schema_version"]})
     - Operational: operational.sqlite3 (Version {op["schema_version"]})
@@ -860,7 +860,7 @@ def generate_html(ir: dict[str, Any]) -> dict[str, str]:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>git-repo-db Schema Visualization Workbench</title>
+<title>resource-atlas Schema Visualization Workbench</title>
 <style>
 :root {{
   --bg-base: #0f172a;
@@ -1353,7 +1353,7 @@ svg.neighborhood-svg {{
 
 <header>
   <div class="brand">
-    <span>git-repo-db</span>
+    <span>resource-atlas</span>
     <span class="brand-badge">Schema Workbench</span>
   </div>
   
@@ -2188,11 +2188,11 @@ def generate_readme(ir: dict[str, Any]) -> dict[str, str]:
     op = ir["stores"]["operational"]
     search = ir["stores"]["search"]
 
-    content = f"""# git-repo-db Database Schema Visualization Workbench
+    content = f"""# resource-atlas Database Schema Visualization Workbench
 
 This is the implemented **normal three-store** schema reference, not the final five-store design. Explore the separately cited [accepted five-store design](/design/) and [current ADRs](/adr/) for responsibility boundaries and semantic keys.
 
-This workbench provides non-destructive, authoritative visualization and inspection tooling for the production database schema of `git-repo-db`.
+This workbench provides non-destructive, authoritative visualization and inspection tooling for the production database schema of `resource-atlas`.
 
 The database architecture implements the **Three-Store Boundary** under **ADR 0002** and binding owner decisions **PF-P01–PF-P17**.
 
@@ -2399,7 +2399,7 @@ def check_artifacts(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Non-destructive database schema visualization workbench for git-repo-db."
+        description="Non-destructive database schema visualization workbench for resource-atlas."
     )
     parser.add_argument(
         "--format",

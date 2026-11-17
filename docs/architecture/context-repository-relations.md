@@ -458,9 +458,9 @@ engineering document authorizes silently changing a selected semantic rule.
 
 ## References
 
-- [Baseline Context SQL](https://github.com/TakashiSasaki/git-repo-db/blob/1134e200eb4ac9ec45bf3fae3be695e2bb786a8d/src/repo_catalog/adapters/sqlite/p1_ddl/context.sql)
-- [Baseline Context admission](https://github.com/TakashiSasaki/git-repo-db/blob/1134e200eb4ac9ec45bf3fae3be695e2bb786a8d/src/repo_catalog/adapters/sqlite/p1_context.py)
-- [Baseline GitHub normalization](https://github.com/TakashiSasaki/git-repo-db/blob/1134e200eb4ac9ec45bf3fae3be695e2bb786a8d/src/repo_catalog/adapters/github/production_intake.py)
+- [Baseline Context SQL](https://github.com/TakashiSasaki/resource-atlas/blob/1134e200eb4ac9ec45bf3fae3be695e2bb786a8d/src/repo_catalog/adapters/sqlite/p1_ddl/context.sql)
+- [Baseline Context admission](https://github.com/TakashiSasaki/resource-atlas/blob/1134e200eb4ac9ec45bf3fae3be695e2bb786a8d/src/repo_catalog/adapters/sqlite/p1_context.py)
+- [Baseline GitHub normalization](https://github.com/TakashiSasaki/resource-atlas/blob/1134e200eb4ac9ec45bf3fae3be695e2bb786a8d/src/repo_catalog/adapters/github/production_intake.py)
 - [SQLite generated columns](https://www.sqlite.org/gencol.html),
   [foreign keys](https://www.sqlite.org/foreignkeys.html),
   [REPLACE behavior](https://www.sqlite.org/lang_conflict.html)

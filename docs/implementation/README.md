@@ -8,7 +8,7 @@ This PR changes no packaged production schema or runtime, opens no user catalog,
 performs no migration, and authorizes no merge/release/deployment. Remaining
 owner-level architectural blockers identified: **0**.
 
-Repository: <https://github.com/TakashiSasaki/git-repo-db>.
+Repository: <https://github.com/TakashiSasaki/resource-atlas>.
 Fetched authoritative main: `57de60b65c2ef29420a885b0c2102dc90e11fa75`.
 The initial checkout was older `b329efa`; all work was started on a new branch
 from fetched `origin/main`, not that old checkout. PR #69's design integration and

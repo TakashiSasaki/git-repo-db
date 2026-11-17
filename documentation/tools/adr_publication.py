@@ -58,6 +58,14 @@ def rewrite_links(text: str, source: str, revision: str) -> str:
 
     def replace(match):
         target = match.group(2)
+        # Keep pinned decision sources byte-identical while publishing their
+        # existing GitHub citations under the repository's canonical name.
+        legacy = "https://github.com/TakashiSasaki/git-repo-db"
+        if target == legacy or target.startswith(
+            (legacy + "/", legacy + "?", legacy + "#")
+        ):
+            canonical = "https://github.com/TakashiSasaki/resource-atlas"
+            return match.group(1) + canonical + target[len(legacy) :] + ")"
         parsed = urlsplit(target)
         if (
             parsed.scheme
@@ -77,7 +85,7 @@ def rewrite_links(text: str, source: str, revision: str) -> str:
         else:
             # External repository links do not copy additional documents/scripts.
             url = (
-                f"https://github.com/TakashiSasaki/git-repo-db/blob/{revision}/{resolved}"
+                f"https://github.com/TakashiSasaki/resource-atlas/blob/{revision}/{resolved}"
                 + suffix
             )
         return match.group(1) + url + ")"

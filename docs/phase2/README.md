@@ -57,8 +57,8 @@ not independent domain Publications or a new counter-history authority.
 
 The original reconstruction began against Schema 18 and the #22–#29 stack. That
 sequence is historical, not a pending integration task. The later Three-Store
-stack was [PR #38](https://github.com/TakashiSasaki/git-repo-db/pull/38) followed by
-[PR #39](https://github.com/TakashiSasaki/git-repo-db/pull/39).
+stack was [PR #38](https://github.com/TakashiSasaki/resource-atlas/pull/38) followed by
+[PR #39](https://github.com/TakashiSasaki/resource-atlas/pull/39).
 
 This status audit inspected `fb3b1fb4d5e1436c58677d2e867708502fbbc64b`. Fetch the
 actual current refs for any new work; do not reset to an old design branch.

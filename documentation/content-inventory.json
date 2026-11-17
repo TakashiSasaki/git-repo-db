@@ -366,7 +366,7 @@
       "producer": "Authored repository guidance.",
       "consumers": "Repository users or coding agents.",
       "publication": "not staged",
-      "source_heading": "# repo-catalog",
+      "source_heading": "# Resource Atlas",
       "cited_adrs": [
         "0011",
         "0002",
@@ -9791,7 +9791,7 @@
       "producer": "Authored site source.",
       "consumers": "documentation/tools/build_docs_site.py and site visitors.",
       "publication": "existing staging input",
-      "source_heading": "# git-repo-db の設計を読む",
+      "source_heading": "# resource-atlas の設計を読む",
       "cited_adrs": [
         "0001",
         "0002",
@@ -10090,7 +10090,7 @@
       "producer": "documentation/tools/schema_viz.py: generate_all_artifacts (including README).",
       "consumers": "documentation/tools/build_docs_site.py; documentation/tests/test_schema_viz.py",
       "publication": "existing staging input",
-      "source_heading": "# git-repo-db Database Schema Visualization Workbench",
+      "source_heading": "# resource-atlas Database Schema Visualization Workbench",
       "cited_adrs": [
         "0002"
       ],

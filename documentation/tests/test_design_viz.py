@@ -118,8 +118,35 @@ def test_link_routing_stays_local_only_for_published_sources():
     out = rewrite_links(text, "docs/adr/0029-independent-access-store.md", "abc123")
     assert "[next](0036-ref-observations-and-shared-notes-mappings.md#decision)" in out
     assert (
-        "[private](https://github.com/TakashiSasaki/git-repo-db/blob/abc123/docs/testing.md)"
+        "[private](https://github.com/TakashiSasaki/resource-atlas/blob/abc123/docs/testing.md)"
         in out
+    )
+
+
+@pytest.mark.parametrize(
+    ("target", "expected"),
+    [
+        (
+            "https://github.com/TakashiSasaki/git-repo-db",
+            "https://github.com/TakashiSasaki/resource-atlas",
+        ),
+        (
+            "https://github.com/TakashiSasaki/git-repo-db/blob/"
+            "92eaebd461186263a3412294ebe9ee6412539cfb/docs/adr/0029.md?plain=1#decision",
+            "https://github.com/TakashiSasaki/resource-atlas/blob/"
+            "92eaebd461186263a3412294ebe9ee6412539cfb/docs/adr/0029.md?plain=1#decision",
+        ),
+        (
+            "https://github.com/TakashiSasaki/git-repo-db-examples/blob/main/README.md",
+            "https://github.com/TakashiSasaki/git-repo-db-examples/blob/main/README.md",
+        ),
+    ],
+)
+def test_legacy_citations_keep_revision_and_unrelated_repository_names(
+    target, expected
+):
+    assert rewrite_links(f"[source]({target})", "docs/adr/example.md", "abc123") == (
+        f"[source]({expected})"
     )
 
 

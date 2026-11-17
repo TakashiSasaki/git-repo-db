@@ -1,13 +1,13 @@
-// git-repo-db Core Store Schema (catalog.sqlite3)
+// resource-atlas Core Store Schema (catalog.sqlite3)
 // Schema Version: 21
 // DDL SHA-256: 8ee2631fe083e26cd0346bc71a8a5d1f4d7dab4bf661958d6406c885bc553ff0
 // Authoritative domain facts, entities, observations, and evidence.
 // Compatible with https://dbdiagram.io/ and https://dbdocs.io/
 
-Project git_repo_db_core {
+Project resource_atlas_core {
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Core Store (catalog.sqlite3)
+    # resource-atlas Core Store (catalog.sqlite3)
     Schema Version: 21
     Tables: 70
     Physical Foreign Keys: 121

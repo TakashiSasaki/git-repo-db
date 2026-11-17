@@ -1,4 +1,4 @@
-"""Bounded consistency summary of actual git-repo-db pytest evidence."""
+"""Bounded consistency summary of actual resource-atlas pytest evidence."""
 
 import argparse
 import collections

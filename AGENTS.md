@@ -2,6 +2,32 @@
 
 This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese. Read the [ADR index](docs/adr/README.md), then the relevant accepted decisions and their scoped supersessions. For ADR lifecycle/triage/numbering/retirement, follow the owner-accepted [ADR 0011](docs/adr/0011-adr-governance.md) and single [ADR operating policy](docs/adr/policy.md); the optional [adr-workflow skill](.agents/skills/adr-workflow/SKILL.md) contains procedures, not additional authority. The policy's bounded pre-adoption migration exception preserves still-binding ADR 0001–0027 clauses; no automatic bulk retirement or re-opening of accepted design decisions.
 
+## Repository name and canonical location
+
+The GitHub repository was renamed from `TakashiSasaki/git-repo-db` to
+[`TakashiSasaki/resource-atlas`](https://github.com/TakashiSasaki/resource-atlas)
+on 2026-11-17 (Asia/Tokyo). It is the same repository with its existing history,
+issues and pull requests. Use `resource-atlas` in current project descriptions
+and `TakashiSasaki/resource-atlas` for GitHub CLI repository arguments and new
+GitHub links. Update maintained links to the canonical URL rather than relying
+on the old repository's redirect.
+
+Existing checkout paths and historical records may still contain `git-repo-db`.
+The current CLI/package names (`repo-catalog`, `repo_catalog`) and documentation
+hostname (`git-repo-db.moukaeritai.work`) are separate names; the repository rename
+does not change them. Preserve historical evidence and use each component's
+actual configuration rather than mechanically replacing the old name.
+
+This naming update also preserves existing Exchange/backup/receipt format
+identifiers, runtime environment variables, cache locations and scheduler lock
+names. Changing these requires accounting for their format/configuration and
+local-state semantics, rather than treating them as repository URL strings.
+Frozen evidence, dated execution records and quoted historical task names retain
+their original spelling and provenance.
+Pinned design sources also retain their exact bytes. The documentation staging
+step canonicalizes their old GitHub links without changing the cited revision,
+tree or source-body checks.
+
 ## Current development phase
 
 This is currently a single-user project in active prototyping. **No formal release
@@ -110,7 +136,7 @@ and other product safeguards remain binding.
 
 **Latest accepted notes-ref discovery: [ADR 0015](docs/adr/0015-automatic-git-notes-ref-discovery.md).** Enumerate observable notes namespaces and explicitly nominated refs. A listing alone proves neither body eligibility nor remote completeness; source and scope evidence follow ADR 0036.
 
-**Latest accepted product scope: [ADR 0014 / GCTX-S01](docs/adr/0014-history-and-notes-catalog-without-file-archive.md).** `git-repo-db` is a Git history/structure/notes catalog, not a repository-file-content archive. Do not offer ordinary blob-body storage as a default, option, generic CAS endpoint or hidden staging/search/cache feature. Retain commit/tree/tag metadata and their actually acquired exact representations, and retain evidenced Git notes content. Notes are native Git blobs; retention is purpose-bound, not `type != blob`. Annotating or tagging an ordinary blob never authorizes storing its target body. Metadata-only operation remains valid with zero raw bodies and no Context. Do not infer a digest, object size, raw serialization, current availability or verification from an OID or relation alone.
+**Latest accepted product scope: [ADR 0014 / GCTX-S01](docs/adr/0014-history-and-notes-catalog-without-file-archive.md).** `resource-atlas` is a Git history/structure/notes catalog, not a repository-file-content archive. Do not offer ordinary blob-body storage as a default, option, generic CAS endpoint or hidden staging/search/cache feature. Retain commit/tree/tag metadata and their actually acquired exact representations, and retain evidenced Git notes content. Notes are native Git blobs; retention is purpose-bound, not `type != blob`. Annotating or tagging an ordinary blob never authorizes storing its target body. Metadata-only operation remains valid with zero raw bodies and no Context. Do not infer a digest, object size, raw serialization, current availability or verification from an OID or relation alone.
 
 Retained metadata/notes still require strict verification and physical integrity. GCTX-M01–M09 and retained-byte/backup integrity remain binding in that domain, scoped by ADR 0014 and ADR 0038. ADR 0038 retires CAS-41's quarantine state/count/pre-diagnosis comparison from the new target format while preserving actual database, manifest, domain and pairing validation. A scope-excluded file body is neither corruption nor a preservation job. Known loss of previously admitted bytes is not normal omission. No existing catalog data is deleted by this redesign; any fresh-format extraction/migration and treatment of legacy retained data require explicit authorization. The [transition plan](docs/architecture/git-core-context-transition-plan.md) is the current implementation planning entry point.
 

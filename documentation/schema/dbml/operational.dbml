@@ -1,13 +1,13 @@
-// git-repo-db Operational Store Schema (operational.sqlite3)
+// resource-atlas Operational Store Schema (operational.sqlite3)
 // Schema Version: 1
 // DDL SHA-256: dafdc014ebf3e54e1695ffb0bb3fd953f1a1c893d5b0b13d812740ee2f288def
 // Disposable jobs, attempts, packfile cache leases, reservations, and progress.
 // Compatible with https://dbdiagram.io/ and https://dbdocs.io/
 
-Project git_repo_db_operational {
+Project resource_atlas_operational {
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Operational Store (operational.sqlite3)
+    # resource-atlas Operational Store (operational.sqlite3)
     Schema Version: 1
     Tables: 10
     Physical Foreign Keys: 9

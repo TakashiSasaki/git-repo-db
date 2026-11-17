@@ -1,8 +1,8 @@
-# git-repo-db の設計を読む
+# resource-atlas の設計を読む
 
 <div class="hero-banner" style="padding: 1.5rem 0; border-bottom: 1px solid var(--md-default-fg-color--lightest); margin-bottom: 2rem;">
   <p style="font-size: 1.25rem; line-height: 1.7; font-weight: 500; color: var(--md-default-fg-color);">
-    <strong>git-repo-db</strong> は、Git リポジトリおよび GitHub の Pull Request / Issue / Code データをローカルの SQLite データベースへ構造化・永続化し、オフライン環境で高速に横断検索・関係解析を可能にするデータベースエンジンおよび CLI ツールです。
+    <strong>resource-atlas</strong> は、Git リポジトリおよび GitHub の Pull Request / Issue / Code データをローカルの SQLite データベースへ構造化・永続化し、オフライン環境で高速に横断検索・関係解析を可能にするデータベースエンジンおよび CLI ツールです。
   </p>
   <p style="color: var(--md-default-fg-color--light);">
     本サイトでは採択済みの5ストア設計と、選択した製品 revision の通常3ストア IR を別々に探索できます。このページに示す Core / Operational / Search の計 84 テーブルは Schema 21 の実装基盤についての表記です。採択済み設計には５つの責務境界があり、この図の３スキーマは通常の初期化で作成されるファイル数や全構成の上限を意味しません。詳細は<a href="architecture/">アーキテクチャ概要</a>を参照してください。
@@ -11,13 +11,13 @@
 
 ## このサイトの読み方
 
-以下は 2026-10-27 時点の製品コミット [`5d28bb33`](https://github.com/TakashiSasaki/git-repo-db/tree/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d) に基づく案内です。サイトのビルド時に選択した製品・文書の revision はページ末尾に別々に表示されます。文書は製品に同期して更新されるとは限らず、選択製品の IR が検証されても手書き説明すべての正しさを保証しません。
+以下は 2026-10-27 時点の製品コミット [`5d28bb33`](https://github.com/TakashiSasaki/resource-atlas/tree/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d) に基づく案内です。サイトのビルド時に選択した製品・文書の revision はページ末尾に別々に表示されます。文書は製品に同期して更新されるとは限らず、選択製品の IR が検証されても手書き説明すべての正しさを保証しません。
 
 | 区分 | この時点の範囲 | 読み始める場所 |
 |---|---|---|
 | 通常ランタイム | `repo-catalog init` は Core を初期化。Operational は必要時、Search は明示的に作成。３スキーマは必須３ファイルを意味しない | [実行経路](architecture/) |
 | 実装済み opt-in | P1 の４ファクトリーと独立 Access CLI は通常 `init` とは別 | [選択機能と根拠](architecture/) |
-| 採択済み目標 | Core / Context / Access / Operational / Search の５責務。採択は全機能の既定起動を意味しない | [ADR 0029 正本](https://github.com/TakashiSasaki/git-repo-db/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/adr/0029-independent-access-store.md) |
+| 採択済み目標 | Core / Context / Access / Operational / Search の５責務。採択は全機能の既定起動を意味しない | [ADR 0029 正本](https://github.com/TakashiSasaki/resource-atlas/blob/5d28bb33bf62d7b0eff7e6547a4fda84c1815a9d/docs/adr/0029-independent-access-store.md) |
 | 履歴・証跡 | 古い CLI、データモデル、監査や検証結果は対象 revision に限定 | [履歴文書の概要](architecture/#3-過去の-schema-20-と現行アーキテクチャの相違点) |
 
 ## 採択済みの5ストア設計を探索する

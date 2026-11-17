@@ -1,13 +1,13 @@
-// git-repo-db Search Store Schema (search.sqlite3)
+// resource-atlas Search Store Schema (search.sqlite3)
 // Schema Version: 1
 // DDL SHA-256: 1fff79854824aae850184fd4af16a29ee8574769e42a139283b01825520a84b7
 // Rebuildable FTS5 search projections and index generations.
 // Compatible with https://dbdiagram.io/ and https://dbdocs.io/
 
-Project git_repo_db_search {
+Project resource_atlas_search {
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Search Store (search.sqlite3)
+    # resource-atlas Search Store (search.sqlite3)
     Schema Version: 1
     Fixed Tables: 4
     Physical Foreign Keys: 2

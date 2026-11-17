@@ -26,6 +26,25 @@ Directly pointing MkDocs `docs_dir` to the repository `docs/` or building the re
 - Preserve the approved public document set selected by the current staging code. The current ADR set is selected explicitly by `documentation/tools/adr_publication.py` and checked against the accepted index. The separately cited five-store model and normal three-store schema viewer have different inputs. A later ADR or implementation report does not automatically enter the public set.
 - Validate the generated distribution (`site/`) with an automated allowlist checker verifying file extensions (`.html`, `.css`, `.js`, `.svg`, `.dbml`, `.json`) and rejecting forbidden patterns (`*.sqlite3`, `*.py`, `*.sh`, `*.key`, `*.pem`, `*.env*`).
 
+### Preserve pinned citations during repository renames
+
+Before changing a cited source for a cosmetic rename, inspect `tools/design_viz.py`
+and `content/design/model.json` in the documentation workspace. The viewer checks
+cited working bytes against its pinned source revision, and the ownership
+inventory checks exact ADR status evidence. Replacing URLs inside those sources
+can fail both checks even when the decision's meaning is unchanged.
+
+Keep pinned source bodies and recorded evidence intact. Update repository URLs in
+`documentation/tools/adr_publication.py:rewrite_links` during staging, including
+already-absolute legacy Markdown links. Preserve the cited commit, path, query
+and fragment, and match the repository-name boundary so similarly prefixed names
+remain unchanged. Update maintained navigation and the viewer's link templates.
+Verify the cited model, ownership, staged ADR bodies and rendered site with
+`documentation/tests/test_design_viz.py`, `test_content_ownership.py`,
+`test_build_docs_site.py` and `test_site_sitemap_pwa.py` in the isolated
+documentation environment. A substantive source change needs its own deliberate
+model/source refresh; a cosmetic rename does not justify weakening byte checks.
+
 ---
 
 ## 2. Standalone HTML Viewer & Index Collision Avoidance

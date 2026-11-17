@@ -227,7 +227,7 @@ raw receipts and issue a separate correction when a work-only parser was wrong.
 
 Use this source-inspection procedure when reviewing identity/JSON wire changes.
 A single word such as canonical can hide distinct profiles: at the
-[fixed ADR 0030 product revision](https://github.com/TakashiSasaki/git-repo-db/tree/efb55af84ccbf1183d47547d22bb6c57d8fbc8f9),
+[fixed ADR 0030 product revision](https://github.com/TakashiSasaki/resource-atlas/tree/efb55af84ccbf1183d47547d22bb6c57d8fbc8f9),
 Context canonical() uses ensure_ascii=True while Exchange _canonical_content() uses
 ensure_ascii=False over the package minus digest_sha256. Resource IDs are strings
 inside that envelope. Applying the envelope serializer to an embedded key can

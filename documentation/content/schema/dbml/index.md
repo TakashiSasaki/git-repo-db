@@ -1,6 +1,6 @@
 # DBML (Database Markup Language) エクスポートと外部ツール連携
 
-`git-repo-db` のデータベーススキーマは、標準的な **DBML (Database Markup Language)** 形式でエクスポートされています。
+`resource-atlas` のデータベーススキーマは、標準的な **DBML (Database Markup Language)** 形式でエクスポートされています。
 
 公式リポジトリの SQLite DDL を正本（Single Source of Truth）とし、**dbdiagram.io**、**dbdocs.io**、**Eraser.io**、および VS Code などの外部ツールで容易に可視化・共有・分析できるように最適化されています。
 
@@ -93,15 +93,15 @@
 4. **Web ポータルのビルド＆公開**:
    ```bash
    # Core Store を公開
-   dbdocs build documentation/schema/dbml/core.dbml --project git-repo-db-core
+   dbdocs build documentation/schema/dbml/core.dbml --project resource-atlas-core
 
    # Operational Store を公開
-   dbdocs build documentation/schema/dbml/operational.dbml --project git-repo-db-operational
+   dbdocs build documentation/schema/dbml/operational.dbml --project resource-atlas-operational
 
    # Search Store を公開
-   dbdocs build documentation/schema/dbml/search.dbml --project git-repo-db-search
+   dbdocs build documentation/schema/dbml/search.dbml --project resource-atlas-search
    ```
-   実行が完了すると、`https://dbdocs.io/<username>/git-repo-db-core` のような公開 URL が発行されます。パスワード保護（`dbdocs password --set <password>`）も設定可能です。
+   実行が完了すると、`https://dbdocs.io/<username>/resource-atlas-core` のような公開 URL が発行されます。パスワード保護（`dbdocs password --set <password>`）も設定可能です。
 
 ---
 
@@ -164,7 +164,7 @@ index_membership.search_document_id > search_documents.search_document_id
 
 [**SchemaSpy** (https://schemaspy.org/)](https://schemaspy.org/) は、データベースメタデータを解析して、インタラクティブな Graphviz ER 図や孤立テーブル・制約アノマリーを含む包括的な HTML ドキュメントを生成するオープンソースツールです。
 
-`git-repo-db` の SQLite データベースに対して SchemaSpy を実行する手順は以下の通りです：
+`resource-atlas` の SQLite データベースに対して SchemaSpy を実行する手順は以下の通りです：
 
 #### ステップ 1: 正本 DDL から実体 SQLite データベースをエクスポート
 
@@ -244,7 +244,7 @@ docker run --rm \
 
 [**Azimutt** (https://azimutt.app/)](https://azimutt.app/) は、数十〜数百テーブルを持つ複雑なデータベーススキーマを、情報過多に圧倒されることなく段階的に探索（Exploration）するために設計されたオープンソースの次世代 ERD ツールです。
 
-全 70 テーブルを持つ `git-repo-db` の Core Store のような大規模スキーマでは、すべてのテーブルを一度にキャンバス上に並べると線が交錯して解読が難しくなりますが、Azimutt は **「関心のあるテーブルを検索して配置し、外部キーのリレーションを + ボタンで辿って必要なサブセットだけを展開・可視化する」** という極めて優れたワークフローを提供します。
+全 70 テーブルを持つ `resource-atlas` の Core Store のような大規模スキーマでは、すべてのテーブルを一度にキャンバス上に並べると線が交錯して解読が難しくなりますが、Azimutt は **「関心のあるテーブルを検索して配置し、外部キーのリレーションを + ボタンで辿って必要なサブセットだけを展開・可視化する」** という極めて優れたワークフローを提供します。
 
 #### 方法 A: Azimutt Web に SQL DDL をインポートする（最も手軽・推奨）
 
@@ -296,7 +296,7 @@ npx azimutt@latest gateway --allow-origin "https://azimutt.app"
 
 ## スキーマ整合性検証
 
-DBML の鮮度を検証します。事前に選択した製品ソースから完全な IR を生成してください。手順は [documentation/README.md](https://github.com/TakashiSasaki/git-repo-db/blob/main/documentation/README.md) を参照してください：
+DBML の鮮度を検証します。事前に選択した製品ソースから完全な IR を生成してください。手順は [documentation/README.md](https://github.com/TakashiSasaki/resource-atlas/blob/main/documentation/README.md) を参照してください：
 
 ```bash
 env -u UV_PROJECT_ENVIRONMENT uv run --project documentation --no-sync python documentation/tools/schema_viz.py --ir documentation/.build/inputs/inventory.json --check

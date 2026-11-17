@@ -2,7 +2,7 @@
 
 製品の説明は [アーキテクチャ概要](../architecture/) にまとめ、旧 CLI・データモデル・監査の位置づけも示します。手順や根拠は対象 commit を確認してください。
 
-本ドキュメントでは、`git-repo-db` のローカル開発環境のセットアップ、テスト実行手順、品質検証、およびドキュメントサイトの管理方法について解説します。
+本ドキュメントでは、`resource-atlas` のローカル開発環境のセットアップ、テスト実行手順、品質検証、およびドキュメントサイトの管理方法について解説します。
 
 ---
 
@@ -22,7 +22,7 @@
 ./scripts/setup-local-python.sh
 ```
 
-製品用の `uv run --no-sync ...` は `scripts/local-run.sh uv run --no-sync ...` として実行します。`scripts/local-run.sh` は製品環境を固定するため、下記の `--project documentation` コマンドには付けません。詳細は [docs/local-python.md](https://github.com/TakashiSasaki/git-repo-db/blob/main/docs/local-python.md) を参照してください。
+製品用の `uv run --no-sync ...` は `scripts/local-run.sh uv run --no-sync ...` として実行します。`scripts/local-run.sh` は製品環境を固定するため、下記の `--project documentation` コマンドには付けません。詳細は [docs/local-python.md](https://github.com/TakashiSasaki/resource-atlas/blob/main/docs/local-python.md) を参照してください。
 
 > [!NOTE]
 > ドキュメント用の依存関係（`mkdocs`, `mkdocs-material`）は、本番アプリケーションの依存関係（`[project].dependencies`）とは完全に分離された `documentation/pyproject.toml` に定義されています。

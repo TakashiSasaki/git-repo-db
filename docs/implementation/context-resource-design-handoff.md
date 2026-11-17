@@ -68,10 +68,10 @@ includes F1/F2/report trees and input hashes. No new ADR number is allocated.
 
 The parent audit was read at its fixed HEAD:
 
-- [Audit](https://github.com/TakashiSasaki/git-repo-db/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/context-provider-agnostic-audit.md).
-- [Findings](https://github.com/TakashiSasaki/git-repo-db/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/context-provider-agnostic-findings.md).
-- [Options](https://github.com/TakashiSasaki/git-repo-db/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/context-provider-agnostic-options.md).
-- [Evidence and execution limits](https://github.com/TakashiSasaki/git-repo-db/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/evidence/context-provider-agnostic/README.md).
+- [Audit](https://github.com/TakashiSasaki/resource-atlas/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/context-provider-agnostic-audit.md).
+- [Findings](https://github.com/TakashiSasaki/resource-atlas/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/context-provider-agnostic-findings.md).
+- [Options](https://github.com/TakashiSasaki/resource-atlas/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/context-provider-agnostic-options.md).
+- [Evidence and execution limits](https://github.com/TakashiSasaki/resource-atlas/blob/24f593861327328fa00dab0b83f956cec330a0ac/docs/implementation/evidence/context-provider-agnostic/README.md).
 
 Its **37 added probes + 126 existing cases = 163 distinct author cases** concern
 product `efb55af…`, Python 3.12.14 / SQLite 3.53.1. They are focused audit evidence,

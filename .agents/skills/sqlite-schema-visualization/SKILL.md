@@ -20,7 +20,7 @@ surrogates and cross-domain tables rather than silently validating them. Target
 Core is INSERT-only; no diagram implies mutable verified/revision/quarantine
 states or ordinary file-body archival is permitted.
 
-When inspecting and generating schema documentation for multi-store SQLite databases (such as `git-repo-db`'s Core, Operational, and Search stores under ADR 0002), follow these verified procedures to avoid silent misclassification, broken diagrams, or nondeterministic diffs.
+When inspecting and generating schema documentation for multi-store SQLite databases (such as `resource-atlas`'s Core, Operational, and Search stores under ADR 0002), follow these verified procedures to avoid silent misclassification, broken diagrams, or nondeterministic diffs.
 
 ---
 

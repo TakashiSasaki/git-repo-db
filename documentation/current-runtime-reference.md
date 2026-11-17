@@ -9,32 +9,32 @@ architecture does not itself activate all five in the ordinary CLI.
 
 ## Ordinary catalog initialization
 
-The normal [`repo-catalog` parser and dispatcher](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/main.py)
+The normal [`repo-catalog` parser and dispatcher](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/main.py)
 requires `init --profile`, `--cache-max-bytes` and `--min-free-bytes`; use
 `repo-catalog init --help` for current arguments. Global options such as
 `--state-dir` precede the subcommand. Initialization requires a new or empty state
-directory. [`MaintenanceService.init`](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/application/maintenance_service.py)
+directory. [`MaintenanceService.init`](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/application/maintenance_service.py)
 stages the configuration and directories and initializes one Core catalog before
 publication. No count is inferred for an existing user's files.
 
 The implemented composed formats are Core Schema 21, Operational Schema 1 and
-Search Schema 1, defined by [schema.py](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/schema.py).
+Search Schema 1, defined by [schema.py](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/schema.py).
 Core holds the implemented catalog; Operational holds reconstructible job and
 execution state; Search holds rebuildable search projections. The
-[Store adapter](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/store.py) opens Operational
+[Store adapter](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/store.py) opens Operational
 lazily when requested. Search creation is explicit, such as `index rebuild`;
 ordinary reads do not create it. These are runtime paths, not a claim that init
 opens three databases or that all deployments have a fixed file count.
 
 ## Optional implemented surfaces and accepted target
 
-The opt-in [P1 factory](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py) lists
+The opt-in [P1 factory](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py) lists
 four entries: Core, Context, Operational and Search. It is not the complete
 five-responsibility target and is not the normal CLI initializer. Independent
-Access has its own opt-in [schema](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/access_schema.py)
-and [connections adapter](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/access_connections.py).
-The standalone [Access workflow](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/access_workflow.py) and
-[Access acquisition](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/access_acquisition.py) CLI modules
+Access has its own opt-in [schema](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/access_schema.py)
+and [connections adapter](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/access_connections.py).
+The standalone [Access workflow](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/access_workflow.py) and
+[Access acquisition](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/access_acquisition.py) CLI modules
 use that adapter; ordinary catalog `init` does not activate them. See the scoped
 [Access A6 review](../docs/implementation/access-a6-independent-review.md) for evidence
 and outstanding limits; implementation does not by itself establish release
@@ -48,7 +48,7 @@ This opt-in migration does not switch ordinary Schema 21 or activate P8; its DDL
 does not turn every proposed physical detail into an accepted final design.
 
 At this selected revision, the [distribution ownership contract](../docs/implementation/minimal-core-distribution.md)
-and [packaging metadata](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/pyproject.toml)
+and [packaging metadata](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/pyproject.toml)
 describe `repo-catalog-contracts` (shared value contracts), `repo-catalog-core`
 (Core admission, Query and Git-only Recovery), and composed `repo-catalog`
 (normal Schema 21 and optional Context/Access/Operational/Search integration).
@@ -57,9 +57,9 @@ operation-specific installation target; the minimum Core distribution is impleme
 while the remaining independent combinations are unfinished.
 
 Git-only Recovery under [ADR 0038](../docs/adr/0038-scoped-recovery-and-optional-initialization.md)
-is implemented in the [Core Recovery adapter](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py):
+is implemented in the [Core Recovery adapter](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py):
 fresh restore and validated merge precede activation without Operational/Search
-initialization. [PR #239](https://github.com/TakashiSasaki/git-repo-db/pull/239)
+initialization. [PR #239](https://github.com/TakashiSasaki/resource-atlas/pull/239)
 added a common baseline/scope/identity check before merge candidate processing.
 Paired Recovery retains its Context validation and reconstruction obligations.
 This describes implementation at the selected revision, not newly executed tests
@@ -78,7 +78,7 @@ source and exact-revision test evidence for present behavior.
 ## CLI and data model navigation at this milestone
 
 The normal CLI exposes source registration, discovery, synchronization, queries,
-maintenance and explicit index rebuild through its [parser and dispatcher](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/main.py).
+maintenance and explicit index rebuild through its [parser and dispatcher](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/cli/main.py).
 The [README initialization example](../README.md#初期化と収集) supplies an empty
 state directory and the three required settings. See `repo-catalog init --help`
 for arguments at the selected checkout; do not use a historical Schema 20 CLI
@@ -86,8 +86,8 @@ contract as a current command reference. The separate Access modules have their
 own help and explicit approval/selection steps; they are not subcommands activated
 by ordinary `init`.
 
-For the normal data model start with the composed [SQLite schema factory](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/schema.py),
-[Store implementation](https://github.com/TakashiSasaki/git-repo-db/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/store.py), and the
+For the normal data model start with the composed [SQLite schema factory](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/schema.py),
+[Store implementation](https://github.com/TakashiSasaki/resource-atlas/blob/8d5334c0a4d4236808e4ecb7a98352638cc97471/src/repo_catalog/adapters/sqlite/store.py), and the
 [public schema overview](schema/README.md). The normal implementation
 [schema viewer](https://git-repo-db.moukaeritai.work/schema/viewer/) covers
 Core/Operational/Search, not all opt-in schemas or the entire accepted architecture.

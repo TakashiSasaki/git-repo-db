@@ -19,7 +19,9 @@ def test_published_milestone_source_links_and_categories():
         p.read_text(encoding="utf-8") for p in (content / "architecture").glob("*.md")
     )
     sources.append((content / "development/index.md").read_text(encoding="utf-8"))
-    pattern = rf"https://github\.com/TakashiSasaki/git-repo-db/blob/{PRODUCT}/([^\s)]+)"
+    pattern = (
+        rf"https://github\.com/TakashiSasaki/resource-atlas/blob/{PRODUCT}/([^\s)]+)"
+    )
     paths = set(re.findall(pattern, "\n".join(sources)))
     assert {
         "docs/adr/0014-history-and-notes-catalog-without-file-archive.md",

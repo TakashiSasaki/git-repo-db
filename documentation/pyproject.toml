@@ -1,5 +1,5 @@
 [project]
-name = "git-repo-db-documentation"
+name = "resource-atlas-documentation"
 version = "0.0.0"
 description = "Isolated, unpublished documentation preparation tools"
 requires-python = ">=3.12"

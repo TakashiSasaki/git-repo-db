@@ -1,6 +1,6 @@
 # ADR 0031 I2 Transfer fence correction — C-F1
 
-The design correction for the High F1 finding in [independent review #121](https://github.com/TakashiSasaki/git-repo-db/pull/121)
+The design correction for the High F1 finding in [independent review #121](https://github.com/TakashiSasaki/resource-atlas/pull/121)
 is ready for independent re-review. It adds a Direct SQL refusal for the reserved
 `resource_relations.relation_kind='transfer_event_report'`, preserving the
 existing fence on both Transfer endpoint roles and the entire Resources design.

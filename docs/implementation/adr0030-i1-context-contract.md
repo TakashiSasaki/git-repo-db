@@ -202,7 +202,7 @@ Historical execution evidence at `ebcf865ede7ee661446b6fd7edf1be6ef7e623a8` (tre
 
 ## 8. Categorization and Root Cause Analysis of 37 Post-I1 Integration Failures
 
-GitHub run [39239845865](https://github.com/TakashiSasaki/git-repo-db/actions/runs/39239845865), retrieved again for the freeze gate, reports **1,861 passed / 37 failed** on the previous HEAD. The direct causes below establish blocked downstream execution, not proof that the unexecuted downstream code is correct. No failures are hidden, skipped or marked xfail. The separate Transfer admission defect is fixed and regression-tested by this gate.
+GitHub run [39239845865](https://github.com/TakashiSasaki/resource-atlas/actions/runs/39239845865), retrieved again for the freeze gate, reports **1,861 passed / 37 failed** on the previous HEAD. The direct causes below establish blocked downstream execution, not proof that the unexecuted downstream code is correct. No failures are hidden, skipped or marked xfail. The separate Transfer admission defect is fixed and regression-tested by this gate.
 
 ### 8.1 Summary Matrix
 

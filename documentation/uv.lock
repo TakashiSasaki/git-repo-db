@@ -196,7 +196,7 @@ wheels = [
 ]
 
 [[package]]
-name = "git-repo-db-documentation"
+name = "resource-atlas-documentation"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [

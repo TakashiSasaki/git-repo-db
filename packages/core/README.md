@@ -2,7 +2,7 @@
 
 Minimal opt-in Git Core: initialization, typed admission, reads and Git-only Recovery.
 
-This synchronized distribution is part of git-repo-db. It includes the
+This synchronized distribution is part of resource-atlas. It includes the
 `CoreRecoveryService` Python entry point for verified backup, persistent stop,
 bounded salvage, fresh restore, receiver-validated merge and safe activation.
 Git-only activation creates no Context, Operational or Search database. Paired

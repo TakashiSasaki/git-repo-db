@@ -1,13 +1,13 @@
-// git-repo-db Combined Conceptual Schema (Three-Store Boundary)
+// resource-atlas Combined Conceptual Schema (Three-Store Boundary)
 // Core Schema 21 (70 tables)
 // Operational Schema 1 (10 tables)
 // Search Schema 1 (4 tables)
 // ADR 0002 Three-Store Boundary Architecture
 
-Project git_repo_db_three_store {
+Project resource_atlas_three_store {
   database_type: 'SQLite'
   Note: '''
-    # git-repo-db Three-Store Conceptual Model
+    # resource-atlas Three-Store Conceptual Model
     Total Product Tables: 84
     - Core: catalog.sqlite3 (Version 21)
     - Operational: operational.sqlite3 (Version 1)

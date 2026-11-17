@@ -1,4 +1,4 @@
-// Comprehensive browser smoke test for git-repo-db documentation website
+// Comprehensive browser smoke test for resource-atlas documentation website
 // Runs against a local static HTTP server serving the generated 'site/' directory.
 
 import { createServer } from "http";
@@ -100,7 +100,7 @@ server.listen(PORT, async () => {
       await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: "networkidle0" });
       const homeTitle = await page.title();
       console.log(`   Title: ${homeTitle}`);
-      if (!homeTitle.includes("git-repo-db")) {
+      if (!homeTitle.includes("resource-atlas")) {
         throw new Error(`Unexpected homepage title: ${homeTitle}`);
       }
 

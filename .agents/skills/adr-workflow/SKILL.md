@@ -1,6 +1,6 @@
 ---
 name: adr-workflow
-description: Create, review, refine, replace, or retire Architecture Decision Records in git-repo-db. Use when a task changes design decisions or ADR governance, when reconciling design stacks, or before an ADR handoff. Discover the shared policy and active decisions without duplicating them.
+description: Create, review, refine, replace, or retire Architecture Decision Records in resource-atlas. Use when a task changes design decisions or ADR governance, when reconciling design stacks, or before an ADR handoff. Discover the shared policy and active decisions without duplicating them.
 ---
 
 # ADR workflow

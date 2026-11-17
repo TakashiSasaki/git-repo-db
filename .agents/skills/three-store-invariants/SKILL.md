@@ -257,7 +257,7 @@ changing these accepted authority boundaries.
 
 ### Historical discrepancy note and cumulative verification
 
-The receipt text below is preserved from the implemented-baseline skill at [commit f5c92d0](https://github.com/TakashiSasaki/git-repo-db/commit/f5c92d0509284cb559c882e61c9703542c78257d). Its counts describe that historical report, not tests executed against a later design/integration HEAD. Consult exact-revision execution evidence before using it for acceptance.
+The receipt text below is preserved from the implemented-baseline skill at [commit f5c92d0](https://github.com/TakashiSasaki/resource-atlas/commit/f5c92d0509284cb559c882e61c9703542c78257d). Its counts describe that historical report, not tests executed against a later design/integration HEAD. Consult exact-revision execution evidence before using it for acceptance.
 
 Earlier PR documentation stated "118 passed" across five suites listing:
 - 12 (`test_catalog3_cache.py`)
