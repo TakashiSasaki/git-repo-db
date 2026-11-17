@@ -9,7 +9,7 @@ Read the current scope before implementation. This index describes accepted targ
 - **Context and Exchange:** [ADR 0030](0030-context-repository-relations-and-selective-exchange.md) and [ADR 0031](0031-generalized-context-resources.md).
 - **RefObservation, Claims and shared Notes Mapping:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md).
 - **Validation and distributions:** [ADR 0001](0001-validation-lifecycle-architecture.md), [ADR 0032](0032-environment-sqlite-validation.md), [ADR 0033](0033-minimal-product-sdist.md), and [ADR 0034](0034-repository-test-and-ci-efficiency.md).
-- **Documentation boundary:** [ADR 0035](0035-independent-documentation-workspace.md) and the [documentation workspace](../../website/README.md).
+- **Documentation boundary:** [ADR 0035](0035-independent-documentation-workspace.md) and the [documentation workspace](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/README.md).
 
 Accepted design, implementation and executed verification are distinct. Follow scoped supersessions and the actual startup path when reporting current behavior.
 
@@ -89,6 +89,8 @@ exceptions require explicit owner approval.
 | [0039](0039-independent-filesystem-and-worktree-catalogs.md) | Independent filesystem/worktree authorities, historical SHA-256 and EFU | 2026-11-06 | Owner accepted the plan and requested implementation. Two independent DBs and optional composition; no Schema 21 migration or ordinary file-body archive. Validation is separately reported. |
 | [0040](0040-scoped-machine-readable-model-validation.md) | Scoped machine-readable semantic models, qualified references and validation evidence | 2026-11-09 | **Owner-accepted design**; source-bound IR, optional RDF/SHACL and bounded operation models. No new runtime dependency or semantic CI gate; implementation and proof remain separate. |
 
+| [0041](0041-independent-web-branch.md) | Independent web branch, pinned canonical-source handoff and 1,000-file limit | 2026-11-17 | Owner approved the web branch and deletion of transferred files from main; preserves independent product/documentation obligations. |
+
 ## Proposed Records
 
 None.
@@ -101,7 +103,7 @@ acceptance-delta and CI evidence. Retired 0026 remains in [pinned history](https
 not as a contradictory accepted file. Acceptance does not implement installation
 guarantees or authorize product implementation, migration or release.
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0040** (includes accepted 0040; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0040 allocation checked the index, fetched reachable history, live remote branches and open PRs on 2026-11-07; no later design allocation was found. Owner accepted ADR 0040 on 2026-11-09; implementation, verification and release remain separate.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0041** (includes accepted 0041; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0040 allocation checked the index, fetched reachable history, live remote branches and open PRs on 2026-11-07; no later design allocation was found. Owner accepted ADR 0040 on 2026-11-09; implementation, verification and release remain separate.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 

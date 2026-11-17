@@ -5,9 +5,14 @@ description: Stage, build, and publish developer documentation sites for multi-s
 
 # Documentation Staging, Build, and GitHub Pages Invariants
 
+Run these website commands on the orphan `web` branch. Canonical publication
+selection is `docs/web-source-policy.json` on the pinned product branch; the
+web adapter reads it through the validated external product checkout.
+Main owns its inventory and frozen evidence (`scripts/content_inventory.py`).
+
 This procedure grants no publication permission. Follow the explicit current
 task and the existing approved staging allowlist in
-[`website/tools/build_docs_site.py`](../../../website/tools/build_docs_site.py). New accepted
+[`website/tools/build_docs_site.py`](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/tools/build_docs_site.py). New accepted
 ADRs, implementation reports, executable spikes or skill updates do not become
 public automatically. Do not broaden that allowlist or change Pages settings
 while merely reconciling accepted architecture or documenting experiments.
@@ -23,7 +28,7 @@ Directly pointing MkDocs `docs_dir` to the repository `docs/` or building the re
 
 ### Rule & Invariant
 - **Never publish unvetted repository files**: Build through an explicit staging directory (`.build/docs-source/`).
-- Preserve the approved public document set selected by the current staging code. The current ADR set is selected explicitly by `website/tools/adr_publication.py` and checked against the accepted index. The separately cited five-store model and normal three-store schema viewer have different inputs. A later ADR or implementation report does not automatically enter the public set.
+- Preserve the approved public document set selected by the current staging code. The current ADR set is selected explicitly by the product-owned `docs/web-source-policy.json`, consumed by `website/tools/adr_publication.py` and checked against the accepted index. The separately cited five-store model and normal three-store schema viewer have different inputs. A later ADR or implementation report does not automatically enter the public set.
 - Validate the generated distribution (`site/`) with an automated allowlist checker verifying file extensions (`.html`, `.css`, `.js`, `.svg`, `.dbml`, `.json`) and rejecting forbidden patterns (`*.sqlite3`, `*.py`, `*.sh`, `*.key`, `*.pem`, `*.env*`).
 
 ---
@@ -97,18 +102,17 @@ Writing `site/` without a leading slash in `.gitignore` causes Git to ignore any
 
 ## 7. GitHub Actions Pages Security & Concurrency Boundaries
 
-### Invariants for `pages.yml`
-1. **Separation of Concerns**:
-   - `build` job requires only `permissions: contents: read`. No deployment credentials permitted.
-   - `deploy` job runs strictly for `github.ref == 'refs/heads/main' && github.event_name != 'pull_request'`.
-   - `deploy` job requires `pages: write` and `id-token: write` under the `github-pages` environment.
-2. **Concurrency Safety**:
-   - Concurrency group: `pages-${{ github.event.pull_request.number || github.ref }}`.
-   - Set `cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}`: allow fast cancellation on PR iterations, but **never** cancel an in-flight deployment on `main`.
-3. **Artifact Deployment**:
-   - Deploy only the prepared static directory (`site/`) using official `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`.
-   - Never push directly to a `gh-pages` branch. Never upload repository root.
-   - Do not commit or upload a `CNAME` file when Pages custom domain is already managed via repository settings.
+The workflow lives on `web`, not in the product tree. Ordinary web pushes and
+PRs run the independent Node frontend and source-bound website preview checks.
+A manual run can perform complete hosted verification without deploying.
+
+The build job has `contents: read`; only a manually selected `deploy` on
+`refs/heads/web` enables the deployment job with `pages: write` and
+`id-token: write`. Production and preview have separate concurrency groups;
+production is not cancelled by later previews. Retain verification receipts and
+preview artifacts separately. Upload only the validated `website/site/` tree
+with the official Pages actions. Existing custom-domain settings stay separate;
+do not commit a CNAME or change Pages/environment settings during a source move.
 
 ---
 

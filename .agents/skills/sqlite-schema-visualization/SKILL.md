@@ -174,7 +174,7 @@ formats expose only an opaque format ID, others only an integer schema version.
    with the separate documentation environment. Avoid adding reasoner packages to
    product dependencies for an optional analysis workflow.
 
-See [the inventory guide](../../../website/schema-model-inventory.md).
+See [the inventory guide](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/schema-model-inventory.md).
 These checks are useful preparation for RDF/SHACL; they do not constitute ontology
 satisfiability, instance-data validation or a proof of implementation conformance.
 

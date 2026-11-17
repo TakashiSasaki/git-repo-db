@@ -343,9 +343,16 @@ def scan(root: Path, paths: list[str]) -> list[Finding]:
     )
 
 
-def scope_paths(paths: list[str], scope: str) -> list[str]:
+def scope_paths(
+    paths: list[str], scope: str, *, website_branch: bool = False
+) -> list[str]:
     def documentation(path):
-        return path.startswith("website/") or path == ".github/workflows/pages.yml"
+        return (
+            path.startswith("website/")
+            or path == ".github/workflows/pages.yml"
+            or website_branch
+            and (path in {"README.md", "AGENTS.md"} or path.startswith("scripts/"))
+        )
 
     return [
         path
@@ -366,7 +373,10 @@ def main() -> int:
         .decode()
         .split("\0")
     )
-    findings = scan(args.root, scope_paths(paths, args.scope))
+    findings = scan(
+        args.root,
+        scope_paths(paths, args.scope, website_branch="product-source.json" in paths),
+    )
     for finding in findings:
         print(f"{finding.path}:{finding.line}: {finding.rule} (ADR 0032)")
     print(f"SQLite validation policy: {len(findings)} violation(s)")

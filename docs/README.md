@@ -6,19 +6,19 @@ accepted decision and governance sources, design/technical contracts under
 inputs, and historical evidence in place. Status and authority are determined
 by each record and its accepted supersessions, not by its directory or age.
 Do not edit dated receipts, archived reports, or their bytes to make them appear
-current. The maintained [current runtime guide](../website/current-runtime-reference.md)
+current. The maintained [current runtime guide](current-runtime-reference.md)
 lives in the documentation workspace. Navigation banners in historical guides
 link directly to it; their original historical bodies remain unchanged.
 
 Some current operational and validation guides remain here because they are
 normative inputs or referenced by product/tooling and accepted contracts. Check
 callers and authority before proposing a move. Human-facing derived guides and
-site sources belong in the separate [documentation workspace](../website/README.md);
-its [agent instructions](../website/AGENTS.md) define publication and
+site sources belong in the separate [documentation workspace](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/README.md);
+its [agent instructions](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/AGENTS.md) define publication and
 refresh boundaries. A source move does not authorize making it public.
 
-For the file-by-file inventory, run `website/.venv/bin/python website/tools/inventory_content.py`
-from the repository root. The reviewed `website/content-inventory.json` records each
+For the file-by-file inventory, run `scripts/local-run.sh python scripts/content_inventory.py`
+from the repository root. The reviewed `docs/content-inventory.json` records each
 non-frozen tracked path individually, including status, source and authority,
 producer, consumers, and publication intent. Static consumer references are a
 bounded literal scan; dynamic references and ambiguous names are not proven
@@ -35,7 +35,7 @@ performed by the inventory checker. To reproduce the literal search for a file
 whose basename is unique within the inventory, substitute its basename below:
 
 ```sh
-rg -l -F --max-filesize 1M --glob '!docs/implementation/evidence/**' --glob '!docs/phase2/reviews/**' --glob '!website/content-inventory.json' --glob '!*.lock' -- 'BASENAME' docs website src scripts tests .github
+rg -l -F --max-filesize 1M --glob '!docs/implementation/evidence/**' --glob '!docs/phase2/reviews/**' --glob '!docs/content-inventory.json' --glob '!*.lock' -- 'BASENAME' docs website src scripts tests .github
 ```
 
 Exclude the file itself when recording inbound references. If a basename is

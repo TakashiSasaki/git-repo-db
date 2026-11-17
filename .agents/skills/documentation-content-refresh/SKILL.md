@@ -5,7 +5,13 @@ description: Refresh derived project documentation against a selected product re
 
 # Bounded documentation content refresh
 
-Follow [website/AGENTS.md](../../../website/AGENTS.md), root AGENTS.md
+Run website commands in the separate `web` checkout under ADR 0041. Product
+canonical sources and the ownership inventory remain on `main`; its verifier
+is `scripts/content_inventory.py` and ownership tests live in `tests/unit/`.
+The product-owned `docs/web-source-policy.json` selects publication inputs.
+Pin the product and web commits separately and preserve both histories.
+
+Follow [website/AGENTS.md](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/AGENTS.md), root AGENTS.md
 and ADR 0035. This procedure grants no merge, publication, allowlist expansion,
 or change to product or design authority.
 
@@ -44,7 +50,7 @@ require every product change to wait for a documentation build.
 
 ## Directory reconciliation
 
-Before moving a guide, run `website/.venv/bin/python website/tools/inventory_content.py`
+Before moving a guide, run `scripts/local-run.sh python scripts/content_inventory.py`
 from the repository root to enumerate tracked roles. Map every changed path's imports, generated inputs, tests,
 workflow filters and links. Keep canonical contracts, machine-consumed inputs and
 historical evidence in their existing locations unless a separately reviewed

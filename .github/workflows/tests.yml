@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+      - name: Keep editable website sources off the product branch
+        run: python scripts/check_web_boundary.py
       - name: Check current SQLite validation policy
         run: python scripts/check_sqlite_validation_policy.py --scope product
       - name: Test policy detector against prohibited and permitted configurations

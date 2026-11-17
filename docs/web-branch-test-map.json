@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "decision": "0041",
+  "moves": [
+    {
+      "old_path": "website/tests/test_content_ownership.py",
+      "new_path": "tests/unit/test_content_ownership.py",
+      "functions": [
+        "test_inventory_has_exact_roles_and_rejects_unreviewed_paths",
+        "test_historical_body_unchanged_and_navigation_retargeted",
+        "test_current_guide_local_links_resolve",
+        "test_current_guide_product_links_match_declared_revision",
+        "test_current_guide_citations_match_inventory",
+        "test_alternate_index_additions_are_not_silently_classified",
+        "test_unresolved_metadata_is_not_accepted",
+        "test_adr_status_evidence_must_match_source",
+        "test_frozen_index_blob_and_mode_changes_are_refused",
+        "test_frozen_baseline_cannot_be_replaced",
+        "test_ignored_untracked_addition_to_frozen_evidence_is_refused",
+        "test_hidden_flags_on_modified_frozen_evidence_are_refused"
+      ]
+    }
+  ],
+  "web_test_paths": [
+    "website/tests/test_build_docs_site.py",
+    "website/tests/test_design_viz.py",
+    "website/tests/test_destinations.py",
+    "website/tests/test_development_guide.py",
+    "website/tests/test_milestone_content.py",
+    "website/tests/test_private_metadata.py",
+    "website/tests/test_provenance.py",
+    "website/tests/test_public_revision.py",
+    "website/tests/test_pwa_node_runner.py",
+    "website/tests/test_revision_dates.py",
+    "website/tests/test_runtime_reference.py",
+    "website/tests/test_schema_commands.py",
+    "website/tests/test_schema_profile.py",
+    "website/tests/test_schema_viz.py",
+    "website/tests/test_semantic_viz.py",
+    "website/tests/test_site_sitemap_pwa.py"
+  ],
+  "semantics": "Moved product ownership tests remain required product obligations; remaining website test obligations retain their paths on web.",
+  "main_nodes": [
+    "tests/unit/test_content_ownership.py::test_inventory_has_exact_roles_and_rejects_unreviewed_paths",
+    "tests/unit/test_content_ownership.py::test_historical_body_unchanged_and_navigation_retargeted",
+    "tests/unit/test_content_ownership.py::test_current_guide_local_links_resolve",
+    "tests/unit/test_content_ownership.py::test_current_guide_product_links_match_declared_revision",
+    "tests/unit/test_content_ownership.py::test_current_guide_citations_match_inventory",
+    "tests/unit/test_content_ownership.py::test_alternate_index_additions_are_not_silently_classified[docs/implementation/unreviewed-current-contract.md]",
+    "tests/unit/test_content_ownership.py::test_alternate_index_additions_are_not_silently_classified[website/content/unpublished-prose.md]",
+    "tests/unit/test_content_ownership.py::test_alternate_index_additions_are_not_silently_classified[website/content/private.env]",
+    "tests/unit/test_content_ownership.py::test_alternate_index_additions_are_not_silently_classified[website/schema/handwritten-policy.md]",
+    "tests/unit/test_content_ownership.py::test_alternate_index_additions_are_not_silently_classified[docs/implementation/evidence/unreviewed.json]",
+    "tests/unit/test_content_ownership.py::test_unresolved_metadata_is_not_accepted",
+    "tests/unit/test_content_ownership.py::test_adr_status_evidence_must_match_source",
+    "tests/unit/test_content_ownership.py::test_frozen_index_blob_and_mode_changes_are_refused[blob]",
+    "tests/unit/test_content_ownership.py::test_frozen_index_blob_and_mode_changes_are_refused[mode]",
+    "tests/unit/test_content_ownership.py::test_frozen_baseline_cannot_be_replaced",
+    "tests/unit/test_content_ownership.py::test_ignored_untracked_addition_to_frozen_evidence_is_refused",
+    "tests/unit/test_content_ownership.py::test_hidden_flags_on_modified_frozen_evidence_are_refused[--assume-unchanged]",
+    "tests/unit/test_content_ownership.py::test_hidden_flags_on_modified_frozen_evidence_are_refused[--skip-worktree]"
+  ]
+}

@@ -2,30 +2,22 @@
 
 This guide applies repository-wide. Task specifications and agent handoffs are written in English; user-facing explanations may be Japanese. For product or semantic-content changes, read the [ADR index](docs/adr/README.md), then the relevant accepted decisions and their scoped supersessions. For ADR lifecycle/triage/numbering/retirement, follow the owner-accepted [ADR 0011](docs/adr/0011-adr-governance.md) and single [ADR operating policy](docs/adr/policy.md); the optional [adr-workflow skill](.agents/skills/adr-workflow/SKILL.md) contains procedures, not additional authority. The policy's bounded pre-adoption migration exception preserves still-binding ADR 0001–0027 clauses; no automatic bulk retirement or re-opening of accepted design decisions.
 
-## Route the task before choosing tools
+## Repository and branch routing
 
-This repository root serves both the Python application and its technical
-documentation website. Choose the workflow from the requested change:
+The canonical repository is `TakashiSasaki/resource-atlas` (formerly `git-repo-db`).
+This branch owns product code, canonical ADRs/contracts, schema production and
+historical evidence. Website authoring lives only on the orphan
+[`web` branch](https://github.com/TakashiSasaki/resource-atlas/tree/web), with its
+own AGENTS.md and independent Node/Python environments under ADR 0041.
+Use that branch for Google AI Studio imports and UI/content changes; keep at most
+1,000 tracked web files. Do not merge the two trees for routine website updates.
 
-| Task | Main sources and workflow |
-| --- | --- |
-| Product or data-model engineering | `src/`, `packages/`, canonical contracts in `docs/`, and their relevant tools/tests. Follow the accepted ADRs and the verified Python environment below. Isolated modeling pilots under `tools/schema-model/` retain their own environment and declared limits. |
-| Website content, layout or interaction | Root `index.html`, `website/web/`, `website/content/`, and documentation rendering tools/tests. Follow [documentation instructions](website/AGENTS.md) and [frontend instructions](website/web/AGENTS.md). |
-| A change spanning both | State the product and website scopes separately; update the authoritative contracts/inputs and their derived presentation as applicable, using each workspace's relevant checks. |
-
-Root `pyproject.toml`/`uv.lock` describe the Python product workspace;
-`package.json`/`package-lock.json` independently describe the private Node/Vite
-semantic explorer. Root `npm run dev`, `npm run build` and `npm run preview`
-operate on that static frontend, with build output in `dist/`. They neither run
-the product nor build the complete MkDocs site. The existing MkDocs build remains
-the full documentation-site workflow. Routine website-only changes need frontend
-and affected documentation checks, not product runtime setup or product test
-runs; use product validation when product behavior or its inputs change.
-
-Code, accepted ADRs and canonical contracts determine product meaning. Website
-models and diagrams are derived explanations with pinned citations; changing
-them does not implement or accept a product design. Keep implemented behavior,
-accepted targets and partial RDF formalization distinct.
+Product meaning is edited here. The web branch selects a full product commit and
+obtains canonical inputs from a separate verified checkout; its models remain
+derived presentation. See [ADR 0041](docs/adr/0041-independent-web-branch.md) and
+[the source selection](docs/web-source-policy.json). Ownership and frozen-evidence
+checks use `scripts/content_inventory.py` and `docs/content-inventory.json`.
+The maintained product runtime guide is `docs/current-runtime-reference.md`.
 
 ## Current development phase
 
@@ -51,7 +43,7 @@ meaningful verification. ADR 0035's product/documentation separation and accepte
 architecture and retirement decisions remain binding. These preferences do not
 authorize destructive operations, security-setting changes, merges or deployments.
 
-For documentation content refresh, see [website/AGENTS.md](website/AGENTS.md#content-structure-and-refresh).
+For documentation content refresh, see [web instructions](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/AGENTS.md#content-structure-and-refresh).
 
 **Owner priority:** minimize avoidable token consumption and duplicate local or
 offline CI work. Apply the [efficient agent execution policy](#efficient-agent-execution).
@@ -77,7 +69,7 @@ offline CI work. Apply the [efficient agent execution policy](#efficient-agent-e
 - [Accepted design](docs/adr/0029-independent-access-store.md) defines five responsibility stores: Core, Context, Access, Operational and Search. This is a target boundary, not a count of databases opened by every startup.
 - The normal catalog path uses the implemented Core Schema 21, Operational 1 and Search 1; see [schema factories](src/repo_catalog/adapters/sqlite/schema.py) and [catalog initialization](src/repo_catalog/adapters/sqlite/store.py). P1 is opt-in: its [four-store factory subset](packages/runtime/src/repo_catalog/adapters/sqlite/p1_schema.py) and separate [Access factory](packages/access/src/repo_catalog/adapters/sqlite/access_schema.py) do not by themselves describe normal startup.
 - Reports must state what is counted (responsibility stores, factory entries, schemas, files or open connections), the source SHA, startup path and unverified scope. Do not equate these units.
-- Use the [task-oriented ADR index](docs/adr/README.md) and [documentation workspace](website/README.md). Authoritative contracts and machine inputs must track product changes; derived human documentation follows product work and does not block routine product checks ([ADR 0035](docs/adr/0035-independent-documentation-workspace.md)).
+- Use the [task-oriented ADR index](docs/adr/README.md) and [web workspace](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/README.md). Authoritative contracts and machine inputs must track product changes; derived human documentation follows product work and does not block routine product checks ([ADR 0035](docs/adr/0035-independent-documentation-workspace.md)).
 
 ## SQLite validation
 
@@ -155,7 +147,7 @@ Retained metadata/notes still require strict verification and physical integrity
 
 The **implemented** normal format remains Catalog3 Core Schema 21, Operational Schema 1 and Search Schema 1; accepted targets include the five-store boundary in ADR 0029 and ref-observation design in ADR 0036. Adoption does not activate or prove implementation. Preserve historical evidence and the Publication-independent reconstruction in its unsuperseded scope.
 
-The developer documentation site is https://git-repo-db.moukaeritai.work/ and publishes from `main` under the existing explicit allowlist.
+The developer documentation site is https://git-repo-db.moukaeritai.work/ ; its source lives on `web` and production publication is a separate manual opt-in under the existing explicit allowlist.
 
 The project is unreleased and has one developer. No old database, internal API, CLI or migration compatibility is required. Preserve Git history and other agents' uncommitted work. **Permissions come from the explicit current owner task**, not this file or an older prompt. Create commits/branches/PRs only within that scope. Merge only specifically authorized PRs after required validation; otherwise do not merge `main`. An authorized merge does not authorize release, deployment, tagging, force pushes, bypassing branch protection, retained-catalog mutation or authenticated live collection. Use disposable synthetic state; stateful CLI commands require an explicit disposable `--state-dir`. Never commit real catalogs, credentials, private content, caches or raw authenticated traffic.
 

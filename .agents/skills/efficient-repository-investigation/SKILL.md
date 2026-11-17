@@ -157,7 +157,7 @@ not certify a live catalog, a migration, or all SQLite schema features.
 
 ## Place new evidence outside frozen documentation collections
 
-Before committing a new report or receipt, read `website/AGENTS.md` and
+Before committing a new report or receipt, read the `web` branch's `website/AGENTS.md` and
 [the file ownership contract](../../../docs/README.md). The existing
 `docs/implementation/evidence/` directory is frozen to a historical Git tree;
 adding files there fails even if those files have explicit ownership records.
@@ -170,7 +170,7 @@ PR #226 first exposed five documentation ownership failures after successful
 product checks. The root cause was new unclassified files inside that frozen
 collection. Moving only those new files and registering their exact new paths
 lets the ownership checks reach their intended assertions. Verify with the
-isolated documentation environment's `website/tests/test_content_ownership.py`;
+verified product environment's `tests/unit/test_content_ownership.py`;
 do not repeat an unchanged product cohort for this evidence-placement fix.
 Freeze the new paths/manifest first: the frozen-index negative controls deliberately
 read `HEAD`, so a staged-only relocation produces a different inventory mismatch.
