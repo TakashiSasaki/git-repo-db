@@ -17,6 +17,14 @@ site sources belong in the separate [documentation workspace](https://github.com
 its [agent instructions](https://github.com/TakashiSasaki/resource-atlas/blob/web/website/AGENTS.md) define publication and
 refresh boundaries. A source move does not authorize making it public.
 
+The [canonical persistence mapping](architecture/persistence-model.json) assigns
+separated-format tables to logical persistent classes under [ADR 0043](adr/0043-separated-persistence-class-mapping.md).
+Run `scripts/local-run.sh python scripts/persistence_model.py --check` to check
+structural coverage, or `--format markdown` to print DDL-derived fields, ordered
+keys and physical FKs alongside Python input/projection correspondence. Keep the
+JSON assignment canonical; generated reports are not another editable source.
+Normal startup and web presentation remain independent of this design increment.
+
 For the file-by-file inventory, run `scripts/local-run.sh python scripts/content_inventory.py`
 from the repository root. The reviewed `docs/content-inventory.json` records each
 non-frozen tracked path individually, including status, source and authority,

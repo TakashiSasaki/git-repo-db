@@ -51,6 +51,16 @@ offline CI work. Apply the [efficient agent execution policy](#efficient-agent-e
 
 ## Architecture orientation
 
+- [ADR 0043](docs/adr/0043-separated-persistence-class-mapping.md) fixes the
+  design-first target: separated DB roles and one logical persistent class per
+  table, with no future normal-format compatibility/conversion requirement.
+  Edit [the canonical mapping](docs/architecture/persistence-model.json), then
+  run `scripts/local-run.sh python scripts/persistence_model.py --check` or
+  `--format markdown` for DDL-derived fields, ordered keys and FKs. Python
+  inputs/DTOs are distinguished from row classes; this is structural checking,
+  not serialization/semantic proof. Runtime cutover, normal-code retirement and
+  web explanations remain later work. Never mutate retained DBs for this check.
+
 - [ADR 0039](docs/adr/0039-independent-filesystem-and-worktree-catalogs.md) adds
   independent filesystem and worktree authorities and an optional DB-free local
   composition package. They are outside the existing P1 store/pair factory.

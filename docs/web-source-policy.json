@@ -36,7 +36,8 @@
     "docs/adr/0038-scoped-recovery-and-optional-initialization.md",
     "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md",
     "docs/adr/0040-scoped-machine-readable-model-validation.md",
-    "docs/adr/0042-asynchronous-web-main-tracking.md"
+    "docs/adr/0042-asynchronous-web-main-tracking.md",
+    "docs/adr/0043-separated-persistence-class-mapping.md"
   ],
   "support": [
     "docs/adr/policy.md"

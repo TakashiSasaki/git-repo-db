@@ -1,0 +1,1063 @@
+{
+  "schema_version": 1,
+  "authority": "docs/adr/0043-separated-persistence-class-mapping.md",
+  "scope": {
+    "target": "separated-design-first",
+    "normal_runtime_changed": false,
+    "retained_instances_read": 0,
+    "ddl_keys_and_columns": "derived only; not copied into this registry",
+    "coverage": "selected product tables from registered separated DDL; excludes SQLite internals and runtime-created virtual/shadow tables",
+    "python_binding_evidence": "AST definition presence plus curated input/projection classification; not serialization or semantic proof",
+    "external_reference_scope": "catalogue-registered optional external references only; other cross-domain semantics remain unformalized"
+  },
+  "domains": {
+    "core": {
+      "store": "p1.core",
+      "responsibility": "Git identity, attributed immutable claims, allowed retained representations and receiver evidence."
+    },
+    "context": {
+      "store": "p1.context",
+      "responsibility": "Service/source registrations, generalized resources, attributed relations/text and Context coverage evidence."
+    },
+    "access": {
+      "store": "access",
+      "responsibility": "Local connection configuration, locator bindings, scope controls and local approvals."
+    },
+    "operational": {
+      "store": "p1.operational",
+      "responsibility": "Request orchestration and required durable budgets/accounting/checkpoints; reconstructibility is scoped, not domain-wide."
+    },
+    "search": {
+      "store": "p1.search",
+      "responsibility": "Rebuildable search projections, separate from authoritative Core/Context facts."
+    },
+    "filesystem": {
+      "store": "filesystem",
+      "responsibility": "Independent historical filesystem metadata/digests and honest scan outcomes, with raw path identity."
+    },
+    "worktrees": {
+      "store": "worktrees",
+      "responsibility": "Independent Git topology/worktree observations and explicitly optional qualified links."
+    }
+  },
+  "classes": [
+    {
+      "id": "Core.Repository",
+      "domain": "core",
+      "table": "repositories",
+      "kind": "entity",
+      "python": null,
+      "note": "Stable repository UUID identity; claims and observations are separate rows."
+    },
+    {
+      "id": "Core.GitObject",
+      "domain": "core",
+      "table": "git_objects",
+      "kind": "entity",
+      "python": null,
+      "note": "Nominal object identity is the ordered object-format/OID pair, independent of retained bytes."
+    },
+    {
+      "id": "Core.RepositoryClaim",
+      "domain": "core",
+      "table": "repository_claims",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/p1_core.py",
+        "symbol": "RepositoryClaim",
+        "role": "row-input"
+      },
+      "note": "Attributed repository field assertion; not a mutable repository property."
+    },
+    {
+      "id": "Core.ScalarClaim",
+      "domain": "core",
+      "table": "scalar_claims",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/p1_core.py",
+        "symbol": "ScalarClaim",
+        "role": "row-input"
+      },
+      "note": "Attributed scalar assertion about a nominal Git object."
+    },
+    {
+      "id": "Core.RelationGroup",
+      "domain": "core",
+      "table": "relation_groups",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/p1_core.py",
+        "symbol": "RelationGroup",
+        "role": "row-input"
+      },
+      "note": "Atomic scoped relation membership assertion; nested members encode into one membership value."
+    },
+    {
+      "id": "Core.GitObservation",
+      "domain": "core",
+      "table": "git_observations",
+      "kind": "entity",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/p1_core.py",
+        "symbol": "GitObservation",
+        "role": "row-input"
+      },
+      "note": "Attributed capture occurrence with repository, kind, scope, value and provenance."
+    },
+    {
+      "id": "Core.RefObservation",
+      "domain": "core",
+      "table": "ref_observations",
+      "kind": "entity",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "RefObservation",
+        "role": "row-input"
+      },
+      "note": "Origin-qualified ref observation occurrence; name/source/visibility belong to its payload."
+    },
+    {
+      "id": "Core.RefObservationClaim",
+      "domain": "core",
+      "table": "ref_observation_claims",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "RefObservationClaim",
+        "role": "row-input"
+      },
+      "note": "Attributed presence/absence/ref-form result for one ref observation."
+    },
+    {
+      "id": "Core.RefEnumerationObservation",
+      "domain": "core",
+      "table": "ref_enumeration_observations",
+      "kind": "entity",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "RefEnumerationObservation",
+        "role": "row-input"
+      },
+      "note": "Scoped enumeration event; its completion and link count do not replace the member links."
+    },
+    {
+      "id": "Core.RefEnumerationLink",
+      "domain": "core",
+      "table": "ref_enumeration_links",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "RefEnumerationLink",
+        "role": "row-input"
+      },
+      "note": "Ordered link between an enumeration and an attributed ref result."
+    },
+    {
+      "id": "Core.NotesMapping",
+      "domain": "core",
+      "table": "notes_mappings",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "NotesMapping",
+        "role": "row-input"
+      },
+      "note": "Shared interpretation of a captured root/target/note/path; not repository membership or file-body permission."
+    },
+    {
+      "id": "Core.NotesMappingClaim",
+      "domain": "core",
+      "table": "notes_mapping_claims",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "NotesMappingClaim",
+        "role": "row-input"
+      },
+      "note": "Attribution connecting an exact ref claim and a shared mapping."
+    },
+    {
+      "id": "Core.NotesMappingGroup",
+      "domain": "core",
+      "table": "notes_mapping_groups",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "NotesMappingGroup",
+        "role": "row-input"
+      },
+      "note": "Atomic scoped mapping membership assertion for an exact ref claim."
+    },
+    {
+      "id": "Core.NotesMappingEvidence",
+      "domain": "core",
+      "table": "notes_mapping_evidence",
+      "kind": "association",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/ref_observation.py",
+        "symbol": "NotesMappingEvidenceRecord",
+        "role": "row-input"
+      },
+      "note": "Receiver evidence for one attributed mapping; evidence is separate from a source assertion."
+    },
+    {
+      "id": "Core.RetainedMetadata",
+      "domain": "core",
+      "table": "retained_metadata",
+      "kind": "entity",
+      "python": null,
+      "note": "Permitted Git metadata representation and its physical-copy identity; this is domain data, not store infrastructure."
+    },
+    {
+      "id": "Core.RetainedNote",
+      "domain": "core",
+      "table": "ref_retained_notes",
+      "kind": "entity",
+      "python": null,
+      "note": "Allowed note body representation with a physical-copy identity; no ordinary file-body archive."
+    },
+    {
+      "id": "Core.IntrinsicClaim",
+      "domain": "core",
+      "table": "intrinsic_claims",
+      "kind": "association",
+      "python": null,
+      "note": "Receiver-derived scalar evidence qualified by the physical copy used."
+    },
+    {
+      "id": "Core.IntrinsicGroup",
+      "domain": "core",
+      "table": "intrinsic_groups",
+      "kind": "association",
+      "python": null,
+      "note": "Receiver-derived relation evidence qualified by the physical copy used."
+    },
+    {
+      "id": "Core.CoverageScope",
+      "domain": "core",
+      "table": "coverage_scopes",
+      "kind": "entity",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/p1_core.py",
+        "symbol": "CoreCoverageScope",
+        "role": "row-input"
+      },
+      "note": "Typed coverage owner coordinate in Core; independent of the identically named Context table."
+    },
+    {
+      "id": "Core.CoverageClaim",
+      "domain": "core",
+      "table": "coverage_claims",
+      "kind": "association",
+      "python": null,
+      "note": "One attributed coverage state/time coordinate; shared Contracts values are not a dedicated Core row type."
+    },
+    {
+      "id": "Core.CoreCoverageProof",
+      "domain": "core",
+      "table": "core_coverage_proofs",
+      "kind": "association",
+      "python": null,
+      "note": "Core-specific evidence for an exact coverage claim; not an infrastructure health marker."
+    },
+    {
+      "id": "Core.RefCoverageProof",
+      "domain": "core",
+      "table": "ref_coverage_proofs",
+      "kind": "association",
+      "python": null,
+      "note": "Evidence connecting exact ref/mapping group coordinates to an exact coverage claim."
+    },
+    {
+      "id": "Core.StoreIdentity",
+      "domain": "core",
+      "table": "store_identity",
+      "kind": "infrastructure",
+      "python": null,
+      "note": "Core format/instance metadata; row role says nothing about mutability or recovery policy."
+    },
+    {
+      "id": "Context.ServiceInstance",
+      "domain": "context",
+      "table": "providers",
+      "kind": "entity",
+      "python": null,
+      "note": "Service-instance UUID registration, distinct from a local connection or access scope."
+    },
+    {
+      "id": "Context.SourceRegistration",
+      "domain": "context",
+      "table": "sources",
+      "kind": "entity",
+      "python": null,
+      "note": "Source-registration identity and registration payload, independent of source inventory evidence."
+    },
+    {
+      "id": "Context.Resource",
+      "domain": "context",
+      "table": "resources",
+      "kind": "entity",
+      "python": null,
+      "note": "Service-scoped typed resource identity; ResourceKey is a value, not this persistent row."
+    },
+    {
+      "id": "Context.FieldCandidate",
+      "domain": "context",
+      "table": "field_candidates",
+      "kind": "association",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/p1_context.py",
+        "symbol": "FieldCandidate",
+        "role": "row-input"
+      },
+      "note": "Attributed field candidate with nested resource/clock values and adapter-derived columns."
+    },
+    {
+      "id": "Context.TextBody",
+      "domain": "context",
+      "table": "text_bodies",
+      "kind": "entity",
+      "python": null,
+      "note": "Exact Context text bytes indexed by SHA-256; unrelated to ordinary repository-file content retention."
+    },
+    {
+      "id": "Context.ResourceRelation",
+      "domain": "context",
+      "table": "resource_relations",
+      "kind": "association",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/production_context.py",
+        "symbol": "ResourceRelation",
+        "role": "row-input"
+      },
+      "note": "Scoped resource relation with atomic member representation."
+    },
+    {
+      "id": "Context.ResourceRepositoryRelation",
+      "domain": "context",
+      "table": "resource_repository_relations",
+      "kind": "association",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/p1_context.py",
+        "symbol": "ResourceRepositoryRelation",
+        "role": "row-input"
+      },
+      "note": "Attributed typed repository relation; nested claim coordinates are flattened by the adapter."
+    },
+    {
+      "id": "Context.RepositoryMappingDisposition",
+      "domain": "context",
+      "table": "repository_mapping_dispositions",
+      "kind": "association",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/p1_context.py",
+        "symbol": "MappingDisposition",
+        "role": "row-input"
+      },
+      "note": "Immutable disposition of an exact mapping claim; not a mutable canonical repository shortcut."
+    },
+    {
+      "id": "Context.RepositoryContext",
+      "domain": "context",
+      "table": "repository_context",
+      "kind": "entity",
+      "python": null,
+      "note": "Context-local registration of a repository coordinate; does not own Core repository identity."
+    },
+    {
+      "id": "Context.SourceRepository",
+      "domain": "context",
+      "table": "source_repositories",
+      "kind": "association",
+      "python": null,
+      "note": "Known positive Source/Repository membership; partial inventories do not delete previous positives."
+    },
+    {
+      "id": "Context.SourceInventoryEvidence",
+      "domain": "context",
+      "table": "source_inventory_evidence",
+      "kind": "association",
+      "python": null,
+      "note": "Attributed scoped source inventory evidence, including honest terminal and member coordinates."
+    },
+    {
+      "id": "Context.Collection",
+      "domain": "context",
+      "table": "collections",
+      "kind": "entity",
+      "python": null,
+      "note": "Collection scope/registration for a resource; one CollectionObservation input is not a stand-alone row mirror."
+    },
+    {
+      "id": "Context.CollectionTerminal",
+      "domain": "context",
+      "table": "collection_terminals",
+      "kind": "association",
+      "python": null,
+      "note": "One attributed terminal collection observation, independent of collection registration."
+    },
+    {
+      "id": "Context.CoreReference",
+      "domain": "context",
+      "table": "core_references",
+      "kind": "association",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/production_context.py",
+        "symbol": "CoreReference",
+        "role": "row-input"
+      },
+      "note": "Resource-associated nominal Git object coordinate; cross-domain meaning is not a cross-file physical FK."
+    },
+    {
+      "id": "Context.CoverageScope",
+      "domain": "context",
+      "table": "coverage_scopes",
+      "kind": "entity",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/p1_context.py",
+        "symbol": "CoverageScope",
+        "role": "row-input"
+      },
+      "note": "Context-owned typed coverage coordinate, separate from Core coverage."
+    },
+    {
+      "id": "Context.CoverageClaim",
+      "domain": "context",
+      "table": "coverage_claims",
+      "kind": "association",
+      "python": null,
+      "note": "One Context coverage claim; shared helper values are not a dedicated row class."
+    },
+    {
+      "id": "Context.CoverageProof",
+      "domain": "context",
+      "table": "coverage_proofs",
+      "kind": "association",
+      "python": null,
+      "note": "Evidence connecting exact collection terminal and coverage coordinates."
+    },
+    {
+      "id": "Context.SourceCoverageProof",
+      "domain": "context",
+      "table": "source_coverage_proofs",
+      "kind": "association",
+      "python": null,
+      "note": "Evidence connecting exact source inventory and coverage coordinates."
+    },
+    {
+      "id": "Context.StoreIdentity",
+      "domain": "context",
+      "table": "store_identity",
+      "kind": "infrastructure",
+      "python": null,
+      "note": "Context instance/format metadata; independent of the Core store identity."
+    },
+    {
+      "id": "Access.AccessScope",
+      "domain": "access",
+      "table": "access_scopes",
+      "kind": "entity",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_registry.py",
+        "symbol": "AccessScope",
+        "role": "row-input"
+      },
+      "note": "Local execution/approval boundary identified by scope UUID."
+    },
+    {
+      "id": "Access.ScopeLocatorRegistration",
+      "domain": "access",
+      "table": "scope_locators",
+      "kind": "association",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_registry.py",
+        "symbol": "ScopeLocatorRegistration",
+        "role": "row-input"
+      },
+      "note": "Append registration occurrence keyed by scope, registration time and raw locator URI."
+    },
+    {
+      "id": "Access.ScopeLocatorControl",
+      "domain": "access",
+      "table": "scope_locator_controls",
+      "kind": "entity",
+      "python": null,
+      "note": "Mutable enabled control for an exact registration occurrence; not part of the immutable registration payload."
+    },
+    {
+      "id": "Access.ScopeExecutionContext",
+      "domain": "access",
+      "table": "scope_execution_contexts",
+      "kind": "entity",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+        "symbol": "ScopeExecutionContext",
+        "role": "row-input"
+      },
+      "note": "Scope-specific execution configuration; adapter column names need not match Python attribute names."
+    },
+    {
+      "id": "Access.ConnectionConfiguration",
+      "domain": "access",
+      "table": "connection_configurations",
+      "kind": "entity",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+        "symbol": "ConnectionConfiguration",
+        "role": "row-input"
+      },
+      "note": "Named local connection configuration within an Access scope."
+    },
+    {
+      "id": "Access.RepositoryBinding",
+      "domain": "access",
+      "table": "repository_locators",
+      "kind": "association",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+        "symbol": "RepositoryBinding",
+        "role": "row-input"
+      },
+      "note": "Local locator/repository binding, not Core repository identity."
+    },
+    {
+      "id": "Access.LocatorConnection",
+      "domain": "access",
+      "table": "locator_connections",
+      "kind": "association",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+        "symbol": "LocatorConnection",
+        "role": "row-input"
+      },
+      "note": "Purpose-specific connection assignment to a local locator."
+    },
+    {
+      "id": "Access.AccessPreference",
+      "domain": "access",
+      "table": "repository_access_preferences",
+      "kind": "association",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+        "symbol": "AccessPreference",
+        "role": "row-input"
+      },
+      "note": "Local preferred locator/connection for a repository, scope and purpose."
+    },
+    {
+      "id": "Access.LocalAccessGrant",
+      "domain": "access",
+      "table": "local_access_grants",
+      "kind": "association",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+        "symbol": "LocalAccessGrant",
+        "role": "row-input"
+      },
+      "note": "Local approval bound to a reviewed plan; existence does not grant perpetual approval after configuration changes."
+    },
+    {
+      "id": "Access.StoreIdentity",
+      "domain": "access",
+      "table": "access_identity",
+      "kind": "infrastructure",
+      "python": null,
+      "note": "Access instance metadata; not a seventh field on an AccessScope."
+    },
+    {
+      "id": "Operational.AcquisitionRequest",
+      "domain": "operational",
+      "table": "acquisition_requests",
+      "kind": "entity",
+      "python": null,
+      "note": "Explicit durable cumulative work request; retries and continuations do not reset request scope."
+    },
+    {
+      "id": "Operational.RequestBudget",
+      "domain": "operational",
+      "table": "request_budgets",
+      "kind": "entity",
+      "python": null,
+      "note": "Finite request/work-kind budget and cached accounting; actual accounting remains independently checked."
+    },
+    {
+      "id": "Operational.AcquisitionAttempt",
+      "domain": "operational",
+      "table": "acquisition_attempts",
+      "kind": "entity",
+      "python": null,
+      "note": "One execution attempt under an explicit request."
+    },
+    {
+      "id": "Operational.WorkAccounting",
+      "domain": "operational",
+      "table": "work_accounting",
+      "kind": "association",
+      "python": null,
+      "note": "Durable reservation/actual-work coordinates; failed or replayed work is not free."
+    },
+    {
+      "id": "Operational.RequestContinuation",
+      "domain": "operational",
+      "table": "request_continuations",
+      "kind": "entity",
+      "python": null,
+      "note": "Scoped durable cursor/checkpoint, including canonical Exchange package bindings where used."
+    },
+    {
+      "id": "Operational.RetryState",
+      "domain": "operational",
+      "table": "retry_state",
+      "kind": "entity",
+      "python": null,
+      "note": "Request-scoped retry schedule/reason; no automatic resume after loss of required Operational state."
+    },
+    {
+      "id": "Operational.CacheLocator",
+      "domain": "operational",
+      "table": "cache_locators",
+      "kind": "association",
+      "python": null,
+      "note": "Locator for reusable metadata/verified-notes cache; reuse never substitutes for required authoritative evidence."
+    },
+    {
+      "id": "Operational.StoreIdentity",
+      "domain": "operational",
+      "table": "store_identity",
+      "kind": "infrastructure",
+      "python": null,
+      "note": "Operational instance identity; required request/recovery state is not classified wholesale as disposable."
+    },
+    {
+      "id": "Search.SearchProjection",
+      "domain": "search",
+      "table": "search_projections",
+      "kind": "projection",
+      "python": null,
+      "note": "Derivative projection generation tied to its exact authority snapshot, not canonical product data."
+    },
+    {
+      "id": "Search.SearchDocument",
+      "domain": "search",
+      "table": "search_documents",
+      "kind": "projection",
+      "python": null,
+      "note": "Searchable derivative document for a qualified projection generation."
+    },
+    {
+      "id": "Search.StoreIdentity",
+      "domain": "search",
+      "table": "store_identity",
+      "kind": "infrastructure",
+      "python": null,
+      "note": "Search store metadata; ordinary authoritative reads need not create a Search DB."
+    },
+    {
+      "id": "Filesystem.CatalogMetadata",
+      "domain": "filesystem",
+      "table": "catalog_metadata",
+      "kind": "infrastructure",
+      "python": null,
+      "note": "Filesystem catalogue namespace/configuration metadata; not a scanned-file entity."
+    },
+    {
+      "id": "Filesystem.Scan",
+      "domain": "filesystem",
+      "table": "scans",
+      "kind": "entity",
+      "python": null,
+      "note": "Namespace-qualified scan occurrence with a root_path value; no separate roots table is implied."
+    },
+    {
+      "id": "Filesystem.Entry",
+      "domain": "filesystem",
+      "table": "entries",
+      "kind": "entity",
+      "python": null,
+      "note": "Raw-path entry within one namespace and scan; all three key components are required."
+    },
+    {
+      "id": "Filesystem.ScanOutcome",
+      "domain": "filesystem",
+      "table": "scan_outcomes",
+      "kind": "entity",
+      "python": null,
+      "note": "Observed termination/partial-result facts for an exact scan; no synthetic completeness."
+    },
+    {
+      "id": "Worktrees.CatalogIdentity",
+      "domain": "worktrees",
+      "table": "catalog_identity",
+      "kind": "infrastructure",
+      "python": null,
+      "note": "Independent worktree catalogue identity; does not turn Local composition into a store."
+    },
+    {
+      "id": "Worktrees.Observation",
+      "domain": "worktrees",
+      "table": "observations",
+      "kind": "entity",
+      "python": null,
+      "note": "One worktree/topology observation with its own execution scope."
+    },
+    {
+      "id": "Worktrees.Worktree",
+      "domain": "worktrees",
+      "table": "worktrees",
+      "kind": "entity",
+      "python": null,
+      "note": "Root-path worktree observation keyed with its enclosing observation UUID."
+    },
+    {
+      "id": "Worktrees.ScanReference",
+      "domain": "worktrees",
+      "table": "scan_references",
+      "kind": "association",
+      "python": null,
+      "note": "Qualified optional link from a worktree observation to a Filesystem scan; no cross-DB transaction."
+    },
+    {
+      "id": "Worktrees.RepositoryLink",
+      "domain": "worktrees",
+      "table": "repository_links",
+      "kind": "association",
+      "python": null,
+      "note": "Attributed common-dir/Repository association; absence of optional Core data stays unresolved."
+    }
+  ],
+  "nonpersistent_types": [
+    {
+      "id": "Core.GitClaim",
+      "domain": "core",
+      "kind": "abstract",
+      "python": null,
+      "sources": [
+        "Core.ScalarClaim",
+        "Core.RelationGroup",
+        "Core.IntrinsicClaim",
+        "Core.IntrinsicGroup"
+      ],
+      "note": "Conceptual shared claim/evidence vocabulary; concrete rows remain separately mapped."
+    },
+    {
+      "id": "Core.OID",
+      "domain": "core",
+      "kind": "value",
+      "python": {
+        "path": "packages/contracts/src/repo_catalog/domain/shared_values.py",
+        "symbol": "OID"
+      },
+      "sources": [],
+      "note": "Nominal algorithm/OID value used in many keys; no standalone OID table is required."
+    },
+    {
+      "id": "Core.Provenance",
+      "domain": "core",
+      "kind": "value",
+      "python": {
+        "path": "packages/contracts/src/repo_catalog/domain/shared_values.py",
+        "symbol": "Provenance"
+      },
+      "sources": [],
+      "note": "Shared attributed-source value; its definition is Contracts-owned, not a claim that Core owns the source module."
+    },
+    {
+      "id": "Core.RelationMember",
+      "domain": "core",
+      "kind": "value",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/p1_core.py",
+        "symbol": "RelationMember"
+      },
+      "sources": [],
+      "note": "Member value embedded in atomic group membership, not one persistent row per Python object."
+    },
+    {
+      "id": "Core.NativeObject",
+      "domain": "core",
+      "kind": "dto",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/p1_core.py",
+        "symbol": "NativeObject"
+      },
+      "sources": [
+        "Core.GitObject",
+        "Core.RetainedMetadata",
+        "Core.RetainedNote"
+      ],
+      "note": "Validated native object/body input; permitted retention and nominal identity are different row responsibilities."
+    },
+    {
+      "id": "Core.GitObjectView",
+      "domain": "core",
+      "kind": "query",
+      "python": {
+        "path": "packages/core/src/repo_catalog/domain/core_query.py",
+        "symbol": "GitObjectView"
+      },
+      "sources": [
+        "Core.GitObject",
+        "Core.ScalarClaim",
+        "Core.RelationGroup",
+        "Core.IntrinsicClaim",
+        "Core.IntrinsicGroup"
+      ],
+      "note": "Read projection over claims/evidence; not a class requiring its own table."
+    },
+    {
+      "id": "Core.CoverageClaimValue",
+      "domain": "core",
+      "kind": "value",
+      "python": {
+        "path": "packages/contracts/src/repo_catalog/domain/p1_coverage.py",
+        "symbol": "CoverageClaim"
+      },
+      "sources": [],
+      "note": "Shared Contracts claim value is reused across Core and Context; distinct qualified persistent classes own their rows."
+    },
+    {
+      "id": "Context.ResourceKey",
+      "domain": "context",
+      "kind": "value",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/p1_context.py",
+        "symbol": "ResourceKey"
+      },
+      "sources": [],
+      "note": "Composite resource coordinate reused by Context inputs and rows."
+    },
+    {
+      "id": "Context.FieldClock",
+      "domain": "context",
+      "kind": "value",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/p1_context.py",
+        "symbol": "FieldClock"
+      },
+      "sources": [],
+      "note": "Clock value embedded in attributed field/relation coordinates."
+    },
+    {
+      "id": "Context.ResourceObservation",
+      "domain": "context",
+      "kind": "dto",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/production_context.py",
+        "symbol": "ResourceObservation"
+      },
+      "sources": [
+        "Context.Resource",
+        "Context.FieldCandidate"
+      ],
+      "note": "Admission aggregate spanning identity and field candidates, not a dedicated resources row mirror."
+    },
+    {
+      "id": "Context.CollectionObservation",
+      "domain": "context",
+      "kind": "dto",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/production_context.py",
+        "symbol": "CollectionObservation"
+      },
+      "sources": [
+        "Context.Collection",
+        "Context.CollectionTerminal"
+      ],
+      "note": "Input spanning collection scope and terminal evidence; adapters must preserve both responsibilities."
+    },
+    {
+      "id": "Context.SourceInventory",
+      "domain": "context",
+      "kind": "dto",
+      "python": {
+        "path": "packages/context/src/repo_catalog/domain/production_context.py",
+        "symbol": "SourceInventory"
+      },
+      "sources": [
+        "Context.SourceInventoryEvidence",
+        "Context.SourceRepository"
+      ],
+      "note": "Scoped evidence and positive repository associations can be produced from this aggregate."
+    },
+    {
+      "id": "Access.AssignmentKey",
+      "domain": "access",
+      "kind": "value",
+      "python": {
+        "path": "packages/access/src/repo_catalog/domain/access_connections.py",
+        "symbol": "AssignmentKey"
+      },
+      "sources": [],
+      "note": "Nested scope/locator/configuration/purpose coordinate; not another assignment table."
+    },
+    {
+      "id": "Filesystem.RootPath",
+      "domain": "filesystem",
+      "kind": "value",
+      "python": null,
+      "sources": [
+        "Filesystem.Scan"
+      ],
+      "note": "Root is currently a raw path value in a scan, with no independent persistent Root class or Python Root class claimed."
+    },
+    {
+      "id": "Filesystem.ScanResult",
+      "domain": "filesystem",
+      "kind": "dto",
+      "python": {
+        "path": "packages/filesystem/src/repo_catalog/filesystem/models.py",
+        "symbol": "ScanResult"
+      },
+      "sources": [
+        "Filesystem.Scan",
+        "Filesystem.ScanOutcome",
+        "Filesystem.Entry"
+      ],
+      "note": "API result combines scan identity, counts and outcome; it is not the scans table row type."
+    },
+    {
+      "id": "Filesystem.FileEntry",
+      "domain": "filesystem",
+      "kind": "query",
+      "python": {
+        "path": "packages/filesystem/src/repo_catalog/filesystem/models.py",
+        "symbol": "FileEntry"
+      },
+      "sources": [
+        "Filesystem.Entry",
+        "Filesystem.Scan"
+      ],
+      "note": "Read payload includes a computed absolute path using scan context; it is not a raw entries row mirror."
+    },
+    {
+      "id": "Worktrees.DiscoveryResult",
+      "domain": "worktrees",
+      "kind": "dto",
+      "python": {
+        "path": "packages/worktrees/src/repo_catalog/worktrees/models.py",
+        "symbol": "DiscoveryResult"
+      },
+      "sources": [
+        "Worktrees.Observation",
+        "Worktrees.Worktree"
+      ],
+      "note": "Discovery result supplies enclosing observation context to its worktree payloads."
+    },
+    {
+      "id": "Worktrees.WorktreeEntry",
+      "domain": "worktrees",
+      "kind": "dto",
+      "python": {
+        "path": "packages/worktrees/src/repo_catalog/worktrees/models.py",
+        "symbol": "WorktreeEntry"
+      },
+      "sources": [
+        "Worktrees.Worktree",
+        "Worktrees.Observation"
+      ],
+      "note": "Scoped payload omits observation_uuid, supplied by its DiscoveryResult/adapter context; cannot stand alone as the complete persistent key."
+    },
+    {
+      "id": "Search.SearchResponse",
+      "domain": "search",
+      "kind": "query",
+      "python": {
+        "path": "packages/search/src/repo_catalog/domain/search_query.py",
+        "symbol": "SearchResponse"
+      },
+      "sources": [
+        "Search.SearchProjection",
+        "Search.SearchDocument"
+      ],
+      "note": "Query response, including authority fallback, is not the derivative document row class."
+    }
+  ],
+  "external_references": [
+    {
+      "id": "worktrees.filesystem-scan",
+      "source": "Worktrees.ScanReference",
+      "target": "Filesystem.Scan"
+    },
+    {
+      "id": "worktrees.repository-claim",
+      "source": "Worktrees.RepositoryLink",
+      "target": "Core.Repository"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "normal-versus-separated",
+      "detail": "Normal Catalog3 remains mixed Core/Context/Access. Its git_objects surrogate PK differs from separated (object_format, object_oid); normal ref_observations uses (snapshot_id, raw_ref_name), separated uses origin UUIDv4 and observation UUIDv7. Repository UUID identity already exists in both. Equal table names never imply equal row identities. No normal/runtime schema is changed by this model."
+    },
+    {
+      "id": "python-row-bindings",
+      "detail": "A logical persistent class is a design assignment, not a claim that a Python class of that name already exists. Null python means no dedicated row type recorded; SQL/adapters may already implement the complete capability. Observed row inputs may be nested or expand into derived columns. Complete key/field serialization needs later adapter-specific verification."
+    },
+    {
+      "id": "root-and-scan-aggregate",
+      "detail": "Filesystem Root is currently root_path within Scan; ScanResult and FileEntry are result/projection types. Do not invent a roots table to match an aggregate or value type. Decide whether independent Root identity is necessary only with its domain semantics."
+    },
+    {
+      "id": "worktree-context-key",
+      "detail": "WorktreeEntry receives observation identity from its enclosing DiscoveryResult/context. A future dedicated Worktree row binding must explicitly include observation_uuid plus root_path; the current scoped DTO is not itself evidence of broken storage."
+    },
+    {
+      "id": "coverage-and-website",
+      "detail": "Context coverage scopes/claims/proofs are real selected tables even if absent from a website concept group. The web branch semantic-model (seven groups of responsibility domains) and older five-store model are derived explanations with different granularities, not canonical table/class maps; their update is independent and deferred."
+    },
+    {
+      "id": "reference-and-behavior-scope",
+      "detail": "Only existing catalogue-registered optional external references and DDL physical FKs are checked/rendered. Context/Core references, paired identity rules, operation preconditions, CHECK/trigger semantics, dynamic virtual tables and retained-instance validity are not fully formalized. Coverage success is not complete operation or semantic conformance."
+    }
+  ],
+  "roadmap": [
+    {
+      "id": "1-foundations",
+      "operations": [
+        "OP-01",
+        "OP-02",
+        "OP-03",
+        "OP-04",
+        "OP-07",
+        "OP-12"
+      ],
+      "detail": "Build on existing independent implementations for Core lifecycle including required recovery, Context reads, paired reads/recovery and Access. Assess remaining separated-format adapter/admission/backup/activation gaps against the module operation contract; do not claim these existing capabilities absent. Preserve Core INSERT-only/typed keys, ADR 0038 stop/preserve/typed salvage/fresh verified restore and paired validation. Carry ADR 0039 independent Filesystem/Worktrees raw paths, partial scans, optional qualified references, EFU and DB-free Local composition; those are outside OP-01..12. Fresh DB start needs no legacy conversion; never mutate/delete retained source DBs."
+    },
+    {
+      "id": "2-orchestration-and-projections",
+      "operations": [
+        "OP-05",
+        "OP-06",
+        "OP-08",
+        "OP-09",
+        "OP-10",
+        "OP-11"
+      ],
+      "detail": "Assess and complete separated-format Operational request orchestration, Git acquisition with optional Access, Exchange and Search integration using existing APIs. Preserve actual cumulative work, durable reservations/checkpoints, package binding and honest loss behavior. Rebuild derivative Search without enlarging authority. Required recovery correctness remains part of foundations, not an optional late add-on."
+    },
+    {
+      "id": "3-ordinary-cli-cutover",
+      "operations": [
+        "OP-01",
+        "OP-02",
+        "OP-03",
+        "OP-04",
+        "OP-05",
+        "OP-06",
+        "OP-07",
+        "OP-08",
+        "OP-09",
+        "OP-10",
+        "OP-11",
+        "OP-12"
+      ],
+      "detail": "Only after behavior/adapter tests and recovery prerequisites pass, switch ordinary initialization/CLI composition to fresh separated catalogs. Keep operation-scoped optional initialization: no command must initialize or open all seven DBs simply because the design has seven responsibility roles. This phase is not implemented here."
+    },
+    {
+      "id": "4-legacy-code-retirement",
+      "operations": [],
+      "detail": "Remove normal-format factories/adapters and obsolete normal-only tests only after recording each affected test node and its concrete separated-format replacement for the same behavior, including corrupt-source stop, backup/restore, Exchange and accounting failures. Retire tests by obligation, not by coverage counts. No backward-compatibility adapter or old-data migration is required; no authorization to delete user DBs or historical evidence is created."
+    }
+  ]
+}
