@@ -18,8 +18,15 @@ ROOT = Path(__file__).resolve().parents[1]
 GITHUB_HTTP_SCOPE = "https://github.com/"
 
 
-def run(command, cwd, *, env=None):
-    subprocess.run([str(x) for x in command], cwd=cwd, env=env, check=True)
+def run(command, cwd, *, env=None, log=None):
+    subprocess.run(
+        [str(x) for x in command],
+        cwd=cwd,
+        env=env,
+        check=True,
+        stdout=log,
+        stderr=subprocess.STDOUT if log is not None else None,
+    )
 
 
 def git_environment():
@@ -98,14 +105,7 @@ def prepare_checkout(selection, product_root=None, *, cache=None, env=None):
     }
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--product-root",
-        type=Path,
-        help="Use an existing checkout's HEAD for local/offline work; record the override",
-    )
-    args = parser.parse_args()
+def read_selection() -> dict:
     selection = json.loads((ROOT / "product-source.json").read_text())
     if selection.get(
         "repository"
@@ -115,7 +115,11 @@ def main() -> None:
         or "commit" in selection
     ):
         raise ValueError("Product source must follow the canonical main branch")
-    snapshot = prepare_checkout(selection, args.product_root, env=git_environment())
+    return selection
+
+
+def product_helpers(snapshot):
+    """Verify executable bytes before importing a product-owned private writer."""
     product = Path(snapshot["path"])
     integrity_spec = importlib.util.spec_from_file_location(
         "web_source_integrity", ROOT / "website/tools/source_integrity.py"
@@ -123,11 +127,23 @@ def main() -> None:
     integrity = importlib.util.module_from_spec(integrity_spec)
     integrity_spec.loader.exec_module(integrity)
     integrity.verify_checkout(product, snapshot["commit"])
+    spec = importlib.util.spec_from_file_location(
+        "verified_private_outputs", product / "scripts/verification_outputs.py"
+    )
+    private = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(private)
+    return integrity, private
+
+
+def prepare_inputs(snapshot, *, log=None):
+    """Prepare an already resolved snapshot; never resolve a moving ref again."""
+    product = Path(snapshot["path"])
+    integrity, private = product_helpers(snapshot)
     env = dict(os.environ)
     env.pop("PYTHONPATH", None)
     env.pop("UV_PROJECT_ENVIRONMENT", None)
     env.pop("RESOURCE_ATLAS_PRODUCT_ROOT", None)
-    run(["./scripts/setup-local-python.sh"], product, env=env)
+    run(["./scripts/setup-local-python.sh"], product, env=env, log=log)
     output = product / "website/.build/inputs" / ("web-" + uuid.uuid4().hex)
     run(
         [
@@ -141,12 +157,8 @@ def main() -> None:
         ],
         product,
         env=env,
+        log=log,
     )
-    spec = importlib.util.spec_from_file_location(
-        "verified_private_outputs", product / "scripts/verification_outputs.py"
-    )
-    private = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(private)
     run(
         [
             "uv",
@@ -159,12 +171,27 @@ def main() -> None:
         ],
         ROOT,
         env=env,
+        log=log,
     )
     integrity.verify_checkout(product, snapshot["commit"])
     target = ROOT / "website/.build/inputs"
     for name in ("inventory.json", "producer.json", "source-manifest.json"):
         private.write_private(ROOT, target / name, (output / name).read_bytes())
     private.write_private_json(ROOT, target / "product-location.json", snapshot)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--product-root",
+        type=Path,
+        help="Use an existing checkout's HEAD for local/offline work; record the override",
+    )
+    args = parser.parse_args()
+    snapshot = prepare_checkout(
+        read_selection(), args.product_root, env=git_environment()
+    )
+    prepare_inputs(snapshot)
     print(
         "Prepared main-tracking inputs and isolated website Python environment:",
         snapshot["commit"],
