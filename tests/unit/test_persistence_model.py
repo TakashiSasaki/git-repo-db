@@ -1,11 +1,17 @@
 """Separated design mapping regressions; no retained catalogue fixtures."""
 
 import copy
+import importlib.util
+import sqlite3
 import subprocess
 import sys
+from dataclasses import FrozenInstanceError, fields, is_dataclass
+from typing import get_type_hints
 
 import pytest
 
+from scripts import generate_persistence_rows
+from scripts.generate_persistence_rows import check_generated, render_modules
 from scripts.persistence_model import (
     MODEL,
     ROOT,
@@ -13,6 +19,7 @@ from scripts.persistence_model import (
     load_model,
     physical_references,
     render_markdown,
+    row_type_binding,
     validate_model,
 )
 from scripts.schema_catalog import build_catalog
@@ -26,6 +33,32 @@ def catalog():
 @pytest.fixture(scope="module")
 def model():
     return load_model()
+
+
+@pytest.fixture(scope="module")
+def row_types(model):
+    modules, classes = {}, {}
+    for record in model["classes"]:
+        binding = record["row_type"]
+        source = binding["path"]
+        if source not in modules:
+            name = "_persistence_rows_" + record["domain"]
+            spec = importlib.util.spec_from_file_location(name, ROOT / source)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
+            modules[source] = module
+        module = modules[source]
+        cls = getattr(module, binding["symbol"])
+        assert module.ROW_TYPES[record["table"]] is cls
+        classes[record["id"]] = cls
+    for source, module in modules.items():
+        assert set(module.ROW_TYPES) == {
+            record["table"]
+            for record in model["classes"]
+            if record["row_type"]["path"] == source
+        }
+    return classes
 
 
 def row(model, ident):
@@ -124,6 +157,20 @@ def test_current_separated_ddl_has_exactly_one_class_per_table(model, catalog):
             ),
             "Python role",
         ),
+        (
+            lambda m: row(m, "Core.Repository").update(row_type=None),
+            "row_type binding is required",
+        ),
+        (
+            lambda m: row(m, "Core.Repository")["row_type"].update(symbol="GoneRow"),
+            "dedicated domain module/name",
+        ),
+        (
+            lambda m: row(m, "Core.Repository")["row_type"].update(
+                path="packages/context/src/repo_catalog/adapters/sqlite/context_rows.py"
+            ),
+            "dedicated domain module/name",
+        ),
     ],
 )
 def test_missing_or_misclassified_correspondence_is_rejected(
@@ -148,8 +195,14 @@ def test_new_ddl_table_requires_a_mapping_without_a_fixed_table_count(model, cat
     extended = copy.deepcopy(model)
     extra = copy.deepcopy(row(extended, "Filesystem.CatalogMetadata"))
     extra.update(id="Filesystem.AdditionalMetadata", table="additional_metadata")
+    extra["row_type"] = row_type_binding(extra)
     extended["classes"].append(extra)
-    assert validate_model(extended, changed) == []
+    # The mapping accepts a new class without a fixed count. Its generated source
+    # must then be written before the default symbol/staleness checks can pass.
+    assert validate_model(extended, changed, inspect_row_types=False) == []
+    assert any(
+        "Python class not found" in error for error in validate_model(extended, changed)
+    )
 
 
 @pytest.mark.parametrize(
@@ -158,6 +211,7 @@ def test_new_ddl_table_requires_a_mapping_without_a_fixed_table_count(model, cat
         ("python", "Core.ScalarClaim", {"verified": True}),
         ("python", "Core.ScalarClaim", {"columns": ["field"]}),
         ("python", "Core.ScalarClaim", {"role": None}),
+        ("row_type", "Core.ScalarClaim", {"columns": ["field"]}),
         ("type-python", "Core.OID", {"verified": True}),
         ("type-python", "Core.OID", {"role": "row-input"}),
         ("external", "worktrees.filesystem-scan", {"physical_foreign_key": True}),
@@ -176,6 +230,8 @@ def test_nested_bindings_reject_copied_ddl_or_proof_fields(
         target = next(
             item for item in broken["nonpersistent_types"] if item["id"] == identifier
         )["python"]
+    elif section == "row_type":
+        target = row(broken, identifier)["row_type"]
     else:
         target = row(broken, identifier)["python"]
     target.update(change)
@@ -297,3 +353,239 @@ def test_malformed_input_fails_cleanly_without_emitting_a_report(tmp_path, paylo
     assert result.stdout == "" and "Traceback" not in result.stderr
     assert "Persistence mapping" in result.stderr
     assert MODEL.read_bytes() == before and source.read_text() == payload
+
+
+def sample_values(table):
+    """Primitive examples exercise codecs, without claiming domain admissibility."""
+    examples = {"TEXT": "value", "INTEGER": 7, "BLOB": b"\xff\x00path"}
+    return {column["name"]: examples[column["type"]] for column in table["columns"]}
+
+
+def test_every_generated_row_has_complete_typed_frozen_ddl_binding(
+    model, catalog, row_types
+):
+    for record in model["classes"]:
+        cls = row_types[record["id"]]
+        table = catalog["stores"][TARGET_FORMATS[record["domain"]]]["tables"][
+            record["table"]
+        ]
+        columns = table["columns"]
+        assert is_dataclass(cls) and cls.__dataclass_params__.frozen
+        assert (
+            tuple(field.name for field in fields(cls))
+            == cls.COLUMNS
+            == tuple(column["name"] for column in columns)
+        )
+        assert cls.WRITE_COLUMNS == tuple(
+            column["name"]
+            for column in columns
+            if not column["is_generated"] and not column["is_hidden"]
+        )
+        assert cls.KEY_COLUMNS == tuple(table["primary_key"])
+        hints = get_type_hints(cls)
+        primitive_types = {"TEXT": str, "INTEGER": int, "BLOB": bytes}
+        for column in columns:
+            expected = primitive_types[column["type"]]
+            if not column["notnull"]:
+                expected |= None
+            assert hints[column["name"]] == expected
+        values = sample_values(table)
+        decoded = cls.from_record(dict(reversed(list(values.items()))))
+        assert {
+            field.name: getattr(decoded, field.name) for field in fields(cls)
+        } == values
+        assert decoded.key_values() == tuple(
+            values[column] for column in table["primary_key"]
+        )
+        with pytest.raises(FrozenInstanceError):
+            setattr(decoded, cls.COLUMNS[0], "changed")
+        with pytest.raises(ValueError, match="full row"):
+            cls.from_record(
+                {key: value for key, value in values.items() if key != cls.COLUMNS[0]}
+            )
+        with pytest.raises(ValueError, match="unknown"):
+            cls.from_record({**values, "not_a_column": "extra"})
+
+
+def test_every_codec_preserves_nulls_and_rejects_coercion(model, catalog, row_types):
+    for record in model["classes"]:
+        cls = row_types[record["id"]]
+        table = catalog["stores"][TARGET_FORMATS[record["domain"]]]["tables"][
+            record["table"]
+        ]
+        values = sample_values(table)
+        writable = {column: values[column] for column in cls.WRITE_COLUMNS}
+        columns, bindings = cls.insert_bindings(dict(reversed(list(writable.items()))))
+        assert columns == cls.WRITE_COLUMNS
+        assert bindings == tuple(values[column] for column in columns)
+        for column in table["columns"]:
+            name = column["name"]
+            null_values = {**values, name: None}
+            if column["notnull"]:
+                with pytest.raises(TypeError, match=name):
+                    cls.from_record(null_values)
+            else:
+                assert getattr(cls.from_record(null_values), name) is None
+            # bool is an int subclass, but never an admitted INTEGER primitive.
+            wrong = True if column["type"] == "INTEGER" else 1
+            with pytest.raises(TypeError, match=name):
+                cls.from_record({**values, name: wrong})
+            if name in cls.WRITE_COLUMNS:
+                with pytest.raises(TypeError, match=name):
+                    cls.insert_bindings({**writable, name: wrong})
+                if column["default_value"] is None:
+                    with pytest.raises(ValueError, match="missing required"):
+                        cls.insert_bindings(
+                            {
+                                key: value
+                                for key, value in writable.items()
+                                if key != name
+                            }
+                        )
+                else:
+                    bound_columns, bound_values = cls.insert_bindings(
+                        {key: value for key, value in writable.items() if key != name}
+                    )
+                    assert name not in bound_columns
+                    assert bound_values == tuple(values[key] for key in bound_columns)
+            else:
+                with pytest.raises(ValueError, match="generated/hidden"):
+                    cls.insert_bindings({**writable, name: values[name]})
+        with pytest.raises(ValueError, match="unknown"):
+            cls.insert_bindings({**writable, "not_a_column": None})
+        # Direct construction has the same primitive validation as decoding.
+        with pytest.raises(TypeError):
+            cls(**{**values, cls.COLUMNS[0]: object()})
+
+
+def test_sqlite_rows_keep_raw_paths_generated_values_and_sql_defaults(
+    catalog, row_types
+):
+    from repo_catalog.adapters.sqlite.p1_schema import register_functions
+
+    def insert(db, table, cls, values):
+        columns, bindings = cls.insert_bindings(values)
+        names = ", ".join(f'"{name}"' for name in columns)
+        placeholders = ", ".join("?" for _ in columns)
+        db.execute(f'INSERT INTO "{table}" ({names}) VALUES ({placeholders})', bindings)
+        return cls.from_record(db.execute(f'SELECT * FROM "{table}"').fetchone())
+
+    with sqlite3.connect(":memory:") as db:
+        db.row_factory = sqlite3.Row
+        # These isolated tables exercise actual DDL codecs/defaults, not complete
+        # store admission, foreign-key relationships, or recovery semantics.
+        register_functions(db, "context")
+        for store, table in (
+            ("filesystem", "entries"),
+            ("p1.context", "field_candidates"),
+            ("p1.operational", "request_budgets"),
+        ):
+            db.execute(catalog["stores"][store]["tables"][table]["sql"])
+        entry_type = row_types["Filesystem.Entry"]
+        entry_values = dict.fromkeys(entry_type.WRITE_COLUMNS)
+        entry_values.update(
+            namespace_uuid="namespace",
+            scan_uuid="scan",
+            relative_path=b"\xffnative\x00path",
+            kind="directory",
+            hash_status="not-applicable",
+        )
+        entry = insert(db, "entries", entry_type, entry_values)
+        assert entry.relative_path == b"\xffnative\x00path"
+        assert entry.key_values() == ("namespace", "scan", b"\xffnative\x00path")
+        assert entry.size is None and entry.link_target is None
+
+        field_type = row_types["Context.FieldCandidate"]
+        field = insert(
+            db,
+            "field_candidates",
+            field_type,
+            {
+                "service_instance_uuidv4": "service",
+                "resource_kind": "issue",
+                "provider_resource_id": "resource",
+                "field_name": "title",
+                "value_json": '"title"',
+                "clock_json": '{"at_us":7,"domain":"source"}',
+                "provenance_json": '{"evidence":"test","source":"provider"}',
+                "observed_at_us": None,
+            },
+        )
+        assert field.clock_domain == "source" and field.source_clock_us == 7
+        assert field.text_body_sha256 is None
+        assert {"clock_domain", "source_clock_us", "text_body_sha256"}.isdisjoint(
+            field_type.WRITE_COLUMNS
+        )
+        with pytest.raises(ValueError, match="full row"):
+            field_type.from_record(
+                db.execute("SELECT field_name FROM field_candidates").fetchone()
+            )
+
+        budget = insert(
+            db,
+            "request_budgets",
+            row_types["Operational.RequestBudget"],
+            {
+                "request_origin_uuidv4": "origin",
+                "request_uuidv4": "request",
+                "work_kind": "input_bytes",
+                "finite_limit": 10,
+            },
+        )
+        assert budget.spent_or_reserved == 0
+
+
+def test_generated_modules_are_current_deterministic_and_independent(model, catalog):
+    assert check_generated(model, catalog) == []
+    modules = render_modules(model, catalog)
+    assert modules == render_modules(copy.deepcopy(model), copy.deepcopy(catalog))
+    assert len(modules) == len(TARGET_FORMATS)
+    for source, contents in modules.items():
+        assert (ROOT / source).read_bytes() == contents.encode("utf-8")
+        assert "repo_catalog" not in contents
+        assert "execute(" not in contents and "PRAGMA" not in contents
+
+
+def test_generator_check_is_read_only_and_write_repairs_only_derived_files(
+    model, catalog, tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setattr(generate_persistence_rows, "ROOT", tmp_path)
+    monkeypatch.setattr(generate_persistence_rows, "load_model", lambda: model)
+    monkeypatch.setattr(generate_persistence_rows, "build_catalog", lambda: catalog)
+    assert generate_persistence_rows.main([]) == 1
+    assert not list(tmp_path.iterdir())
+    assert "stale generated" in capsys.readouterr().err
+    assert generate_persistence_rows.main(["--write"]) == 0
+    before = {path: path.read_bytes() for path in tmp_path.rglob("*.py")}
+    assert len(before) == len(TARGET_FORMATS)
+    assert generate_persistence_rows.main(["--check"]) == 0
+    assert {path: path.read_bytes() for path in before} == before
+    stale = next(iter(before))
+    stale.write_bytes(before[stale] + b"# stale\n")
+    assert generate_persistence_rows.main([]) == 1
+    assert stale.read_bytes().endswith(b"# stale\n")
+    assert generate_persistence_rows.main(["--write"]) == 0
+    assert {path: path.read_bytes() for path in before} == before
+
+
+def test_generator_handles_hidden_columns_and_fails_closed_for_unknown_sql_types(
+    model, catalog
+):
+    changed = copy.deepcopy(catalog)
+    column = changed["stores"]["filesystem"]["tables"]["entries"]["columns"][2]
+    column["is_hidden"] = True
+    source = render_modules(model, changed)[
+        row(model, "Filesystem.Entry")["row_type"]["path"]
+    ]
+    namespace = {"__name__": "_persistence_rows_hidden_test"}
+    # A registered module is needed for dataclasses' standard annotation lookup.
+    import types
+
+    module = types.ModuleType(namespace["__name__"])
+    sys.modules[module.__name__] = module
+    exec(compile(source, "<generated hidden-column test>", "exec"), module.__dict__)
+    cls = module.EntryRow
+    assert "relative_path" in cls.COLUMNS and "relative_path" not in cls.WRITE_COLUMNS
+    column["type"] = "REAL"
+    with pytest.raises(ValueError, match="unsupported row column type"):
+        render_modules(model, changed)

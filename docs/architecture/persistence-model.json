@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "authority": "docs/adr/0043-separated-persistence-class-mapping.md",
   "scope": {
     "target": "separated-design-first",
@@ -7,7 +7,7 @@
     "retained_instances_read": 0,
     "ddl_keys_and_columns": "derived only; not copied into this registry",
     "coverage": "selected product tables from registered separated DDL; excludes SQLite internals and runtime-created virtual/shadow tables",
-    "python_binding_evidence": "AST definition presence plus curated input/projection classification; not serialization or semantic proof",
+    "python_binding_evidence": "row_type names dedicated DDL-generated frozen row codecs; python preserves observed input/projection bindings; neither proves admission/semantic correctness",
     "external_reference_scope": "catalogue-registered optional external references only; other cross-domain semantics remain unformalized"
   },
   "domains": {
@@ -47,7 +47,11 @@
       "table": "repositories",
       "kind": "entity",
       "python": null,
-      "note": "Stable repository UUID identity; claims and observations are separate rows."
+      "note": "Stable repository UUID identity; claims and observations are separate rows.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RepositoryRow"
+      }
     },
     {
       "id": "Core.GitObject",
@@ -55,7 +59,11 @@
       "table": "git_objects",
       "kind": "entity",
       "python": null,
-      "note": "Nominal object identity is the ordered object-format/OID pair, independent of retained bytes."
+      "note": "Nominal object identity is the ordered object-format/OID pair, independent of retained bytes.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "GitObjectRow"
+      }
     },
     {
       "id": "Core.RepositoryClaim",
@@ -67,7 +75,11 @@
         "symbol": "RepositoryClaim",
         "role": "row-input"
       },
-      "note": "Attributed repository field assertion; not a mutable repository property."
+      "note": "Attributed repository field assertion; not a mutable repository property.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RepositoryClaimRow"
+      }
     },
     {
       "id": "Core.ScalarClaim",
@@ -79,7 +91,11 @@
         "symbol": "ScalarClaim",
         "role": "row-input"
       },
-      "note": "Attributed scalar assertion about a nominal Git object."
+      "note": "Attributed scalar assertion about a nominal Git object.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "ScalarClaimRow"
+      }
     },
     {
       "id": "Core.RelationGroup",
@@ -91,7 +107,11 @@
         "symbol": "RelationGroup",
         "role": "row-input"
       },
-      "note": "Atomic scoped relation membership assertion; nested members encode into one membership value."
+      "note": "Atomic scoped relation membership assertion; nested members encode into one membership value.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RelationGroupRow"
+      }
     },
     {
       "id": "Core.GitObservation",
@@ -103,7 +123,11 @@
         "symbol": "GitObservation",
         "role": "row-input"
       },
-      "note": "Attributed capture occurrence with repository, kind, scope, value and provenance."
+      "note": "Attributed capture occurrence with repository, kind, scope, value and provenance.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "GitObservationRow"
+      }
     },
     {
       "id": "Core.RefObservation",
@@ -115,7 +139,11 @@
         "symbol": "RefObservation",
         "role": "row-input"
       },
-      "note": "Origin-qualified ref observation occurrence; name/source/visibility belong to its payload."
+      "note": "Origin-qualified ref observation occurrence; name/source/visibility belong to its payload.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RefObservationRow"
+      }
     },
     {
       "id": "Core.RefObservationClaim",
@@ -127,7 +155,11 @@
         "symbol": "RefObservationClaim",
         "role": "row-input"
       },
-      "note": "Attributed presence/absence/ref-form result for one ref observation."
+      "note": "Attributed presence/absence/ref-form result for one ref observation.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RefObservationClaimRow"
+      }
     },
     {
       "id": "Core.RefEnumerationObservation",
@@ -139,7 +171,11 @@
         "symbol": "RefEnumerationObservation",
         "role": "row-input"
       },
-      "note": "Scoped enumeration event; its completion and link count do not replace the member links."
+      "note": "Scoped enumeration event; its completion and link count do not replace the member links.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RefEnumerationObservationRow"
+      }
     },
     {
       "id": "Core.RefEnumerationLink",
@@ -151,7 +187,11 @@
         "symbol": "RefEnumerationLink",
         "role": "row-input"
       },
-      "note": "Ordered link between an enumeration and an attributed ref result."
+      "note": "Ordered link between an enumeration and an attributed ref result.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RefEnumerationLinkRow"
+      }
     },
     {
       "id": "Core.NotesMapping",
@@ -163,7 +203,11 @@
         "symbol": "NotesMapping",
         "role": "row-input"
       },
-      "note": "Shared interpretation of a captured root/target/note/path; not repository membership or file-body permission."
+      "note": "Shared interpretation of a captured root/target/note/path; not repository membership or file-body permission.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "NotesMappingRow"
+      }
     },
     {
       "id": "Core.NotesMappingClaim",
@@ -175,7 +219,11 @@
         "symbol": "NotesMappingClaim",
         "role": "row-input"
       },
-      "note": "Attribution connecting an exact ref claim and a shared mapping."
+      "note": "Attribution connecting an exact ref claim and a shared mapping.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "NotesMappingClaimRow"
+      }
     },
     {
       "id": "Core.NotesMappingGroup",
@@ -187,7 +235,11 @@
         "symbol": "NotesMappingGroup",
         "role": "row-input"
       },
-      "note": "Atomic scoped mapping membership assertion for an exact ref claim."
+      "note": "Atomic scoped mapping membership assertion for an exact ref claim.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "NotesMappingGroupRow"
+      }
     },
     {
       "id": "Core.NotesMappingEvidence",
@@ -199,7 +251,11 @@
         "symbol": "NotesMappingEvidenceRecord",
         "role": "row-input"
       },
-      "note": "Receiver evidence for one attributed mapping; evidence is separate from a source assertion."
+      "note": "Receiver evidence for one attributed mapping; evidence is separate from a source assertion.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "NotesMappingEvidenceRow"
+      }
     },
     {
       "id": "Core.RetainedMetadata",
@@ -207,7 +263,11 @@
       "table": "retained_metadata",
       "kind": "entity",
       "python": null,
-      "note": "Permitted Git metadata representation and its physical-copy identity; this is domain data, not store infrastructure."
+      "note": "Permitted Git metadata representation and its physical-copy identity; this is domain data, not store infrastructure.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RetainedMetadataRow"
+      }
     },
     {
       "id": "Core.RetainedNote",
@@ -215,7 +275,11 @@
       "table": "ref_retained_notes",
       "kind": "entity",
       "python": null,
-      "note": "Allowed note body representation with a physical-copy identity; no ordinary file-body archive."
+      "note": "Allowed note body representation with a physical-copy identity; no ordinary file-body archive.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RetainedNoteRow"
+      }
     },
     {
       "id": "Core.IntrinsicClaim",
@@ -223,7 +287,11 @@
       "table": "intrinsic_claims",
       "kind": "association",
       "python": null,
-      "note": "Receiver-derived scalar evidence qualified by the physical copy used."
+      "note": "Receiver-derived scalar evidence qualified by the physical copy used.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "IntrinsicClaimRow"
+      }
     },
     {
       "id": "Core.IntrinsicGroup",
@@ -231,7 +299,11 @@
       "table": "intrinsic_groups",
       "kind": "association",
       "python": null,
-      "note": "Receiver-derived relation evidence qualified by the physical copy used."
+      "note": "Receiver-derived relation evidence qualified by the physical copy used.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "IntrinsicGroupRow"
+      }
     },
     {
       "id": "Core.CoverageScope",
@@ -243,7 +315,11 @@
         "symbol": "CoreCoverageScope",
         "role": "row-input"
       },
-      "note": "Typed coverage owner coordinate in Core; independent of the identically named Context table."
+      "note": "Typed coverage owner coordinate in Core; independent of the identically named Context table.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "CoverageScopeRow"
+      }
     },
     {
       "id": "Core.CoverageClaim",
@@ -251,7 +327,11 @@
       "table": "coverage_claims",
       "kind": "association",
       "python": null,
-      "note": "One attributed coverage state/time coordinate; shared Contracts values are not a dedicated Core row type."
+      "note": "One attributed coverage state/time coordinate; shared Contracts values are not a dedicated Core row type.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "CoverageClaimRow"
+      }
     },
     {
       "id": "Core.CoreCoverageProof",
@@ -259,7 +339,11 @@
       "table": "core_coverage_proofs",
       "kind": "association",
       "python": null,
-      "note": "Core-specific evidence for an exact coverage claim; not an infrastructure health marker."
+      "note": "Core-specific evidence for an exact coverage claim; not an infrastructure health marker.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "CoreCoverageProofRow"
+      }
     },
     {
       "id": "Core.RefCoverageProof",
@@ -267,7 +351,11 @@
       "table": "ref_coverage_proofs",
       "kind": "association",
       "python": null,
-      "note": "Evidence connecting exact ref/mapping group coordinates to an exact coverage claim."
+      "note": "Evidence connecting exact ref/mapping group coordinates to an exact coverage claim.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RefCoverageProofRow"
+      }
     },
     {
       "id": "Core.StoreIdentity",
@@ -275,7 +363,11 @@
       "table": "store_identity",
       "kind": "infrastructure",
       "python": null,
-      "note": "Core format/instance metadata; row role says nothing about mutability or recovery policy."
+      "note": "Core format/instance metadata; row role says nothing about mutability or recovery policy.",
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "StoreIdentityRow"
+      }
     },
     {
       "id": "Context.ServiceInstance",
@@ -283,7 +375,11 @@
       "table": "providers",
       "kind": "entity",
       "python": null,
-      "note": "Service-instance UUID registration, distinct from a local connection or access scope."
+      "note": "Service-instance UUID registration, distinct from a local connection or access scope.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "ServiceInstanceRow"
+      }
     },
     {
       "id": "Context.SourceRegistration",
@@ -291,7 +387,11 @@
       "table": "sources",
       "kind": "entity",
       "python": null,
-      "note": "Source-registration identity and registration payload, independent of source inventory evidence."
+      "note": "Source-registration identity and registration payload, independent of source inventory evidence.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "SourceRegistrationRow"
+      }
     },
     {
       "id": "Context.Resource",
@@ -299,7 +399,11 @@
       "table": "resources",
       "kind": "entity",
       "python": null,
-      "note": "Service-scoped typed resource identity; ResourceKey is a value, not this persistent row."
+      "note": "Service-scoped typed resource identity; ResourceKey is a value, not this persistent row.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "ResourceRow"
+      }
     },
     {
       "id": "Context.FieldCandidate",
@@ -311,7 +415,11 @@
         "symbol": "FieldCandidate",
         "role": "row-input"
       },
-      "note": "Attributed field candidate with nested resource/clock values and adapter-derived columns."
+      "note": "Attributed field candidate with nested resource/clock values and adapter-derived columns.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "FieldCandidateRow"
+      }
     },
     {
       "id": "Context.TextBody",
@@ -319,7 +427,11 @@
       "table": "text_bodies",
       "kind": "entity",
       "python": null,
-      "note": "Exact Context text bytes indexed by SHA-256; unrelated to ordinary repository-file content retention."
+      "note": "Exact Context text bytes indexed by SHA-256; unrelated to ordinary repository-file content retention.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "TextBodyRow"
+      }
     },
     {
       "id": "Context.ResourceRelation",
@@ -331,7 +443,11 @@
         "symbol": "ResourceRelation",
         "role": "row-input"
       },
-      "note": "Scoped resource relation with atomic member representation."
+      "note": "Scoped resource relation with atomic member representation.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "ResourceRelationRow"
+      }
     },
     {
       "id": "Context.ResourceRepositoryRelation",
@@ -343,7 +459,11 @@
         "symbol": "ResourceRepositoryRelation",
         "role": "row-input"
       },
-      "note": "Attributed typed repository relation; nested claim coordinates are flattened by the adapter."
+      "note": "Attributed typed repository relation; nested claim coordinates are flattened by the adapter.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "ResourceRepositoryRelationRow"
+      }
     },
     {
       "id": "Context.RepositoryMappingDisposition",
@@ -355,7 +475,11 @@
         "symbol": "MappingDisposition",
         "role": "row-input"
       },
-      "note": "Immutable disposition of an exact mapping claim; not a mutable canonical repository shortcut."
+      "note": "Immutable disposition of an exact mapping claim; not a mutable canonical repository shortcut.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "RepositoryMappingDispositionRow"
+      }
     },
     {
       "id": "Context.RepositoryContext",
@@ -363,7 +487,11 @@
       "table": "repository_context",
       "kind": "entity",
       "python": null,
-      "note": "Context-local registration of a repository coordinate; does not own Core repository identity."
+      "note": "Context-local registration of a repository coordinate; does not own Core repository identity.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "RepositoryContextRow"
+      }
     },
     {
       "id": "Context.SourceRepository",
@@ -371,7 +499,11 @@
       "table": "source_repositories",
       "kind": "association",
       "python": null,
-      "note": "Known positive Source/Repository membership; partial inventories do not delete previous positives."
+      "note": "Known positive Source/Repository membership; partial inventories do not delete previous positives.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "SourceRepositoryRow"
+      }
     },
     {
       "id": "Context.SourceInventoryEvidence",
@@ -379,7 +511,11 @@
       "table": "source_inventory_evidence",
       "kind": "association",
       "python": null,
-      "note": "Attributed scoped source inventory evidence, including honest terminal and member coordinates."
+      "note": "Attributed scoped source inventory evidence, including honest terminal and member coordinates.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "SourceInventoryEvidenceRow"
+      }
     },
     {
       "id": "Context.Collection",
@@ -387,7 +523,11 @@
       "table": "collections",
       "kind": "entity",
       "python": null,
-      "note": "Collection scope/registration for a resource; one CollectionObservation input is not a stand-alone row mirror."
+      "note": "Collection scope/registration for a resource; one CollectionObservation input is not a stand-alone row mirror.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "CollectionRow"
+      }
     },
     {
       "id": "Context.CollectionTerminal",
@@ -395,7 +535,11 @@
       "table": "collection_terminals",
       "kind": "association",
       "python": null,
-      "note": "One attributed terminal collection observation, independent of collection registration."
+      "note": "One attributed terminal collection observation, independent of collection registration.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "CollectionTerminalRow"
+      }
     },
     {
       "id": "Context.CoreReference",
@@ -407,7 +551,11 @@
         "symbol": "CoreReference",
         "role": "row-input"
       },
-      "note": "Resource-associated nominal Git object coordinate; cross-domain meaning is not a cross-file physical FK."
+      "note": "Resource-associated nominal Git object coordinate; cross-domain meaning is not a cross-file physical FK.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "CoreReferenceRow"
+      }
     },
     {
       "id": "Context.CoverageScope",
@@ -419,7 +567,11 @@
         "symbol": "CoverageScope",
         "role": "row-input"
       },
-      "note": "Context-owned typed coverage coordinate, separate from Core coverage."
+      "note": "Context-owned typed coverage coordinate, separate from Core coverage.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "CoverageScopeRow"
+      }
     },
     {
       "id": "Context.CoverageClaim",
@@ -427,7 +579,11 @@
       "table": "coverage_claims",
       "kind": "association",
       "python": null,
-      "note": "One Context coverage claim; shared helper values are not a dedicated row class."
+      "note": "One Context coverage claim; shared helper values are not a dedicated row class.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "CoverageClaimRow"
+      }
     },
     {
       "id": "Context.CoverageProof",
@@ -435,7 +591,11 @@
       "table": "coverage_proofs",
       "kind": "association",
       "python": null,
-      "note": "Evidence connecting exact collection terminal and coverage coordinates."
+      "note": "Evidence connecting exact collection terminal and coverage coordinates.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "CoverageProofRow"
+      }
     },
     {
       "id": "Context.SourceCoverageProof",
@@ -443,7 +603,11 @@
       "table": "source_coverage_proofs",
       "kind": "association",
       "python": null,
-      "note": "Evidence connecting exact source inventory and coverage coordinates."
+      "note": "Evidence connecting exact source inventory and coverage coordinates.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "SourceCoverageProofRow"
+      }
     },
     {
       "id": "Context.StoreIdentity",
@@ -451,7 +615,11 @@
       "table": "store_identity",
       "kind": "infrastructure",
       "python": null,
-      "note": "Context instance/format metadata; independent of the Core store identity."
+      "note": "Context instance/format metadata; independent of the Core store identity.",
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "StoreIdentityRow"
+      }
     },
     {
       "id": "Access.AccessScope",
@@ -463,7 +631,11 @@
         "symbol": "AccessScope",
         "role": "row-input"
       },
-      "note": "Local execution/approval boundary identified by scope UUID."
+      "note": "Local execution/approval boundary identified by scope UUID.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "AccessScopeRow"
+      }
     },
     {
       "id": "Access.ScopeLocatorRegistration",
@@ -475,7 +647,11 @@
         "symbol": "ScopeLocatorRegistration",
         "role": "row-input"
       },
-      "note": "Append registration occurrence keyed by scope, registration time and raw locator URI."
+      "note": "Append registration occurrence keyed by scope, registration time and raw locator URI.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "ScopeLocatorRegistrationRow"
+      }
     },
     {
       "id": "Access.ScopeLocatorControl",
@@ -483,7 +659,11 @@
       "table": "scope_locator_controls",
       "kind": "entity",
       "python": null,
-      "note": "Mutable enabled control for an exact registration occurrence; not part of the immutable registration payload."
+      "note": "Mutable enabled control for an exact registration occurrence; not part of the immutable registration payload.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "ScopeLocatorControlRow"
+      }
     },
     {
       "id": "Access.ScopeExecutionContext",
@@ -495,7 +675,11 @@
         "symbol": "ScopeExecutionContext",
         "role": "row-input"
       },
-      "note": "Scope-specific execution configuration; adapter column names need not match Python attribute names."
+      "note": "Scope-specific execution configuration; adapter column names need not match Python attribute names.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "ScopeExecutionContextRow"
+      }
     },
     {
       "id": "Access.ConnectionConfiguration",
@@ -507,7 +691,11 @@
         "symbol": "ConnectionConfiguration",
         "role": "row-input"
       },
-      "note": "Named local connection configuration within an Access scope."
+      "note": "Named local connection configuration within an Access scope.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "ConnectionConfigurationRow"
+      }
     },
     {
       "id": "Access.RepositoryBinding",
@@ -519,7 +707,11 @@
         "symbol": "RepositoryBinding",
         "role": "row-input"
       },
-      "note": "Local locator/repository binding, not Core repository identity."
+      "note": "Local locator/repository binding, not Core repository identity.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "RepositoryBindingRow"
+      }
     },
     {
       "id": "Access.LocatorConnection",
@@ -531,7 +723,11 @@
         "symbol": "LocatorConnection",
         "role": "row-input"
       },
-      "note": "Purpose-specific connection assignment to a local locator."
+      "note": "Purpose-specific connection assignment to a local locator.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "LocatorConnectionRow"
+      }
     },
     {
       "id": "Access.AccessPreference",
@@ -543,7 +739,11 @@
         "symbol": "AccessPreference",
         "role": "row-input"
       },
-      "note": "Local preferred locator/connection for a repository, scope and purpose."
+      "note": "Local preferred locator/connection for a repository, scope and purpose.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "AccessPreferenceRow"
+      }
     },
     {
       "id": "Access.LocalAccessGrant",
@@ -555,7 +755,11 @@
         "symbol": "LocalAccessGrant",
         "role": "row-input"
       },
-      "note": "Local approval bound to a reviewed plan; existence does not grant perpetual approval after configuration changes."
+      "note": "Local approval bound to a reviewed plan; existence does not grant perpetual approval after configuration changes.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "LocalAccessGrantRow"
+      }
     },
     {
       "id": "Access.StoreIdentity",
@@ -563,7 +767,11 @@
       "table": "access_identity",
       "kind": "infrastructure",
       "python": null,
-      "note": "Access instance metadata; not a seventh field on an AccessScope."
+      "note": "Access instance metadata; not a seventh field on an AccessScope.",
+      "row_type": {
+        "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+        "symbol": "StoreIdentityRow"
+      }
     },
     {
       "id": "Operational.AcquisitionRequest",
@@ -571,7 +779,11 @@
       "table": "acquisition_requests",
       "kind": "entity",
       "python": null,
-      "note": "Explicit durable cumulative work request; retries and continuations do not reset request scope."
+      "note": "Explicit durable cumulative work request; retries and continuations do not reset request scope.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "AcquisitionRequestRow"
+      }
     },
     {
       "id": "Operational.RequestBudget",
@@ -579,7 +791,11 @@
       "table": "request_budgets",
       "kind": "entity",
       "python": null,
-      "note": "Finite request/work-kind budget and cached accounting; actual accounting remains independently checked."
+      "note": "Finite request/work-kind budget and cached accounting; actual accounting remains independently checked.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "RequestBudgetRow"
+      }
     },
     {
       "id": "Operational.AcquisitionAttempt",
@@ -587,7 +803,11 @@
       "table": "acquisition_attempts",
       "kind": "entity",
       "python": null,
-      "note": "One execution attempt under an explicit request."
+      "note": "One execution attempt under an explicit request.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "AcquisitionAttemptRow"
+      }
     },
     {
       "id": "Operational.WorkAccounting",
@@ -595,7 +815,11 @@
       "table": "work_accounting",
       "kind": "association",
       "python": null,
-      "note": "Durable reservation/actual-work coordinates; failed or replayed work is not free."
+      "note": "Durable reservation/actual-work coordinates; failed or replayed work is not free.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "WorkAccountingRow"
+      }
     },
     {
       "id": "Operational.RequestContinuation",
@@ -603,7 +827,11 @@
       "table": "request_continuations",
       "kind": "entity",
       "python": null,
-      "note": "Scoped durable cursor/checkpoint, including canonical Exchange package bindings where used."
+      "note": "Scoped durable cursor/checkpoint, including canonical Exchange package bindings where used.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "RequestContinuationRow"
+      }
     },
     {
       "id": "Operational.RetryState",
@@ -611,7 +839,11 @@
       "table": "retry_state",
       "kind": "entity",
       "python": null,
-      "note": "Request-scoped retry schedule/reason; no automatic resume after loss of required Operational state."
+      "note": "Request-scoped retry schedule/reason; no automatic resume after loss of required Operational state.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "RetryStateRow"
+      }
     },
     {
       "id": "Operational.CacheLocator",
@@ -619,7 +851,11 @@
       "table": "cache_locators",
       "kind": "association",
       "python": null,
-      "note": "Locator for reusable metadata/verified-notes cache; reuse never substitutes for required authoritative evidence."
+      "note": "Locator for reusable metadata/verified-notes cache; reuse never substitutes for required authoritative evidence.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "CacheLocatorRow"
+      }
     },
     {
       "id": "Operational.StoreIdentity",
@@ -627,7 +863,11 @@
       "table": "store_identity",
       "kind": "infrastructure",
       "python": null,
-      "note": "Operational instance identity; required request/recovery state is not classified wholesale as disposable."
+      "note": "Operational instance identity; required request/recovery state is not classified wholesale as disposable.",
+      "row_type": {
+        "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+        "symbol": "StoreIdentityRow"
+      }
     },
     {
       "id": "Search.SearchProjection",
@@ -635,7 +875,11 @@
       "table": "search_projections",
       "kind": "projection",
       "python": null,
-      "note": "Derivative projection generation tied to its exact authority snapshot, not canonical product data."
+      "note": "Derivative projection generation tied to its exact authority snapshot, not canonical product data.",
+      "row_type": {
+        "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+        "symbol": "SearchProjectionRow"
+      }
     },
     {
       "id": "Search.SearchDocument",
@@ -643,7 +887,11 @@
       "table": "search_documents",
       "kind": "projection",
       "python": null,
-      "note": "Searchable derivative document for a qualified projection generation."
+      "note": "Searchable derivative document for a qualified projection generation.",
+      "row_type": {
+        "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+        "symbol": "SearchDocumentRow"
+      }
     },
     {
       "id": "Search.StoreIdentity",
@@ -651,7 +899,11 @@
       "table": "store_identity",
       "kind": "infrastructure",
       "python": null,
-      "note": "Search store metadata; ordinary authoritative reads need not create a Search DB."
+      "note": "Search store metadata; ordinary authoritative reads need not create a Search DB.",
+      "row_type": {
+        "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+        "symbol": "StoreIdentityRow"
+      }
     },
     {
       "id": "Filesystem.CatalogMetadata",
@@ -659,7 +911,11 @@
       "table": "catalog_metadata",
       "kind": "infrastructure",
       "python": null,
-      "note": "Filesystem catalogue namespace/configuration metadata; not a scanned-file entity."
+      "note": "Filesystem catalogue namespace/configuration metadata; not a scanned-file entity.",
+      "row_type": {
+        "path": "packages/filesystem/src/repo_catalog/filesystem/rows.py",
+        "symbol": "CatalogMetadataRow"
+      }
     },
     {
       "id": "Filesystem.Scan",
@@ -667,7 +923,11 @@
       "table": "scans",
       "kind": "entity",
       "python": null,
-      "note": "Namespace-qualified scan occurrence with a root_path value; no separate roots table is implied."
+      "note": "Namespace-qualified scan occurrence with a root_path value; no separate roots table is implied.",
+      "row_type": {
+        "path": "packages/filesystem/src/repo_catalog/filesystem/rows.py",
+        "symbol": "ScanRow"
+      }
     },
     {
       "id": "Filesystem.Entry",
@@ -675,7 +935,11 @@
       "table": "entries",
       "kind": "entity",
       "python": null,
-      "note": "Raw-path entry within one namespace and scan; all three key components are required."
+      "note": "Raw-path entry within one namespace and scan; all three key components are required.",
+      "row_type": {
+        "path": "packages/filesystem/src/repo_catalog/filesystem/rows.py",
+        "symbol": "EntryRow"
+      }
     },
     {
       "id": "Filesystem.ScanOutcome",
@@ -683,7 +947,11 @@
       "table": "scan_outcomes",
       "kind": "entity",
       "python": null,
-      "note": "Observed termination/partial-result facts for an exact scan; no synthetic completeness."
+      "note": "Observed termination/partial-result facts for an exact scan; no synthetic completeness.",
+      "row_type": {
+        "path": "packages/filesystem/src/repo_catalog/filesystem/rows.py",
+        "symbol": "ScanOutcomeRow"
+      }
     },
     {
       "id": "Worktrees.CatalogIdentity",
@@ -691,7 +959,11 @@
       "table": "catalog_identity",
       "kind": "infrastructure",
       "python": null,
-      "note": "Independent worktree catalogue identity; does not turn Local composition into a store."
+      "note": "Independent worktree catalogue identity; does not turn Local composition into a store.",
+      "row_type": {
+        "path": "packages/worktrees/src/repo_catalog/worktrees/rows.py",
+        "symbol": "CatalogIdentityRow"
+      }
     },
     {
       "id": "Worktrees.Observation",
@@ -699,7 +971,11 @@
       "table": "observations",
       "kind": "entity",
       "python": null,
-      "note": "One worktree/topology observation with its own execution scope."
+      "note": "One worktree/topology observation with its own execution scope.",
+      "row_type": {
+        "path": "packages/worktrees/src/repo_catalog/worktrees/rows.py",
+        "symbol": "ObservationRow"
+      }
     },
     {
       "id": "Worktrees.Worktree",
@@ -707,7 +983,11 @@
       "table": "worktrees",
       "kind": "entity",
       "python": null,
-      "note": "Root-path worktree observation keyed with its enclosing observation UUID."
+      "note": "Root-path worktree observation keyed with its enclosing observation UUID.",
+      "row_type": {
+        "path": "packages/worktrees/src/repo_catalog/worktrees/rows.py",
+        "symbol": "WorktreeRow"
+      }
     },
     {
       "id": "Worktrees.ScanReference",
@@ -715,7 +995,11 @@
       "table": "scan_references",
       "kind": "association",
       "python": null,
-      "note": "Qualified optional link from a worktree observation to a Filesystem scan; no cross-DB transaction."
+      "note": "Qualified optional link from a worktree observation to a Filesystem scan; no cross-DB transaction.",
+      "row_type": {
+        "path": "packages/worktrees/src/repo_catalog/worktrees/rows.py",
+        "symbol": "ScanReferenceRow"
+      }
     },
     {
       "id": "Worktrees.RepositoryLink",
@@ -723,7 +1007,11 @@
       "table": "repository_links",
       "kind": "association",
       "python": null,
-      "note": "Attributed common-dir/Repository association; absence of optional Core data stays unresolved."
+      "note": "Attributed common-dir/Repository association; absence of optional Core data stays unresolved.",
+      "row_type": {
+        "path": "packages/worktrees/src/repo_catalog/worktrees/rows.py",
+        "symbol": "RepositoryLinkRow"
+      }
     }
   ],
   "nonpersistent_types": [
@@ -992,7 +1280,7 @@
     },
     {
       "id": "python-row-bindings",
-      "detail": "A logical persistent class is a design assignment, not a claim that a Python class of that name already exists. Null python means no dedicated row type recorded; SQL/adapters may already implement the complete capability. Observed row inputs may be nested or expand into derived columns. Complete key/field serialization needs later adapter-specific verification."
+      "detail": "Each persistent class has a dedicated DDL-generated row_type binding. The separate python binding remains an observed input/projection, which may contain nested values, expand into derived columns or require outer context. Codec completeness does not prove adapter input serialization or admission correctness."
     },
     {
       "id": "root-and-scan-aggregate",
@@ -1000,7 +1288,7 @@
     },
     {
       "id": "worktree-context-key",
-      "detail": "WorktreeEntry receives observation identity from its enclosing DiscoveryResult/context. A future dedicated Worktree row binding must explicitly include observation_uuid plus root_path; the current scoped DTO is not itself evidence of broken storage."
+      "detail": "WorktreeEntry receives observation identity from its enclosing DiscoveryResult/context. The generated WorktreeRow carries observation_uuid plus root_path; the scoped DTO remains separate and does not prove its adapter binding."
     },
     {
       "id": "coverage-and-website",

@@ -60,6 +60,12 @@ offline CI work. Apply the [efficient agent execution policy](#efficient-agent-e
   inputs/DTOs are distinguished from row classes; this is structural checking,
   not serialization/semantic proof. Runtime cutover, normal-code retirement and
   web explanations remain later work. Never mutate retained DBs for this check.
+  Dedicated persistence row classes are generated from that mapping and actual
+  DDL: use `scripts/local-run.sh python scripts/generate_persistence_rows.py
+  --write` after a schema/class-assignment change, and `--check` for a read-only
+  staleness check. Keep ordinary input/projection bindings separate from
+  `row_type`; do not hand-edit generated modules or force partial/body-avoiding
+  projections to load full rows. Each domain's generated module is stdlib-only.
 
 - [ADR 0039](docs/adr/0039-independent-filesystem-and-worktree-catalogs.md) adds
   independent filesystem and worktree authorities and an optional DB-free local

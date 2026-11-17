@@ -103,6 +103,7 @@ def inventory() -> list[dict]:
                 "vite.config.mjs",
                 "scripts/schema_inventory.py",
                 "scripts/persistence_model.py",
+                "scripts/generate_persistence_rows.py",
                 "scripts/content_inventory.py",
                 "scripts/export_web_inputs.py",
                 "scripts/check_web_boundary.py",

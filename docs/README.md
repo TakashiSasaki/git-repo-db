@@ -24,6 +24,13 @@ structural coverage, or `--format markdown` to print DDL-derived fields, ordered
 keys and physical FKs alongside Python input/projection correspondence. Keep the
 JSON assignment canonical; generated reports are not another editable source.
 Normal startup and web presentation remain independent of this design increment.
+Dedicated row classes are checked-in generated product sources in each owning
+domain. Regenerate with `scripts/local-run.sh python scripts/generate_persistence_rows.py
+--write`, or use `--check` to compare without writing. The version-2 mapping
+records `row_type` separately from existing Python input/projection bindings.
+Generated/hidden SQL columns are readable but excluded from INSERT bindings;
+omitted SQL defaults remain SQLite's responsibility. Codecs check primitive
+shape, not admission, recovery or authorization semantics.
 
 For the file-by-file inventory, run `scripts/local-run.sh python scripts/content_inventory.py`
 from the repository root. The reviewed `docs/content-inventory.json` records each
