@@ -28,6 +28,8 @@ from repo_catalog.domain.query_contracts import (
 )
 from repo_catalog.domain.search_query import SEARCH_PROJECTION_KINDS
 
+from .search_row_bindings import insert_values
+
 
 class BoundedDocuments(dict):
     """Finite derivative working set, checked before retaining each document."""
@@ -93,13 +95,16 @@ def _replace_projection_rows(db, projection_kind, snapshot_token, documents):
         )
         db.execute(
             "INSERT INTO search_projections VALUES(?,?)",
-            (projection_kind, snapshot_token),
+            insert_values("search_projections", (projection_kind, snapshot_token)),
         )
         if documents:
             db.executemany(
                 "INSERT INTO search_documents VALUES(?,?,?,?)",
                 [
-                    (projection_kind, snapshot_token, doc_key, text)
+                    insert_values(
+                        "search_documents",
+                        (projection_kind, snapshot_token, doc_key, text),
+                    )
                     for doc_key, text in sorted(documents.items())
                 ],
             )

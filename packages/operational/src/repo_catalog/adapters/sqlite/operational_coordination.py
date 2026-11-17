@@ -20,6 +20,8 @@ from repo_catalog.domain.p1_coordination import (
 )
 from repo_catalog.domain.shared_values import CoreFailure
 
+from .operational_row_bindings import insert_values
+
 
 class WorkLedger:
     """Durable finite request accounting, with mandatory loss-detecting checkpoints.
@@ -260,18 +262,37 @@ class WorkLedger:
         try:
             self.db.execute(
                 "INSERT INTO acquisition_requests VALUES(?,?,?,'open')",
-                (*request.values(), scope),
+                insert_values(
+                    "acquisition_requests",
+                    (*request.values(), scope),
+                    constants={"state": "open"},
+                ),
             )
             self.db.executemany(
                 "INSERT INTO request_budgets(request_origin_uuidv4,request_uuidv4,work_kind,finite_limit) VALUES(?,?,?,?)",
-                [(*request.values(), kind, limit) for kind, limit in limits.items()],
+                [
+                    insert_values(
+                        "request_budgets",
+                        (*request.values(), kind, limit),
+                        columns=(
+                            "request_origin_uuidv4",
+                            "request_uuidv4",
+                            "work_kind",
+                            "finite_limit",
+                        ),
+                    )
+                    for kind, limit in limits.items()
+                ],
             )
             self.db.execute(
                 "INSERT INTO request_continuations VALUES(?,?,?,?)",
-                (
-                    *request.values(),
-                    self._CHECKPOINT_SCOPE,
-                    _json(self._empty_checkpoint(scope, limits)),
+                insert_values(
+                    "request_continuations",
+                    (
+                        *request.values(),
+                        self._CHECKPOINT_SCOPE,
+                        _json(self._empty_checkpoint(scope, limits)),
+                    ),
                 ),
             )
             stamp = self._stamp()
@@ -293,7 +314,7 @@ class WorkLedger:
             self._toggle(checkpoint, "continuation_xor", (scope, old[0]))
         self.db.execute(
             "INSERT INTO request_continuations VALUES(?,?,?,?) ON CONFLICT(request_origin_uuidv4,request_uuidv4,continuation_scope_json) DO UPDATE SET cursor_json=excluded.cursor_json",
-            (*request.values(), scope, value),
+            insert_values("request_continuations", (*request.values(), scope, value)),
         )
         self._toggle(checkpoint, "continuation_xor", (scope, value))
 
@@ -301,7 +322,10 @@ class WorkLedger:
         with self._checked(request, write=True) as checkpoint:
             self.db.execute(
                 "INSERT INTO acquisition_attempts VALUES(?,?,?,?)",
-                (*request.values(), attempt_uuidv4, continuation),
+                insert_values(
+                    "acquisition_attempts",
+                    (*request.values(), attempt_uuidv4, continuation),
+                ),
             )
             checkpoint["attempt_count"] += 1
             self._toggle(checkpoint, "attempt_xor", (attempt_uuidv4, continuation))
@@ -329,7 +353,11 @@ class WorkLedger:
     ):
         self.db.execute(
             "INSERT INTO work_accounting VALUES(?,?,?,?,?,?,NULL)",
-            (*request.values(), attempt, kind, coordinate, amount),
+            insert_values(
+                "work_accounting",
+                (*request.values(), attempt, kind, coordinate, amount),
+                constants={"actual": None},
+            ),
         )
         checkpoint["work_count"] += 1
         checkpoint["usage"][kind] += amount

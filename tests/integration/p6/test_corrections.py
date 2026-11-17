@@ -16,6 +16,7 @@ from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.application.query_pagination import _paginate_items
 from repo_catalog.domain.context_admission import DependencySet
+from repo_catalog.domain.core_query import validate_cursor_key
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
@@ -305,6 +306,7 @@ def test_page_selection_memory_scales_with_limit_not_catalog(tmp_path):
             key_fn=lambda item: item.key,
             page=PageRequest(limit=5),
             endpoint_kind="git_objects",
+            cursor_validator=validate_cursor_key,
             filters={},
             snapshot_token=token,
         )

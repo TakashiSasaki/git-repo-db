@@ -21,6 +21,8 @@ from repo_catalog.adapters.sqlite.catalog_runtime import (
     persist_catalog_stop,
 )
 from repo_catalog.adapters.sqlite.context_admission import admission_checked
+from repo_catalog.adapters.sqlite.context_row_bindings import context_write_values
+from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.context_registration import registration_json
@@ -252,6 +254,22 @@ _EXPORT_CONTEXT_ROWS = {
             "provenance_json",
         ),
     ),
+}
+
+
+# Bind codecs only for selections that already materialize complete table rows.
+# Resource, field, text and relation projections retain their narrower contracts.
+_EXPORT_CONTEXT_FULL_ROWS = {
+    "providers": ROW_TYPES["providers"],
+    "repositories": ROW_TYPES["repository_context"],
+    "sources": ROW_TYPES["sources"],
+    "source_repositories": ROW_TYPES["source_repositories"],
+    "source_inventories": ROW_TYPES["source_inventory_evidence"],
+    "mapping_dispositions": ROW_TYPES["repository_mapping_dispositions"],
+    "core_references": ROW_TYPES["core_references"],
+    "claims": ROW_TYPES["coverage_claims"],
+    "proofs": ROW_TYPES["coverage_proofs"],
+    "source_proofs": ROW_TYPES["source_coverage_proofs"],
 }
 
 
@@ -569,6 +587,8 @@ class Context(ContextStore):
                     db.execute("PRAGMA query_only=ON")
                     db.execute("BEGIN")
                     identity = db.execute("SELECT * FROM store_identity").fetchall()
+                    for row in identity:
+                        ROW_TYPES["store_identity"].from_record(row)
                     if _identity_sink is not None:
                         _identity_sink(identity)
                     from repo_catalog.adapters.sqlite.catalog_runtime import (
@@ -722,7 +742,11 @@ class Context(ContextStore):
             raise ContextError("IDENTITY_REBIND", "provider", service)
         self.db.execute(
             "INSERT INTO providers VALUES(?,?,?) ON CONFLICT(service_instance_uuidv4) DO UPDATE SET configuration_json=excluded.configuration_json",
-            (service, kind, configuration_json),
+            context_write_values(
+                ROW_TYPES["providers"],
+                ROW_TYPES["providers"].WRITE_COLUMNS,
+                (service, kind, configuration_json),
+            ),
         )
 
     def repository(self, repository_uuidv4: str, configuration_json: str = "{}"):
@@ -730,7 +754,11 @@ class Context(ContextStore):
         registration_json("repository", configuration_json)
         self.db.execute(
             "INSERT INTO repository_context VALUES(?,?) ON CONFLICT(repository_uuidv4) DO UPDATE SET configuration_json=excluded.configuration_json",
-            (repository_uuidv4, configuration_json),
+            context_write_values(
+                ROW_TYPES["repository_context"],
+                ROW_TYPES["repository_context"].WRITE_COLUMNS,
+                (repository_uuidv4, configuration_json),
+            ),
         )
 
     def source(self, source: str, service: str, configuration_json: str = "{}"):
@@ -744,7 +772,11 @@ class Context(ContextStore):
             raise ContextError("IDENTITY_REBIND", "source", source)
         self.db.execute(
             "INSERT INTO sources VALUES(?,?,?) ON CONFLICT(source_registration_uuidv4) DO UPDATE SET configuration_json=excluded.configuration_json",
-            (source, service, configuration_json),
+            context_write_values(
+                ROW_TYPES["sources"],
+                ROW_TYPES["sources"].WRITE_COLUMNS,
+                (source, service, configuration_json),
+            ),
         )
 
     def source_repositories(self, source: str) -> tuple[str, ...]:
@@ -764,7 +796,11 @@ class Context(ContextStore):
         registration_json("membership", attributes_json)
         self.db.execute(
             "INSERT INTO source_repositories VALUES(?,?,?) ON CONFLICT(source_registration_uuidv4,repository_uuidv4) DO NOTHING",
-            (source, repository, attributes_json),
+            context_write_values(
+                ROW_TYPES["source_repositories"],
+                ROW_TYPES["source_repositories"].WRITE_COLUMNS,
+                (source, repository, attributes_json),
+            ),
         )
 
     def inventory(self, observation: SourceInventory):
@@ -791,7 +827,11 @@ class Context(ContextStore):
                 )
             self.db.execute(
                 "INSERT INTO source_inventory_evidence VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
-                observation.values,
+                context_write_values(
+                    ROW_TYPES["source_inventory_evidence"],
+                    ROW_TYPES["source_inventory_evidence"].WRITE_COLUMNS,
+                    observation.values,
+                ),
             )
 
     def resource(
@@ -951,7 +991,20 @@ class Context(ContextStore):
                 return "duplicate"
             self.db.execute(
                 "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
-                (*key, relation.observed_at_us),
+                context_write_values(
+                    ROW_TYPES["resource_relations"],
+                    (
+                        "service_instance_uuidv4",
+                        "resource_kind",
+                        "provider_resource_id",
+                        "relation_kind",
+                        "members_json",
+                        "provenance_json",
+                        "scope_json",
+                        "observed_at_us",
+                    ),
+                    (*key, relation.observed_at_us),
+                ),
             )
             return "insert"
 
@@ -1016,11 +1069,19 @@ class Context(ContextStore):
             if not prior:
                 self.db.execute(
                     "INSERT INTO collections VALUES(?,?,?,?,?,?)",
-                    (*key, observation.scope_json),
+                    context_write_values(
+                        ROW_TYPES["collections"],
+                        ROW_TYPES["collections"].WRITE_COLUMNS,
+                        (*key, observation.scope_json),
+                    ),
                 )
             self.db.execute(
                 "INSERT INTO collection_terminals VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
-                observation.terminal,
+                context_write_values(
+                    ROW_TYPES["collection_terminals"],
+                    ROW_TYPES["collection_terminals"].WRITE_COLUMNS,
+                    observation.terminal,
+                ),
             )
 
     def collection_coverage(
@@ -1074,12 +1135,16 @@ class Context(ContextStore):
                 raise ContextError("STALE_CLAIM", "coverage")
             self.db.execute(
                 "INSERT INTO coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
-                (
-                    claim.scope.owner_kind,
-                    claim.scope.encoded,
-                    claim.observed_at_us,
-                    claim.state,
-                    *observation.terminal,
+                context_write_values(
+                    ROW_TYPES["coverage_proofs"],
+                    ROW_TYPES["coverage_proofs"].WRITE_COLUMNS,
+                    (
+                        claim.scope.owner_kind,
+                        claim.scope.encoded,
+                        claim.observed_at_us,
+                        claim.state,
+                        *observation.terminal,
+                    ),
                 ),
             )
 
@@ -1090,12 +1155,16 @@ class Context(ContextStore):
                 raise ContextError("STALE_CLAIM", "coverage")
             self.db.execute(
                 "INSERT INTO source_coverage_proofs VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
-                (
-                    claim.scope.owner_kind,
-                    claim.scope.encoded,
-                    claim.observed_at_us,
-                    claim.state,
-                    *observation.values,
+                context_write_values(
+                    ROW_TYPES["source_coverage_proofs"],
+                    ROW_TYPES["source_coverage_proofs"].WRITE_COLUMNS,
+                    (
+                        claim.scope.owner_kind,
+                        claim.scope.encoded,
+                        claim.observed_at_us,
+                        claim.state,
+                        *observation.values,
+                    ),
                 ),
             )
 
@@ -1456,6 +1525,13 @@ class Context(ContextStore):
             if row is None:
                 with self._stored("exchange metadata rows"):
                     raise ValueError("metadata changed in snapshot")
+            row_type = _EXPORT_CONTEXT_FULL_ROWS.get(selector)
+            if row_type is not None:
+                try:
+                    row_type.from_record(dict(zip(columns, row, strict=True)))
+                except (ValueError, TypeError):
+                    with self._stored("exchange metadata row"):
+                        raise
             result.append(row)
         return result
 

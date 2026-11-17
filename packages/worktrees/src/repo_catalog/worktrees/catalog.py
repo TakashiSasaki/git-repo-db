@@ -16,6 +16,7 @@ from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
+from ._row_bindings import insert_values, read_record
 from .git import discover_topology
 from .models import (
     DiscoveryResult,
@@ -193,6 +194,7 @@ class WorktreeCatalog:
             or identity["schema_sha256"] != FINGERPRINT
         ):
             raise WorktreeError("SCHEMA", "unsupported worktree catalog format")
+        identity = read_record("catalog_identity", identity)
         self.namespace_uuid = uuid_value(identity["namespace_uuid"], 4)
         self.path_dialect = identity["path_dialect"]
 
@@ -213,13 +215,17 @@ class WorktreeCatalog:
             connection.executescript(SCHEMA)
             connection.execute(
                 "INSERT INTO catalog_identity VALUES(1,?,?,?,?,?,?)",
-                (
-                    FORMAT,
-                    namespace_uuid,
-                    os.name,
-                    sys.getfilesystemencoding(),
-                    sys.getfilesystemencodeerrors(),
-                    FINGERPRINT,
+                insert_values(
+                    "catalog_identity",
+                    (
+                        FORMAT,
+                        namespace_uuid,
+                        os.name,
+                        sys.getfilesystemencoding(),
+                        sys.getfilesystemencodeerrors(),
+                        FINGERPRINT,
+                    ),
+                    constants={"singleton": 1},
                 ),
             )
             connection.commit()
@@ -269,32 +275,38 @@ class WorktreeCatalog:
         with self._db:
             self._db.execute(
                 "INSERT INTO observations VALUES(?,?,?,?,?,?)",
-                (
-                    result.observation_uuid,
-                    result.requested_path,
-                    result.common_dir,
-                    result.status,
-                    json.dumps(result.errors),
-                    result.observed_at_us,
+                insert_values(
+                    "observations",
+                    (
+                        result.observation_uuid,
+                        result.requested_path,
+                        result.common_dir,
+                        result.status,
+                        json.dumps(result.errors),
+                        result.observed_at_us,
+                    ),
                 ),
             )
             self._db.executemany(
                 "INSERT INTO worktrees VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                 [
-                    (
-                        result.observation_uuid,
-                        entry.root_path,
-                        entry.git_dir,
-                        entry.common_dir,
-                        entry.head_oid,
-                        entry.branch,
-                        int(entry.bare),
-                        entry.locked,
-                        entry.prunable,
-                        entry.error,
-                        entry.object_format,
-                    )
-                    for entry in result.entries
+                    insert_values("worktrees", values)
+                    for values in [
+                        (
+                            result.observation_uuid,
+                            entry.root_path,
+                            entry.git_dir,
+                            entry.common_dir,
+                            entry.head_oid,
+                            entry.branch,
+                            int(entry.bare),
+                            entry.locked,
+                            entry.prunable,
+                            entry.error,
+                            entry.object_format,
+                        )
+                        for entry in result.entries
+                    ]
                 ],
             )
         return result
@@ -306,6 +318,7 @@ class WorktreeCatalog:
         ).fetchone()
         if row is None:
             raise WorktreeError("NOT_FOUND", "topology observation not found")
+        row = read_record("observations", row)
         entries = tuple(
             WorktreeEntry(
                 item["root_path"],
@@ -319,9 +332,12 @@ class WorktreeCatalog:
                 item["error"],
                 item["object_format"],
             )
-            for item in self._db.execute(
-                "SELECT * FROM worktrees WHERE observation_uuid=? ORDER BY root_path",
-                (observation,),
+            for item in (
+                read_record("worktrees", record)
+                for record in self._db.execute(
+                    "SELECT * FROM worktrees WHERE observation_uuid=? ORDER BY root_path",
+                    (observation,),
+                )
             )
         )
         return DiscoveryResult(
@@ -358,11 +374,14 @@ class WorktreeCatalog:
         with self._db:
             self._db.execute(
                 "INSERT INTO scan_references VALUES(?,?,?,?) ON CONFLICT DO NOTHING",
-                (
-                    observation_uuid,
-                    path,
-                    filesystem_namespace_uuid,
-                    filesystem_scan_uuid,
+                insert_values(
+                    "scan_references",
+                    (
+                        observation_uuid,
+                        path,
+                        filesystem_namespace_uuid,
+                        filesystem_scan_uuid,
+                    ),
                 ),
             )
 
@@ -370,7 +389,7 @@ class WorktreeCatalog:
         uuid_value(filesystem_namespace_uuid, 4)
         uuid_value(filesystem_scan_uuid, 7)
         return tuple(
-            dict(row)
+            read_record("scan_references", row)
             for row in self._db.execute(
                 "SELECT * FROM scan_references WHERE filesystem_namespace_uuid=? AND filesystem_scan_uuid=? ORDER BY observation_uuid,root_path",
                 (filesystem_namespace_uuid, filesystem_scan_uuid),
@@ -392,10 +411,13 @@ class WorktreeCatalog:
         with self._db:
             self._db.execute(
                 "INSERT INTO repository_links VALUES(?,?,?) ON CONFLICT DO NOTHING",
-                (
-                    path,
-                    repository_uuid,
-                    time.time_ns() // 1000,
+                insert_values(
+                    "repository_links",
+                    (
+                        path,
+                        repository_uuid,
+                        time.time_ns() // 1000,
+                    ),
                 ),
             )
 
@@ -427,6 +449,7 @@ class WorktreeCatalog:
         if self._db.execute("PRAGMA foreign_key_check").fetchone() is not None:
             raise WorktreeError("INTEGRITY", "worktree database reference check failed")
         for row in self._db.execute("SELECT * FROM observations"):
+            row = read_record("observations", row)
             uuid_value(row["observation_uuid"], 7)
             errors = json.loads(row["errors_json"])
             if not isinstance(errors, list) or any(
@@ -452,6 +475,7 @@ class WorktreeCatalog:
             if not _valid_path(row[1], self.path_dialect):
                 raise WorktreeError("INTEGRITY", "invalid repository association path")
         for row in self._db.execute("SELECT * FROM worktrees"):
+            row = read_record("worktrees", row)
             for key in ("root_path", "git_dir", "common_dir"):
                 value = row[key]
                 if value is not None and not _valid_path(value, self.path_dialect):

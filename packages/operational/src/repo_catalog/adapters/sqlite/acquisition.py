@@ -39,6 +39,8 @@ from repo_catalog.domain.time import (
     validate_required_observation_us,
 )
 
+from .operational_row_bindings import insert_values, read_values
+
 
 class InMemoryNotesProgress:
     """Ephemeral NotesProgress when running without `operational.sqlite3`."""
@@ -354,7 +356,17 @@ class OperationalAcquisitionLedger:
                 VALUES(?,?,?,?,?)
                 ON CONFLICT(request_origin_uuidv4,request_uuidv4,retry_scope_json)
                 DO UPDATE SET not_before_us=excluded.not_before_us, reason=excluded.reason""",
-                (*req.values(), scope_json, retry_us, reason_encoded),
+                insert_values(
+                    "retry_state",
+                    (*req.values(), scope_json, retry_us, reason_encoded),
+                    columns=(
+                        "request_origin_uuidv4",
+                        "request_uuidv4",
+                        "retry_scope_json",
+                        "not_before_us",
+                        "reason",
+                    ),
+                ),
             )
             self.db.commit()
         except BaseException:
@@ -397,6 +409,7 @@ class OperationalAcquisitionLedger:
             ).fetchone()
         if row is None:
             return None
+        row = read_values("retry_state", row)
         raw_reason = row[4]
         try:
             parsed = json.loads(raw_reason)
@@ -471,7 +484,16 @@ class OperationalAcquisitionLedger:
                 VALUES(?,?,?,?)
                 ON CONFLICT(repository_uuidv4,cache_purpose,semantic_coordinate_json)
                 DO UPDATE SET locator=excluded.locator""",
-                (repo, cache_purpose, coord_json, locator),
+                insert_values(
+                    "cache_locators",
+                    (repo, cache_purpose, coord_json, locator),
+                    columns=(
+                        "repository_uuidv4",
+                        "cache_purpose",
+                        "semantic_coordinate_json",
+                        "locator",
+                    ),
+                ),
             )
             self.db.commit()
         except BaseException:
@@ -498,6 +520,7 @@ class OperationalAcquisitionLedger:
         ).fetchone()
         if row is None:
             return None
+        row = read_values("cache_locators", row)
         return {
             "repository_uuidv4": row[0],
             "cache_purpose": row[1],

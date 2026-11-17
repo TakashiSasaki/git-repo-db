@@ -32,6 +32,8 @@ from repo_catalog.domain.access_registry import (
     scope_uuid,
 )
 
+from .access_row_bindings import insert_values, read_values
+
 # Trusted fixed table/column vocabulary; never interpolated caller SQL.
 _LAYOUT = {
     ScopeExecutionContext: (
@@ -117,6 +119,7 @@ class AccessConnections(AccessRegistry):
         if row is None:
             raise AccessRegistryError("NOT_FOUND", "Access configuration is absent")
         try:
+            row = read_values(_LAYOUT[cls][0], row)
             if cls is ScopeExecutionContext:
                 return cls(row[0], row[1], schema._boolean(row[2]))
             if cls in (RepositoryBinding, ConnectionConfiguration):
@@ -138,6 +141,7 @@ class AccessConnections(AccessRegistry):
     def _put(self, value, expected):
         cls = type(value)
         table, columns, width = _LAYOUT[cls]
+        bound_values = insert_values(table, value.row, columns=columns)
         if expected is not None:
             expected = _input(expected, cls)
             if expected.row[:width] != value.row[:width]:
@@ -165,7 +169,7 @@ class AccessConnections(AccessRegistry):
                 return "duplicate"
             if prior is None:
                 placeholders = ",".join("?" for _ in columns)
-                db.execute(f"INSERT INTO {table} VALUES({placeholders})", value.row)
+                db.execute(f"INSERT INTO {table} VALUES({placeholders})", bound_values)
                 return "insert"
             if (
                 cls is RepositoryBinding
@@ -179,7 +183,8 @@ class AccessConnections(AccessRegistry):
             setters = ",".join(f"{column}=?" for column in columns[width:])
             clause = " AND ".join(f"{column}=?" for column in columns[:width])
             db.execute(
-                f"UPDATE {table} SET {setters} WHERE {clause}", value.row[width:] + key
+                f"UPDATE {table} SET {setters} WHERE {clause}",
+                bound_values[width:] + key,
             )
             return "update"
 
@@ -388,7 +393,9 @@ class AccessConnections(AccessRegistry):
             )
             db.execute(
                 "INSERT INTO local_access_grants VALUES(?,?,?,?,?,?,?,?,?,?)",
-                (*value.row, grant.approved_at_us),
+                insert_values(
+                    "local_access_grants", (*value.row, grant.approved_at_us)
+                ),
             )
         return grant
 
@@ -426,6 +433,7 @@ class AccessConnections(AccessRegistry):
                     "APPROVAL_REQUIRED", "explicit local review required"
                 )
             try:
+                row = read_values("local_access_grants", row)
                 recorded = AccessReviewPlan(
                     AssignmentKey(*row[:4]),
                     row[4],
@@ -437,7 +445,7 @@ class AccessConnections(AccessRegistry):
                 actual = self._plan(
                     db, row[4], recorded.assignment, recorded.registration
                 )
-            except ValueError:
+            except (TypeError, ValueError):
                 self._corrupt()
             if recorded != actual:
                 self._corrupt()

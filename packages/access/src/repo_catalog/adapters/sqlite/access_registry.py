@@ -25,6 +25,8 @@ from repo_catalog.domain.access_registry import (
     scope_uuid,
 )
 
+from .access_row_bindings import insert_values, read_values
+
 
 class AccessRegistry:
     def __init__(self, path: str | Path, *, writable: bool = False):
@@ -129,14 +131,14 @@ class AccessRegistry:
         if row is None:
             raise AccessRegistryError("NOT_FOUND", "Scope is not registered")
         try:
-            return AccessScope(*row)
-        except ValueError:
+            return AccessScope(*read_values("access_scopes", row))
+        except (TypeError, ValueError):
             self._corrupt()
 
     def _registration(self, row: tuple) -> ScopeLocatorRegistration:
         try:
-            return ScopeLocatorRegistration(*row)
-        except ValueError:
+            return ScopeLocatorRegistration(*read_values("scope_locators", row))
+        except (TypeError, ValueError):
             self._corrupt()
 
     @staticmethod
@@ -180,7 +182,9 @@ class AccessRegistry:
                 return "duplicate"
             db.execute(
                 "INSERT INTO access_scopes VALUES(?,?)",
-                (value.scope_uuidv4, value.display_name),
+                insert_values(
+                    "access_scopes", (value.scope_uuidv4, value.display_name)
+                ),
             )
             return "insert"
 
@@ -206,8 +210,16 @@ class AccessRegistry:
             if self._has_registration(db, value):
                 # Never recreate missing controls or revive disabled settings on replay.
                 return RegistrationResult("duplicate", latest, False)
-            db.execute("INSERT INTO scope_locators VALUES(?,?,?)", value.key)
-            db.execute("INSERT INTO scope_locator_controls VALUES(?,?,?,0)", value.key)
+            db.execute(
+                "INSERT INTO scope_locators VALUES(?,?,?)",
+                insert_values("scope_locators", value.key),
+            )
+            db.execute(
+                "INSERT INTO scope_locator_controls VALUES(?,?,?,0)",
+                insert_values(
+                    "scope_locator_controls", value.key, constants={"enabled": 0}
+                ),
+            )
             return RegistrationResult(
                 "insert", latest, latest is not None and value.registered_at_us < latest
             )
@@ -300,7 +312,7 @@ class AccessRegistry:
                 # Unlike replay, this is an explicit control operation.
                 db.execute(
                     "INSERT INTO scope_locator_controls VALUES(?,?,?,?)",
-                    (*value.key, int(enabled)),
+                    insert_values("scope_locator_controls", (*value.key, int(enabled))),
                 )
             else:
                 db.execute(

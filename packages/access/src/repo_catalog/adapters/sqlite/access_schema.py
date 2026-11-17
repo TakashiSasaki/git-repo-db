@@ -31,6 +31,8 @@ from repo_catalog.domain.access_registry import (
     scope_uuid,
 )
 
+from .access_row_bindings import insert_values, read_values
+
 FORMAT = "repo-catalog/access-2"
 SCHEMA_VERSION = 2
 MIN_SQLITE = (3, 51, 3)
@@ -139,7 +141,16 @@ def validate(db: sqlite3.Connection) -> None:
     if schema_rows(db) != expected_schema():
         raise AccessRegistryError("FORMAT", "Access registry schema mismatch")
     expected = [("access", FORMAT, SCHEMA_VERSION, fingerprint())]
-    if db.execute("SELECT * FROM access_identity").fetchall() != expected:
+    try:
+        identity = [
+            read_values("access_identity", row)
+            for row in db.execute("SELECT * FROM access_identity")
+        ]
+    except (TypeError, ValueError):
+        raise AccessRegistryError(
+            "FORMAT", "Access registry identity mismatch"
+        ) from None
+    if identity != expected:
         raise AccessRegistryError("FORMAT", "Access registry identity mismatch")
     if db.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
         raise AccessRegistryError("CORRUPT", "Access registry integrity failure")
@@ -147,14 +158,14 @@ def validate(db: sqlite3.Connection) -> None:
         raise AccessRegistryError("CORRUPT", "Access registry reference failure")
     try:
         for row in db.execute("SELECT scope_uuidv4,display_name FROM access_scopes"):
-            AccessScope(*row)
+            AccessScope(*read_values("access_scopes", row))
         for row in db.execute("SELECT * FROM scope_locators"):
-            ScopeLocatorRegistration(*row)
+            ScopeLocatorRegistration(*read_values("scope_locators", row))
         for row in db.execute("SELECT enabled FROM scope_locator_controls"):
             if type(row[0]) is not int or row[0] not in (0, 1):
                 raise AccessRegistryError("CORRUPT", "invalid route control")
         validate_connections(db)
-    except (ValueError, UnicodeError):
+    except (TypeError, ValueError, UnicodeError):
         raise AccessRegistryError("CORRUPT", "invalid stored Access value") from None
 
 
@@ -188,12 +199,13 @@ def validate_connections(db: sqlite3.Connection) -> None:
         ),
     ):
         for row in db.execute(f"SELECT * FROM {table}"):
-            validate_row(row)
+            validate_row(read_values(table, row))
     if db.execute(
         "SELECT 1 FROM locator_connections a JOIN connection_configurations p USING(scope_uuidv4,configuration_name) WHERE access_repository_transport(a.locator_text)<>json_extract(p.options_json,'$.transport')"
     ).fetchone():
         raise AccessRegistryError("CORRUPT", "incompatible stored transport")
     for row in db.execute("SELECT * FROM local_access_grants"):
+        row = read_values("local_access_grants", row)
         plan = connection_values.AccessReviewPlan(
             connection_values.AssignmentKey(*row[:4]),
             row[4],
@@ -371,7 +383,9 @@ def initialize(path: str | Path) -> None:
         db.executescript("BEGIN IMMEDIATE;\n" + schema_sql())
         db.execute(
             "INSERT INTO access_identity VALUES(?,?,?,?)",
-            ("access", FORMAT, SCHEMA_VERSION, fingerprint()),
+            insert_values(
+                "access_identity", ("access", FORMAT, SCHEMA_VERSION, fingerprint())
+            ),
         )
         db.commit()
         _validate_snapshot(db)

@@ -21,11 +21,13 @@ from repo_catalog.domain.p1_context import (
     FieldClock,
     MappingDisposition,
     MappingOperationEvidence,
+    MappingSupport,
     ProviderEndpointDeclaration,
     ResourceKey,
     ResourceRepositoryRelation,
     TransferEventReport,
     canonical,
+    encode_transfer_supported_provenance,
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, CoordinationError
 from repo_catalog.domain.p1_core import OID
@@ -44,6 +46,7 @@ from tests.integration.context_originals import synthetic_parent
 from tests.integration.p1 import test_context as p1_contract
 from tests.support.context_admission import (
     fixture_context,
+    fixture_reviewed_transfer_transaction,
     fixture_service,
     fixture_transaction,
 )
@@ -57,6 +60,17 @@ INSTANCE = "49a14b65-20b1-48b3-a021-c2970247e95c"
 OTHER_SERVICE = "6eb0350d-95e0-479d-ac57-f0f3b68ced2c"
 OTHER_REPO = "22307f0c-6d1e-41da-b2fb-c4c11362e7d2"
 PR = ResourceKey.from_native(SERVICE, "pull_request", "pr-7")
+
+
+def facade_transfer_mapping():
+    return ResourceRepositoryRelation(
+        ResourceKey.from_native(SERVICE, "repository", "protocol-keywords"),
+        "represents_repository",
+        FieldClock("fixture-transfer-mapping", 1),
+        canonical(REPO),
+        canonical({"source": "integration-fixture", "evidence": "transfer-mapping"}),
+        1,
+    )
 
 
 def production_grants():
@@ -108,7 +122,15 @@ def production_grants():
     }
     return (
         p1_contract.p1_grants()
-        | dependencies((tuple(resources), mapping, disposition))
+        | dependencies(
+            (
+                tuple(resources),
+                mapping,
+                disposition,
+                facade_transfer_mapping(),
+                facade_transfer_mapping().claim_key,
+            )
+        )
         | DependencySet(
             repositories={OTHER_REPO},
             sources={SOURCE},
@@ -1163,7 +1185,7 @@ def test_unknown_text_digest_is_unavailable_without_false_corruption(context):
 
 
 def test_production_context_relation_facade_methods(directory):
-    with fixture_transaction(directory, production_grants()) as store:
+    with fixture_reviewed_transfer_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.repository(REPO)
         prov_repo = ResourceKey.from_native(
@@ -1283,13 +1305,42 @@ def test_production_context_relation_facade_methods(directory):
 
         # 3.3: admit_transfer_event return type (must return str "insert" / "duplicate")
         ev_res = ResourceKey.timeline_event(issue, "ev-1")
+        # Accepted I5 requires independent Parent and active MappingSupport.
+        # The earlier facade withdrawal belongs to another Provider Repository.
+        mapping = facade_transfer_mapping()
+        store.resource(mapping.resource)
+        store.admit_repository_relation(mapping)
+        store.resource(
+            ev_res, identification=RI.scoped(ev_res, issue, "timeline_event", "ev-1")
+        )
+        parent = synthetic_parent(ev_res, issue)
+        store.relation(
+            ResourceRelation(
+                ev_res,
+                "parent",
+                (issue,),
+                parent.provenance_json,
+                parent.scope_json,
+                parent.observed_at_us,
+            )
+        )
+        event_provenance = encode_transfer_supported_provenance(
+            "github",
+            "transfer-1",
+            (
+                (role, MappingSupport(mapping.resource, (mapping.claim_key,)))
+                for role in ("transfer_from_repository", "transfer_to_repository")
+            ),
+        )
         report = TransferEventReport.from_targets(
             ev_res,
             clock=FieldClock("github:event", 10),
-            provenance_json=prov,
+            provenance_json=event_provenance,
             observed_at_us=10,
             parent_report=synthetic_parent(ev_res, issue),
-            endpoint_declaration=ProviderEndpointDeclaration(prov_repo, prov_repo),
+            endpoint_declaration=ProviderEndpointDeclaration(
+                mapping.resource, mapping.resource
+            ),
             endpoints=(
                 ("transfer_from_repository", canonical(REPO)),
                 ("transfer_to_repository", canonical(REPO)),
