@@ -1,5 +1,7 @@
 > Website editing and Google AI Studio imports use the [`web` branch](https://github.com/TakashiSasaki/resource-atlas/tree/web). This branch owns the application and canonical design documents.
 
+> GitHub Actions の `pages` を手動実行するときは、ブランチに `web` を選択してください。`main` には手動実行を登録するための案内だけを残しています。通常のプッシュではサイトを公開しません。
+
 # Resource Atlas
 
 任意のGit取得先とGitHubのPR・通常IssueをSQLiteへ保存し、cloneやAPI接続がなくなった後も照会するCLIです。

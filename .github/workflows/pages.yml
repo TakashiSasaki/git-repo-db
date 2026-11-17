@@ -1,0 +1,20 @@
+# GitHub requires the workflow_dispatch definition on the default branch.
+# The implementation and all website sources live at this same path on web.
+name: pages
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Publish the complete site to GitHub Pages (select branch web)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  select-web:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Select the web branch
+        run: |
+          echo '::error::Select branch web in Run workflow, or use gh workflow run pages.yml --ref web -f deploy=false. The main branch contains only this registration notice.'
+          exit 1

@@ -102,9 +102,17 @@ Writing `site/` without a leading slash in `.gitignore` causes Git to ignore any
 
 ## 7. GitHub Actions Pages Security & Concurrency Boundaries
 
-The workflow lives on `web`, not in the product tree. Ordinary web pushes and
-PRs run the independent Node frontend and source-bound website preview checks.
-A manual run can perform complete hosted verification without deploying.
+The build/deployment workflow lives on `web`. Main keeps only a same-path
+`workflow_dispatch` registration notice so GitHub exposes manual execution;
+running that notice on main fails with instructions to select `web`. It contains
+no checkout, build or deployment. Ordinary web pushes and PRs run the independent
+Node frontend and source-bound website preview checks. For complete hosted
+verification without deployment, select branch `web` and leave `deploy` false,
+or run `gh workflow run pages.yml --ref web -f deploy=false`. An explicitly
+authorized production deployment uses `-f deploy=true` on that same web ref.
+Do not delete the main registration while relying on GitHub's default-branch
+workflow-dispatch contract. These commands document operation; they do not grant
+deployment authorization or claim a live dispatch was verified.
 
 The build job has `contents: read`; only a manually selected `deploy` on
 `refs/heads/web` enables the deployment job with `pages: write` and
