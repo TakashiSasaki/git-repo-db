@@ -16,6 +16,11 @@ For full-site/schema work, product-source.json follows ref main. Preparation
 resolves it once per attempt and records actual inputs automatically. No manually
 maintained product SHA or matching-current-main gate is required. Web lag/failure
 never blocks main; prefer deterministic generation and review only changed text.
+Use `python scripts/refresh_web.py` for update detection, necessary schema
+generation and a persistent manual-review report. `--check` only reports a plan.
+Reports/state stay in website/.build/verification/refresh, outside public outputs.
+The inspected main revision and actually reused extraction source are separate
+diagnostic facts. Pending review is bookkeeping, never a main/release gate.
 Run `python scripts/prepare_product.py` to prepare a separate verified product
 checkout and source-bound IR, then use website/.venv for Python checks/builds.
 See website/README.md. Source SHA/tree, web SHA/tree and neutral IR hash are

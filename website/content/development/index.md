@@ -11,7 +11,17 @@ npm run build
 node scripts/check_web_tree.mjs
 ```
 
-設計原文やスキーマを使う完全なサイト検証では、`product-source.json` が指定する `main` を
+通常の追随は次の1コマンドで、更新要否の判定、必要な機械生成、要確認箇所のレポートまで行います。
+
+```bash
+python scripts/refresh_web.py
+```
+
+説明文や設計モデルは自動で書き換えません。レポートは
+`website/.build/verification/refresh/report.md` に保存され、要確認項目が残っていても main の作業を止めません。
+`--check` は生成せずに計画だけを出します。初回は未確認として扱い、以降も再実行だけでは要確認リストを消しません。
+
+下位コマンドで設計原文やスキーマを使う完全なサイト検証では、`product-source.json` が指定する `main` を
 更新開始時に一度だけ取得します。固定 SHA の手動更新は不要です。本体の Python と依存はそこで検証し、ウェブ側の
 Python 環境 `website/.venv` は別に作成します。製品用の `scripts/local-run.sh` は
 その製品チェックアウトで使い、ウェブの起動コマンドには付けません。
