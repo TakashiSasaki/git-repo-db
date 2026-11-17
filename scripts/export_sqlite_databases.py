@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Export pristine, authoritative SQLite databases for SchemaSpy, SQLite CLI, and GUI tools.
 
-Instantiates empty SQLite databases containing all 84 tables, physical foreign keys,
-unique constraints, and generated columns directly from authoritative Python DDL.
+Instantiates fresh specimens of the seven independent role definitions, including
+physical foreign keys, unique constraints and generated columns. This does not
+initialize an application or open, convert or overwrite retained databases.
 
 Usage:
     scripts/local-run.sh python scripts/export_sqlite_databases.py
@@ -24,11 +25,35 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from repo_catalog.adapters.sqlite.schema import (  # noqa: E402
-    operational_schema_sql,
-    schema_sql,
-    search_schema_sql,
-)
+
+def definitions():
+    """Use owning DDL factories; this registry grants no cross-store authority."""
+    from repo_catalog.adapters.sqlite import access_schema, p1_schema
+    from repo_catalog.filesystem import store as filesystem
+    from repo_catalog.worktrees import catalog as worktrees
+
+    def prepare_p1(role):
+        def prepare(db):
+            p1_schema.register_functions(db, role)
+            p1_schema.configure(db, role)
+
+        return prepare
+
+    return {
+        **{
+            role: (p1_schema.compose(role), prepare_p1(role))
+            for role in p1_schema.STORES
+        },
+        "access": (access_schema.schema_sql(), access_schema.register_functions),
+        "filesystem": (
+            filesystem.DDL,
+            lambda db: db.execute("PRAGMA trusted_schema=OFF"),
+        ),
+        "worktrees": (
+            worktrees.SCHEMA,
+            lambda db: db.execute("PRAGMA trusted_schema=OFF"),
+        ),
+    }
 
 
 def _open_directory(path: Path) -> int:
@@ -142,23 +167,22 @@ def export_databases(output_dir: Path) -> dict[str, Path]:
                 )
         os.mkdir(stage, mode=0o700, dir_fd=parent_fd)
         created = True
-        targets = {
-            "catalog": (schema_sql(), 70),
-            "operational": (operational_schema_sql(), 10),
-            "search": (search_schema_sql(), 4),
-        }
-        for stem, (ddl, expected_tables) in targets.items():
+        targets = definitions()
+        for stem, (ddl, prepare) in targets.items():
             db_path = stage_path / (stem + ".sqlite3")
             sql_path = stage_path / (stem + ".sql")
             conn = sqlite3.connect(db_path)
             try:
+                conn.execute("PRAGMA foreign_keys=ON")
+                conn.execute("PRAGMA recursive_triggers=ON")
+                prepare(conn)
                 conn.executescript(ddl)
                 conn.commit()
                 count = conn.execute(
                     "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
                 ).fetchone()[0]
                 if (
-                    count != expected_tables
+                    count == 0
                     or conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok"
                     or conn.execute("PRAGMA foreign_key_check").fetchall()
                 ):

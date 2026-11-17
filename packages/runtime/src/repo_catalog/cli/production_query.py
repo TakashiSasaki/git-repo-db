@@ -1,8 +1,7 @@
-"""Opt-in Core Query CLI, extended by installed Context/Search capabilities (`python -m repo_catalog.cli.production_query`).
+"""Authoritative Core Query CLI with installed Context/Search composition.
 
-Isolated from `repo_catalog.cli.main` (which remains the unchanged Schema 21 CLI).
-Outputs deterministic canonical JSON to stdout and structured JSON error
-diagnostics to stderr with non-zero exit codes.
+The ordinary CLI delegates its query commands here. Outputs canonical JSON and
+structured error diagnostics without opening the retired normal backend.
 """
 
 from __future__ import annotations
@@ -43,7 +42,7 @@ def _core_available():
     return importlib.util.find_spec("repo_catalog.application.core_query") is not None
 
 
-def _query_service(args, features):
+def _selected_query_service(args, features):
     if features is not None and (
         features.__name__.endswith(
             (".query_features", ".search_query_features", ".paired_query_features")
@@ -60,7 +59,18 @@ def _query_service(args, features):
     return CoreQueryService(args.catalog, mode=args.mode)
 
 
+def _query_service(args, features):
+    from repo_catalog.cli.query_limits import read_limits
+
+    service = _selected_query_service(args, features)
+    service.read_limits = read_limits(args)
+    return service
+
+
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
+    from repo_catalog.cli.query_limits import add_limits
+
+    add_limits(parser)
     parser.add_argument(
         "--catalog",
         required=True,
@@ -212,9 +222,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     except Exception as error:
         context_module = sys.modules.get("repo_catalog.domain.production_context")
         context_error = getattr(context_module, "ContextError", ())
-        if not isinstance(error, (QueryError, CoreFailure, CoordinationError)) and not (
-            context_error and isinstance(error, context_error)
-        ):
+        if not isinstance(
+            error, (QueryError, CoreFailure, CoordinationError, ValueError)
+        ) and not (context_error and isinstance(error, context_error)):
             raise
         err_payload = {
             "code": getattr(error, "code", "ERROR"),

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from contextlib import ExitStack, contextmanager
 from dataclasses import replace
@@ -54,6 +55,7 @@ from repo_catalog.domain.p1_core import (
     ScalarClaim,
     account_verification,
     encode,
+    uuid4_value,
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.notes import NotesSource, request_scope
@@ -63,6 +65,67 @@ from repo_catalog.domain.ports.p1_core import WorkBudget
 def _charge(work: WorkBudget, unit: str, amount: int = 1) -> None:
     work.require(unit, amount)
     work.charge(unit, amount)
+
+
+class _ParentSourceProgress:
+    """Checked Source-qualified Notes/ref coordinates in one parent request."""
+
+    def __init__(self, original, source, unit_scope=()):
+        self.original, self.source, self.work = original, source, original.work
+        self.unit_scope = unit_scope
+
+    def _scope(self, scope):
+        coordinate = json.loads(scope)
+        if type(coordinate) is not list:
+            raise CoordinationError(
+                "REQUEST_SCOPE", "native-source", "array coordinate required"
+            )
+        namespace = ["operation", list(self.unit_scope)] if self.unit_scope else []
+        return encode(["frozen-native-source", self.source, *namespace, *coordinate])
+
+    def bind(
+        self,
+        repository,
+        instance,
+        source_attribution,
+        source_scope,
+        work,
+        *,
+        catalog_repository_uuidv4=None,
+    ):
+        if work is not self.work:
+            raise CoordinationError("REQUEST_SCOPE", "native-source")
+        if work.ledger.store_identity() != (
+            catalog_repository_uuidv4 or repository,
+            instance,
+        ):
+            raise CoordinationError("STORE_IDENTITY", "native-source")
+        work.ledger.validate_continuation(work.request, work.attempt_uuidv4)
+        binding = request_scope(repository, instance, source_attribution, source_scope)
+        if self.save_once(encode(["notes-binding"]), binding) != binding:
+            raise CoordinationError(
+                "REQUEST_SCOPE", "native-source", "original Notes source changed"
+            )
+
+    def load(self, scope):
+        return self.original.load(self._scope(scope))
+
+    def save_once(self, scope, value):
+        return self.original.save_once(self._scope(scope), value)
+
+    def load_bounded(self, scope, max_bytes):
+        return self.original.load_bounded(self._scope(scope), max_bytes)
+
+    def save_once_bounded(self, scope, value, max_bytes, *, encoded):
+        return self.original.save_once_bounded(
+            self._scope(scope), value, max_bytes, encoded=encoded
+        )
+
+    def scan_guard(self, scope):
+        return self.original.scan_guard(self._scope(scope))
+
+    def request_identity(self):
+        return self.original.request_identity()
 
 
 class _PreparedCore:
@@ -325,7 +388,9 @@ class GitAcquisition:
         self.progress = progress
 
     @staticmethod
-    def _validate_native_accounting(core, work, progress, scope, request):
+    def _validate_native_accounting(
+        core, work, progress, scope, request, *, shared=None
+    ):
         # Native input must never substitute a volatile or unrelated request.
         # Reuse the canonical durable capability and its existing identity,
         # inode/checkpoint and frozen-scope validation before any source work.
@@ -345,10 +410,40 @@ class GitAcquisition:
             raise CoordinationError("STORE_IDENTITY", "operational")
         if work.request != request:
             raise CoordinationError("REQUEST_SCOPE", "request")
+        if shared is not None:
+            source, owner = shared[:2]
+            uuid4_value(source)
+            unit_scope = shared[2] if len(shared) == 3 else ()
+            if (
+                len(shared) not in (2, 3)
+                or type(unit_scope) is not tuple
+                or len(unit_scope) > 16
+                or any(type(v) is not str or not 0 < len(v) <= 1024 for v in unit_scope)
+                or len(encode(unit_scope).encode()) > 4096
+            ):
+                raise CoordinationError(
+                    "REQUEST_SCOPE", "native-source", "unit coordinate"
+                )
+            if (
+                type(owner) is not OperationalAcquisitionLedger
+                or owner.work_ledger is not ledger
+                or type(core) is not GitCore
+                or ledger._path.resolve()
+                != (core._directory / "operational.sqlite3").resolve()
+            ):
+                raise CoordinationError(
+                    "CONTINUATION_UNAVAILABLE",
+                    "native-source",
+                    "real parent ledger/path required",
+                )
         ledger.validate_continuation(
             work.request,
             work.attempt_uuidv4,
-            scope=scope if isinstance(scope, str) else encode(scope),
+            scope=None
+            if shared is not None
+            else scope
+            if isinstance(scope, str)
+            else encode(scope),
         )
 
     @contextmanager
@@ -618,6 +713,10 @@ class GitAcquisition:
         progress: Any | None = None,
         new_request: bool = False,
         request_identity: RequestIdentity | None = None,
+        _shared_parent=None,
+        _metadata_walk=None,
+        _after_ref_scan=None,
+        _before_metadata=None,
     ) -> GitAcquisitionReport:
         """Acquire one explicitly selected repository; the catalog seed is not it.
 
@@ -625,6 +724,22 @@ class GitAcquisition:
         Core/Operational identity pairing remains anchored to store_identity.
         """
         preflight_intent = native_request_intent(without_ref_inputs(request))
+        if _metadata_walk is not None:
+            from repo_catalog.adapters.git.metadata_walk import NativeMetadataWalk
+
+            if type(_metadata_walk) is not NativeMetadataWalk:
+                raise CoreFailure(
+                    "REQUEST", "metadata-walk", "trusted selection required"
+                )
+            preflight_intent["metadata_walk"] = _metadata_walk.intent(
+                source, request.select_object_oids
+            )
+        if _shared_parent is not None and (
+            new_request or work is None or progress is None or request_identity is None
+        ):
+            raise CoordinationError(
+                "REQUEST_SCOPE", "native-source", "existing parent work required"
+            )
         with ExitStack() as stack:
             core_cap = stack.enter_context(_open_core(self.core))
             core_cap.ensure_available()
@@ -669,13 +784,22 @@ class GitAcquisition:
                 or RequestIdentity(
                     request.capture_origin_uuidv4, request.capture_uuidv4
                 ),
+                shared=_shared_parent,
             )
+            if _shared_parent is not None:
+                active_progress = _ParentSourceProgress(
+                    active_progress,
+                    _shared_parent[0],
+                    _shared_parent[2] if len(_shared_parent) == 3 else (),
+                )
 
             semantic_intent = (
                 native_request_intent(request, active_work)
                 if request.notes is not None and request.notes.ref_inputs
                 else preflight_intent
             )
+            if _metadata_walk is not None:
+                semantic_intent["metadata_walk"] = preflight_intent["metadata_walk"]
             _charge(active_work, "metadata_units", 1)
             intent_scope = encode(
                 [
@@ -687,7 +811,9 @@ class GitAcquisition:
             intent = {
                 "request": semantic_intent,
                 "source": [
-                    str(source.path),
+                    GitNotesSource(source).scope
+                    if getattr(source, "acquisition_scope", None) is not None
+                    else str(source.path),
                     source.object_format,
                     request.source_attribution,
                 ],
@@ -716,10 +842,21 @@ class GitAcquisition:
                 if request.notes is not None and request.notes.ref_inputs
                 else repr(request.notes),
             }
+            if _metadata_walk is not None:
+                intent["metadata_walk"] = semantic_intent["metadata_walk"]
             with ref_input_processing(
                 request.notes.ref_inputs if request.notes is not None else (),
                 active_work,
             ):
+                if (
+                    _shared_parent is not None
+                    and active_progress.save_once(encode(["intent"]), intent) != intent
+                ):
+                    raise CoreFailure(
+                        "INCOMPATIBLE_REPLAY",
+                        "native-source",
+                        "original Source intent changed",
+                    )
                 if active_progress.save_once(intent_scope, intent) != intent:
                     raise CoreFailure(
                         "INCOMPATIBLE_REPLAY", intent_scope, "request intent changed"
@@ -922,7 +1059,15 @@ class GitAcquisition:
                         failure_code, failure_detail = error.code, str(error)
                         break
 
-            for missing_oid in request.nominal_missing_object_oids:
+            if _after_ref_scan is not None:
+                _after_ref_scan(tuple(ref_enumerations))
+            selected = request.select_object_oids
+            missing = request.nominal_missing_object_oids
+            if _metadata_walk is not None:
+                selected, discovered_missing = _metadata_walk.discover(active_work)
+                missing = tuple(dict.fromkeys((*missing, *discovered_missing)))
+
+            for missing_oid in missing:
                 if missing_oid.object_format != source.object_format:
                     raise CoreFailure(
                         "NATIVE_FORMAT",
@@ -937,7 +1082,9 @@ class GitAcquisition:
                 if missing_oid not in metadata_only_order:
                     metadata_only_order.append(missing_oid)
 
-            for object_oid in request.select_object_oids:
+            for object_oid in selected:
+                if _before_metadata is not None:
+                    _before_metadata()
                 should_retain = (
                     object_oid in request.retain_object_oids
                     if request.retain_object_oids is not None
@@ -1171,6 +1318,39 @@ class GitAcquisition:
                 request.source_attribution,
             )
 
+    def acquire_from_native_with_budget(
+        self,
+        source,
+        request,
+        *,
+        source_registration_uuidv4,
+        ledger,
+        work,
+        progress,
+        request_identity,
+        unit_scope=(),
+        metadata_walk=None,
+        after_ref_scan=None,
+        before_metadata=None,
+    ):
+        """Run one frozen Source with actual parent work and no child request.
+
+        Each source pins its complete native/Notes intent and owns separate
+        continuation coordinates. Original Core captures remain caller supplied.
+        """
+        return self.acquire_from_native(
+            source,
+            request,
+            work=work,
+            progress=progress,
+            new_request=False,
+            request_identity=request_identity,
+            _shared_parent=(source_registration_uuidv4, ledger, unit_scope),
+            _metadata_walk=metadata_walk,
+            _after_ref_scan=after_ref_scan,
+            _before_metadata=before_metadata,
+        )
+
     def acquire_metadata_only(
         self,
         unit: GitMetadataInput,
@@ -1180,9 +1360,22 @@ class GitAcquisition:
         notes_source: NotesSource | None = None,
         new_request: bool = False,
         request_identity: RequestIdentity | None = None,
+        reparse_source=None,
     ) -> GitAcquisitionReport:
         """Admit a GitMetadataInput unit (with optional retained NativeObjects and Notes)."""
         preflight_intent = metadata_input_intent(without_ref_inputs(unit))
+        if reparse_source is not None:
+            from repo_catalog.application.metadata_reparse import RetainedReparseSource
+
+            if (
+                type(reparse_source) is not RetainedReparseSource
+                or reparse_source.unit is not unit
+            ):
+                raise CoreFailure(
+                    "REQUEST",
+                    "metadata-reparse",
+                    "trusted retained read source required",
+                )
         with ExitStack() as stack:
             core_cap = stack.enter_context(_open_core(self.core))
             core_cap.ensure_available()
@@ -1219,6 +1412,8 @@ class GitAcquisition:
                 if notes_source is None
                 else [notes_source.scope, notes_source.object_format]
             )
+            if reparse_source is not None:
+                semantic_intent["retained_reparse_source"] = reparse_source.intent
             _charge(active_work, "metadata_units", 1)
             intent_scope = encode(
                 ["p5-metadata-intent", unit.capture_origin_uuidv4, unit.capture_uuidv4]
@@ -1233,6 +1428,11 @@ class GitAcquisition:
                     raise CoreFailure(
                         "INCOMPATIBLE_REPLAY", "metadata", "request intent changed"
                     )
+            derived_claims = (
+                ()
+                if reparse_source is None
+                else reparse_source.read_claims(active_work)
+            )
             core_cap.admit_repository(unit.repository_uuidv4)
 
             admitted_order: list[OID] = []
@@ -1291,7 +1491,7 @@ class GitAcquisition:
                         ):
                             metadata_only_order.append(target_object_oid)
 
-            for s_claim in unit.scalar_claims:
+            for s_claim in (*unit.scalar_claims, *derived_claims):
                 _charge(active_work, "metadata_units", 1)
                 core_cap.admit_claim(s_claim)
                 _record_admitted(s_claim.subject)

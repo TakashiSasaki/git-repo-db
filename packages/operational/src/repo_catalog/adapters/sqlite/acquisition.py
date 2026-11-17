@@ -33,10 +33,10 @@ from repo_catalog.domain.p1_coordination import (
 )
 from repo_catalog.domain.query_work import UnlimitedWorkBudget as UnlimitedWorkBudget
 from repo_catalog.domain.request_scope import request_scope
+from repo_catalog.domain.retry_deadline import validate_retry_deadline_us
 from repo_catalog.domain.shared_values import CoreFailure, encode, uuid4_value
 from repo_catalog.domain.time import (
     validate_observation_us,
-    validate_required_observation_us,
 )
 
 from .operational_row_bindings import insert_values, read_values
@@ -329,11 +329,14 @@ class OperationalAcquisitionLedger:
         attempt_count: int | None = None,
         state: dict[str, Any] | None = None,
         request: RequestIdentity | None = None,
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         """Record or update retry/backoff state in `operational.sqlite3.retry_state`."""
         self.work_ledger._ready()
         retry_us = not_before_us if not_before_us is not None else next_retry_at_us
-        validate_required_observation_us(retry_us)
+        retry_us = validate_retry_deadline_us(retry_us)
+        if retry_us is None:
+            self.clear_retry_state(scope_key, request=request)
+            return None
         req = self.ensure_request(request)
         scope_json = _canonical_scope_json(scope_key)
         prior = self.get_retry_state(scope_key, request=req)
@@ -410,6 +413,11 @@ class OperationalAcquisitionLedger:
         if row is None:
             return None
         row = read_values("retry_state", row)
+        try:
+            if validate_retry_deadline_us(row[3]) is None:
+                raise ValueError("stored retry deadline is absent")
+        except (ValueError, TypeError) as error:
+            raise CoordinationError("CONTINUATION_UNAVAILABLE", "retry") from error
         raw_reason = row[4]
         try:
             parsed = json.loads(raw_reason)

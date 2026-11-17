@@ -1,4 +1,3 @@
-import copy
 import gzip
 import json
 import os
@@ -15,8 +14,8 @@ from repo_catalog.adapters.recording import (
     RecordingError,
     recorder_from_config,
 )
-from repo_catalog.config import DEFAULTS, validate
 from repo_catalog.domain.models import CancellationToken, CatalogError, Waiting
+from tests.support.provider_transport import TRANSPORT_SETTINGS
 
 
 class Credentials:
@@ -30,7 +29,7 @@ def references(path):
 
 def transport(client, recorder=None, *, max_attempts=3):
     return GitHubTransport(
-        {**DEFAULTS["github"], "max_attempts": max_attempts},
+        {**TRANSPORT_SETTINGS, "max_attempts": max_attempts},
         CancellationToken(),
         client=client,
         credentials=Credentials(),
@@ -118,7 +117,7 @@ def test_capture_preserves_decoded_bytes_and_redacts_metadata_before_recorder(tm
 
 
 def test_disabled_recorder_does_not_create_any_archive(tmp_path):
-    recorder = recorder_from_config(DEFAULTS["github"], tmp_path)
+    recorder = recorder_from_config(TRANSPORT_SETTINGS, tmp_path)
     assert isinstance(recorder, DisabledRecorder)
     with httpx.Client(
         transport=httpx.MockTransport(
@@ -400,9 +399,7 @@ def test_reader_rejects_noncanonical_references(tmp_path, reference):
 
 @pytest.mark.parametrize("value", ["false", 0, 1, None, []])
 def test_recording_configuration_requires_boolean(value):
-    config = copy.deepcopy(DEFAULTS)
-    config["cache"].update(max_bytes=1000, min_free_bytes=0)
-    config["github"]["record_messages"] = value
-    with pytest.raises(CatalogError) as raised:
-        validate(config)
-    assert raised.value.code == "CONFIG_ERROR"
+    config = {**TRANSPORT_SETTINGS, "record_messages": value}
+    with pytest.raises(RecordingError) as raised:
+        recorder_from_config(config, None)
+    assert raised.value.code == "ARCHIVE_ARGUMENT"

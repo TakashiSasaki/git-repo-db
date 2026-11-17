@@ -10,6 +10,7 @@ from contextlib import ExitStack, closing
 from dataclasses import dataclass
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.admission_transaction import rollback_after_failure
 from repo_catalog.adapters.sqlite.catalog_runtime import (
     SnapshotReadLimits,
     _identity,
@@ -154,6 +155,7 @@ class PairCoordinator(PairSnapshotCoordinator):
                     context, _context_admission=context_admission
                 )
                 context_unit(context_capability)
+                context_capability._check_active()
                 context.set_authorizer(None)
                 cut("during_context")
                 validate_dependencies(core, context)
@@ -167,18 +169,14 @@ class PairCoordinator(PairSnapshotCoordinator):
                 self._check_running()
             except Exception as error:
                 self._record_corruption(error, existing=False)
-                core.set_authorizer(None)
-                context.set_authorizer(None)
-                core.rollback()
-                context.rollback()
+                rollback_after_failure(core, error)
+                rollback_after_failure(context, error)
                 raise AdmissionFailure(
                     PairAdmission(core_committed, context_committed), error
                 ) from error
-            except BaseException:
-                core.set_authorizer(None)
-                context.set_authorizer(None)
-                core.rollback()
-                context.rollback()
+            except BaseException as error:
+                rollback_after_failure(core, error)
+                rollback_after_failure(context, error)
                 raise
             finally:
                 for capability in (core_capability, context_capability):

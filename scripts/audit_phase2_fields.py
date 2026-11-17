@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import re
-import sqlite3
 import sys
 from collections import Counter
 from pathlib import Path
@@ -21,12 +21,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
-from repo_catalog.adapters.sqlite.json_contracts import inventory  # noqa: E402
-from repo_catalog.adapters.sqlite.schema import (  # noqa: E402
-    DDL_SHA256,
-    SCHEMA_VERSION,
-    schema_sql,
-)
 from scripts.audit_phase2_dependencies import (  # noqa: E402
     sql_call_method,
     sql_forwarders,
@@ -113,74 +107,46 @@ class SourceAudit(ast.NodeVisitor):
 
 
 def generated_inventory():
-    db = sqlite3.connect(":memory:")
-    try:
-        db.executescript(schema_sql())
-        columns = inventory(db)
-        objects = list(
-            db.execute(
-                "SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE sql IS NOT NULL"
-            )
-        )
-        table_columns = {}
-        source_calls = []
-        projections = []
-        for path in sorted((ROOT / "src/repo_catalog").rglob("*.py")):
-            relative = path.relative_to(ROOT / "src/repo_catalog").as_posix()
-            audit = SourceAudit(relative)
-            audit.visit(ast.parse(path.read_text(encoding="utf-8"), filename=str(path)))
-            source_calls.extend(audit.sql_calls)
-            projections.extend(
-                {"file": "src/repo_catalog/" + relative, "symbol": symbol, "keys": keys}
-                for symbol, keys in audit.public_fields.items()
-            )
-        for entry in columns:
-            table, column = entry["table"], entry["column"]
-            if table not in table_columns:
-                table_columns[table] = [
-                    {
-                        "name": c[1],
-                        "type": c[2],
-                        "not_null": bool(c[3]),
-                        "pk": c[5],
-                        "hidden": c[6],
-                    }
-                    for c in db.execute(f'PRAGMA table_xinfo("{table}")')
-                ]
-            entry["static_sql_call_sites"] = [
-                {key: value for key, value in call.items() if key != "tables"}
-                for call in source_calls
-                if table in call["tables"]
-            ]
-            entry["schema_guards_and_views"] = [
-                {"type": kind, "name": name}
-                for kind, name, owner, sql in objects
-                if kind in {"trigger", "view"}
-                and (owner == table or re.search(rf"\b{re.escape(table)}\b", sql))
-                and re.search(rf"\b{re.escape(column)}\b", sql)
-            ]
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "ddl_sha256": DDL_SHA256.hex(),
-            "json_column_count": len(columns),
-            "category_counts": dict(
-                sorted(Counter(e["category"] for e in columns).items())
-            ),
-            "foreign_key_check": list(db.execute("PRAGMA foreign_key_check")),
-            "integrity_check": [r[0] for r in db.execute("PRAGMA integrity_check")],
-            "json_columns": columns,
-            "json_table_columns": table_columns,
-            "public_projection_syntax": projections,
-            "limitations": [
-                "Static SQL call sites are syntactic candidates; dynamic table names and indirect consumers require the prose investigation.",
-                "Recognized one/all and local AST SQL-forwarding methods do not resolve receiver types or argument aliases; unrecognized interfaces remain unproven.",
-                "Public projection keys include nested literal dictionaries and exclude dynamic keys; they are not a new public schema.",
-                "Provider projection columns accept unknown keys, so no finite provider-key vocabulary can be inferred from the DDL.",
-                "This is in-memory schema/AST verification, not application acceptance or a historical test receipt.",
-            ],
+    """Describe role-qualified structured-field candidates, never a JSON schema."""
+    from scripts.audit_callsite_dependencies import source_files
+    from scripts.schema_catalog import build_catalog
+
+    stores = build_catalog()["stores"]
+    calls = []
+    for path in source_files():
+        audit = SourceAudit(path.relative_to(ROOT).as_posix())
+        audit.visit(ast.parse(path.read_text(encoding="utf-8")))
+        calls.extend(audit.sql_calls)
+    fields = [
+        {
+            "store": role,
+            "table": table,
+            "column": column["name"],
+            "type": column["type"],
+            "category": "json-name-candidate",
         }
-    finally:
-        db.close()
+        for role, store in stores.items()
+        for table, definition in store["tables"].items()
+        for column in definition["columns"]
+        if column["name"].endswith("_json")
+    ]
+    fingerprints = {role: store["ddl_sha256"] for role, store in stores.items()}
+    return {
+        "schema_version": "separated-roles",
+        "ddl_sha256": hashlib.sha256(
+            json.dumps(fingerprints, sort_keys=True).encode()
+        ).hexdigest(),
+        "role_fingerprints": fingerprints,
+        "json_column_count": len(fields),
+        "category_counts": dict(Counter(field["category"] for field in fields)),
+        "json_columns": fields,
+        "static_sql_call_sites": calls,
+        "limitations": [
+            "Suffix candidates are lexical field leads, not a semantic JSON contract or complete list of structured encodings.",
+            "Unmodified role-qualified DDL is authoritative for all fields, keys, guards and physical FKs.",
+            "Static SQL candidates and projection syntax do not establish runtime reachability.",
+        ],
+    }
 
 
 def main():
@@ -218,13 +184,17 @@ def main():
                 f"python scripts/audit_phase2_fields.py --check --output {separate}"
             )
     else:
+        if args.output == CONTRACT:
+            raise SystemExit(
+                "Preserve the historical proposal snapshot; supply --output for current evidence"
+            )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(encoded, encoding="utf-8")
     print(
         json.dumps(
             {
                 "json_columns": data["generated_inventory"]["json_column_count"],
-                "ddl_sha256": DDL_SHA256.hex(),
+                "ddl_sha256": current["ddl_sha256"],
                 "check": args.check,
             },
             sort_keys=True,

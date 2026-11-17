@@ -50,6 +50,7 @@ from tests.support.context_admission import (
     fixture_service,
     fixture_transaction,
 )
+from tests.support.context_reader_probe import field_original_update_fault
 
 REPO = p1_contract.REPO
 SERVICE = p1_contract.SERVICE
@@ -938,8 +939,8 @@ def test_invalid_stored_field_is_corruption_not_bad_incoming_data(directory):
         store.provider(SERVICE, "github")
         store.observe(ResourceObservation(KEY, (field(),)))
     db = connect(directory / "context.sqlite3", "context")
-    db.execute("PRAGMA ignore_check_constraints=ON")
-    db.execute("UPDATE field_candidates SET provenance_json='not-json'")
+    with field_original_update_fault(db):
+        db.execute("UPDATE field_candidates SET provenance_json='not-json'")
     db.close()
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
         with Context.snapshot(directory) as store:
@@ -1095,8 +1096,8 @@ def test_invalid_utf8_stored_field_stops_before_caller_can_swallow(directory):
         store.provider(SERVICE, "github")
         store.observe(ResourceObservation(KEY, (field(),)))
     db = connect(directory / "context.sqlite3", "context")
-    db.execute("PRAGMA ignore_check_constraints=ON")
-    db.execute("UPDATE field_candidates SET provenance_json=CAST(X'80' AS TEXT)")
+    with field_original_update_fault(db):
+        db.execute("UPDATE field_candidates SET provenance_json=CAST(X'80' AS TEXT)")
     db.close()
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
         with Context.snapshot(directory) as store:

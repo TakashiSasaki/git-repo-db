@@ -14,9 +14,41 @@ import sqlite3
 import subprocess
 import sys
 import sysconfig
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 from urllib.parse import unquote, urlsplit
+
+
+@contextmanager
+def field_original_update_fault(db):
+    """Damage a disposable field row, then restore its exact admission guard.
+
+    This stdlib-only helper also travels with the installed Context probe. It
+    grants no product capability and never disables other table triggers.
+    """
+    name = "field_original_no_update"
+    row = db.execute(
+        "SELECT sql FROM sqlite_schema WHERE type='trigger' AND name=?",
+        (name,),
+    ).fetchone()
+    assert row is not None and row[0]
+    ddl = row[0]
+    checks = db.execute("PRAGMA ignore_check_constraints").fetchone()[0]
+    db.execute('DROP TRIGGER "field_original_no_update"')
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    try:
+        yield
+    finally:
+        db.execute("PRAGMA ignore_check_constraints=" + str(checks))
+        db.execute(ddl)
+        assert (
+            db.execute(
+                "SELECT sql FROM sqlite_schema WHERE type='trigger' AND name=?",
+                (name,),
+            ).fetchone()[0]
+            == ddl
+        )
 
 
 def refuses(callback, codes):
@@ -293,21 +325,19 @@ def main(output):
         damaged = fresh("damaged-" + fault)
         path = damaged / "context.sqlite3"
         with sqlite3.connect(path) as db:
-            table = "text_bodies" if fault == "text" else "field_candidates"
-            triggers = db.execute(
-                "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=?",
-                (table,),
-            ).fetchall()
-            for name, _ in triggers:
-                db.execute('DROP TRIGGER "' + name + '"')
-            db.execute("PRAGMA ignore_check_constraints=ON")
-            db.execute(
-                "UPDATE text_bodies SET text_value='tampered'"
-                if fault == "text"
-                else "UPDATE field_candidates SET provenance_json='[]'"
-            )
-            for _, sql in triggers:
-                db.execute(sql)
+            if fault == "provenance":
+                with field_original_update_fault(db):
+                    db.execute("UPDATE field_candidates SET provenance_json='[]'")
+            else:
+                triggers = db.execute(
+                    "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='text_bodies'"
+                ).fetchall()
+                for name, _ in triggers:
+                    db.execute('DROP TRIGGER "' + name + '"')
+                db.execute("PRAGMA ignore_check_constraints=ON")
+                db.execute("UPDATE text_bodies SET text_value='tampered'")
+                for _, sql in triggers:
+                    db.execute(sql)
         before = hashlib.sha256(path.read_bytes()).hexdigest()
         refuses(
             lambda: ContextQueryService(
@@ -606,21 +636,19 @@ def main(output):
     for fault in ("text", "provenance"):
         dest = fresh("enumeration-damaged-" + fault)
         with sqlite3.connect(dest / "context.sqlite3") as db:
-            table = "text_bodies" if fault == "text" else "field_candidates"
-            triggers = db.execute(
-                "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=?",
-                (table,),
-            ).fetchall()
-            for name, _ in triggers:
-                db.execute('DROP TRIGGER "' + name + '"')
-            db.execute("PRAGMA ignore_check_constraints=ON")
-            db.execute(
-                "UPDATE text_bodies SET text_value='tampered'"
-                if fault == "text"
-                else "UPDATE field_candidates SET provenance_json='[]'"
-            )
-            for _, sql in triggers:
-                db.execute(sql)
+            if fault == "provenance":
+                with field_original_update_fault(db):
+                    db.execute("UPDATE field_candidates SET provenance_json='[]'")
+            else:
+                triggers = db.execute(
+                    "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='text_bodies'"
+                ).fetchall()
+                for name, _ in triggers:
+                    db.execute('DROP TRIGGER "' + name + '"')
+                db.execute("PRAGMA ignore_check_constraints=ON")
+                db.execute("UPDATE text_bodies SET text_value='tampered'")
+                for _, sql in triggers:
+                    db.execute(sql)
         before = hashlib.sha256((dest / "context.sqlite3").read_bytes()).hexdigest()
         refuses(
             lambda: ContextQueryService(

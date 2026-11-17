@@ -32,12 +32,15 @@ class ProviderRegistration:
     service_instance_uuidv4: str
     provider_kind: str = "github"
     configuration_json: str = "{}"
+    ensure_only: bool = False
 
     def __post_init__(self) -> None:
         uuid4_value(self.service_instance_uuidv4)
         if not self.provider_kind:
             raise AcquisitionError("PROVIDER_KIND", self.service_instance_uuidv4)
         registration_json("provider", self.configuration_json)
+        if type(self.ensure_only) is not bool:
+            raise ValueError("strict registration mode required")
 
 
 @dataclass(frozen=True)
@@ -66,12 +69,15 @@ class SourceRegistration:
     configuration_json: str = "{}"
     associated_repositories: tuple[str, ...] = ()
     association_attributes_json: str = "{}"
+    ensure_only: bool = False
 
     def __post_init__(self) -> None:
         uuid4_value(self.source_registration_uuidv4)
         uuid4_value(self.service_instance_uuidv4)
         registration_json("source", self.configuration_json)
         registration_json("membership", self.association_attributes_json)
+        if type(self.ensure_only) is not bool:
+            raise ValueError("strict registration mode required")
         for repo in self.associated_repositories:
             uuid4_value(repo)
 

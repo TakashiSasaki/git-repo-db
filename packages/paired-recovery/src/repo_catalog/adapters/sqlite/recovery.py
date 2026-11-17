@@ -18,6 +18,7 @@ from repo_catalog.adapters.sqlite.core_recovery import (
 )
 from repo_catalog.adapters.sqlite.core_recovery_validation import (
     validate_stored_checks,
+    validate_stored_identity_authority,
     validate_stored_text_encoding,
 )
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
@@ -118,7 +119,27 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
             else CandidateType.GIT_METADATA
         )
 
-    def _special_source_candidate(self, store_name, table, row):
+    def _special_source_candidate(self, store_name, table, row, **context):
+        if store_name == "context" and table in {
+            "source_inventory_evidence",
+            "source_coverage_proofs",
+        }:
+            from repo_catalog.adapters.sqlite.source_inventory_salvage import (
+                source_candidate,
+            )
+
+            kind, ident, payload, qualification = source_candidate(
+                context["connection"],
+                table,
+                row,
+                context["work"],
+                max_bytes=context["max_bytes"],
+                max_members=context["max_members"],
+            )
+            return CandidateType(kind), ident, payload, qualification
+        identity = super()._special_source_candidate(store_name, table, row, **context)
+        if identity is not None:
+            return identity
         if store_name == "context" and table == "text_bodies":
             return (
                 CandidateType.CONTEXT_DOCUMENT,
@@ -126,6 +147,60 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
                 {"sha256": row.get("sha256"), "text_value": row.get("text_value")},
             )
         return None
+
+    def _merge_identity_candidate(
+        self, kind, payload, directory, core, store, connection, admission, budget, work
+    ):
+        from repo_catalog.adapters.sqlite.identity_salvage import (
+            IDENTITY_CANDIDATES,
+            decode_identity_candidate,
+        )
+
+        entity, _, _ = IDENTITY_CANDIDATES[kind]
+        if entity == "repository":
+            return super()._merge_identity_candidate(
+                kind,
+                payload,
+                directory,
+                core,
+                store,
+                connection,
+                admission,
+                budget,
+                work,
+            )
+        if store is None:
+            raise RecoveryCapabilityError(
+                "Service identity recovery requires Context authority"
+            )
+        evidence_kind, original = decode_identity_candidate(
+            kind, payload, ROW_TYPES, work
+        )
+        with store.transaction(admission=admission):
+            assert_catalog_not_stopped(directory)
+            result, inserted = store.admit_identity_evidence(
+                evidence_kind,
+                payload["record_json"],
+                original.encoded,
+                with_insertion=True,
+            )
+            assert_catalog_not_stopped(directory)
+        return result if inserted else "duplicate"
+
+    def _merge_source_candidate(
+        self, kind, payload, directory, store, connection, admission, budget, work
+    ):
+        from repo_catalog.adapters.sqlite.source_inventory_salvage import (
+            admit_source_packet,
+        )
+
+        if store is None:
+            raise RecoveryCapabilityError(
+                "Source inventory recovery requires paired Context authority"
+            )
+        return admit_source_packet(
+            directory, kind, payload, connection, store._authorization, admission, work
+        )
 
     def _validate_and_summarize_context(self, context_db: Path) -> RetainedByteSummary:
         conn = sqlite3.connect(f"file:{context_db.resolve()}?mode=ro", uri=True)
@@ -146,8 +221,21 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
                     "Context physical schema rows differ from packaged expectation"
                 )
 
+            identity_work = self._ref_validation_work()
+            validate_stored_identity_authority(
+                conn, "context", ROW_TYPES, identity_work, self.validation_budget
+            )
+            from repo_catalog.adapters.sqlite.source_inventory_salvage import (
+                validate_stored_source_authority,
+            )
+
+            validate_stored_source_authority(
+                conn, identity_work, self.validation_budget
+            )
             validate_stored_text_encoding(conn, "context")
-            validate_stored_checks(conn, "context", retained_bytes=False)
+            validate_stored_checks(
+                conn, "context", retained_bytes=False, work=identity_work
+            )
             validate_stored_admission_guards(conn, "context")
 
             result = conn.execute("PRAGMA integrity_check").fetchall()

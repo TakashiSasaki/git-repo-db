@@ -26,9 +26,9 @@ class RefuseDocumentation(importlib.abc.MetaPathFinder):
         if fullname in {"schema_viz", "scripts.schema_viz"} or fullname.split(".")[0] in {"mkdocs", "material", "yaml"}:
             raise ImportError("documentation import forbidden: " + fullname)
 sys.meta_path.insert(0, RefuseDocumentation())
-from scripts.audit_implementation_boundary import build
-inventory, report = build()
-assert inventory and report
+from scripts.schema_inventory import introspect_all, validate_inventory
+inventory = introspect_all()
+assert inventory and not validate_inventory(inventory)
 assert not any(name in sys.modules for name in ("schema_viz", "scripts.schema_viz", "mkdocs", "material", "yaml"))
 """
     result = subprocess.run(

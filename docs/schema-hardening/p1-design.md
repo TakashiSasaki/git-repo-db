@@ -1,5 +1,10 @@
 # P1: 独立target DDL・変換契約・制約検証
 
+> **Historical design:** This page records the reviewed branch and execution
+> snapshots below. Its old `scripts/demo.py` commands and conversion target are
+> historical material. The implemented separated runtime and fresh-format policy
+> are described in [Current runtime reference](../current-runtime-reference.md).
+
 レビュー入力: branch `design/schema-v2-hardening`、HEAD `2ca0a0f0b80763ca6ab921f5544809c43bbcc8e3`、main `9a4110185d7e7abffc291f9cfd118ca71587f998`。
 開始時remote/PRはこのSHAと一致し、最新CI run 37327752971 は86 passed / packaging 2 failed。重複修正はなかった。
 本工程はsynthetic fixtureのみ。通常application・migration runner・001/002資源・実DB・旧Git cacheを変更/変換/切替しない。

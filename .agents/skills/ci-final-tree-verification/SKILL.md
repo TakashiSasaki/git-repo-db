@@ -1,6 +1,6 @@
 ---
 name: ci-final-tree-verification
-description: Verify git-repo-db CI status and test execution against the exact feature HEAD and effective Git tree. Distinguish ordinary development checks (lightweight CI + local focused testing) from explicit release acceptance (independent local + hosted complete execution with test-node reconciliation). Use before PR submission, review, or release qualification.
+description: Verify resource-atlas CI status and test execution against the exact feature HEAD and effective Git tree. Distinguish ordinary development checks (lightweight CI + local focused testing) from explicit release acceptance (independent local + hosted complete execution with test-node reconciliation). Use before PR submission, review, or release qualification.
 ---
 
 # Verify the exact accepted tree
@@ -8,6 +8,14 @@ description: Verify git-repo-db CI status and test execution against the exact f
 Use `docs/change-aware-ci.md`, `docs/testing.md`, and `scripts/ci_dependencies.json` as the live contracts. Follow [ADR 0032](../../../docs/adr/0032-environment-sqlite-validation.md) for the environment's Python-loaded SQLite; one version per environment suffices for development and release. Distinguish ordinary development validation from explicit release acceptance.
 
 ## Stacked integration trees and merge authorization fences
+
+Record each worktree's actual branch, `git rev-parse HEAD` and
+`git rev-parse 'HEAD^{tree}'` with an explicit working directory. The newest
+entry in `git log --all` can belong to a separate author branch: a review of
+that candidate remains candidate-source review. Keep its SHA separate from the
+integration HEAD, then establish relevant-file identity after integration before
+carrying its findings or test evidence forward. This distinction caught a review
+that had mistaken an authored CLI mapping commit for the primary worktree HEAD.
 
 Separate feature-tree acceptance does not prove their combined executable tree.
 Fetch all reviewed heads, record their exact SHAs and the actual main, then use
@@ -945,9 +953,10 @@ procedures requires all feature combinations or release qualification.
 
 Include every product source root in lexical ownership audits and subprocess test
 fixtures too. Compare namespace-relative module identities and reject duplicate
-owners; preserve explicit normal-runtime versus opt-in classification rather than
-inferring activation from the distribution directory. Keep any target hash/owner
-inventory compact instead of duplicating its full function index. The focused
+owners; index every current source owner rather than preserving the retired
+normal-versus-opt-in exclusion list. A package path does not prescribe a startup
+set or prove runtime reachability. Keep source hashes and lexical-analysis limits
+explicit; historical snapshots retain their original classification. The focused
 `tests/unit/test_callsite_source_owners.py` controls cover moved roots, unknown
 modules and duplicate ownership; documentation fixtures exercise fresh-process
 imports across the same roots. Update current machine input labels when a scanner's
@@ -1053,3 +1062,39 @@ all established callers. Check `verify_i4_distribution.py` and
 composed nodes in `tests/packaging/test_access_distribution.py`. This does not
 justify expanding an Access extraction into unrelated Exchange qualification or
 weakening either consumer's integrity checks.
+
+
+## Integrated static checks and reachable fault injection
+
+A passing author fragment does not qualify the final combined namespace tree.
+After merging row-class imports or resolving source-root changes, run the locked
+Ruff import/lint and format checks on the actual integrated scope. An extra blank
+line around a generated first-party import can fail hosted I001 even though its
+runtime tests passed. Regenerate source-hash artifacts after the final import
+ordering; report the original CI failure and the corrected exact tree. A purely
+import-order follow-up may reuse behavioral evidence when imports are the same
+and generated modules have no registration side effects; verify those inputs
+rather than claiming a fresh broad test run.
+
+Before a corruption counterexample, assert the healthy setup actually admitted
+its intended facts. Check admitted **and replayed** units and exact stored
+originals: a proof can legitimately insert its inventory dependency before the
+standalone inventory is delivered. Require the targeted damaging UPDATE to
+change the expected row count. An earlier packet rejection followed by an UPDATE
+of zero rows does not exercise restore validation. These checks prevent a false
+claim that a sound production hook is missing.
+
+When an immutable-original trigger blocks deliberate fault injection, remove
+only the required guard in the disposable fixture, preserve its exact SQL, inject
+the fault, and restore that exact definition/settings before public reads or
+backup/restore. Keep the original corruption-stop and source-byte-preservation
+assertions. Never weaken the product guard to prepare a fixture. See the scoped
+helper in `tests/support/context_reader_probe.py` and current Source recovery
+controls in `tests/integration/auxiliary_rows/test_source_inventory_recovery.py`.
+
+Close every setup SQLite connection before taking a source-file/sidecar snapshot.
+`with sqlite3.connect(...) as db` commits/rolls back but does **not** close `db`.
+A later GC/close can checkpoint or remove WAL sidecars and falsely appear as a
+salvage write. Use explicit close or `contextlib.closing`, establish a quiescent
+baseline, then assert exact preservation immediately after the operation as well
+as after its lifecycle. A fixture-timing repair does not authorize source writes.

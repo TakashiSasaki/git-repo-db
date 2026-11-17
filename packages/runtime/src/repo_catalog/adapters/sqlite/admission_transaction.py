@@ -6,20 +6,53 @@ from repo_catalog.adapters.sqlite.catalog_runtime import _Cursor
 from repo_catalog.domain.p1_coordination import CoordinationError
 
 
+def rollback_after_failure(connection, original):
+    """Finish a failed owner boundary without masking its initiating error.
+
+    A Core capability may already have discarded this connection after its own
+    rollback failed. Every other cleanup failure is retained as a diagnostic and
+    forces connection discard, so pending writes cannot become a later commit.
+    """
+    try:
+        if connection.in_transaction:
+            connection.set_authorizer(None)
+            connection.rollback()
+    except BaseException as cleanup:
+        original.add_note(
+            f"Owner transaction cleanup failed: {type(cleanup).__name__}: {cleanup}"
+        )
+        try:
+            connection.close()
+        except BaseException as discard:
+            original.add_note(
+                f"Owner connection discard failed: {type(discard).__name__}: {discard}"
+            )
+
+
 class AdmissionTransaction:
     """Callback connection that cannot end its enclosing transaction."""
 
     def __init__(self, db: sqlite3.Connection):
         self._db = db
         self._active = True
+        self._aborted_error = None
         self.set_authorizer(None)
 
     def _check_active(self):
+        if self._aborted_error is not None:
+            raise self._aborted_error
         if not self._active:
             raise CoordinationError("CAPABILITY_EXPIRED", "admission")
 
     def _expire(self):
         self._active = False
+
+    def _abort(self, original):
+        """Discard an unsafe callback transaction, retaining its first failure."""
+        if self._aborted_error is None:
+            self._aborted_error = original
+        self._active = False
+        self._db.close()
 
     @property
     def in_transaction(self):

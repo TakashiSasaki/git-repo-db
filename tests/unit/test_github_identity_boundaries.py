@@ -131,7 +131,7 @@ def test_pr_title_and_body_preserve_native_local_and_namespace_coordinates(
             "thread",
             "thread_node",
         ),
-        (normalize_review_comment, (731, {"id": 9}), "comment", "9"),
+        (normalize_review_comment, (731, {"id": 9}), "review_comment", "9"),
         (normalize_pr_commit, (731, {"sha": "a" * 40}), "pr_commit", "a" * 40),
         (normalize_pr_file, (731, {"filename": "a/日本.txt"}), "pr_file", "a/日本.txt"),
     ],

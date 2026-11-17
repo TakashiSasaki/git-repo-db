@@ -38,6 +38,9 @@ from repo_catalog.domain.resource_identity import (
 )
 from repo_catalog.domain.time import parse_iso8601_us, validate_observation_us
 
+NORMALIZER_MODULE = __name__
+NORMALIZER_VERSION = "1"
+
 _ACTOR_FIELDS = ("id", "login", "type", "html_url", "url")
 _LABEL_FIELDS = ("id", "name", "color", "description", "default")
 _REACTION_FIELDS = (
@@ -50,6 +53,20 @@ _REACTION_FIELDS = (
     "hooray",
     "eyes",
     "rocket",
+)
+_MILESTONE_FIELDS = (
+    "id",
+    "number",
+    "title",
+    "description",
+    "state",
+    "due_on",
+    "created_at",
+    "updated_at",
+    "closed_at",
+    "open_issues",
+    "closed_issues",
+    "html_url",
 )
 
 
@@ -70,6 +87,24 @@ def canonical_database_id(value: object, field_name: str = "id") -> str:
         field_name,
         f"GitHub {field_name} must be a canonical positive decimal database ID",
     )
+
+
+def milestone_field_name(provider_database_id, field_name):
+    """Natural milestone subject/leaf; explicit Node namespaces stay distinct."""
+    if field_name not in (*_MILESTONE_FIELDS, "creator"):
+        raise AcquisitionError("INVALID_FIELD", "milestone")
+    if type(provider_database_id) is list:
+        subject = parse_identity(encode_identity(provider_database_id))
+        if (
+            len(subject) != 2
+            or subject[0] != "github:node_id"
+            or type(subject[1]) is not str
+            or not subject[1]
+        ):
+            raise AcquisitionError("NODE_ID_REQUIRED", "milestone")
+    else:
+        subject = canonical_database_id(provider_database_id)
+    return canonical(["milestone", subject, field_name])
 
 
 def github_resource_id(payload: dict[str, Any], *, graphql: bool) -> str:
@@ -182,7 +217,80 @@ def _select_dict(value: object, allowed_keys: tuple[str, ...]) -> dict[str, Any]
         return None
     if not isinstance(value, dict):
         raise AcquisitionError("MALFORMED_OBJECT", allowed_keys, "expected JSON object")
-    return {k: value[k] for k in allowed_keys if k in value}
+    result = {key: value[key] for key in allowed_keys if key in value}
+    integers = {"id", "number", "open_issues", "closed_issues", *_REACTION_FIELDS}
+    for key, item in result.items():
+        if item is None:
+            continue
+        if key == "default":
+            valid = type(item) is bool
+        elif key in integers:
+            valid = type(item) is int and 0 <= item <= 2**63 - 1
+        else:
+            valid = type(item) is str
+        if not valid:
+            raise AcquisitionError(
+                "INVALID_FIELD", key, "invalid modeled metadata leaf"
+            )
+        if isinstance(item, str):
+            _utf8_text(item, key)
+    return result
+
+
+def _utf8_text(value, field):
+    if value is not None:
+        try:
+            value.encode("utf-8")
+        except (AttributeError, UnicodeError) as error:
+            raise AcquisitionError(
+                "INVALID_FIELD", field, "UTF-8 text required"
+            ) from error
+    return value
+
+
+def _modeled_fields(fields, resource, payload, clock, provenance, observed):
+    """Project known metadata only; captured Node IDs never identify resources."""
+    known = {field.field_name for field in fields}
+    extras = {}
+    if "reactions" in payload:
+        extras["reactions"] = _select_dict(payload["reactions"], _REACTION_FIELDS)
+    if resource.resource_kind != "issue" and "node_id" in payload:
+        value = payload["node_id"]
+        if value is not None and type(value) is not str:
+            raise AcquisitionError(
+                "INVALID_FIELD", "node_id", "string or null required"
+            )
+        extras["node_id"] = _utf8_text(value, "node_id")
+    for name, allowed in (
+        ("labels", _LABEL_FIELDS),
+        ("assignees", _ACTOR_FIELDS),
+        ("requested_reviewers", _ACTOR_FIELDS),
+        (
+            "requested_teams",
+            ("id", "name", "slug", "description", "privacy", "html_url"),
+        ),
+    ):
+        if name not in payload or name in known:
+            continue
+        raw = payload[name]
+        if isinstance(raw, dict) and "nodes" in raw:
+            raw = raw["nodes"]
+        if raw is not None and type(raw) is not list:
+            raise AcquisitionError("INVALID_FIELD", name, "array or null required")
+        extras[name] = (
+            None if raw is None else [_select_dict(item, allowed) for item in raw]
+        )
+    if "milestone" in payload and "milestone" not in known:
+        raw = payload["milestone"]
+        milestone = _select_dict(raw, _MILESTONE_FIELDS)
+        if isinstance(raw, dict) and "creator" in raw:
+            milestone["creator"] = _select_dict(raw["creator"], _ACTOR_FIELDS)
+        extras["milestone"] = milestone
+    return tuple(fields) + tuple(
+        _candidate(resource, name, value, clock, provenance, observed)
+        for name, value in extras.items()
+        if name not in known
+    )
 
 
 def _extract_actorLogin(
@@ -200,8 +308,6 @@ def _extract_actorLogin(
     actor = payload[key]
     if actor is None:
         return True, None
-    if isinstance(actor, str):
-        return True, actor
     if not isinstance(actor, dict):
         raise AcquisitionError("MALFORMED_ACTOR", key, "actor must be object or null")
     if "login" not in actor:
@@ -220,10 +326,16 @@ def _candidate(
     provenance_json: str,
     observed_at_us: int | None,
 ) -> FieldCandidate:
+    if field_name == "url" and value is not None and type(value) is not str:
+        raise AcquisitionError("INVALID_FIELD", field_name, "string or null required")
+    if isinstance(value, str):
+        _utf8_text(value, field_name)
+    encoded = canonical(value)
+    _utf8_text(encoded, field_name)
     return FieldCandidate(
         resource=resource,
         field_name=field_name,
-        value_json=canonical(value),
+        value_json=encoded,
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
@@ -394,7 +506,7 @@ def normalize_issue(
     fields: list[FieldCandidate] = []
     if "number" in payload:
         num = payload["number"]
-        if num is not None and (type(num) is not int or num <= 0):
+        if num is not None and (type(num) is not int or not 0 < num <= 2**63 - 1):
             raise AcquisitionError("INVALID_FIELD", "number", "positive int required")
         fields.append(
             _candidate(issue_key, "number", num, clock, provenance_json, observed_at_us)
@@ -475,6 +587,10 @@ def normalize_issue(
         raw_labels = payload["labels"]
         if isinstance(raw_labels, dict) and "nodes" in raw_labels:
             raw_labels = raw_labels["nodes"]
+        if raw_labels is not None and type(raw_labels) is not list:
+            raise AcquisitionError(
+                "INVALID_FIELD", "raw_labels", "array or null required"
+            )
         labels = (
             None
             if raw_labels is None
@@ -489,6 +605,10 @@ def normalize_issue(
         raw_assignees = payload["assignees"]
         if isinstance(raw_assignees, dict) and "nodes" in raw_assignees:
             raw_assignees = raw_assignees["nodes"]
+        if raw_assignees is not None and type(raw_assignees) is not list:
+            raise AcquisitionError(
+                "INVALID_FIELD", "raw_assignees", "array or null required"
+            )
         assignees = (
             None
             if raw_assignees is None
@@ -505,19 +625,48 @@ def normalize_issue(
             )
         )
     if "milestone" in payload:
-        ms = _select_dict(
-            payload["milestone"], ("id", "number", "title", "state", "due_on")
-        )
+        ms = _select_dict(payload["milestone"], _MILESTONE_FIELDS)
+        if (
+            isinstance(ms, dict)
+            and isinstance(payload["milestone"], dict)
+            and "creator" in payload["milestone"]
+        ):
+            ms["creator"] = _select_dict(payload["milestone"]["creator"], _ACTOR_FIELDS)
         fields.append(
             _candidate(
                 issue_key, "milestone", ms, clock, provenance_json, observed_at_us
             )
         )
+        if isinstance(ms, dict) and any(
+            payload["milestone"].get(name) is not None
+            for name in ("id", "databaseId", "fullDatabaseId")
+        ):
+            try:
+                native_id = parse_identity(
+                    github_resource_id(payload["milestone"], graphql=graphql)
+                )
+            except AcquisitionError:
+                # Preserve the actual metadata projection; an unrecognized
+                # subject cannot acquire another milestone's qualified facts.
+                native_id = None
+            if native_id is not None:
+                for name, value in ms.items():
+                    fields.append(
+                        _candidate(
+                            issue_key,
+                            milestone_field_name(native_id, name),
+                            native_id if name == "id" else value,
+                            clock,
+                            provenance_json,
+                            observed_at_us,
+                        )
+                    )
     text_admissions: list[tuple[ResourceKey, str | None, FieldClock, str, int]] = []
     if "body" in payload:
         body = payload["body"]
         if body is not None and not isinstance(body, str):
             raise AcquisitionError("INVALID_FIELD", "body", "string or null required")
+        _utf8_text(body, "body")
         text_admissions.append(
             (issue_key, body, clock, provenance_json, observed_at_us)
         )
@@ -526,7 +675,14 @@ def normalize_issue(
         clock=clock,
         provenance_json=provenance_json,
         observed_at_us=observed_at_us,
-        observations=(ResourceObservation(issue_key, tuple(fields)),),
+        observations=(
+            ResourceObservation(
+                issue_key,
+                _modeled_fields(
+                    fields, issue_key, payload, clock, provenance_json, observed_at_us
+                ),
+            ),
+        ),
         text_admissions=tuple(text_admissions),
         extra_texts=(),
         relations=repository_role_relation(
@@ -543,115 +699,11 @@ def normalize_issue(
     )
 
 
-def normalize_pull_request(
-    service_instance_uuidv4: str,
-    payload: dict[str, Any],
-    observed_at_us: int | None,
-    provenance_json: str,
-    *,
-    graphql: bool = False,
-) -> NormalizedContextUnit:
-    """Normalize a GitHub Pull Request payload, including title/body documents and CoreReferences."""
-    if not isinstance(payload, dict):
-        raise AcquisitionError("MALFORMED_PAYLOAD", "pull_request", "dict required")
-    if graphql and "__typename" in payload and payload["__typename"] != "PullRequest":
-        raise AcquisitionError("RESOURCE_KIND", "pull_request")
-    validate_observation_us(observed_at_us)
-    json_value(provenance_json, provenance=True)
-    pr_id = github_resource_id(payload, graphql=graphql)
-    pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
-    _, updated_us = _parse_optional_time_us(
-        payload, "updatedAt" if graphql and "updatedAt" in payload else "updated_at"
-    )
-    clock = FieldClock("github:pr:updated_at", updated_us)
-    fields: list[FieldCandidate] = []
-    observations: list[ResourceObservation] = []
-    text_admissions: list[tuple[ResourceKey, str | None, FieldClock, str, int]] = []
-    relations: list[ResourceRelation] = []
-    core_refs: list[tuple[CoreReference, FieldClock, int]] = []
-
-    if "number" in payload:
-        num = payload["number"]
-        if num is not None and (type(num) is not int or num <= 0):
-            raise AcquisitionError("INVALID_FIELD", "number", "positive int required")
-        fields.append(
-            _candidate(pr_key, "number", num, clock, provenance_json, observed_at_us)
-        )
-    if "state" in payload:
-        state = payload["state"]
-        if isinstance(state, str) and state.upper() in ("OPEN", "CLOSED", "MERGED"):
-            state = state.lower()
-        elif state is not None:
-            raise AcquisitionError("INVALID_FIELD", "state", "invalid PR state")
-        fields.append(
-            _candidate(pr_key, "state", state, clock, provenance_json, observed_at_us)
-        )
-    has_author, login = _extract_actorLogin(payload, graphql=graphql)
-    if has_author:
-        fields.append(
-            _candidate(pr_key, "author", login, clock, provenance_json, observed_at_us)
-        )
-    url_key = (
-        "url"
-        if graphql and "url" in payload
-        else (
-            "html_url" if "html_url" in payload else ("url" if "url" in payload else "")
-        )
-    )
-    if url_key:
-        fields.append(
-            _candidate(
-                pr_key, "url", payload[url_key], clock, provenance_json, observed_at_us
-            )
-        )
-    for scalar in (
-        "draft",
-        "merged",
-        "locked",
-        "mergeable",
-        "mergeable_state",
-        "rebaseable",
-        "maintainer_can_modify",
-        "comments",
-        "review_comments",
-        "commits",
-        "changed_files",
-        "additions",
-        "deletions",
-        "author_association",
-        "active_lock_reason",
-    ):
-        if scalar in payload:
-            fields.append(
-                _candidate(
-                    pr_key,
-                    scalar,
-                    payload[scalar],
-                    clock,
-                    provenance_json,
-                    observed_at_us,
-                )
-            )
-    for src_t, dst_t in (
-        (
-            "createdAt" if graphql and "createdAt" in payload else "created_at",
-            "created_at_us",
-        ),
-        (
-            "closedAt" if graphql and "closedAt" in payload else "closed_at",
-            "closed_at_us",
-        ),
-        (
-            "mergedAt" if graphql and "mergedAt" in payload else "merged_at",
-            "merged_at_us",
-        ),
-    ):
-        present, ts = _parse_optional_time_us(payload, src_t)
-        if present:
-            fields.append(
-                _candidate(pr_key, dst_t, ts, clock, provenance_json, observed_at_us)
-            )
-
+def _pr_comparison_fields(
+    pr_key, payload, clock, provenance_json, observed_at_us, *, graphql
+):
+    fields = []
+    core_refs = []
     seen_formats: set[str] = set()
     for role, gql_oid_key, gql_ref_key in (
         ("head", "headRefOid", "headRefName"),
@@ -853,16 +905,190 @@ def normalize_pull_request(
                     )
                 )
 
+        elif not isinstance(mc, dict):
+            raise AcquisitionError(
+                "MALFORMED_FIELD", "mergeCommit", "object or null required"
+            )
+
     if len(seen_formats) > 1:
         raise AcquisitionError(
             "MIXED_OBJECT_FORMATS", pr_key, "mixed SHA-1 and SHA-256 commit OIDs in PR"
         )
+
+    return tuple(fields), tuple(core_refs)
+
+
+def normalize_pr_comparison_header(
+    resource: ResourceKey,
+    payload: dict[str, Any],
+    observed_at_us: int | None,
+    provenance_json: str,
+) -> NormalizedContextUnit:
+    """Normalize comparison fields for an independently identified GraphQL PR."""
+    if (
+        not isinstance(resource, ResourceKey)
+        or resource.resource_kind != "pull_request"
+    ):
+        raise AcquisitionError("RESOURCE_KIND", "pull_request")
+    if not isinstance(payload, dict):
+        raise AcquisitionError(
+            "MALFORMED_PAYLOAD", "comparison_header", "dict required"
+        )
+    validate_observation_us(observed_at_us)
+    json_value(provenance_json, provenance=True)
+    _, updated_us = _parse_optional_time_us(payload, "updatedAt")
+    clock = FieldClock("github:pr:updated_at", updated_us)
+    selected = {
+        key: payload[key]
+        for key in ("headRefOid", "baseRefOid", "mergeCommit")
+        if key in payload
+    }
+    fields, references = _pr_comparison_fields(
+        resource, selected, clock, provenance_json, observed_at_us, graphql=True
+    )
+    return NormalizedContextUnit(
+        primary_resource=resource,
+        clock=clock,
+        provenance_json=provenance_json,
+        observed_at_us=observed_at_us,
+        observations=(ResourceObservation(resource, fields),),
+        text_admissions=(),
+        extra_texts=(),
+        relations=(),
+        core_references=references,
+    )
+
+
+def normalize_pull_request(
+    service_instance_uuidv4: str,
+    payload: dict[str, Any],
+    observed_at_us: int | None,
+    provenance_json: str,
+    *,
+    graphql: bool = False,
+) -> NormalizedContextUnit:
+    """Normalize a GitHub Pull Request payload, including title/body documents and CoreReferences."""
+    if not isinstance(payload, dict):
+        raise AcquisitionError("MALFORMED_PAYLOAD", "pull_request", "dict required")
+    if graphql and "__typename" in payload and payload["__typename"] != "PullRequest":
+        raise AcquisitionError("RESOURCE_KIND", "pull_request")
+    validate_observation_us(observed_at_us)
+    json_value(provenance_json, provenance=True)
+    pr_id = github_resource_id(payload, graphql=graphql)
+    pr_key = ResourceKey(service_instance_uuidv4, "pull_request", pr_id)
+    _, updated_us = _parse_optional_time_us(
+        payload, "updatedAt" if graphql and "updatedAt" in payload else "updated_at"
+    )
+    clock = FieldClock("github:pr:updated_at", updated_us)
+    fields: list[FieldCandidate] = []
+    observations: list[ResourceObservation] = []
+    text_admissions: list[tuple[ResourceKey, str | None, FieldClock, str, int]] = []
+    relations: list[ResourceRelation] = []
+    core_refs: list[tuple[CoreReference, FieldClock, int]] = []
+
+    if "number" in payload:
+        num = payload["number"]
+        if num is not None and (type(num) is not int or not 0 < num <= 2**63 - 1):
+            raise AcquisitionError("INVALID_FIELD", "number", "positive int required")
+        fields.append(
+            _candidate(pr_key, "number", num, clock, provenance_json, observed_at_us)
+        )
+    if "state" in payload:
+        state = payload["state"]
+        if isinstance(state, str) and state.upper() in ("OPEN", "CLOSED", "MERGED"):
+            state = state.lower()
+        elif state is not None:
+            raise AcquisitionError("INVALID_FIELD", "state", "invalid PR state")
+        fields.append(
+            _candidate(pr_key, "state", state, clock, provenance_json, observed_at_us)
+        )
+    has_author, login = _extract_actorLogin(payload, graphql=graphql)
+    if has_author:
+        fields.append(
+            _candidate(pr_key, "author", login, clock, provenance_json, observed_at_us)
+        )
+    url_key = (
+        "url"
+        if graphql and "url" in payload
+        else (
+            "html_url" if "html_url" in payload else ("url" if "url" in payload else "")
+        )
+    )
+    if url_key:
+        fields.append(
+            _candidate(
+                pr_key, "url", payload[url_key], clock, provenance_json, observed_at_us
+            )
+        )
+    for name in ("commits", "changed_files", "additions", "deletions"):
+        if (
+            name in payload
+            and payload[name] is not None
+            and (type(payload[name]) is not int or not 0 <= payload[name] <= 2**63 - 1)
+        ):
+            raise AcquisitionError(
+                "INVALID_FIELD", name, "finite nonnegative integer required"
+            )
+    for scalar in (
+        "draft",
+        "merged",
+        "locked",
+        "mergeable",
+        "mergeable_state",
+        "rebaseable",
+        "maintainer_can_modify",
+        "comments",
+        "review_comments",
+        "commits",
+        "changed_files",
+        "additions",
+        "deletions",
+        "author_association",
+        "active_lock_reason",
+    ):
+        if scalar in payload:
+            fields.append(
+                _candidate(
+                    pr_key,
+                    scalar,
+                    payload[scalar],
+                    clock,
+                    provenance_json,
+                    observed_at_us,
+                )
+            )
+    for src_t, dst_t in (
+        (
+            "createdAt" if graphql and "createdAt" in payload else "created_at",
+            "created_at_us",
+        ),
+        (
+            "closedAt" if graphql and "closedAt" in payload else "closed_at",
+            "closed_at_us",
+        ),
+        (
+            "mergedAt" if graphql and "mergedAt" in payload else "merged_at",
+            "merged_at_us",
+        ),
+    ):
+        present, ts = _parse_optional_time_us(payload, src_t)
+        if present:
+            fields.append(
+                _candidate(pr_key, dst_t, ts, clock, provenance_json, observed_at_us)
+            )
+
+    comparison_fields, comparison_refs = _pr_comparison_fields(
+        pr_key, payload, clock, provenance_json, observed_at_us, graphql=graphql
+    )
+    fields.extend(comparison_fields)
+    core_refs.extend(comparison_refs)
 
     doc_members: list[ResourceKey] = []
     if "title" in payload:
         title_val = payload["title"]
         if title_val is not None and not isinstance(title_val, str):
             raise AcquisitionError("INVALID_FIELD", "title", "string or null required")
+        _utf8_text(title_val, "title_val")
         fields.append(
             _candidate(
                 pr_key, "title", title_val, clock, provenance_json, observed_at_us
@@ -889,6 +1115,7 @@ def normalize_pull_request(
         body_val = payload["body"]
         if body_val is not None and not isinstance(body_val, str):
             raise AcquisitionError("INVALID_FIELD", "body", "string or null required")
+        _utf8_text(body_val, "body_val")
         body_doc = make_document_key(
             pr_key, "pull_request_document", "pr_body", parse_identity(pr_id)
         )
@@ -906,7 +1133,15 @@ def normalize_pull_request(
         )
         doc_members.append(body_doc)
 
-    observations.insert(0, ResourceObservation(pr_key, tuple(fields)))
+    observations.insert(
+        0,
+        ResourceObservation(
+            pr_key,
+            _modeled_fields(
+                fields, pr_key, payload, clock, provenance_json, observed_at_us
+            ),
+        ),
+    )
     if doc_members:
         relations.append(
             ResourceRelation(
@@ -1082,6 +1317,7 @@ def normalize_review(
         body = payload["body"]
         if body is not None and not isinstance(body, str):
             raise AcquisitionError("INVALID_FIELD", "body", "string or null required")
+        _utf8_text(body, "body")
         text_admissions.append(
             (review_key, body, clock, provenance_json, observed_at_us)
         )
@@ -1102,7 +1338,9 @@ def normalize_review(
             ResourceObservation(pr_key, ()),
             ResourceObservation(
                 review_key,
-                tuple(fields),
+                _modeled_fields(
+                    fields, review_key, payload, clock, provenance_json, observed_at_us
+                ),
                 ResourceIdentification.scoped(
                     review_key, pr_key, "review_summary", review_id
                 ),
@@ -1179,7 +1417,9 @@ def normalize_review_thread(
             ResourceObservation(pr_key, ()),
             ResourceObservation(
                 thread_key,
-                tuple(fields),
+                _modeled_fields(
+                    fields, thread_key, payload, clock, provenance_json, observed_at_us
+                ),
                 ResourceIdentification.scoped(thread_key, pr_key, "thread", thread_id),
             ),
         ),
@@ -1213,7 +1453,9 @@ def normalize_review_comment(
         else ("databaseId" if graphql and "databaseId" in payload else "id")
     )
     comment_id = canonical_database_id(payload.get(id_field), id_field)
-    comment_key = make_document_key(pr_key, "review_comment", "comment", comment_id)
+    comment_key = make_document_key(
+        pr_key, "review_comment", "review_comment", comment_id
+    )
 
     _, updated_us = _parse_optional_time_us(
         payload, "updatedAt" if graphql and "updatedAt" in payload else "updated_at"
@@ -1305,6 +1547,17 @@ def normalize_review_comment(
             )
         )
 
+    def nested_projection(name, keys):
+        nested = payload[name]
+        if nested is None:
+            return True, None
+        if not isinstance(nested, dict):
+            raise AcquisitionError("INVALID_FIELD", name, "object or null required")
+        for key in keys:
+            if key in nested:
+                return True, nested[key]
+        return False, None
+
     # Review relation
     review_db_id: str | None = None
     has_review_field = False
@@ -1315,16 +1568,11 @@ def normalize_review_comment(
                 payload["pull_request_review_id"], "pull_request_review_id"
             )
     elif graphql and "pullRequestReview" in payload:
-        has_review_field = True
-        pr_rev = payload["pullRequestReview"]
-        if isinstance(pr_rev, dict):
-            rid_key = (
-                "fullDatabaseId"
-                if "fullDatabaseId" in pr_rev
-                else ("databaseId" if "databaseId" in pr_rev else "id")
-            )
-            if rid_key in pr_rev and pr_rev[rid_key] is not None:
-                review_db_id = canonical_database_id(pr_rev[rid_key], rid_key)
+        has_review_field, raw_id = nested_projection(
+            "pullRequestReview", ("fullDatabaseId", "databaseId", "id")
+        )
+        if has_review_field and payload["pullRequestReview"] is not None:
+            review_db_id = canonical_database_id(raw_id, "pullRequestReview")
     if has_review_field:
         fields.append(
             _candidate(
@@ -1370,16 +1618,11 @@ def normalize_review_comment(
                 payload["in_reply_to_id"], "in_reply_to_id"
             )
     elif graphql and "replyTo" in payload:
-        has_reply_field = True
-        rep = payload["replyTo"]
-        if isinstance(rep, dict):
-            rid_key = (
-                "fullDatabaseId"
-                if "fullDatabaseId" in rep
-                else ("databaseId" if "databaseId" in rep else "id")
-            )
-            if rid_key in rep and rep[rid_key] is not None:
-                reply_db_id = canonical_database_id(rep[rid_key], rid_key)
+        has_reply_field, raw_id = nested_projection(
+            "replyTo", ("fullDatabaseId", "databaseId", "id")
+        )
+        if has_reply_field and payload["replyTo"] is not None:
+            reply_db_id = canonical_database_id(raw_id, "replyTo")
     if has_reply_field:
         fields.append(
             _candidate(
@@ -1393,14 +1636,14 @@ def normalize_review_comment(
         )
         if reply_db_id is not None:
             parent_comment_key = make_document_key(
-                pr_key, "review_comment", "comment", reply_db_id
+                pr_key, "review_comment", "review_comment", reply_db_id
             )
             extra_observations.append(
                 ResourceObservation(
                     parent_comment_key,
                     (),
                     ResourceIdentification.scoped(
-                        parent_comment_key, pr_key, "comment", reply_db_id
+                        parent_comment_key, pr_key, "review_comment", reply_db_id
                     ),
                 )
             )
@@ -1470,9 +1713,7 @@ def normalize_review_comment(
             has_oid = True
             raw_oid = payload[rest_key]
         elif graphql and gql_key in payload:
-            has_oid = True
-            c_obj = payload[gql_key]
-            raw_oid = c_obj.get("oid") if isinstance(c_obj, dict) else None
+            has_oid, raw_oid = nested_projection(gql_key, ("oid",))
         if has_oid:
             object_oid = parse_git_oid(raw_oid, f"review_comment.{role}")
             if object_oid is None:
@@ -1510,6 +1751,7 @@ def normalize_review_comment(
         body = payload["body"]
         if body is not None and not isinstance(body, str):
             raise AcquisitionError("INVALID_FIELD", "body", "string or null required")
+        _utf8_text(body, "body")
         text_admissions.append(
             (comment_key, body, clock, provenance_json, observed_at_us)
         )
@@ -1523,9 +1765,11 @@ def normalize_review_comment(
             *extra_observations,
             ResourceObservation(
                 comment_key,
-                tuple(fields),
+                _modeled_fields(
+                    fields, comment_key, payload, clock, provenance_json, observed_at_us
+                ),
                 ResourceIdentification.scoped(
-                    comment_key, pr_key, "comment", comment_id
+                    comment_key, pr_key, "review_comment", comment_id
                 ),
             ),
         ),
@@ -1623,6 +1867,7 @@ def normalize_issue_comment(
         body = payload["body"]
         if body is not None and not isinstance(body, str):
             raise AcquisitionError("INVALID_FIELD", "body", "string or null required")
+        _utf8_text(body, "body")
         text_admissions.append(
             (comment_key, body, clock, provenance_json, observed_at_us)
         )
@@ -1643,7 +1888,9 @@ def normalize_issue_comment(
             ResourceObservation(parent_key, ()),
             ResourceObservation(
                 comment_key,
-                tuple(fields),
+                _modeled_fields(
+                    fields, comment_key, payload, clock, provenance_json, observed_at_us
+                ),
                 ResourceIdentification.scoped(
                     comment_key, parent_key, "comment", comment_id
                 ),
@@ -1855,7 +2102,9 @@ def normalize_timeline_event(
             ResourceObservation(parent_key, ()),
             ResourceObservation(
                 event_key,
-                tuple(fields),
+                _modeled_fields(
+                    fields, event_key, payload, clock, provenance_json, observed_at_us
+                ),
                 ResourceIdentification.scoped(
                     event_key, parent_key, "timeline_event", parse_identity(eid)
                 ),
@@ -1988,7 +2237,9 @@ def normalize_pr_commit(
             ResourceObservation(pr_key, ()),
             ResourceObservation(
                 commit_doc,
-                tuple(fields),
+                _modeled_fields(
+                    fields, commit_doc, payload, clock, provenance_json, observed_at_us
+                ),
                 ResourceIdentification.scoped(
                     commit_doc, pr_key, "pr_commit", object_oid.object_oid
                 ),
@@ -2047,6 +2298,7 @@ def normalize_pr_file(
         patch = payload["patch"]
         if patch is not None and not isinstance(patch, str):
             raise AcquisitionError("INVALID_FIELD", "patch", "string or null required")
+        _utf8_text(patch, "patch")
         fields.append(
             _candidate(file_doc, "patch", patch, clock, provenance_json, observed_at_us)
         )
@@ -2070,7 +2322,9 @@ def normalize_pr_file(
             ResourceObservation(pr_key, ()),
             ResourceObservation(
                 file_doc,
-                tuple(fields),
+                _modeled_fields(
+                    fields, file_doc, payload, clock, provenance_json, observed_at_us
+                ),
                 ResourceIdentification.scoped(file_doc, pr_key, "pr_file", filename),
             ),
         ),

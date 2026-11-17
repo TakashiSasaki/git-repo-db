@@ -2,8 +2,8 @@
   "schema_version": 2,
   "authority": "docs/adr/0043-separated-persistence-class-mapping.md",
   "scope": {
-    "target": "separated-design-first",
-    "normal_runtime_changed": false,
+    "target": "separated-runtime",
+    "normal_runtime_changed": true,
     "retained_instances_read": 0,
     "ddl_keys_and_columns": "derived only; not copied into this registry",
     "coverage": "selected product tables from registered separated DDL; excludes SQLite internals and runtime-created virtual/shadow tables",
@@ -1012,6 +1012,54 @@
         "path": "packages/worktrees/src/repo_catalog/worktrees/rows.py",
         "symbol": "RepositoryLinkRow"
       }
+    },
+    {
+      "id": "Core.RepositoryIdentityAssertion",
+      "domain": "core",
+      "table": "repository_identity_assertions",
+      "kind": "association",
+      "python": null,
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RepositoryIdentityAssertionRow"
+      },
+      "note": "Reported repository identity assertion occurrence with exact original canonical payload/provenance; cancellations may precede assertions and status never physically merges identities or establishes authenticity."
+    },
+    {
+      "id": "Core.RepositoryIdentityCancellation",
+      "domain": "core",
+      "table": "repository_identity_cancellations",
+      "kind": "association",
+      "python": null,
+      "row_type": {
+        "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+        "symbol": "RepositoryIdentityCancellationRow"
+      },
+      "note": "Reported repository identity cancellation occurrence with exact original canonical payload/provenance; cancellations may precede assertions and status never physically merges identities or establishes authenticity."
+    },
+    {
+      "id": "Context.ServiceIdentityAssertion",
+      "domain": "context",
+      "table": "service_identity_assertions",
+      "kind": "association",
+      "python": null,
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "ServiceIdentityAssertionRow"
+      },
+      "note": "Reported service identity assertion occurrence with exact original canonical payload/provenance; cancellations may precede assertions and status never physically merges identities or establishes authenticity."
+    },
+    {
+      "id": "Context.ServiceIdentityCancellation",
+      "domain": "context",
+      "table": "service_identity_cancellations",
+      "kind": "association",
+      "python": null,
+      "row_type": {
+        "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+        "symbol": "ServiceIdentityCancellationRow"
+      },
+      "note": "Reported service identity cancellation occurrence with exact original canonical payload/provenance; cancellations may precede assertions and status never physically merges identities or establishes authenticity."
     }
   ],
   "nonpersistent_types": [
@@ -1276,11 +1324,11 @@
   "gaps": [
     {
       "id": "normal-versus-separated",
-      "detail": "Normal Catalog3 remains mixed Core/Context/Access. Its git_objects surrogate PK differs from separated (object_format, object_oid); normal ref_observations uses (snapshot_id, raw_ref_name), separated uses origin UUIDv4 and observation UUIDv7. Repository UUID identity already exists in both. Equal table names never imply equal row identities. No normal/runtime schema is changed by this model."
+      "detail": "The retired normal Catalog3 format mixes Core/Context/Access and uses different Git object/ref keys. The ordinary CLI now composes separated stores; remaining legacy code/test retirement is explicitly tracked. Repository UUID identity already existed in both. Existing DBs are never converted or overwritten."
     },
     {
       "id": "python-row-bindings",
-      "detail": "Each persistent class has a dedicated DDL-generated row_type binding. The separate python binding remains an observed input/projection, which may contain nested values, expand into derived columns or require outer context. Codec completeness does not prove adapter input serialization or admission correctness."
+      "detail": "Every selected persistent class has a dedicated generated row_type. The separate python binding describes observed input/projection classes; null there means no such dedicated input class recorded, not missing SQL functionality or missing generated row type. Domain admission, serialization behavior and capability checks require their own regressions."
     },
     {
       "id": "root-and-scan-aggregate",
@@ -1288,7 +1336,7 @@
     },
     {
       "id": "worktree-context-key",
-      "detail": "WorktreeEntry receives observation identity from its enclosing DiscoveryResult/context. The generated WorktreeRow carries observation_uuid plus root_path; the scoped DTO remains separate and does not prove its adapter binding."
+      "detail": "WorktreeEntry remains a scoped DTO whose enclosing DiscoveryResult supplies observation identity. The dedicated WorktreeRow now explicitly carries observation_uuid plus root_path; adapters preserve the full key without rewriting the DTO into a raw row."
     },
     {
       "id": "coverage-and-website",

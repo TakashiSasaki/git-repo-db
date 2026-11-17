@@ -43,6 +43,10 @@ def p1_grants():
                 ResourceKey.document(parent, "review", "review", "same-provider-doc-id")
                 for parent in parents[:2]
             ),
+            *(
+                ResourceKey.document(parents[0], "review", "review_summary", value)
+                for value in ("not-empty", "other")
+            ),
             ResourceKey.document(parents[2], "document", "body", "real-id"),
             ResourceKey.document(parents[3], "document", "body", "D1"),
         },

@@ -78,12 +78,16 @@ jobs:
         if: steps.plan.outputs.smoke == 'true'
         run: |
           python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
-          python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog --format json doctor
+          catalog_smoke_root=$(mktemp -d)
+          trap 'rm -rf "$catalog_smoke_root"' EXIT
+          uv run --no-sync repo-catalog init --scope core --catalog "$catalog_smoke_root"
+          python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog doctor --catalog "$catalog_smoke_root"
       - name: Verify composed schema and generated guards
         if: steps.plan.outputs.smoke == 'true'
         run: |
-          uv run --no-sync python scripts/audit_publication_free.py > artifacts/ci-profile/schema-map.json
-          cmp artifacts/ci-profile/schema-map.json docs/phase2/publication-free-schema-map.json
+          uv run --no-sync python scripts/schema_inventory.py --check
+          uv run --no-sync python scripts/persistence_model.py --check
+          uv run --no-sync python scripts/generate_persistence_rows.py --check
       - name: Collect selected tests before execution
         if: steps.plan.outputs.tests == 'true' || steps.plan.outputs.packaging == 'true'
         run: uv run --no-sync python scripts/ci_execute.py collect

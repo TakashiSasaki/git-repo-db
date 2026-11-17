@@ -230,6 +230,7 @@ class Core:
         self._admitting = False
         self._reading = False
         self._external = False
+        self._cleanup_failed = False
         self._active = True
         self._stopped = False
         self._on_corruption = on_corruption
@@ -259,6 +260,7 @@ class Core:
         result = cls.__new__(cls)
         result._directory = None
         result._db, result._external, result._active = db, True, True
+        result._cleanup_failed = False
         result._admitting, result._stopped, result._on_corruption = False, False, None
         result._reading = False
         db.set_authorizer(result._authorize)
@@ -266,7 +268,8 @@ class Core:
             yield result
         finally:
             result._active = False
-            db.set_authorizer(None)
+            if not result._cleanup_failed:
+                db.set_authorizer(None)
 
     def _authorize(
         self, action: int, _a: str, _b: str, _database: str, _trigger: str
@@ -350,6 +353,32 @@ class Core:
                 self._integrity_stop(("Core read", str(error)))
             raise
 
+    def _discard_failed_cleanup(self, original, cleanup):
+        """A failed rollback cannot leave a pending unit available for commit."""
+        self._cleanup_failed = True
+        self._active = False
+        original.add_note(
+            f"Core transaction cleanup failed: {type(cleanup).__name__}: {cleanup}"
+        )
+        try:
+            from repo_catalog.adapters.sqlite.admission_transaction import (
+                AdmissionTransaction,
+            )
+
+            if isinstance(self._db, AdmissionTransaction):
+                # This is the trusted Runtime owner guard, not caller input.
+                # Its public API deliberately cannot end the outer transaction.
+                self._db._db.close()
+                self._db._expire()
+            else:
+                self._db.close()
+        except BaseException as close_error:
+            # Preserve the initiating failure even if discard itself fails. The
+            # inactive capability's authorizer remains installed and read-only.
+            original.add_note(
+                f"Core connection discard failed: {type(close_error).__name__}: {close_error}"
+            )
+
     @contextmanager
     def _transaction(self) -> Iterator[None]:
         self._available()
@@ -386,12 +415,15 @@ class Core:
                         if _sqlite_authority_failure(error):
                             self._integrity_stop(("Core transaction", str(error)))
                     finally:
-                        if self._db.in_transaction:
-                            if self._external:
-                                self._db.execute("ROLLBACK TO p1_core_unit")
-                                self._db.execute("RELEASE p1_core_unit")
-                            else:
-                                self._db.execute("ROLLBACK")
+                        try:
+                            if self._db.in_transaction:
+                                if self._external:
+                                    self._db.execute("ROLLBACK TO p1_core_unit")
+                                    self._db.execute("RELEASE p1_core_unit")
+                                else:
+                                    self._db.execute("ROLLBACK")
+                        except BaseException as cleanup_error:
+                            self._discard_failed_cleanup(error, cleanup_error)
                     raise
             except sqlite3.DatabaseError as error:
                 # BEGIN/SAVEPOINT may itself fail before the inner unit exists.
@@ -732,6 +764,92 @@ class Core:
             mapping.note_object_oid.object_oid,
             mapping.mapping_path,
         )
+
+    def admit_identity_evidence(
+        self, kind, record_json, provenance, *, with_insertion=False
+    ):
+        """Preserve one original repository assertion/cancellation, including conflicts."""
+        from repo_catalog.domain.identity_assertions import identity_values
+
+        values = identity_values(kind, "repository", record_json, provenance)
+        table = (
+            "repository_identity_assertions"
+            if kind == "relation"
+            else "repository_identity_cancellations"
+        )
+        key = "relation_uuidv4" if kind == "relation" else "cancellation_uuidv4"
+        with self._transaction():
+            before = self._db.total_changes
+            self._insert(table, values)
+            inserted = self._db.total_changes != before
+            variants = self._db.execute(
+                f"SELECT count(DISTINCT record_json) FROM {table} WHERE {key}=?",
+                (values[0],),
+            ).fetchone()[0]
+            state = (
+                "conflict" if variants > 1 else "accepted" if inserted else "duplicate"
+            )
+            return (state, inserted) if with_insertion else state
+
+    @_completed_read
+    @_decoded_read
+    def identity_evidence_snapshot(
+        self, *, max_evidence=10000, max_bytes=16 * 1024 * 1024
+    ):
+        """One Core-only snapshot; no Context lookup or implied physical merge."""
+        from repo_catalog.domain.identity_assertions import identity_values
+
+        for limit in (max_evidence, max_bytes):
+            if type(limit) is not int or limit <= 0:
+                raise ValueError("positive finite identity read limits required")
+        result = {}
+        with self._snapshot():
+            for kind, table, output in (
+                ("relation", "repository_identity_assertions", "relations"),
+                ("cancellation", "repository_identity_cancellations", "cancellations"),
+            ):
+                count, size = self.sql(
+                    f"SELECT count(*),coalesce(sum(octet_length(record_json)+octet_length(provenance)),0) FROM {table}"
+                )[0]
+                if count > max_evidence or size > max_bytes:
+                    raise CoreFailure(
+                        "QUERY_BUDGET",
+                        "identity",
+                        "finite identity evidence read limit",
+                    )
+                max_evidence -= count
+                max_bytes -= size
+                rows = []
+                for row in self.sql(
+                    f"SELECT * FROM {table} ORDER BY {','.join(ROW_TYPES[table].KEY_COLUMNS)}"
+                ):
+                    self._stored_row(table, row)
+                    decoded = self._stored(
+                        "identity",
+                        identity_values,
+                        kind,
+                        "repository",
+                        row["record_json"],
+                        self._provenance_value("identity", row["provenance"]),
+                    )
+                    if tuple(row) != decoded:
+                        self._integrity_stop(
+                            ("identity", "row coordinates differ from original record")
+                        )
+                    rows.append(dict(row))
+                result[output] = rows
+            repositories = self.sql(
+                "SELECT repository_uuidv4 FROM repositories ORDER BY repository_uuidv4 LIMIT ?",
+                (max_evidence + 1,),
+            )
+            if len(repositories) > max_evidence:
+                raise CoreFailure(
+                    "QUERY_BUDGET", "identity", "finite nominal identity read limit"
+                )
+            result["repository_uuids"] = [
+                self._stored("repository", uuid4_value, row[0]) for row in repositories
+            ]
+        return result
 
     def admit_repository(self, repository_uuidv4: str) -> None:
         uuid4_value(repository_uuidv4)

@@ -754,7 +754,7 @@ def test_cli_diagnostics_do_not_echo_secret_paths(tmp_path):
 
 def test_core_and_context_optional_no_default_activation():
     from repo_catalog.adapters.sqlite.p1_schema import STORES
-    from scripts.audit_callsite_dependencies import ISOLATED_TARGET_MODULES
+    from scripts.audit_callsite_dependencies import owned_source, source_owner
 
     assert "access" not in STORES
     for path in (
@@ -764,7 +764,8 @@ def test_core_and_context_optional_no_default_activation():
         "application/access_maintenance.py",
         "cli/access_maintenance.py",
     ):
-        assert "packages/access/src/repo_catalog/" + path in ISOLATED_TARGET_MODULES
+        actual = Path(__file__).resolve().parents[3] / owned_source(path)
+        assert source_owner(actual) == "repo-catalog-access"
 
 
 @pytest.mark.parametrize("event", ["stop", "replacement", "cancel"])

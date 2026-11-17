@@ -35,6 +35,24 @@ def resource(row: dict) -> ResourceKey:
     )
 
 
+def inventory_resources(row):
+    """Provider repositories are typed Source members, never Git UUID aliases."""
+    from repo_catalog.domain.p1_context import ResourceKey, canonical
+
+    encoded = row.get("provider_repositories_json", "[]")
+    values = json.loads(encoded)
+    if type(values) is not list:
+        raise ValueError("typed Provider repository members required")
+    result = tuple(ResourceKey(*value) for value in values)
+    if any(member.resource_kind != "repository" for member in result) or len(
+        set(result)
+    ) != len(result):
+        raise ValueError("unique Provider repository members required")
+    if canonical(sorted([list(member.coordinates()) for member in result])) != encoded:
+        raise ValueError("canonical Provider repository set required")
+    return result
+
+
 def relation(row: dict) -> ResourceRepositoryRelation:
     from repo_catalog.domain.p1_context import FieldClock, ResourceRepositoryRelation
 
@@ -191,10 +209,91 @@ def explicit_scope(scope: ExchangeSelectionScope) -> None:
         )
 
 
+def role_check_dependencies(context, scope):
+    """Select actual native ref occurrences named by selected PR check reports.
+
+    These original keys are dependencies, not sender authority or proof of a
+    target. Core still verifies their full observations/claims and event units.
+    """
+    if context is None or not scope.include_context or not scope.include_core:
+        return scope
+    if scope.ref_observation_keys is None and scope.object_oids is None:
+        return scope  # The original request already selects all native refs.
+    from dataclasses import replace
+
+    from repo_catalog.domain.p1_core import CoreFailure, _performed
+    from repo_catalog.domain.pr_assessment import decode_git_role_checks
+    from repo_catalog.domain.ref_observation import RefObservationKey
+
+    resources = [resource(row).coordinates() for row in context["resources"]]
+    relations = [
+        tuple(
+            row[key]
+            for key in (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "relation_kind",
+                "members_json",
+                "provenance_json",
+                "scope_json",
+                "observed_at_us",
+            )
+        )
+        for row in context["resource_relations"]
+    ]
+    collections = [
+        tuple(
+            row[key]
+            for key in (
+                "service_instance_uuidv4",
+                "resource_kind",
+                "provider_resource_id",
+                "collection_kind",
+                "provenance_json",
+                "scope_json",
+                "observed_at_us",
+                "terminal_state",
+                "members_json",
+            )
+        )
+        for row in context["collections"]
+    ]
+    _performed("metadata_units", len(resources) + len(relations) + len(collections))
+    selected, _, _ = expand_resources(
+        resources,
+        relations,
+        collections,
+        scope,
+        context["resource_repository_relations"],
+    )
+    keys = set(scope.ref_observation_keys or ())
+    for row in context["collections"]:
+        _performed("metadata_units", 1)
+        if row["collection_kind"] != "git_role_checks" or resource(row) not in selected:
+            continue
+        try:
+            checks = decode_git_role_checks(json.loads(row["scope_json"]))
+        except (TypeError, ValueError):
+            continue  # An unresolved reported scope cannot invent dependencies.
+        _performed("metadata_units", len(checks))
+        keys.update(
+            RefObservationKey(*check["ref_observation_key"]) for check in checks
+        )
+        if len(keys) > scope.max_units:
+            raise CoreFailure(
+                "QUERY_BUDGET", "ref-exchange", "finite PR check dependencies"
+            )
+    return replace(
+        scope, ref_observation_keys=tuple(sorted(keys, key=lambda key: key.key))
+    )
+
+
 def filter_sections(core, context, scope, *, permitted=None):
     """Recompute selection from typed facts; a wire report grants no authority."""
     from repo_catalog.domain.git_native import parse_metadata
 
+    scope = role_check_dependencies(context, scope)
     omissions = []
     for name, data, enabled in (
         ("core", core, scope.include_core),
@@ -228,6 +327,15 @@ def filter_sections(core, context, scope, *, permitted=None):
     def allowed(value):
         return repos is None or value in repos
 
+    identity_targets = (
+        None
+        if scope.identity_assertion_uuidv4s is None and scope.all_selected
+        else set(scope.identity_assertion_uuidv4s or ())
+    )
+
+    def identity_selected(row):
+        return identity_targets is None or row["relation_uuidv4"] in identity_targets
+
     def retain(data, key, predicate, reason):
         from repo_catalog.domain.p1_core import _performed
 
@@ -243,6 +351,30 @@ def filter_sections(core, context, scope, *, permitted=None):
         data[key] = retained
 
     if core is not None:
+        for section in (
+            "repository_identity_assertions",
+            "repository_identity_cancellations",
+        ):
+            if section not in core:
+                continue
+
+            def selected_identity(row):
+                if not identity_selected(row):
+                    return False
+                if section.endswith("_cancellations"):
+                    return True  # Original target need not have arrived yet.
+                record = json.loads(row["record_json"])
+                return all(
+                    allowed(record[side + "_repository_uuidv4"])
+                    for side in ("left", "right")
+                )
+
+            retain(
+                core,
+                section,
+                selected_identity,
+                "identity_target_or_endpoint_not_selected_or_permitted",
+            )
         available = {(r["object_format"], r["object_oid"]) for r in core["git_objects"]}
         chosen = (
             available.copy()
@@ -634,6 +766,15 @@ def filter_sections(core, context, scope, *, permitted=None):
             ResourceKey,
         )
 
+        for section in (
+            "service_identity_assertions",
+            "service_identity_cancellations",
+        ):
+            if section in context:
+                retain(
+                    context, section, identity_selected, "identity_target_not_selected"
+                )
+
         original_terminals = [
             ("source_inventory", r) for r in context["source_inventories"]
         ] + [("collection", r) for r in context["collections"]]
@@ -678,6 +819,8 @@ def filter_sections(core, context, scope, *, permitted=None):
             scope,
             context["resource_repository_relations"],
         )
+        narrow = narrow_collection_owners(scope)
+        selected_collections = set(scope.collection_keys or ())
         reports = transfer_reports(context)
         denied = {
             p.report_key
@@ -707,6 +850,14 @@ def filter_sections(core, context, scope, *, permitted=None):
             def selected(r):
                 if resource(r) not in chosen:
                     return False
+                if resource(r) in narrow:
+                    if key in {"resource_relations", "resource_repository_relations"}:
+                        return False
+                    if (
+                        key == "collections"
+                        and collection_key(r) not in selected_collections
+                    ):
+                        return False
                 if "members_json" in r and not all(
                     ResourceKey(*m) in chosen for m in json.loads(r["members_json"])
                 ):
@@ -788,6 +939,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             lambda r: (
                 r["source_registration_uuidv4"] in source_ids
                 and all(allowed(v) for v in json.loads(r["members_json"]))
+                and set(inventory_resources(r)) <= chosen
             ),
             "whole_inventory_dependency_not_selected",
         )
@@ -801,7 +953,13 @@ def filter_sections(core, context, scope, *, permitted=None):
                 return coordinates[0] in source_ids and allowed(coordinates[1])
             if row["owner_kind"] == "source_inventory":
                 return coordinates[0] in source_ids
-            return ResourceKey(*coordinates[:3]) in chosen
+            owner = ResourceKey(*coordinates[:3])
+            if owner in narrow:
+                return (
+                    row["owner_kind"] == "collection"
+                    and tuple(coordinates[:5]) in selected_collections
+                )
+            return owner in chosen
 
         for key in ("coverage_scopes", "coverage_claims", "coverage_proofs"):
             retain(context, key, owner_selected, "coverage_owner_not_selected")
@@ -811,6 +969,12 @@ def filter_sections(core, context, scope, *, permitted=None):
             services = {r["service_instance_uuidv4"] for r in context["resources"]} | {
                 r["service_instance_uuidv4"] for r in context["sources"]
             }
+            for row in context.get("service_identity_assertions", ()):
+                record = json.loads(row["record_json"])
+                services.update(
+                    record[side + "_service_instance_uuidv4"]
+                    for side in ("left", "right")
+                )
             retain(
                 context,
                 "providers",
@@ -831,6 +995,25 @@ def filter_sections(core, context, scope, *, permitted=None):
     return omissions
 
 
+def collection_key(row):
+    return (
+        *resource(row).coordinates(),
+        row["collection_kind"],
+        row["provenance_json"],
+    )
+
+
+def narrow_collection_owners(scope):
+    """Owners selected as nominal support, without selecting all sibling scopes."""
+    from repo_catalog.domain.p1_context import ResourceKey
+
+    if scope.collection_keys is None or scope.resource_keys is None:
+        return set()
+    return {ResourceKey(*key[:3]) for key in scope.collection_keys} - set(
+        scope.resource_keys
+    )
+
+
 def expand_resources(rows, relations, collections, scope, repository_relations=()):
     from repo_catalog.domain.p1_context import ResourceKey
 
@@ -841,6 +1024,13 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
         if scope.resource_keys is None
         else set(scope.resource_keys).intersection(available)
     )
+    selected_collections = set(scope.collection_keys or ())
+    narrow = narrow_collection_owners(scope)
+    chosen.update(
+        ResourceKey(*row[:3])
+        for row in collections
+        if tuple(row[:5]) in selected_collections and ResourceKey(*row[:3]) in available
+    )
     reasons = []
     omissions = []
     edges = {r: set() for r in available}
@@ -848,15 +1038,24 @@ def expand_resources(rows, relations, collections, scope, repository_relations=(
     # Identification declarations never add traversal edges.
     for row in relations:
         owner = ResourceKey(*row[:3])
+        if owner in narrow:
+            continue
         edges.setdefault(owner, set()).update(
             ResourceKey(*m) for m in json.loads(row[4])
         )
     for row in collections:
+        if (
+            ResourceKey(*row[:3]) in narrow
+            and tuple(row[:5]) not in selected_collections
+        ):
+            continue
         edges.setdefault(ResourceKey(*row[:3]), set()).update(
             ResourceKey(*m) for m in json.loads(row[8])
         )
     for row in repository_relations:
         rel = relation(row)
+        if rel.resource in narrow:
+            continue
         if rel.embedded_support is not None:
             edges.setdefault(rel.resource, set()).add(
                 rel.embedded_support.provider_repository
@@ -1031,10 +1230,15 @@ def validate_context(data):
             row["terminal"],
             tuple(json.loads(row["members_json"])),
             row["provenance_json"],
+            provider_repositories=inventory_resources(row),
         )
         for repository in inventory.repositories:
             uuid4_value(repository)
         if inventory.members_json != row["members_json"]:
+            raise ExchangeError("NONCANONICAL_INVENTORY", "source_inventories")
+        if inventory.provider_repositories_json != row.get(
+            "provider_repositories_json", "[]"
+        ):
             raise ExchangeError("NONCANONICAL_INVENTORY", "source_inventories")
     for row in data["core_references"]:
         CoreReference(
@@ -1165,6 +1369,11 @@ def validate_context_bindings(data, source_services):
             and isinstance(scope, dict)
             and scope.get("service_instance_uuidv4", source_services[source])
             != source_services[source]
+        ):
+            raise ExchangeError("SOURCE_SERVICE", "source_inventories")
+        if source in source_services and any(
+            member.service_instance_uuidv4 != source_services[source]
+            for member in inventory_resources(row)
         ):
             raise ExchangeError("SOURCE_SERVICE", "source_inventories")
 
@@ -1458,6 +1667,7 @@ def terminal_key(row, kind):
             row["terminal"],
             row["members_json"],
             row["provenance_json"],
+            row.get("provider_repositories_json", "[]"),
         )
     return (
         kind,

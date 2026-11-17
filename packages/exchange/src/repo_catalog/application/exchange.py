@@ -18,13 +18,16 @@ import hashlib
 import json
 import sqlite3
 from collections.abc import Callable
-from contextlib import closing, contextmanager
+from contextlib import ExitStack, closing, contextmanager
 from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator
 from uuid import uuid4
 
-from repo_catalog.adapters.sqlite.admission_transaction import AdmissionTransaction
+from repo_catalog.adapters.sqlite.admission_transaction import (
+    AdmissionTransaction,
+    rollback_after_failure,
+)
 from repo_catalog.adapters.sqlite.catalog_runtime import (
     SnapshotReadLimits,
     catalog_completion,
@@ -43,6 +46,11 @@ from repo_catalog.domain.exchange import (
     require_context,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
+from repo_catalog.domain.identity_exchange import (
+    decode_identity_row,
+    identity_columns,
+    identity_dependencies,
+)
 from repo_catalog.domain.p1_coordination import (
     AdmissionFailure,
     CoordinationError,
@@ -69,13 +77,17 @@ from repo_catalog.domain.p1_core import (
 )
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.scalar_wire import encode_scalar_row, scalar_value_json
 from repo_catalog.domain.selective_exchange import (
     CorePreflight,
     bound_sections,
     expand_resources,
     explicit_scope,
     filter_sections,
+    inventory_resources,
+    narrow_collection_owners,
     preserve_context_coverage,
+    role_check_dependencies,
     terminal_key,
     transfer_reports,
     validate_context,
@@ -477,37 +489,6 @@ class ExchangeService:
                         else None,
                     )
 
-            core_section: dict[str, list[dict[str, Any]]] | None = None
-            if scope.include_core and self._has_core():
-                try:
-                    with account_verification(self._export_work):
-                        core_scope = self._expand_core_selection(scope)
-                        core_section = self._export_core(core_scope, sender_instance)
-                except (sqlite3.OperationalError, CoordinationError) as error:
-                    if (
-                        getattr(error, "sqlite_errorcode", None)
-                        != sqlite3.SQLITE_INTERRUPT
-                        and getattr(error, "code", None) != "QUERY_BUDGET"
-                    ):
-                        raise
-                    core_section = empty_core_section()
-                    self._selection_details["omissions"].append(
-                        {"section": "core", "reason": "work_limit"}
-                    )
-                except CoreFailure as error:
-                    if error.code not in ("BUDGET", "QUERY_BUDGET"):
-                        raise
-                    core_section = empty_core_section()
-                    self._selection_details["omissions"].append(
-                        {
-                            "section": "core",
-                            "reason": "work_limit"
-                            if error.scope == "ref-exchange"
-                            and "cumulative export work" in str(error)
-                            else "resource_limit",
-                        }
-                    )
-
             context_section: dict[str, list[dict[str, Any]]] | None = None
             if scope.include_context and self._has_context():
                 try:
@@ -537,6 +518,39 @@ class ExchangeService:
                     context_section = empty_context_section()
                     self._selection_details["omissions"].append(
                         {"section": "context", "reason": "resource_limit"}
+                    )
+
+            core_section: dict[str, list[dict[str, Any]]] | None = None
+            if scope.include_core and self._has_core():
+                try:
+                    with account_verification(self._export_work):
+                        core_scope = self._expand_core_selection(
+                            role_check_dependencies(context_section, scope)
+                        )
+                        core_section = self._export_core(core_scope, sender_instance)
+                except (sqlite3.OperationalError, CoordinationError) as error:
+                    if (
+                        getattr(error, "sqlite_errorcode", None)
+                        != sqlite3.SQLITE_INTERRUPT
+                        and getattr(error, "code", None) != "QUERY_BUDGET"
+                    ):
+                        raise
+                    core_section = empty_core_section()
+                    self._selection_details["omissions"].append(
+                        {"section": "core", "reason": "work_limit"}
+                    )
+                except CoreFailure as error:
+                    if error.code not in ("BUDGET", "QUERY_BUDGET"):
+                        raise
+                    core_section = empty_core_section()
+                    self._selection_details["omissions"].append(
+                        {
+                            "section": "core",
+                            "reason": "work_limit"
+                            if error.scope == "ref-exchange"
+                            and "cumulative export work" in str(error)
+                            else "resource_limit",
+                        }
                     )
 
             with account_verification(self._export_work):
@@ -598,18 +612,41 @@ class ExchangeService:
                     for r in (context_section or {}).get("resources", [])
                 ],
             }
-            with catalog_completion(self.directory):
-                self._check_stop()
-                return ExchangePackage(
-                    package_id=pkg_id,
-                    exported_at_us=exported_at_us,
-                    sender_catalog_instance_uuidv4=sender_instance,
-                    repository_uuidv4=repo_uuid,
-                    selection_scope=scope,
-                    selection_report=self._selection_details,
-                    core=core_section,
-                    context=context_section,
-                )
+            with ExitStack() as authority:
+                if context_section is not None and any(
+                    context_section.get(name)
+                    for name in (
+                        "service_identity_assertions",
+                        "service_identity_cancellations",
+                    )
+                ):
+                    from repo_catalog.domain.context_admission import (
+                        AdmissionRefused,
+                        ContextAdmissionService,
+                    )
+
+                    auth, adm = self.authorization, self.admission
+                    if (
+                        not isinstance(auth, ContextAdmissionService)
+                        or adm is None
+                        or adm.operation != "exchange_export"
+                    ):
+                        raise AdmissionRefused("PERMISSION_DENIED")
+                    authority.enter_context(
+                        auth.authorize(adm, identity_dependencies(context_section))
+                    )
+                with catalog_completion(self.directory):
+                    self._check_stop()
+                    return ExchangePackage(
+                        package_id=pkg_id,
+                        exported_at_us=exported_at_us,
+                        sender_catalog_instance_uuidv4=sender_instance,
+                        repository_uuidv4=repo_uuid,
+                        selection_scope=scope,
+                        selection_report=self._selection_details,
+                        core=core_section,
+                        context=context_section,
+                    )
 
     def _expand_core_selection(self, scope):
         if scope.object_oids is None:
@@ -731,12 +768,45 @@ class ExchangeService:
                         self._selection_details["omissions"],
                     )
 
-                for row in core.exchange_metadata_rows("repositories", (), ref_work):
+                for row in core.exchange_metadata_rows(
+                    "repositories",
+                    (),
+                    ref_work,
+                    keys=None
+                    if scope.repository_uuidv4s is None
+                    else tuple((key,) for key in scope.repository_uuidv4s),
+                ):
                     core._stored("repository", uuid4_value, row[0])
                     section["repositories"].append({"repository_uuidv4": row[0]})
 
+                for name in (
+                    "repository_identity_assertions",
+                    "repository_identity_cancellations",
+                ):
+                    for values in core.exchange_metadata_rows(name, (), ref_work):
+                        row = dict(zip(identity_columns(name), values, strict=True))
+                        size = sum(len(value) for value in values)
+                        ref_work.require("input_bytes", 13 * size + 2)
+                        try:
+                            core._stored(
+                                "identity Exchange evidence",
+                                decode_identity_row,
+                                name,
+                                row,
+                            )
+                        except BaseException:
+                            ref_work.abandon("input_bytes")
+                            raise
+                        ref_work.charge("input_bytes", 4 * size)
+                        section[name].append(row)
+
                 for row in core.exchange_metadata_rows(
-                    "repository_claims", (), ref_work
+                    "repository_claims",
+                    (),
+                    ref_work,
+                    keys=None
+                    if scope.repository_uuidv4s is None
+                    else tuple((key,) for key in scope.repository_uuidv4s),
                 ):
 
                     def stored_repository_claim(value):
@@ -771,7 +841,12 @@ class ExchangeService:
 
                 # Verify all retained_metadata rows via core.read_metadata(oid)
                 meta_rows = core.exchange_metadata_rows(
-                    "retained_metadata", (), ref_work
+                    "retained_metadata",
+                    (),
+                    ref_work,
+                    keys=None
+                    if selected_oids is None
+                    else tuple(sorted(oid.key for oid in selected_oids)),
                 )
                 for row in meta_rows:
                     if type(row[4]) is not int or row[4] < 0:
@@ -819,7 +894,14 @@ class ExchangeService:
                             }
                         )
 
-                claim_rows = core.exchange_metadata_rows("scalar_claims", (), ref_work)
+                claim_rows = core.exchange_metadata_rows(
+                    "scalar_claims",
+                    (),
+                    ref_work,
+                    keys=None
+                    if selected_oids is None
+                    else tuple(sorted(oid.key for oid in selected_oids)),
+                )
                 for row in claim_rows:
                     object_oid = core._stored("scalar claim", OID, row[0], row[1])
                     if selected_oids is not None and object_oid not in selected_oids:
@@ -860,8 +942,17 @@ class ExchangeService:
                             }
                         )
 
+                    section["scalar_claims"][-1] = encode_scalar_row(
+                        section["scalar_claims"][-1]
+                    )
+
                 group_rows = core.exchange_metadata_rows(
-                    "relation_groups", (), ref_work
+                    "relation_groups",
+                    (),
+                    ref_work,
+                    keys=None
+                    if selected_oids is None
+                    else tuple(sorted(oid.key for oid in selected_oids)),
                 )
                 for row in group_rows:
                     object_oid = core._stored("relation group", OID, row[0], row[1])
@@ -966,14 +1057,30 @@ class ExchangeService:
                         }
                     )
 
-                cov_scope_rows = core.exchange_metadata_rows(
-                    "coverage_scopes", (), ref_work
-                )
                 exported_cov_scopes: set[tuple[str, str]] = set()
                 exported_ref_keys = {
                     (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"])
                     for r in section["ref_observations"]
                 }
+                prefixes = None
+                if selected_oids is not None:
+                    prefix_set = set()
+
+                    def add_prefix(owner_kind, coordinates):
+                        prefix = encode(coordinates)[:-1] + ","
+                        prefix_set.add((owner_kind, prefix, prefix[:-1] + "-"))
+
+                    for object_oid in selected_oids:
+                        for owner_kind in ("object", "field"):
+                            add_prefix(owner_kind, object_oid.key)
+                    for key in exported_ref_keys:
+                        add_prefix("ref_observation", key)
+                    for repository in section["repositories"]:
+                        add_prefix("repository", (repository["repository_uuidv4"],))
+                    prefixes = tuple(sorted(prefix_set))
+                cov_scope_rows = core.exchange_metadata_rows(
+                    "coverage_scopes", (), ref_work, prefixes=prefixes
+                )
                 scopes_by_key = {}
 
                 def stored_scope(row):
@@ -1031,7 +1138,10 @@ class ExchangeService:
                         raise
                     ref_work.charge("input_bytes", 2 * len(row[1]))
                     if owner_kind in ("object", "field") and selected_oids is not None:
-                        if OID(row[5], row[6]) not in selected_oids:
+                        if (
+                            OID(row["object_format"], row["object_oid"])
+                            not in selected_oids
+                        ):
                             continue
                     if (
                         owner_kind == "ref_observation"
@@ -1048,7 +1158,12 @@ class ExchangeService:
                         }
                     )
 
-                for row in core.exchange_metadata_rows("coverage_claims", (), ref_work):
+                for row in core.exchange_metadata_rows(
+                    "coverage_claims",
+                    (),
+                    ref_work,
+                    keys=tuple(sorted(exported_cov_scopes)),
+                ):
                     if (row[0], row[1]) not in exported_cov_scopes:
                         continue
                     # Latest-state projection does not validate older claims.
@@ -1152,7 +1267,12 @@ class ExchangeService:
                     )
                     for row in section["coverage_claims"]
                 }
-                for row in core.exchange_metadata_rows("coverage_proofs", (), ref_work):
+                for row in core.exchange_metadata_rows(
+                    "coverage_proofs",
+                    (),
+                    ref_work,
+                    keys=tuple(sorted(exported_cov_scopes)),
+                ):
                     if (row[0], row[1]) not in exported_cov_scopes:
                         continue
                     c_scope = scopes_by_key[(row[0], row[1])]
@@ -1214,7 +1334,16 @@ class ExchangeService:
                         }
                     )
 
-                for row in core.exchange_metadata_rows("git_objects", (), ref_work):
+                for row in core.exchange_metadata_rows(
+                    "git_objects",
+                    (),
+                    ref_work,
+                    keys=None
+                    if selected_oids is None
+                    else tuple(
+                        sorted(oid.key for oid in selected_oids | referenced_oids)
+                    ),
+                ):
                     object_oid = core._stored("git object", OID, row[0], row[1])
                     if (
                         selected_oids is not None
@@ -1328,6 +1457,15 @@ class ExchangeService:
                     }
                 )
 
+            for name in (
+                "service_identity_assertions",
+                "service_identity_cancellations",
+            ):
+                for values in ctx._exchange_metadata_rows(name, self._export_work):
+                    row = dict(zip(identity_columns(name), values, strict=True))
+                    validate_stored_context_row(name, row)
+                    section[name].append(row)
+
             for row in ctx._exchange_metadata_rows("repositories", self._export_work):
                 section["repositories"].append(
                     {
@@ -1338,7 +1476,13 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx._exchange_metadata_rows("sources", self._export_work):
+            for row in ctx._exchange_metadata_rows(
+                "sources",
+                self._export_work,
+                keys=None
+                if selected_sources is None
+                else tuple((key,) for key in sorted(selected_sources)),
+            ):
                 if selected_sources is not None and row[0] not in selected_sources:
                     continue
                 section["sources"].append(
@@ -1352,7 +1496,11 @@ class ExchangeService:
                 )
 
             for row in ctx._exchange_metadata_rows(
-                "source_repositories", self._export_work
+                "source_repositories",
+                self._export_work,
+                keys=None
+                if selected_sources is None
+                else tuple((key,) for key in sorted(selected_sources)),
             ):
                 if selected_sources is not None and row[0] not in selected_sources:
                     continue
@@ -1367,7 +1515,11 @@ class ExchangeService:
                 )
 
             for row in ctx._exchange_metadata_rows(
-                "source_inventories", self._export_work
+                "source_inventories",
+                self._export_work,
+                keys=None
+                if selected_sources is None
+                else tuple((key,) for key in sorted(selected_sources)),
             ):
                 if selected_sources is not None and row[0] not in selected_sources:
                     continue
@@ -1382,16 +1534,20 @@ class ExchangeService:
                     "terminal": bool(row[4]),
                     "members_json": row[5],
                     "provenance_json": row[6],
+                    "provider_repositories_json": row[7],
                 }
                 validate_stored_context_row("source_inventories", record)
-                input_size = sum(len(row[index]) for index in (1, 5, 6))
+                input_size = sum(len(row[index]) for index in (1, 5, 6, 7))
                 self._export_work.require("input_bytes", 13 * input_size + 2)
                 try:
                     with ctx._stored("source inventory"):
                         members = json.loads(row[5])
+                        provider_members = inventory_resources(record)
                         if type(members) is not list:
                             raise ValueError("invalid stored inventory members")
-                    self._export_work.require("metadata_units", len(members))
+                    self._export_work.require(
+                        "metadata_units", len(members) + len(provider_members)
+                    )
                     try:
                         with ctx._stored("source inventory"):
                             inventory = SourceInventory(
@@ -1402,37 +1558,30 @@ class ExchangeService:
                                 bool(row[4]),
                                 tuple(members),
                                 row[6],
+                                provider_repositories=provider_members,
                             )
                             if inventory.values != tuple(row):
                                 raise ValueError("noncanonical source inventory")
                     except BaseException:
                         self._export_work.abandon("metadata_units")
                         raise
-                    self._export_work.charge("metadata_units", len(members))
+                    self._export_work.charge(
+                        "metadata_units", len(members) + len(provider_members)
+                    )
                 except BaseException:
                     self._export_work.abandon("input_bytes")
                     raise
                 self._export_work.charge("input_bytes", 2 * input_size)
                 section["source_inventories"].append(record)
 
-            # Determine full set of exported resources (including parents/members of selected resources)
-            all_resource_rows = ctx._exchange_metadata_rows(
-                "resources", self._export_work
-            )
-
-            rel_rows = ctx._exchange_metadata_rows("relations", self._export_work)
-            coll_rows = ctx._exchange_metadata_rows("collections", self._export_work)
+            # The graph planner reads only each bounded actual frontier. Source
+            # namespaces and uncaptured siblings never become traversal edges.
+            all_resource_rows, rel_rows, coll_rows, support_rows = [], [], [], []
             support_columns = (
                 "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,"
                 "target_json,clock_json,provenance_json,observed_at_us,"
                 "event_report_members_json,event_report_scope_json"
             )
-            support_rows = [
-                dict(zip(support_columns.split(","), r))
-                for r in ctx._exchange_metadata_rows(
-                    "repository_relations", self._export_work
-                )
-            ]
             resource_columns = (
                 "service_instance_uuidv4",
                 "resource_kind",
@@ -1518,25 +1667,110 @@ class ExchangeService:
                     raise
                 self._export_work.charge("input_bytes", 2 * size)
 
-            for raw in all_resource_rows:
-                validate_stored_context_row(
-                    "resources", dict(zip(resource_columns, raw, strict=True))
+            narrow = narrow_collection_owners(scope)
+            frontier = None if selected_rks is None else set(selected_rks) | narrow
+            visited = set()
+            for depth in range(scope.max_depth + 1):
+                keys = (
+                    None
+                    if frontier is None
+                    else tuple(sorted(key.coordinates() for key in frontier - visited))
                 )
-            for raw in rel_rows:
-                validate_stored_context_graph(
-                    "resource_relations", dict(zip(relation_columns, raw, strict=True))
+                if keys == ():
+                    break
+                found = ctx._exchange_metadata_rows(
+                    "resources", self._export_work, keys=keys
                 )
-            for raw in coll_rows:
-                validate_stored_context_graph(
-                    "collections", dict(zip(collection_columns, raw, strict=True))
+                for raw in found:
+                    validate_stored_context_row(
+                        "resources", dict(zip(resource_columns, raw, strict=True))
+                    )
+                owners = tuple(tuple(raw[:3]) for raw in found)
+                actual = {ResourceKey(*key) for key in owners}
+                visited.update(actual)
+                broad_owners = tuple(
+                    key for key in owners if ResourceKey(*key) not in narrow
                 )
-            for raw in support_rows:
-                validate_stored_context_row("resource_repository_relations", raw)
+                graph_relations = ctx._exchange_metadata_rows(
+                    "relations", self._export_work, keys=broad_owners
+                )
+                graph_collections = ctx._exchange_metadata_rows(
+                    "collections", self._export_work, keys=broad_owners
+                )
+                exact = tuple(
+                    key
+                    for key in (scope.collection_keys or ())
+                    if ResourceKey(*key[:3]) in actual & narrow
+                )
+                if exact:
+                    graph_collections.extend(
+                        ctx._exchange_metadata_rows(
+                            "collections_exact", self._export_work, keys=exact
+                        )
+                    )
+                graph_support = [
+                    dict(zip(support_columns.split(","), raw, strict=True))
+                    for raw in ctx._exchange_metadata_rows(
+                        "repository_relations", self._export_work, keys=broad_owners
+                    )
+                ]
+                for raw in graph_relations:
+                    validate_stored_context_graph(
+                        "resource_relations",
+                        dict(zip(relation_columns, raw, strict=True)),
+                    )
+                for raw in graph_collections:
+                    validate_stored_context_graph(
+                        "collections", dict(zip(collection_columns, raw, strict=True))
+                    )
+                for raw in graph_support:
+                    validate_stored_context_row("resource_repository_relations", raw)
+                all_resource_rows.extend(found)
+                rel_rows.extend(graph_relations)
+                coll_rows.extend(graph_collections)
+                support_rows.extend(graph_support)
+                if frontier is None:
+                    break
+                adjacent = {
+                    ResourceKey(*member)
+                    for raw in graph_relations
+                    for member in json.loads(raw[4])
+                }
+                adjacent.update(
+                    ResourceKey(*member)
+                    for raw in graph_collections
+                    for member in json.loads(raw[8])
+                )
+                for raw in graph_support:
+                    relation = decode_relation(raw)
+                    if relation.embedded_support is not None:
+                        adjacent.add(relation.embedded_support.provider_repository)
+                frontier = adjacent - visited
+                if len(visited) + len(frontier) > scope.max_units:
+                    # The established planner below decides which actual owners
+                    # fit. Do not scan an unbounded next frontier first.
+                    frontier = set(
+                        sorted(frontier, key=lambda key: key.coordinates())[
+                            : max(0, scope.max_units - len(visited))
+                        ]
+                    )
+                if depth == scope.max_depth:
+                    break
             included_rks, reasons, omissions = expand_resources(
                 all_resource_rows, rel_rows, coll_rows, scope, support_rows
             )
             self._selection_details["dependency_reasons"].extend(reasons)
             self._selection_details["omissions"].extend(omissions)
+            actual_collection_keys = {tuple(row[:5]) for row in coll_rows}
+            self._selection_details["omissions"].extend(
+                {
+                    "section": "collections",
+                    "unit": list(key),
+                    "reason": "selected_collection_unavailable",
+                }
+                for key in (scope.collection_keys or ())
+                if key not in actual_collection_keys
+            )
             for row in all_resource_rows:
                 if ResourceKey(*row[:3]) in included_rks:
                     section["resources"].append(
@@ -1614,7 +1848,13 @@ class ExchangeService:
                     "service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,claim_clock_json,claim_target_json,claim_provenance_json,disposition_kind,disposition_clock_json,disposition_provenance_json,observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json",
                 ),
             ):
-                for row in ctx._exchange_metadata_rows(selector, self._export_work):
+                for row in ctx._exchange_metadata_rows(
+                    selector,
+                    self._export_work,
+                    keys=tuple(
+                        sorted(key.coordinates() for key in included_rks - narrow)
+                    ),
+                ):
                     if ResourceKey(*row[:3]) in included_rks:
                         section[table].append(dict(zip(columns.split(","), row)))
             # If graph limits withheld a Transfer scope, its endpoint rows must
@@ -1649,7 +1889,11 @@ class ExchangeService:
             ]
 
             referenced_text_digests: set[str] = set()
-            fc_rows = ctx._exchange_metadata_rows("field_candidates", self._export_work)
+            fc_rows = ctx._exchange_metadata_rows(
+                "field_candidates",
+                self._export_work,
+                keys=tuple(sorted(key.coordinates() for key in included_rks)),
+            )
             for row in fc_rows:
                 rk = ResourceKey(row[0], row[1], row[2])
                 if rk not in included_rks:
@@ -1675,7 +1919,13 @@ class ExchangeService:
                     }
                 )
 
-            tb_rows = ctx._exchange_metadata_rows("text_bodies", self._export_work)
+            tb_rows = ctx._exchange_metadata_rows(
+                "text_bodies",
+                self._export_work,
+                keys=None
+                if selected_rks is None
+                else tuple((digest,) for digest in sorted(referenced_text_digests)),
+            )
             for (sha256_hex,) in tb_rows:
                 # Always verify every stored text body on export
                 text_val = ctx.read_text(sha256_hex)
@@ -1691,7 +1941,11 @@ class ExchangeService:
                     }
                 )
 
-            cr_rows = ctx._exchange_metadata_rows("core_references", self._export_work)
+            cr_rows = ctx._exchange_metadata_rows(
+                "core_references",
+                self._export_work,
+                keys=tuple(sorted(key.coordinates() for key in included_rks)),
+            )
             for row in cr_rows:
                 rk = ResourceKey(row[0], row[1], row[2])
                 if rk not in included_rks:
@@ -1711,7 +1965,29 @@ class ExchangeService:
 
             exported_ctx_scopes: set[tuple[str, str]] = set()
             ctx_scopes_by_key = {}
-            for row in ctx._exchange_metadata_rows("scopes", self._export_work):
+            prefixes = None
+            if selected_rks is not None:
+                prefix_set = set()
+
+                def add_prefix(owner_kind, coordinates):
+                    prefix = encode(coordinates)[:-1] + ","
+                    prefix_set.add((owner_kind, prefix, prefix[:-1] + "-"))
+
+                for key in included_rks - narrow:
+                    for owner_kind in ("resource", "collection", "field"):
+                        add_prefix(owner_kind, key.coordinates())
+                for key in scope.collection_keys or ():
+                    if ResourceKey(*key[:3]) in narrow & included_rks:
+                        add_prefix("collection", key)
+                for source in section["sources"]:
+                    for owner_kind in ("source", "source_inventory"):
+                        add_prefix(owner_kind, (source["source_registration_uuidv4"],))
+                for repository in section["repositories"]:
+                    add_prefix("repository", (repository["repository_uuidv4"],))
+                prefixes = tuple(sorted(prefix_set))
+            for row in ctx._exchange_metadata_rows(
+                "scopes", self._export_work, prefixes=prefixes
+            ):
                 if type(row[1]) is not str:
                     with ctx._stored("exchange Coverage scope"):
                         raise ValueError("invalid stored coordinates type")
@@ -1745,7 +2021,9 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx._exchange_metadata_rows("claims", self._export_work):
+            for row in ctx._exchange_metadata_rows(
+                "claims", self._export_work, keys=tuple(sorted(exported_ctx_scopes))
+            ):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
                 if row[4] is not None and type(row[4]) is not str:
@@ -1792,7 +2070,7 @@ class ExchangeService:
 
             def checked_context_proof(row, *, source):
                 c_scope = ctx_scopes_by_key[(row[0], row[1])]
-                json_indexes = (5, 9, 10) if source else (8, 11)
+                json_indexes = (5, 9, 10, 11) if source else (8, 11)
                 with ctx._stored("exchange Coverage proof"):
                     if tuple(row[:4]) not in ctx_claim_keys:
                         raise ValueError("missing Coverage proof claim")
@@ -1809,6 +2087,9 @@ class ExchangeService:
                                 original_scope = json_value(row[5])
                                 validate_required_observation_us(row[6])
                                 members = json_value(row[9])
+                                provider_members = inventory_resources(
+                                    {"provider_repositories_json": row[11]}
+                                )
                                 json_value(row[10], provenance=True)
                                 if (
                                     c_scope.owner_kind != "source_inventory"
@@ -1853,7 +2134,8 @@ class ExchangeService:
                     self._export_work.abandon("input_bytes")
                     raise
                 self._export_work.charge("input_bytes", 2 * input_size)
-                self._export_work.require("metadata_units", len(members) + 1)
+                units = len(members) + 1 + (len(provider_members) if source else 0)
+                self._export_work.require("metadata_units", units)
                 try:
                     with ctx._stored("exchange Coverage proof"):
                         if source:
@@ -1869,8 +2151,8 @@ class ExchangeService:
                                 ResourceKey(*member)
                         if source:
                             evidence = ctx.db.execute(
-                                "SELECT 1 FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=? AND observed_at_us=? AND coverage_state=? AND terminal=? AND members_json=? AND provenance_json=?",
-                                tuple(row[4:11]),
+                                "SELECT 1 FROM source_inventory_evidence WHERE source_registration_uuidv4=? AND scope_json=? AND observed_at_us=? AND coverage_state=? AND terminal=? AND members_json=? AND provenance_json=? AND provider_repositories_json=?",
+                                tuple(row[4:12]),
                             ).fetchone()
                         else:
                             evidence = ctx.db.execute(
@@ -1882,9 +2164,11 @@ class ExchangeService:
                 except BaseException:
                     self._export_work.abandon("metadata_units")
                     raise
-                self._export_work.charge("metadata_units", len(members) + 1)
+                self._export_work.charge("metadata_units", units)
 
-            for row in ctx._exchange_metadata_rows("proofs", self._export_work):
+            for row in ctx._exchange_metadata_rows(
+                "proofs", self._export_work, keys=tuple(sorted(exported_ctx_scopes))
+            ):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
                 checked_context_proof(row, source=False)
@@ -1906,7 +2190,11 @@ class ExchangeService:
                     }
                 )
 
-            for row in ctx._exchange_metadata_rows("source_proofs", self._export_work):
+            for row in ctx._exchange_metadata_rows(
+                "source_proofs",
+                self._export_work,
+                keys=tuple(sorted(exported_ctx_scopes)),
+            ):
                 if (row[0], row[1]) not in exported_ctx_scopes:
                     continue
                 checked_context_proof(row, source=True)
@@ -1924,6 +2212,7 @@ class ExchangeService:
                         "terminal": bool(row[8]),
                         "members_json": row[9],
                         "provenance_json": row[10],
+                        "provider_repositories_json": row[11],
                     }
                 )
 
@@ -2246,6 +2535,13 @@ class ExchangeService:
             if fmt and object_oid:
                 object_oids.add(OID(fmt, object_oid))
 
+        for row in context_data.get("source_inventories", ()):
+            sources.add(row["source_registration_uuidv4"])
+            repositories.update(json.loads(row["members_json"]))
+            for member in inventory_resources(row):
+                resources.add(member)
+                provider_registrations.add(member.service_instance_uuidv4)
+
         return DependencySet(
             resources=resources,
             repositories=repositories,
@@ -2255,6 +2551,29 @@ class ExchangeService:
             dispositions=dispositions,
             provider_registrations=provider_registrations,
             object_oids=object_oids,
+        ) | identity_dependencies(context_data)
+
+    @staticmethod
+    def _local_receiver_selection(scope, grants):
+        """Issue dependency targets only from the caller's explicit local grants.
+
+        Collection roots select wire facts, while a capability must authorize
+        their actual owner/member/reference targets. Never learn permissions
+        from the incoming packet, and never replace supplied capabilities.
+        """
+        if scope.collection_keys is None:
+            return scope
+        from repo_catalog.domain.context_admission import (
+            AdmissionSelection,
+            DependencySet,
+        )
+
+        if type(grants) is not DependencySet:
+            return scope  # Preserve existing default-denial policy.
+        return replace(
+            AdmissionSelection.from_scope(scope),
+            resource_keys=grants.resources,
+            object_oids=grants.object_oids,
         )
 
     @staticmethod
@@ -2276,6 +2595,8 @@ class ExchangeService:
             raise AdmissionRefused("PERMISSION_DENIED")
 
         package_deps = ExchangeService._extract_context_dependencies(context_data)
+        if package_deps.identity_assertions and adm.operation != "exchange_import":
+            raise AdmissionRefused("PERMISSION_DENIED")
         if hasattr(policy, "grants") and policy.grants is None:
             if (
                 package_deps.resources
@@ -2283,6 +2604,7 @@ class ExchangeService:
                 or package_deps.provider_registrations
                 or package_deps.mapping_claims
                 or package_deps.dispositions
+                or package_deps.identity_assertions
             ):
                 raise AdmissionRefused("PERMISSION_DENIED")
 
@@ -2324,7 +2646,6 @@ class ExchangeService:
             and selection.include_context
             and self._has_context()
         )
-
         # Validate every section, including units later withheld by permission.
         with account_verification(active_work):
             from repo_catalog.domain.exchange_rows import validate_replay_consistency
@@ -2343,6 +2664,18 @@ class ExchangeService:
                 self._prevalidate_context_section(package.context)
                 validate_context(package.context)
         cut("after_preflight")
+        if (
+            package.context is not None
+            and any(
+                package.context.get(name)
+                for name in (
+                    "service_identity_assertions",
+                    "service_identity_cancellations",
+                )
+            )
+            and not self._has_context()
+        ):
+            raise ExchangeError("CONTEXT_UNAVAILABLE", "identity_evidence")
         core_data = copy.deepcopy(package.core)
         context_data = copy.deepcopy(package.context)
         with account_verification(active_work):
@@ -2466,7 +2799,9 @@ class ExchangeService:
                         "exchange_import",
                         grants=active_grants,
                         permitted_repositories=frozenset(permitted),
-                        selection=admit_selection,
+                        selection=self._local_receiver_selection(
+                            admit_selection, active_grants
+                        ),
                     )
                 self._validate_receiver_authority(auth, adm, context_data)
             from importlib.util import find_spec
@@ -2545,9 +2880,8 @@ class ExchangeService:
                     with catalog_completion(self.directory):
                         db.commit()
                     checkpoint("after_core_commit")
-                except BaseException:
-                    db.set_authorizer(None)
-                    db.rollback()
+                except BaseException as error:
+                    rollback_after_failure(db, error)
                     raise
         elif want_context and context_data is not None:
             from repo_catalog.adapters.sqlite.production_context import Context
@@ -2571,7 +2905,9 @@ class ExchangeService:
                     "exchange_import",
                     grants=active_grants,
                     permitted_repositories=frozenset(permitted),
-                    selection=admit_selection,
+                    selection=self._local_receiver_selection(
+                        admit_selection, active_grants
+                    ),
                 )
             self._validate_receiver_authority(auth, adm, context_data)
             with Context.transaction(
@@ -2804,7 +3140,14 @@ class ExchangeService:
                     )
                     if found:
                         self._dependency_rows += 1
-                        if tuple(found[0]) != tuple((row[k] for k in payload)):
+                        if tuple(found[0]) != tuple(
+                            (
+                                scalar_value_json(row)
+                                if section == "scalar_claims" and k == "value_json"
+                                else row[k]
+                                for k in payload
+                            )
+                        ):
                             raise ExchangeError(
                                 "IMMUTABLE_REPLAY_CONFLICT", ["core", section]
                             )
@@ -3274,6 +3617,7 @@ class ExchangeService:
             lambda r: (
                 r["source_registration_uuidv4"] in sources
                 and set(json.loads(r["members_json"])).issubset(repos)
+                and set(inventory_resources(r)).issubset(resources)
             ),
         )
         reports = transfer_reports(data)
@@ -3551,6 +3895,15 @@ class ExchangeService:
             _performed("metadata_units", 1)
             core_cap.admit_repository(repo["repository_uuidv4"])
 
+        for name in (
+            "repository_identity_assertions",
+            "repository_identity_cancellations",
+        ):
+            for row in core_data.get(name, ()):
+                _performed("metadata_units", 1)
+                kind, provenance, _ = decode_identity_row(name, row)
+                core_cap.admit_identity_evidence(kind, row["record_json"], provenance)
+
         for rc in core_data["repository_claims"]:
             _performed("metadata_units", 1)
             prov = Provenance(*json.loads(rc["provenance_json"]))
@@ -3606,11 +3959,12 @@ class ExchangeService:
             _performed("metadata_units", 1)
             object_oid = OID(sc["object_format"], sc["object_oid"])
             prov = Provenance(*json.loads(sc["provenance_json"]))
-            val_dec = json.loads(sc["value_json"])
+            original_value_json = scalar_value_json(sc)
+            val_dec = json.loads(original_value_json)
             orig_val = None if val_dec == ["unknown"] else val_dec[1]
             claim = ScalarClaim(object_oid, sc["field"], orig_val, prov)
             if (
-                claim.key[3] != sc["value_json"]
+                claim.key[3] != original_value_json
                 or claim.key[4] != sc["provenance_json"]
             ):
                 raise ExchangeError("NONCANONICAL_CLAIM", "scalar_claims")
@@ -3755,7 +4109,7 @@ class ExchangeService:
         from repo_catalog.domain.selective_exchange import preflight_i2_context
 
         preflight_i2_context(ctx_data)
-        count_sql = "SELECT (SELECT count(*) FROM providers)+(SELECT count(*) FROM repository_context)+(SELECT count(*) FROM sources)+(SELECT count(*) FROM source_repositories)+(SELECT count(*) FROM resources)+(SELECT count(*) FROM resource_repository_relations)+(SELECT count(*) FROM repository_mapping_dispositions)+(SELECT count(*) FROM field_candidates)+(SELECT count(*) FROM resource_relations)+(SELECT count(*) FROM text_bodies)+(SELECT count(*) FROM collections)+(SELECT count(*) FROM collection_terminals)+(SELECT count(*) FROM core_references)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM coverage_proofs)+(SELECT count(*) FROM source_inventory_evidence)+(SELECT count(*) FROM source_coverage_proofs)"
+        count_sql = "SELECT (SELECT count(*) FROM providers)+(SELECT count(*) FROM repository_context)+(SELECT count(*) FROM sources)+(SELECT count(*) FROM source_repositories)+(SELECT count(*) FROM resources)+(SELECT count(*) FROM resource_repository_relations)+(SELECT count(*) FROM repository_mapping_dispositions)+(SELECT count(*) FROM field_candidates)+(SELECT count(*) FROM resource_relations)+(SELECT count(*) FROM text_bodies)+(SELECT count(*) FROM collections)+(SELECT count(*) FROM collection_terminals)+(SELECT count(*) FROM core_references)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM coverage_proofs)+(SELECT count(*) FROM source_inventory_evidence)+(SELECT count(*) FROM source_coverage_proofs)+(SELECT count(*) FROM service_identity_assertions)+(SELECT count(*) FROM service_identity_cancellations)"
         before_changes = ctx.db.execute(count_sql).fetchone()[0]
         before_res_count = ctx.db.execute("SELECT COUNT(*) FROM resources").fetchone()[
             0
@@ -3774,6 +4128,12 @@ class ExchangeService:
                 prov["provider_kind"],
                 prov["configuration_json"],
             )
+
+        for name in ("service_identity_assertions", "service_identity_cancellations"):
+            for row in ctx_data.get(name, ()):
+                _performed("metadata_units", 1)
+                kind, _, _ = decode_identity_row(name, row)
+                ctx.admit_identity_evidence(kind, row["record_json"], row["provenance"])
 
         for repo in ctx_data["repositories"]:
             _performed("metadata_units", 1)
@@ -4032,8 +4392,9 @@ class ExchangeService:
                 term_val,
                 repos,
                 inv["provenance_json"],
+                provider_repositories=inventory_resources(inv),
             )
-            ctx.inventory(src_inv)
+            ctx.admit_inventory_history(src_inv)
             i_key = terminal_key(inv, "source_inventory")
             for cp in inventory_proofs_by_terminal.get(i_key, ()):
                 _performed("metadata_units", 1)
@@ -4054,7 +4415,7 @@ class ExchangeService:
                     cp["coverage_state"],
                     details_json,
                 )
-                ctx.prove_inventory(c_claim, src_inv)
+                ctx.admit_inventory_history(src_inv, c_claim)
                 admitted_claim_keys.add(c_key)
 
         for coll in sorted(
@@ -4097,11 +4458,7 @@ class ExchangeService:
                     cp["coverage_state"],
                     details_json,
                 )
-                ctx.prove_collection(
-                    c_claim,
-                    coll_obs,
-                    required_scope_json=coll["scope_json"],
-                )
+                ctx.admit_collection_history(coll_obs, c_claim)
                 admitted_claim_keys.add(c_key)
 
         # Collection-owned scope FKs require their original collections first.

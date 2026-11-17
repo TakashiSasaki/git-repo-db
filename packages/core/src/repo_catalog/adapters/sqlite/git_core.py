@@ -36,6 +36,81 @@ from repo_catalog.domain.ref_observation import NotesMappingEvidenceRecord
 # The exchange reader accepts only these fixed projections. In particular, it
 # cannot be used as a typed-read capability for caller-provided SQL or to read
 # retained proof/body columns.
+
+
+def _export_selection_parameters(key_columns, keys, prefixes, work):
+    """Bind fixed metadata keys; never accept caller SQL or body projections."""
+    values = keys if keys is not None else prefixes
+    width = len(key_columns) if keys is not None else 3
+    if (
+        type(values) is not tuple
+        or len(values) > 1_000_000
+        or any(
+            type(row) is not tuple
+            or len(row) != width
+            or any(type(value) is not str for value in row)
+            for row in values
+        )
+        or keys is not None
+        and prefixes is not None
+    ):
+        raise ValueError("fixed typed export keys required")
+    # These are bounded local selection coordinates, not authoritative payloads.
+    size = sum(len(value.encode("utf-8")) for row in values for value in row)
+    work.require("input_bytes", 6 * size + 4 * len(values) * (width + 1) + 2)
+    try:
+        encoded = json.dumps(values, ensure_ascii=False, separators=(",", ":"))
+    except BaseException:
+        work.abandon("input_bytes")
+        raise
+    work.charge("input_bytes", len(encoded.encode("utf-8")))
+    return (encoded,)
+
+
+def _export_selection_statement(query, key_columns, mode):
+    base, order = query.rsplit(" ORDER BY ", 1)
+    if mode == "keys":
+        selected = ",".join(
+            "json_extract(value,'$[" + str(index) + "]')"
+            for index in range(len(key_columns))
+        )
+        predicate = (
+            "("
+            + ",".join(key_columns)
+            + ") IN (SELECT "
+            + selected
+            + " FROM json_each(?))"
+        )
+    else:
+        # Canonical JSON coordinates have a stable comma-terminated prefix.
+        # CROSS JOIN fixes the small request set outside the indexed PK ranges.
+        base = base.replace(
+            "FROM coverage_scopes",
+            "FROM json_each(?) AS selection CROSS JOIN coverage_scopes",
+        )
+        predicate = "owner_kind=json_extract(selection.value,'$[0]') AND owner_coordinates_json>=json_extract(selection.value,'$[1]') AND owner_coordinates_json<json_extract(selection.value,'$[2]')"
+    return (
+        base
+        + (" AND " if " WHERE " in base.rsplit(" FROM ", 1)[-1] else " WHERE ")
+        + predicate
+        + " ORDER BY "
+        + order
+    )
+
+
+_EXPORT_SELECTION_COLUMNS = {
+    "repositories": ("repository_uuidv4",),
+    "repository_claims": ("repository_uuidv4",),
+    "git_observations": ("repository_uuidv4",),
+    "git_objects": ("object_format", "object_oid"),
+    "retained_metadata": ("object_format", "object_oid"),
+    "scalar_claims": ("c.object_format", "c.object_oid"),
+    "relation_groups": ("g.object_format", "g.object_oid"),
+    "coverage_scopes": ("owner_kind", "owner_coordinates_json"),
+    "coverage_claims": ("owner_kind", "owner_coordinates_json"),
+    "coverage_proofs": ("owner_kind", "owner_coordinates_json"),
+}
+
 _REF_EXCHANGE_ROWS = {
     "groups": (
         "notes_mapping_groups",
@@ -133,6 +208,16 @@ _REF_EXCHANGE_ROWS = {
 # Fixed Core metadata selections used by Exchange, including historical rows.
 # These contain no retained bodies or protected proof bundles.
 _EXCHANGE_METADATA_ROWS = {
+    "repository_identity_assertions": (
+        "SELECT relation_uuidv4,record_json,provenance FROM repository_identity_assertions ORDER BY relation_uuidv4,record_json,provenance",
+        ("relation_uuidv4", "record_json", "provenance"),
+        0,
+    ),
+    "repository_identity_cancellations": (
+        "SELECT cancellation_uuidv4,relation_uuidv4,record_json,provenance FROM repository_identity_cancellations ORDER BY cancellation_uuidv4,relation_uuidv4,record_json,provenance",
+        ("cancellation_uuidv4", "relation_uuidv4", "record_json", "provenance"),
+        0,
+    ),
     "repositories": (
         "SELECT repository_uuidv4 FROM repositories ORDER BY repository_uuidv4",
         ("repository_uuidv4",),
@@ -241,6 +326,8 @@ _EXCHANGE_METADATA_ROWS = {
 # These existing Exchange projections contain complete rows. Body/proof/key-only
 # projections remain scoped and do not acquire omitted fields for row decoding.
 _EXCHANGE_FULL_ROWS = {
+    "repository_identity_assertions": ROW_TYPES["repository_identity_assertions"],
+    "repository_identity_cancellations": ROW_TYPES["repository_identity_cancellations"],
     "repositories": ROW_TYPES["repositories"],
     "repository_claims": ROW_TYPES["repository_claims"],
     "scalar_claims": ROW_TYPES["scalar_claims"],
@@ -415,9 +502,23 @@ class GitCore(Core):
         self._available()
 
     @_decoded_read
-    def _open_export_metadata_cursor(self, selector, parameters, *, lengths):
+    def _open_export_metadata_cursor(
+        self, selector, parameters, *, lengths, selection_mode=None
+    ):
         selectors = _EXCHANGE_METADATA_ROWS
         query, columns, _arity = selectors[selector]
+        if selection_mode is not None:
+            key_columns = _EXPORT_SELECTION_COLUMNS.get(selector)
+            if (
+                selection_mode not in {"keys", "prefixes"}
+                or key_columns is None
+                or selection_mode == "prefixes"
+                and selector != "coverage_scopes"
+            ):
+                raise CoreFailure(
+                    "QUERY_BUDGET", "exchange-metadata", "fixed selection required"
+                )
+            query = _export_selection_statement(query, key_columns, selection_mode)
         # Each fixed query orders by its complete immutable key, so the
         # measurement and value cursors traverse the same rows. Non-key payload
         # values are not included in an extra sort before their reservation.
@@ -445,15 +546,21 @@ class GitCore(Core):
             raise
 
     @_completed_read
-    def exchange_metadata_rows(self, selector, parameters, work):
+    def exchange_metadata_rows(
+        self, selector, parameters, work, *, keys=None, prefixes=None
+    ):
         """Read only fixed Core metadata, reserving each row before fetching it.
 
         Both cursors use one pinned snapshot and a complete deterministic order.
         User work callbacks execute outside the narrow fixed-SQL decode boundary.
         """
-        return self._scan_exchange_metadata_rows(selector, parameters, work)
+        return self._scan_exchange_metadata_rows(
+            selector, parameters, work, keys=keys, prefixes=prefixes
+        )
 
-    def _scan_exchange_metadata_rows(self, selector, parameters, work):
+    def _scan_exchange_metadata_rows(
+        self, selector, parameters, work, *, keys=None, prefixes=None
+    ):
         selectors = _EXCHANGE_METADATA_ROWS
         spec = selectors.get(selector) if type(selector) is str else None
         if (
@@ -465,13 +572,25 @@ class GitCore(Core):
             raise CoreFailure(
                 "QUERY_BUDGET", "exchange-metadata", "fixed selector required"
             )
+        key_columns = _EXPORT_SELECTION_COLUMNS.get(selector)
+        if (keys is not None and key_columns is None) or (
+            prefixes is not None and selector != "coverage_scopes"
+        ):
+            raise CoreFailure(
+                "QUERY_BUDGET", "exchange-metadata", "fixed selection required"
+            )
+        if keys is not None or prefixes is not None:
+            parameters = _export_selection_parameters(key_columns, keys, prefixes, work)
+            selection_mode = "keys" if keys is not None else "prefixes"
+        else:
+            selection_mode = None
         with self._snapshot():
             measured = self._open_export_metadata_cursor(
-                selector, parameters, lengths=True
+                selector, parameters, lengths=True, selection_mode=selection_mode
             )
             try:
                 values = self._open_export_metadata_cursor(
-                    selector, parameters, lengths=False
+                    selector, parameters, lengths=False, selection_mode=selection_mode
                 )
                 try:
                     result = []
@@ -524,6 +643,40 @@ class GitCore(Core):
                                 row_type.from_record,
                                 {name: record[name] for name in row_type.COLUMNS},
                             )
+                        if selector in {
+                            "repository_identity_assertions",
+                            "repository_identity_cancellations",
+                        }:
+                            from repo_catalog.domain.identity_assertions import (
+                                identity_values,
+                            )
+
+                            kind = (
+                                "relation"
+                                if selector.endswith("assertions")
+                                else "cancellation"
+                            )
+                            work.require("input_bytes", size)
+                            try:
+                                expected = self._stored(
+                                    selector,
+                                    identity_values,
+                                    kind,
+                                    "repository",
+                                    record["record_json"],
+                                    self._provenance_value(
+                                        selector, record["provenance"]
+                                    ),
+                                )
+                                if tuple(row) != expected:
+                                    self._integrity_stop(
+                                        (
+                                            selector,
+                                            "identity coordinates differ from original record",
+                                        )
+                                    )
+                            finally:
+                                work.charge("input_bytes", size)
                         result.append(row)
                     return result
                 finally:

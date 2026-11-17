@@ -10,8 +10,8 @@ import pytest
 
 from repo_catalog.adapters.github.transport import GitHubTransport
 from repo_catalog.adapters.recording import RecordingError
-from repo_catalog.config import DEFAULTS
 from repo_catalog.domain.models import CancellationToken, CatalogError
+from tests.support.provider_transport import TRANSPORT_SETTINGS
 
 SECRET = "synthetic-private-recorder-secret"
 
@@ -26,7 +26,7 @@ class BrokenRecorder:
 
 def transport(client, *, recorder=None, token=None, clock_us=lambda: 10):
     return GitHubTransport(
-        {**DEFAULTS["github"], "max_attempts": 1},
+        {**TRANSPORT_SETTINGS, "max_attempts": 1},
         token or CancellationToken(),
         client=client,
         clock_us=clock_us,

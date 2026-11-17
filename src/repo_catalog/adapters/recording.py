@@ -221,7 +221,10 @@ def safe_exchange_context(context):
 
 def recorder_from_config(config, state_dir):
     """Engineering default: disabled; enabled captures use a local subdirectory."""
-    if not config.get("record_messages", False):
+    enabled = config.get("record_messages", False)
+    if type(enabled) is not bool:
+        raise RecordingError("ARCHIVE_ARGUMENT", "Recording selection must be boolean")
+    if not enabled:
         return DisabledRecorder()
     return LocalFileRecorder(Path(state_dir) / "transport-archive")
 

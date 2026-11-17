@@ -320,6 +320,7 @@ def validate_stored_admission_guards(
                 "coverage_proof_owner",
                 "source_coverage_owner",
                 "rrr_event_report_time",
+                "collection_terminal_members_owner",
             },
         )
         validate_stored_context_relations(connection)

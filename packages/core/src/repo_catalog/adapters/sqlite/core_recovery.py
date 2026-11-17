@@ -34,6 +34,7 @@ from repo_catalog.adapters.sqlite.core_recovery_validation import (
     charge_ref_integrity_inputs,
     validate_stored_admission_guards,
     validate_stored_checks,
+    validate_stored_identity_authority,
     validate_stored_ref_authority,
     validate_stored_text_encoding,
 )
@@ -985,8 +986,42 @@ class CoreRecoveryAdapter:
     def _source_candidate_type(self, store_name):
         return CandidateType.GIT_METADATA
 
-    def _special_source_candidate(self, store_name, table, row):
+    def _special_source_candidate(self, store_name, table, row, **_context):
+        from repo_catalog.adapters.sqlite.identity_salvage import (
+            identity_source_candidate,
+        )
+
+        candidate = identity_source_candidate(store_name, table, row)
+        if candidate is not None:
+            kind, ident, payload = candidate
+            return CandidateType(kind), ident, payload
         return None
+
+    def _merge_identity_candidate(
+        self, kind, payload, directory, core, store, connection, admission, budget, work
+    ):
+        from repo_catalog.adapters.sqlite.identity_salvage import (
+            IDENTITY_CANDIDATES,
+            decode_identity_candidate,
+        )
+
+        entity, _, _ = IDENTITY_CANDIDATES[kind]
+        if entity != "repository":
+            raise RecoveryCapabilityError(
+                "Service identity recovery requires paired Context authority"
+            )
+        evidence_kind, original = decode_identity_candidate(
+            kind, payload, ROW_TYPES, work
+        )
+        state, inserted = core.admit_identity_evidence(
+            evidence_kind, payload["record_json"], original, with_insertion=True
+        )
+        return state if inserted else "duplicate"
+
+    def _merge_source_candidate(self, *args):
+        raise RecoveryCapabilityError(
+            "Source inventory recovery requires paired Context authority"
+        )
 
     def _open_context_merge(
         self, directory, core, work, budget, exhausted, authorization, admission
@@ -1441,6 +1476,9 @@ class CoreRecoveryAdapter:
                     "Core physical schema rows differ from packaged expectation"
                 )
 
+            validate_stored_identity_authority(
+                conn, "core", ROW_TYPES, work, self.validation_budget
+            )
             ref_notes, ref_bytes = validate_stored_ref_authority(
                 conn, work, self.validation_budget
             )
@@ -2303,9 +2341,17 @@ class CoreRecoveryAdapter:
                                     raw_body, work
                                 )
                         elif special := self._special_source_candidate(
-                            store_name, table, row_dict
+                            store_name,
+                            table,
+                            row_dict,
+                            connection=conn,
+                            work=work,
+                            max_bytes=max_payload_bytes,
+                            max_members=max_records,
                         ):
-                            c_type, c_id, payload = special
+                            c_type, c_id, payload = special[:3]
+                            if len(special) == 4:
+                                withheld_reason = special[3]
                         else:
                             c_type = self._source_candidate_type(store_name)
 
@@ -3145,6 +3191,10 @@ class CoreRecoveryAdapter:
                         in (
                             CandidateType.CONTEXT_DOCUMENT.value,
                             CandidateType.CONTEXT_RESOURCE.value,
+                            CandidateType.SERVICE_IDENTITY_ASSERTION.value,
+                            CandidateType.SERVICE_IDENTITY_CANCELLATION.value,
+                            CandidateType.SOURCE_INVENTORY.value,
+                            CandidateType.SOURCE_INVENTORY_PROOF.value,
                             "context_text",
                         )
                         or (record.get("extraction_provenance") or {}).get("store")
@@ -3217,6 +3267,130 @@ class CoreRecoveryAdapter:
                     if fault_stage == "after_partial_work" and processed >= 1:
                         _save_budget_state()
                         raise RecoveryError("Injected failure after partial work")
+
+                    if c_type in {"source_inventory", "source_inventory_proof"}:
+                        try:
+                            result = self._merge_source_candidate(
+                                c_type,
+                                payload,
+                                fresh_destination_dir,
+                                ctx_store,
+                                ctx_conn,
+                                ctx_admission,
+                                b,
+                                work_budget,
+                            )
+                            if result == "duplicate":
+                                replayed += 1
+                            else:
+                                admitted += 1
+                        except (
+                            RecoveryCapabilityError,
+                            CorruptionDetectedError,
+                            CatalogStoppedError,
+                        ):
+                            raise
+                        except CoreFailure as error:
+                            if error.code in (
+                                "AUTHORITATIVE_CORRUPTION",
+                                "RECOVERY_STOP",
+                            ):
+                                raise
+                            if error.code in ("BUDGET", "QUERY_BUDGET"):
+                                budget_exhausted = True
+                                unprocessed += 1
+                            else:
+                                rejected += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Source inventory admission refused: {error}",
+                                }
+                            )
+                        except (
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            RecursionError,
+                            sqlite3.IntegrityError,
+                        ) as error:
+                            rejected += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Invalid or unauthorized Source inventory unit: {error}",
+                                }
+                            )
+                        continue
+
+                    # Identity flags and extraction metadata never grant authority:
+                    # revalidate exact typed rows, then use the owning public admission.
+                    if c_type in {
+                        "repository_identity_assertion",
+                        "repository_identity_cancellation",
+                        "service_identity_assertion",
+                        "service_identity_cancellation",
+                    }:
+                        try:
+                            state = self._merge_identity_candidate(
+                                c_type,
+                                payload,
+                                fresh_destination_dir,
+                                core,
+                                ctx_store,
+                                ctx_conn,
+                                ctx_admission,
+                                b,
+                                work_budget,
+                            )
+                            if state == "duplicate":
+                                replayed += 1
+                            else:
+                                admitted += 1
+                            if state == "conflict":
+                                rejections.append(
+                                    {
+                                        "candidate_id": cand_id,
+                                        "reason": "Competing immutable identity reports retained; no equivalence winner",
+                                    }
+                                )
+                        except (
+                            RecoveryCapabilityError,
+                            CorruptionDetectedError,
+                            CatalogStoppedError,
+                        ):
+                            raise
+                        except CoreFailure as error:
+                            if error.code in (
+                                "AUTHORITATIVE_CORRUPTION",
+                                "RECOVERY_STOP",
+                            ):
+                                raise
+                            if error.code in ("BUDGET", "QUERY_BUDGET"):
+                                budget_exhausted = True
+                                unprocessed += 1
+                            else:
+                                rejected += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Identity admission refused: {error}",
+                                }
+                            )
+                        except (
+                            ValueError,
+                            TypeError,
+                            KeyError,
+                            sqlite3.IntegrityError,
+                        ) as error:
+                            rejected += 1
+                            rejections.append(
+                                {
+                                    "candidate_id": cand_id,
+                                    "reason": f"Invalid or unauthorized identity candidate: {error}",
+                                }
+                            )
+                        continue
 
                     # Ref units contain their original dependencies and are
                     # rechecked at the destination, independently of line order.

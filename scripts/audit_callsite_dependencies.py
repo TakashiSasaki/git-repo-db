@@ -1,4 +1,4 @@
-"""Reproduce the baseline lexical dependency index; see its limits in the report."""
+"""Index every current distribution source with explicit lexical-analysis limits."""
 
 from __future__ import annotations
 
@@ -74,189 +74,8 @@ def source_owner(path: Path) -> str:
     )
 
 
-# This explicit list is the isolated P1 target, not the normal Schema 21 runtime.
-# Do not expand it to a filename-prefix ignore: newly integrated runtime paths
-# must enter the baseline source audit when P8 switches the application.
-ISOLATED_P1_MODULES = frozenset(
-    owned_source(relative)
-    for relative in (
-        "adapters/sqlite/p1_schema.py",
-        "adapters/sqlite/p1_core.py",
-        "adapters/sqlite/p1_context.py",
-        "adapters/sqlite/p1_coordination.py",
-        "adapters/sqlite/operational_coordination.py",
-        "adapters/sqlite/core_coordination.py",
-        "adapters/sqlite/core_schema_functions.py",
-        "adapters/sqlite/catalog_runtime.py",
-        "adapters/sqlite/context_transaction.py",
-        "adapters/sqlite/admission_transaction.py",
-        "application/query_runtime.py",
-        "application/context_query.py",
-        "domain/context_query.py",
-        "cli/context_query_features.py",
-        "domain/shared_values.py",
-        "domain/query_work.py",
-        "domain/request_scope.py",
-        "domain/p1_core.py",
-        "domain/ref_observation.py",
-        "domain/ref_coverage.py",
-        "domain/p1_context.py",
-        "domain/p1_coverage.py",
-        "domain/p1_coordination.py",
-        "domain/ports/p1_core.py",
-        "domain/ports/p1_context.py",
-        "domain/ports/p1_coordination.py",
-    )
-)
-
-# These explicit optional paths belong to the opt-in P2/P3/P4/P5/P6/P7 implementations.
-# A sibling branch need not contain the other stage's modules. Their presence
-# does not change the historical Schema 21 call-site inventory or activate them.
-ISOLATED_NEXT_STAGE_MODULES = frozenset(
-    owned_source(relative)
-    for relative in (
-        "adapters/git/native.py",
-        "adapters/sqlite/git_core.py",
-        "domain/git_native.py",
-        "adapters/sqlite/production_context.py",
-        "domain/production_context.py",
-        "domain/resource_identification.py",
-        "domain/parent_report.py",
-        "domain/transfer_sql.py",
-        "domain/resource_stage.py",
-        "domain/context_registration.py",
-        # I6-A is part of the same opt-in target; classify exact modules, never
-        # hide future similarly named public-runtime files by a prefix rule.
-        "domain/context_admission.py",
-        "domain/ports/context_authorization.py",
-        "adapters/sqlite/context_admission.py",
-        "domain/ports/production_context.py",
-        "domain/notes.py",
-        "domain/ports/notes.py",
-        "application/notes.py",
-        "application/ref_observations.py",
-        "adapters/git/notes.py",
-        "adapters/sqlite/notes.py",
-        "domain/acquisition.py",
-        "adapters/sqlite/operational_coordination.py",
-        "application/paired_acquisition.py",
-        "application/provider_acquisition.py",
-        "application/git_acquisition.py",
-        "domain/paired_acquisition.py",
-        "domain/provider_acquisition.py",
-        "domain/git_acquisition.py",
-        "domain/acquisition_errors.py",
-        "domain/exchange.py",
-        "domain/ref_exchange.py",
-        "domain/selective_exchange.py",
-        "domain/exchange_rows.py",
-        # I6-B pure codecs/plans remain in the same explicit opt-in boundary.
-        "domain/context_wire.py",
-        "domain/context_dependencies.py",
-        "domain/ports/acquisition.py",
-        "application/acquisition.py",
-        "application/exchange.py",
-        "application/ref_exchange.py",
-        "application/ref_reconstruction.py",
-        "adapters/github/production_intake.py",
-        "adapters/sqlite/acquisition.py",
-        "domain/production_query.py",
-        "domain/ports/production_query.py",
-        "application/production_query.py",
-        "adapters/sqlite/production_search.py",
-        "adapters/sqlite/search_core.py",
-        "adapters/sqlite/search_context.py",
-        "adapters/sqlite/search_projection.py",
-        "application/search_query.py",
-        "application/core_search.py",
-        "application/context_search.py",
-        "application/paired_search.py",
-        "domain/search_query.py",
-        "domain/ports/search_query.py",
-        "cli/search_query_features.py",
-        "adapters/sqlite/paired_coordination.py",
-        "adapters/sqlite/paired_admission.py",
-        "application/paired_query.py",
-        "domain/paired_query.py",
-        "cli/paired_query_features.py",
-        "application/core_query.py",
-        "application/query_encoding.py",
-        "application/query_pagination.py",
-        "domain/core_query.py",
-        "domain/query_contracts.py",
-        "domain/ports/core_query.py",
-        "cli/production_query.py",
-        "cli/query_features.py",
-        "domain/recovery.py",
-        "domain/ports/recovery.py",
-        "application/recovery.py",
-        "application/core_recovery.py",
-        "adapters/sqlite/recovery.py",
-        "adapters/sqlite/core_recovery.py",
-        "adapters/sqlite/recovery_budget.py",
-        "adapters/sqlite/recovery_validation.py",
-        "adapters/sqlite/core_recovery_validation.py",
-        "adapters/sqlite/ref_salvage.py",
-        # A1a Access registry is explicit opt-in, not a default/P1 activation.
-        "domain/access_backup.py",
-        "domain/ports/access_backup.py",
-        "adapters/sqlite/access_backup.py",
-        "application/access_maintenance.py",
-        "cli/access_maintenance.py",
-        "domain/access_registry.py",
-        "domain/access_connections.py",
-        "domain/native_acquisition.py",
-        "domain/git_acquisition.py",
-        "domain/acquisition_errors.py",
-        "application/git_acquisition.py",
-        "application/access_acquisition.py",
-        "cli/access_acquisition.py",
-        "adapters/git/access_native.py",
-        "domain/access_workflow.py",
-        "domain/ports/access_workflow.py",
-        "application/access_workflow.py",
-        "adapters/filesystem/access_executor.py",
-        "cli/access_workflow.py",
-        "domain/ports/access_connections.py",
-        "adapters/sqlite/access_connections.py",
-        "domain/ports/access_registry.py",
-        "adapters/sqlite/access_schema.py",
-        "adapters/sqlite/access_registry.py",
-    )
-)
-# Independent local catalog entrypoints remain opt-in, outside Schema 21 startup.
-# Keep concrete members explicit so a future startup integration is never hidden
-# by a package-name or filename-prefix exemption.
-ISOLATED_LOCAL_MODULES = frozenset(
-    owned_source(relative)
-    for relative in (
-        "filesystem/__init__.py",
-        "filesystem/models.py",
-        "filesystem/store.py",
-        "filesystem/scanner.py",
-        "filesystem/efu.py",
-        "filesystem/cli.py",
-        "worktrees/__init__.py",
-        "worktrees/models.py",
-        "worktrees/git.py",
-        "worktrees/catalog.py",
-        "worktrees/cli.py",
-        "local/__init__.py",
-        "local/service.py",
-        "local/cli.py",
-    )
-)
-ISOLATED_TARGET_MODULES = (
-    ISOLATED_P1_MODULES | ISOLATED_NEXT_STAGE_MODULES | ISOLATED_LOCAL_MODULES
-)
-
-
-def isolated_runtime_imports(source: str, package: str) -> set[str]:
-    """Find direct imports of isolated targets, including relative/from forms."""
-    targets = {
-        source_relative(ROOT / path).as_posix().removesuffix(".py").replace("/", ".")
-        for path in ISOLATED_TARGET_MODULES
-    }
+def product_imports(source: str, package: str) -> set[str]:
+    """Direct namespace imports only; dynamic loading is not a reachability proof."""
     imported = set()
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.Import):
@@ -267,35 +86,21 @@ def isolated_runtime_imports(source: str, package: str) -> set[str]:
                 module = importlib.util.resolve_name("." * node.level + module, package)
             imported.add(module)
             imported.update(module + "." + alias.name for alias in node.names)
-    return imported & targets
-
-
-def is_baseline_source(path: Path) -> bool:
-    module = source_relative(path).as_posix()
-    return module not in {
-        source_relative(ROOT / relative).as_posix()
-        for relative in ISOLATED_TARGET_MODULES
-    }
+    return {name for name in imported if name.startswith("repo_catalog.")}
 
 
 def build():
-    source = ROOT / "src/repo_catalog"
-    resources = source / "resources"
-    vocabulary = set()
-    for path in sorted(resources.glob("*.sql")):
-        vocabulary.update(
-            re.findall(
-                r"CREATE\s+(?:TABLE|VIEW)\s+(\w+)", path.read_text(), re.IGNORECASE
-            )
-        )
+    from scripts.schema_inventory import introspect_all
+
+    schemas = introspect_all()["stores"]
+    vocabulary = {}
+    for role, schema in schemas.items():
+        for name in [*schema["tables"], *schema["views"]]:
+            vocabulary.setdefault(name, []).append(role)
     names = sorted(vocabulary)
     pattern = re.compile(r"\b(?:" + "|".join(names) + r")\b")
-    modules, isolated_modules, references, revisions = [], [], [], []
-    paths = source_files() + sorted(resources.glob("*.sql"))
-    # Prototypes deliberately do not become baseline production dependencies.
-    paths = [
-        p for p in paths if "spikes" not in p.parts and "experimental" not in p.parts
-    ]
+    modules, references, revisions = [], [], []
+    paths = source_files() + source_files((".sql",))
     for path in paths:
         relative = path.relative_to(ROOT).as_posix()
         text = path.read_text()
@@ -310,17 +115,16 @@ def build():
             "path": relative,
             "owner": source_owner(path),
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "direct_product_imports": sorted(
+                product_imports(text, ".".join(source_relative(path).parent.parts))
+            )
+            if path.suffix == ".py"
+            else [],
             "functions": [
                 {"name": name, "line": start, "end_line": end}
                 for start, end, name in sorted(definitions)
             ],
         }
-        if not is_baseline_source(path):
-            # Retain syntax validation and complete ownership/hash coverage;
-            # opt-in functions do not duplicate the normal-runtime lexical index.
-            entry.pop("functions")
-            isolated_modules.append(entry)
-            continue
         modules.append(entry)
         for number, line in enumerate(text.splitlines(), 1):
             enclosing = sorted(
@@ -364,15 +168,13 @@ def build():
                     }
                 )
     return {
-        "format": "git-repo-db/implementation-callsite-audit-v1",
-        "baseline_main": "57de60b65c2ef29420a885b0c2102dc90e11fa75",
-        "status": "baseline-source-index-not-target-implementation",
-        "method": "All distribution source roots: syntax-checked owner/hash inventory separates explicit opt-in modules from the normal-runtime AST/function lexical index; all packaged resource owners/hashes are retained. Literal baseline table/view vocabulary is not proof of runtime reachability. Manual semantic interpretation is in callsite-dependencies.md and legacy-operations.md.",
+        "format": "resource-atlas/implementation-callsite-audit-v2",
+        "status": "current-separated-source-index",
+        "method": "Every declared distribution source is syntax-checked, hashed and indexed. Table/view vocabulary comes from current in-memory schema factories. Literal references and direct imports do not prove dynamic runtime reachability or SQL authority.",
         "source_roots": {
             source.relative_to(ROOT).as_posix(): owner
             for source, owner in SOURCE_OWNERS.items()
         },
-        "isolated_modules": isolated_modules,
         "packaged_resources": [
             {
                 "path": path.relative_to(ROOT).as_posix(),
@@ -388,6 +190,7 @@ def build():
         ],
         "modules": modules,
         "table_and_view_vocabulary": names,
+        "schema_owners": vocabulary,
         "references": references,
         "revision_dependencies": revisions,
     }

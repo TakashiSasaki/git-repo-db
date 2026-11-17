@@ -10,6 +10,12 @@ from repo_catalog.domain.ref_observation import valid_ref_absence
 
 
 def register_functions(db):
+    from repo_catalog.domain.identity_assertions import identity_evidence_sql
+
+    db.create_function(
+        "p1_identity_evidence_v1", 4, identity_evidence_sql, deterministic=True
+    )
+
     def uuid7(value):
         try:
             parsed = UUID(value)

@@ -1,13 +1,12 @@
-"""Ensure the opt-in registry cannot become a hidden normal-runtime dependency."""
+"""Current Access ownership and domain layering, without opt-in exclusions."""
 
 import ast
 from pathlib import Path
 
 from scripts.audit_callsite_dependencies import (
-    ISOLATED_TARGET_MODULES,
-    is_baseline_source,
-    isolated_runtime_imports,
     owned_source,
+    source_files,
+    source_owner,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -39,24 +38,21 @@ OWNED = {
 }
 
 
-def test_explicit_isolated_ownership_is_not_a_prefix_escape():
-    assert OWNED <= ISOLATED_TARGET_MODULES
-    assert is_baseline_source(ROOT / "src/repo_catalog/application/access_future.py")
-    for source in (
-        "from repo_catalog.adapters.sqlite import access_registry",
-        "from . import access_registry",
-    ):
-        assert isolated_runtime_imports(source, "repo_catalog.adapters.sqlite") == {
-            "repo_catalog.adapters.sqlite.access_registry"
-        }
+def test_explicit_access_source_ownership():
+    for relative in OWNED:
+        path = ROOT / relative
+        assert path.is_file()
+        owner = source_owner(path)
+        assert owner == (
+            "repo-catalog-git-acquisition"
+            if "/git-acquisition/" in relative
+            else "repo-catalog-access"
+        )
 
 
-def test_normal_runtime_has_no_access_import():
-    for path in (ROOT / "src/repo_catalog").rglob("*.py"):
-        if is_baseline_source(path):
-            package = ".".join(path.relative_to(ROOT / "src").parts[:-1])
-            imported = isolated_runtime_imports(path.read_text(), package)
-            assert not imported, (str(path), imported)
+def test_access_sources_are_not_excluded_from_current_audit():
+    indexed = {path.relative_to(ROOT).as_posix() for path in source_files()}
+    assert OWNED <= indexed
 
 
 def test_access_domain_does_not_import_adapters():

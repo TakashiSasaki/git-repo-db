@@ -6,11 +6,11 @@ Advisory details are excluded from claim identity and latest-state selection.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from repo_catalog.domain.coverage import derive_coverage_state as derive_coverage_state
+from repo_catalog.domain.coverage_details import validate_coverage_details
 from repo_catalog.domain.time import validate_required_observation_us
 
 CoverageState = Literal["unknown", "partial", "complete", "not_applicable"]
@@ -34,18 +34,7 @@ class CoverageClaim:
         validate_required_observation_us(self.observed_at_us)
         if self.state not in {"unknown", "partial", "complete", "not_applicable"}:
             raise ValueError("Invalid authoritative coverage state")
-        if (
-            self.details_json is not None
-            and json.dumps(
-                json.loads(self.details_json),
-                ensure_ascii=True,
-                sort_keys=True,
-                separators=(",", ":"),
-                allow_nan=False,
-            )
-            != self.details_json
-        ):
-            raise ValueError("Details must be canonical JSON")
+        validate_coverage_details(self.details_json)
 
 
 @dataclass(frozen=True)

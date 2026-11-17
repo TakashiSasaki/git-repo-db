@@ -323,8 +323,12 @@ def render_markdown(model: dict, catalog: dict) -> str:
     lines = [
         "# Separated persistence class mapping",
         "",
-        "Accepted target correspondence; normal startup remains unchanged. "
-        "DDL-derived fields/keys are implementation facts. Dedicated row types "
+        (
+            "Ordinary CLI composition uses the separated stores. "
+            if model.get("scope", {}).get("normal_runtime_changed")
+            else "Accepted target correspondence; normal startup remains unchanged. "
+        )
+        + "DDL-derived fields/keys are implementation facts. Dedicated row types "
         "are generated separately from observed Python inputs/projections; "
         "AST presence does not prove row serialization or admission correctness.",
         "",

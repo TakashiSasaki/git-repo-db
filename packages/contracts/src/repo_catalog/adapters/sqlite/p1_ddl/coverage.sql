@@ -4,7 +4,7 @@ CREATE TABLE coverage_claims(
  owner_coordinates_json TEXT NOT NULL,
  observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),
  coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),
- details_json TEXT CHECK(details_json IS NULL OR p1_json(details_json)),
+ details_json TEXT CHECK(details_json IS NULL OR p1_coverage_details(details_json)=1),
  PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state),
  FOREIGN KEY(owner_kind,owner_coordinates_json) REFERENCES coverage_scopes
 ) STRICT, WITHOUT ROWID;

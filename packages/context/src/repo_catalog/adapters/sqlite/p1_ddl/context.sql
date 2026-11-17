@@ -94,6 +94,10 @@ CREATE TABLE field_candidates(
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,clock_json,value_json,provenance_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id) REFERENCES resources
 ) STRICT, WITHOUT ROWID;
+-- Current candidates may be pruned/replaced by admission; an original's own
+-- value, provenance, clock, field and observation coordinates never mutate.
+CREATE TRIGGER field_original_no_update BEFORE UPDATE ON field_candidates
+BEGIN SELECT RAISE(ABORT,'immutable original field candidate'); END;
 CREATE TABLE resource_relations(
  service_instance_uuidv4 TEXT NOT NULL,
  resource_kind TEXT NOT NULL,
@@ -191,10 +195,20 @@ CREATE TABLE collection_terminals(
  provenance_json TEXT NOT NULL,
  observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),
  terminal_state TEXT NOT NULL CHECK(terminal_state IN('complete','partial','unknown')),
- members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),
+ members_json TEXT NOT NULL CHECK(p1_collection_members_v1(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,members_json)=1),
  PRIMARY KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,observed_at_us,terminal_state,members_json),
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json) REFERENCES collections
 ) STRICT, WITHOUT ROWID;
+CREATE TRIGGER collection_terminal_members_owner BEFORE INSERT ON collection_terminals
+WHEN CASE WHEN p1_collection_members_v1(NEW.service_instance_uuidv4,NEW.resource_kind,NEW.provider_resource_id,NEW.collection_kind,NEW.members_json)=1
+THEN EXISTS(SELECT 1 FROM json_each(NEW.members_json) j WHERE NOT EXISTS(
+ SELECT 1 FROM resources r
+ WHERE r.service_instance_uuidv4=json_extract(j.value,'$[0]')
+ AND r.resource_kind=json_extract(j.value,'$[1]')
+ AND r.provider_resource_id=json_extract(j.value,'$[2]')
+ AND (NEW.collection_kind NOT IN('reviews','comments','threads','documents') OR
+  (r.identifier_namespace_kind=NEW.resource_kind AND r.identifier_namespace_id=NEW.provider_resource_id)))) ELSE 0 END
+BEGIN SELECT RAISE(ABORT,'Collection member namespace/resource mismatch'); END;
 CREATE TABLE core_references(
  service_instance_uuidv4 TEXT NOT NULL,
  resource_kind TEXT NOT NULL,
@@ -245,7 +259,7 @@ CREATE TABLE coverage_proofs(
  provenance_json TEXT NOT NULL,
  terminal_observed_at_us INTEGER NOT NULL CHECK(typeof(terminal_observed_at_us)='integer' AND terminal_observed_at_us>0),
  terminal_state TEXT NOT NULL,
- members_json TEXT NOT NULL,
+ members_json TEXT NOT NULL CHECK(p1_collection_members_v1(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,members_json)=1),
  PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json),
  FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,
  FOREIGN KEY(service_instance_uuidv4,resource_kind,provider_resource_id,collection_kind,provenance_json,terminal_observed_at_us,terminal_state,members_json) REFERENCES collection_terminals,
@@ -259,10 +273,37 @@ CREATE TABLE source_inventory_evidence(
  observed_at_us INTEGER NOT NULL CHECK(typeof(observed_at_us)='integer' AND observed_at_us>0),
  coverage_state TEXT NOT NULL CHECK(coverage_state IN('complete','partial','unknown','not_applicable')),
  terminal INTEGER NOT NULL CHECK(terminal IN(0,1)),
- members_json TEXT NOT NULL CHECK(p1_json(members_json) AND json_type(members_json)='array'),
+ members_json TEXT NOT NULL CHECK(p1_json(members_json) AND p1_source_git_members_v1(members_json)),
  provenance_json TEXT NOT NULL CHECK(p1_json(provenance_json) AND json_type(provenance_json)='object' AND COALESCE(json_type(provenance_json,'$.source')='text',0) AND length(json_extract(provenance_json,'$.source'))>0 AND json_type(provenance_json,'$.evidence') IS NOT NULL AND json_type(provenance_json,'$.evidence')!='null'),
- PRIMARY KEY(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json)
+ provider_repositories_json TEXT NOT NULL DEFAULT '[]' CHECK(p1_json(provider_repositories_json) AND json_type(provider_repositories_json)='array'),
+ PRIMARY KEY(source_registration_uuidv4,scope_json,observed_at_us,coverage_state,terminal,members_json,provenance_json,provider_repositories_json)
 ) STRICT, WITHOUT ROWID;
+CREATE TRIGGER source_inventory_scope BEFORE INSERT ON source_inventory_evidence
+WHEN p1_source_inventory_scope_v1(NEW.scope_json,NEW.source_registration_uuidv4,
+ (SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=NEW.source_registration_uuidv4))!=1
+BEGIN SELECT RAISE(ABORT,'Source inventory scope owner mismatch'); END;
+CREATE TRIGGER source_inventory_provider_members BEFORE INSERT ON source_inventory_evidence BEGIN
+ SELECT CASE WHEN EXISTS(
+  SELECT 1 FROM json_each(NEW.provider_repositories_json) member
+  WHERE CASE WHEN member.type='array' THEN
+   json_array_length(member.value)!=3
+   OR json_type(member.value,'$[0]') IS NOT 'text'
+   OR json_type(member.value,'$[1]') IS NOT 'text'
+   OR json_type(member.value,'$[2]') IS NOT 'text'
+   OR json_extract(member.value,'$[1]')!='repository'
+   OR json_extract(member.value,'$[0]')!=(SELECT service_instance_uuidv4 FROM sources WHERE source_registration_uuidv4=NEW.source_registration_uuidv4)
+   OR NOT EXISTS(SELECT 1 FROM resources resource
+    WHERE resource.service_instance_uuidv4=json_extract(member.value,'$[0]')
+     AND resource.resource_kind='repository'
+     AND resource.provider_resource_id=json_extract(member.value,'$[2]')
+     AND resource.identifier_namespace_kind IS NULL AND resource.document_kind IS NULL)
+  ELSE 1 END)
+  OR EXISTS(SELECT 1 FROM json_each(NEW.provider_repositories_json) member
+   GROUP BY CASE WHEN member.type='array' THEN json_extract(member.value,'$[0]') END,
+    CASE WHEN member.type='array' THEN json_extract(member.value,'$[1]') END,
+    CASE WHEN member.type='array' THEN json_extract(member.value,'$[2]') END HAVING count(*)>1)
+ THEN RAISE(ABORT,'invalid Source Provider repository membership') END;
+END;
 CREATE TRIGGER coverage_proof_owner BEFORE INSERT ON coverage_proofs WHEN NOT EXISTS(
  SELECT 1 FROM coverage_scopes s JOIN collections c ON
  c.service_instance_uuidv4=NEW.service_instance_uuidv4 AND c.resource_kind=NEW.resource_kind AND c.provider_resource_id=NEW.provider_resource_id AND c.collection_kind=NEW.collection_kind AND c.provenance_json=NEW.provenance_json
@@ -310,9 +351,10 @@ CREATE TABLE source_coverage_proofs(
  terminal INTEGER NOT NULL CHECK(terminal=1),
  members_json TEXT NOT NULL,
  provenance_json TEXT NOT NULL,
- PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json),
+ provider_repositories_json TEXT NOT NULL DEFAULT '[]',
+ PRIMARY KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json,provider_repositories_json),
  FOREIGN KEY(owner_kind,owner_coordinates_json,observed_at_us,coverage_state) REFERENCES coverage_claims,
- FOREIGN KEY(source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json) REFERENCES source_inventory_evidence,
+ FOREIGN KEY(source_registration_uuidv4,scope_json,inventory_observed_at_us,inventory_state,terminal,members_json,provenance_json,provider_repositories_json) REFERENCES source_inventory_evidence,
  CHECK(inventory_observed_at_us<=observed_at_us),
  CHECK(coverage_state!='complete' OR inventory_state='complete')
 ) STRICT, WITHOUT ROWID;
@@ -331,15 +373,9 @@ BEGIN SELECT RAISE(ABORT,'registered Source identity'); END;
 
 -- Dependent completeness may only cite the current genuine terminal candidate
 -- set. Later terminals preserve old reports; readers recheck them dynamically.
-CREATE TRIGGER coverage_proof_current_terminal BEFORE INSERT ON coverage_proofs
-WHEN NEW.terminal_observed_at_us!=(SELECT MAX(t.observed_at_us) FROM collection_terminals t
- WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json)
- OR EXISTS(SELECT 1 FROM collection_terminals t WHERE t.service_instance_uuidv4=NEW.service_instance_uuidv4 AND t.resource_kind=NEW.resource_kind AND t.provider_resource_id=NEW.provider_resource_id AND t.collection_kind=NEW.collection_kind AND t.provenance_json=NEW.provenance_json AND t.observed_at_us=NEW.terminal_observed_at_us AND t.terminal_state!='unknown' AND (t.terminal_state!=NEW.terminal_state OR t.members_json!=NEW.members_json))
-BEGIN SELECT RAISE(ABORT,'Coverage proof terminal is superseded or conflicting'); END;
-CREATE TRIGGER source_coverage_current_terminal BEFORE INSERT ON source_coverage_proofs
-WHEN NEW.inventory_observed_at_us!=(SELECT MAX(i.observed_at_us) FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json)
- OR EXISTS(SELECT 1 FROM source_inventory_evidence i WHERE i.source_registration_uuidv4=NEW.source_registration_uuidv4 AND i.scope_json=NEW.scope_json AND i.observed_at_us=NEW.inventory_observed_at_us AND i.coverage_state!='unknown' AND (i.coverage_state!=NEW.inventory_state OR i.members_json!=NEW.members_json OR i.terminal!=NEW.terminal))
-BEGIN SELECT RAISE(ABORT,'Source Coverage terminal is superseded or conflicting'); END;
+-- Current-terminal qualification is checked by ordinary typed proof admission.
+-- Collection and Source Exchange history retain whole original witnesses;
+-- readers independently recheck latest evidence before asserting completeness.
 
 CREATE TABLE resource_repository_relations(
  service_instance_uuidv4 TEXT NOT NULL,
@@ -541,6 +577,34 @@ BEGIN SELECT RAISE(ABORT,'immutable mapping disposition'); END;
 CREATE TRIGGER i2_transfer_stage_fence BEFORE INSERT ON resource_repository_relations
 WHEN NEW.relation_kind COLLATE BINARY IN('transfer_from_repository','transfer_to_repository')
 BEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END;
+-- Stage checks must not scan all unrelated immutable reports on each write.
+CREATE INDEX resource_relations_kind_lookup ON resource_relations(relation_kind COLLATE BINARY);
+CREATE INDEX resource_repository_relations_kind_lookup ON resource_repository_relations(relation_kind COLLATE BINARY);
 CREATE TRIGGER i2_transfer_report_stage_fence BEFORE INSERT ON resource_relations
 WHEN NEW.relation_kind COLLATE BINARY='transfer_event_report'
 BEGIN SELECT RAISE(ABORT,'I2_TRANSFER_UNSUPPORTED'); END;
+
+-- Portable identity evidence is append-only; unresolved endpoints and cancellation
+-- targets do not require invented nominal rows or a mutable staging authority.
+CREATE TABLE service_identity_assertions (
+ relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),
+ record_json TEXT NOT NULL CHECK(p1_json(record_json)),
+ provenance TEXT NOT NULL,
+ CHECK(p1_identity_evidence_v1('relation','service',record_json,provenance)=1),
+ CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),
+ PRIMARY KEY(relation_uuidv4,record_json,provenance)
+) STRICT, WITHOUT ROWID;
+CREATE TABLE service_identity_cancellations (
+ cancellation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(cancellation_uuidv4)),
+ relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),
+ record_json TEXT NOT NULL CHECK(p1_json(record_json)),
+ provenance TEXT NOT NULL,
+ CHECK(p1_identity_evidence_v1('cancellation','service',record_json,provenance)=1),
+ CHECK(json_extract(record_json,'$.cancellation_uuidv4')=cancellation_uuidv4),
+ CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),
+ PRIMARY KEY(cancellation_uuidv4,relation_uuidv4,record_json,provenance)
+) STRICT, WITHOUT ROWID;
+CREATE TRIGGER service_identity_assertions_no_update BEFORE UPDATE ON service_identity_assertions BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END;
+CREATE TRIGGER service_identity_assertions_no_delete BEFORE DELETE ON service_identity_assertions BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END;
+CREATE TRIGGER service_identity_cancellations_no_update BEFORE UPDATE ON service_identity_cancellations BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END;
+CREATE TRIGGER service_identity_cancellations_no_delete BEFORE DELETE ON service_identity_cancellations BEGIN SELECT RAISE(ABORT,'immutable Context identity evidence'); END;

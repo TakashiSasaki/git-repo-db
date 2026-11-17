@@ -1,4 +1,4 @@
-"""Isolated P1 target schemas. Never imported by the normal catalog initializer.
+"""Canonical separated store factories with explicit per-role initialization.
 
 These factory connections are trusted adapter infrastructure, not a public SQL
 admission API. Core's supported application boundary is p1_core.Core. A process
@@ -16,11 +16,11 @@ from importlib.resources import files
 from pathlib import Path
 from uuid import UUID
 
-# P1 factory subset, not an inventory of every responsibility or runtime store.
-# Access has a separate opt-in factory: adapters/sqlite/access_schema.py.
+# Four factory roles, not an inventory of every responsibility or startup store.
+# Access has its own independent factory: adapters/sqlite/access_schema.py.
 STORES = ("core", "context", "operational", "search")
 MIN_SQLITE = (3, 51, 3)  # Includes the verified WAL-reset fix, STRICT and JSON.
-FORMAT = "repo-catalog/p1-isolated-3"
+FORMAT = "repo-catalog/p1-isolated-4"
 
 REQUIRED_PRAGMAS = {
     "foreign_keys": 1,
@@ -75,6 +75,12 @@ def register_functions(db: sqlite3.Connection, store: str | None = None) -> None
     db.create_function("p1_uuid4", 1, uuid4, deterministic=True)
     db.create_function("p1_object_oid", 2, valid_object_oid, deterministic=True)
     db.create_function("p1_json", 1, _json, deterministic=True)
+    if store in (None, "core", "context"):
+        from repo_catalog.domain.coverage_details import coverage_details_sql
+
+        db.create_function(
+            "p1_coverage_details", 1, coverage_details_sql, deterministic=True
+        )
     db.create_function(
         "p1_array", -1, lambda *values: canonical(values), deterministic=True
     )
@@ -152,8 +158,11 @@ def verify_connection(db: sqlite3.Connection, store: str | None = None) -> None:
     if store is not None and store not in STORES:
         raise SchemaError(f"unknown store: {store}")
     required = [("p1_uuid4", 1), ("p1_object_oid", 2), ("p1_json", 1), ("p1_array", -1)]
+    if store in (None, "core", "context"):
+        required += [("p1_coverage_details", 1)]
     if store == "core":
         required += [
+            ("p1_identity_evidence_v1", 4),
             ("p1_uuid7", 1),
             ("p1_ref_absence", 1),
             ("p1_mapping_path", 1),
@@ -172,6 +181,10 @@ def verify_connection(db: sqlite3.Connection, store: str | None = None) -> None:
         ]
     if store in (None, "context"):
         required += [
+            ("p1_identity_evidence_v1", 4),
+            ("p1_source_git_members_v1", 1),
+            ("p1_source_inventory_scope_v1", 3),
+            ("p1_collection_members_v1", 5),
             ("p1_resource_identity_v1", 1),
             ("p1_resource_identification_v1", 6),
             ("p1_parent_report_v1", 7),

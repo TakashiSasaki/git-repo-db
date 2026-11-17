@@ -6194,9 +6194,9 @@
     "docs/implementation/schema-inventory.json": {
       "status": "machine-input-with-scoped-provenance",
       "owner": "docs/implementation/",
-      "authority": "Structured audit or contract input; preserve its documented scope and check the named consumer before change.",
+      "authority": "Historical normal-format migration/disposition snapshot; preserved for baseline reconciliation, not the current startup model.",
       "source": "docs/implementation/schema-inventory.json",
-      "producer": "Committed machine inventory or ledger; producer and revision are described by the associated audit.",
+      "producer": "Historical scripts/audit_implementation_boundary.py at the pre-cutover source; current producer writes separated-* artifacts.",
       "consumers": "scripts/audit_p1_schema.py; scripts/audit_implementation_boundary.py",
       "publication": "not staged",
       "baseline_git_object": {
@@ -6245,9 +6245,9 @@
     "docs/implementation/table-disposition.md": {
       "status": "generated-schema-disposition-report",
       "owner": "docs/implementation/",
-      "authority": "Derived implemented-table audit; recommendation rows are authored inputs and do not independently change accepted design.",
+      "authority": "Historical normal-format migration/disposition snapshot; preserved for baseline reconciliation, not the current startup model.",
       "source": "docs/implementation/table-disposition.md",
-      "producer": "Regenerate with scripts/audit_implementation_boundary.py; do not hand-edit this generated Markdown.",
+      "producer": "Historical scripts/audit_implementation_boundary.py at the pre-cutover source; current producer writes separated-* artifacts.",
       "consumers": "scripts/audit_implementation_boundary.py --check, .github/workflows/access-registry.yml and implementation audit readers.",
       "publication": "not staged",
       "source_heading": "# Complete implemented table disposition audit",
@@ -10111,6 +10111,74 @@
       "producer": "Source-reviewed baseline nodes, exact original Git blobs and named successor tests.",
       "consumers": "Retirement checker, independent implementation review and development validation.",
       "publication": "not staged"
+    },
+    "scripts/check_runtime_retirement.py": {
+      "status": "repository-tool",
+      "owner": "scripts/",
+      "authority": "Executable node/blob/reference check for approved legacy retirement.",
+      "source": "scripts/check_runtime_retirement.py",
+      "producer": "Authored deterministic repository tooling; no catalog reads or writes.",
+      "consumers": "Migration authors, focused regressions and independent review.",
+      "publication": "not staged"
+    },
+    "tests/unit/test_runtime_retirement.py": {
+      "status": "product-boundary-test",
+      "owner": "tests/unit/",
+      "authority": "Approved named test replacement and source-preservation contract.",
+      "source": "tests/unit/test_runtime_retirement.py",
+      "producer": "Disposable Git baseline and actual replacement-source controls.",
+      "consumers": "Development pytest and independent review.",
+      "publication": "not staged"
+    },
+    "docs/implementation/separated-schema-inventory.json": {
+      "status": "machine-input-with-scoped-provenance",
+      "owner": "docs/implementation/",
+      "authority": "Current seven-role DDL inventory; in-memory definitions, never retained instance validation.",
+      "source": "docs/implementation/separated-schema-inventory.json",
+      "producer": "scripts/audit_implementation_boundary.py from current factories and persistence-model.json",
+      "consumers": "Current implementation audit, independent review and asynchronous web source import.",
+      "publication": "not staged",
+      "baseline_git_object": {
+        "mode": "100644",
+        "blob": "8492ebcdfacef52d7af2c903c8f7f406b1d50c5a"
+      },
+      "static_consumer_references": [
+        "docs/implementation/README.md",
+        "docs/implementation/audit-notes.md",
+        "docs/implementation/callsite-dependencies.md",
+        "docs/implementation/documentation-separation-ledger.json",
+        "docs/implementation/execution-evidence.json",
+        "docs/implementation/table-disposition.json",
+        "docs/implementation/table-disposition.md",
+        "scripts/audit_implementation_boundary.py",
+        "scripts/audit_p1_schema.py",
+        "tests/integration/architecture_spikes/test_audit.py"
+      ],
+      "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
+    },
+    "docs/implementation/separated-persistence-boundary.md": {
+      "status": "generated-schema-disposition-report",
+      "owner": "docs/implementation/",
+      "authority": "Derived current role/class mapping report; semantic and executed runtime evidence remains separately scoped.",
+      "source": "docs/implementation/separated-persistence-boundary.md",
+      "producer": "scripts/audit_implementation_boundary.py from current factories and persistence-model.json",
+      "consumers": "Current implementation audit, independent review and asynchronous web source import.",
+      "publication": "not staged",
+      "source_heading": "# Complete implemented table disposition audit",
+      "cited_adrs": [
+        "0026"
+      ],
+      "baseline_git_object": {
+        "mode": "100644",
+        "blob": "91628e2e242cb47c60f8c53215ed5d4247a0f77e"
+      },
+      "static_consumer_references": [
+        "docs/implementation/README.md",
+        "docs/implementation/callsite-dependencies.md",
+        "docs/implementation/execution-evidence.json",
+        "scripts/audit_implementation_boundary.py"
+      ],
+      "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     }
   }
 }

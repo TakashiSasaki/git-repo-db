@@ -330,3 +330,24 @@ CREATE UNIQUE INDEX notes_mapping_evidence_coordinate ON notes_mapping_evidence(
 CREATE TRIGGER ref_coverage_proof_requires_typed_evidence BEFORE INSERT ON core_coverage_proofs
 WHEN NEW.owner_kind='ref_observation'
 BEGIN SELECT RAISE(ABORT,'ref-observation Coverage proof requires I2 typed evidence'); END;
+
+-- Portable identity evidence is append-only; unresolved endpoints and cancellation
+-- targets do not require invented nominal rows or a mutable staging authority.
+CREATE TABLE repository_identity_assertions (
+ relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),
+ record_json TEXT NOT NULL CHECK(p1_json(record_json)),
+ provenance TEXT NOT NULL,
+ CHECK(p1_identity_evidence_v1('relation','repository',record_json,provenance)=1),
+ CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),
+ PRIMARY KEY(relation_uuidv4,record_json,provenance)
+) STRICT, WITHOUT ROWID;
+CREATE TABLE repository_identity_cancellations (
+ cancellation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(cancellation_uuidv4)),
+ relation_uuidv4 TEXT NOT NULL CHECK(p1_uuid4(relation_uuidv4)),
+ record_json TEXT NOT NULL CHECK(p1_json(record_json)),
+ provenance TEXT NOT NULL,
+ CHECK(p1_identity_evidence_v1('cancellation','repository',record_json,provenance)=1),
+ CHECK(json_extract(record_json,'$.cancellation_uuidv4')=cancellation_uuidv4),
+ CHECK(json_extract(record_json,'$.relation_uuidv4')=relation_uuidv4),
+ PRIMARY KEY(cancellation_uuidv4,relation_uuidv4,record_json,provenance)
+) STRICT, WITHOUT ROWID;

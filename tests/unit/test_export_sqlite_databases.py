@@ -16,45 +16,28 @@ def test_export_databases():
         out_dir = Path(tmpdir) / "specimens"
         dbs = export_databases(out_dir)
 
-        assert "catalog.sqlite3" in dbs
-        assert "operational.sqlite3" in dbs
-        assert "search.sqlite3" in dbs
-        assert "catalog.sql" in dbs
-        assert "operational.sql" in dbs
-        assert "search.sql" in dbs
-        assert dbs["catalog.sql"].is_file()
-        assert dbs["operational.sql"].is_file()
-        assert dbs["search.sql"].is_file()
-
-        # Core Store
-        core_conn = sqlite3.connect(dbs["catalog.sqlite3"])
-        try:
-            core_tables = core_conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-            ).fetchall()
-            assert len(core_tables) == 70
-        finally:
-            core_conn.close()
-
-        # Operational Store
-        op_conn = sqlite3.connect(dbs["operational.sqlite3"])
-        try:
-            op_tables = op_conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-            ).fetchall()
-            assert len(op_tables) == 10
-        finally:
-            op_conn.close()
-
-        # Search Store
-        search_conn = sqlite3.connect(dbs["search.sqlite3"])
-        try:
-            search_tables = search_conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-            ).fetchall()
-            assert len(search_tables) == 4
-        finally:
-            search_conn.close()
+        assert set(dbs) == {
+            role + suffix
+            for role in exporter.definitions()
+            for suffix in (".sql", ".sqlite3")
+        }
+        for role in exporter.definitions():
+            assert dbs[role + ".sql"].is_file()
+            connection = sqlite3.connect(dbs[role + ".sqlite3"])
+            try:
+                exporter.definitions()[role][1](connection)
+                assert connection.execute("PRAGMA integrity_check").fetchone() == (
+                    "ok",
+                )
+                assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+                assert (
+                    connection.execute(
+                        "SELECT count(*) FROM sqlite_schema WHERE type='table'"
+                    ).fetchone()[0]
+                    > 0
+                )
+            finally:
+                connection.close()
 
 
 def test_existing_destination_and_links_preserve_sentinels(tmp_path):
@@ -101,7 +84,7 @@ def test_concurrent_publish_has_one_winner(tmp_path):
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(lambda _: run(), range(2)))
     assert sum(result is not None for result in results) == 1
-    assert len(list(target.iterdir())) == 6
+    assert len(list(target.iterdir())) == 2 * len(exporter.definitions())
     assert not list(tmp_path.glob(".schema-export-*"))
 
 
@@ -136,17 +119,14 @@ def test_protected_checkout_paths(tmp_path, monkeypatch, name):
 
 def test_missing_parents_and_source_fidelity(tmp_path):
     result = export_databases(tmp_path / "new" / "parents" / "output")
-    for stem, factory in [
-        ("catalog", exporter.schema_sql),
-        ("operational", exporter.operational_schema_sql),
-        ("search", exporter.search_schema_sql),
-    ]:
-        assert result[stem + ".sql"].read_text() == factory()
-        with (
-            sqlite3.connect(":memory:") as reference,
-            sqlite3.connect(result[stem + ".sqlite3"]) as actual,
-        ):
-            reference.executescript(factory())
+    for stem, (ddl, prepare) in exporter.definitions().items():
+        assert result[stem + ".sql"].read_text() == ddl
+        reference = sqlite3.connect(":memory:")
+        actual = sqlite3.connect(result[stem + ".sqlite3"])
+        try:
+            prepare(reference)
+            prepare(actual)
+            reference.executescript(ddl)
             query = (
                 "SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name"
             )
@@ -154,6 +134,9 @@ def test_missing_parents_and_source_fidelity(tmp_path):
                 actual.execute(query).fetchall() == reference.execute(query).fetchall()
             )
             assert actual.execute("PRAGMA foreign_key_check").fetchall() == []
+        finally:
+            reference.close()
+            actual.close()
 
 
 def test_construction_failure_cleans_only_own_stage(tmp_path, monkeypatch):
@@ -210,5 +193,5 @@ def test_default_build_path_under_trusted_checkout_ancestor(tmp_path, monkeypatc
     (checkout / ".git").write_bytes(b"gitdir: sentinel")
     monkeypatch.setattr(exporter, "ROOT", checkout)
     outputs = export_databases(checkout / ".build" / "databases")
-    assert len(outputs) == 6
+    assert len(outputs) == 2 * len(exporter.definitions())
     assert (checkout / ".git").read_bytes() == b"gitdir: sentinel"

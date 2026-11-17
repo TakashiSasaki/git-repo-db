@@ -612,6 +612,7 @@ class ProviderAcquisition:
                     prov.service_instance_uuidv4,
                     prov.provider_kind,
                     prov.configuration_json,
+                    ensure_only=prov.ensure_only,
                 )
             has_default_provider = ctx.db.execute(
                 "SELECT 1 FROM providers WHERE service_instance_uuidv4=?",
@@ -628,8 +629,34 @@ class ProviderAcquisition:
             admitted_collections = 0
             admitted_inventories = 0
 
+            # Register the complete declared dependency set before admitting
+            # observations whose genuine provenance refers to those Sources.
+            # Required authority checks remain owned by each typed mutation.
             for repo in batch.repositories:
                 ctx.repository(repo.repository_uuidv4, repo.configuration_json)
+
+            for src in batch.sources:
+                has_src_prov = ctx.db.execute(
+                    "SELECT 1 FROM providers WHERE service_instance_uuidv4=?",
+                    (src.service_instance_uuidv4,),
+                ).fetchone()
+                if not has_src_prov:
+                    raise ValueError("Source requires registered Provider identity")
+                ctx.source(
+                    src.source_registration_uuidv4,
+                    src.service_instance_uuidv4,
+                    src.configuration_json,
+                    ensure_only=src.ensure_only,
+                )
+                for assoc_repo in src.associated_repositories:
+                    self._ensure_repository_row(ctx, assoc_repo)
+                    ctx.associate_source(
+                        src.source_registration_uuidv4,
+                        assoc_repo,
+                        src.association_attributes_json,
+                    )
+
+            for repo in batch.repositories:
                 if repo.raw_metadata is not None:
                     obs_us = repo.observed_at_us
                     if repo.provenance_json is None:
@@ -679,26 +706,6 @@ class ProviderAcquisition:
                     linked_refs,
                     pending_refs,
                 )
-
-            for src in batch.sources:
-                has_src_prov = ctx.db.execute(
-                    "SELECT 1 FROM providers WHERE service_instance_uuidv4=?",
-                    (src.service_instance_uuidv4,),
-                ).fetchone()
-                if not has_src_prov:
-                    raise ValueError("Source requires registered Provider identity")
-                ctx.source(
-                    src.source_registration_uuidv4,
-                    src.service_instance_uuidv4,
-                    src.configuration_json,
-                )
-                for assoc_repo in src.associated_repositories:
-                    self._ensure_repository_row(ctx, assoc_repo)
-                    ctx.associate_source(
-                        src.source_registration_uuidv4,
-                        assoc_repo,
-                        src.association_attributes_json,
-                    )
 
             for inv in batch.source_inventories:
                 for repo_uuid in inv.repositories:

@@ -59,7 +59,13 @@ def headers(body: bytes, kind: str) -> tuple[list[tuple[bytes, bytes]], bytes, b
 
 def _oid(fmt: str, raw: bytes, kind: str) -> OID:
     try:
-        result = OID(fmt, raw.decode("ascii"))
+        width = {"sha1": 40, "sha256": 64}.get(fmt)
+        spelling = raw.decode("ascii")
+        if width is None or re.fullmatch(rf"[0-9a-fA-F]{{{width}}}", spelling) is None:
+            _fail(kind, "invalid full hexadecimal native object reference")
+        # Native header spelling is retained in the exact body. Its semantic
+        # target uses the same canonical lowercase coordinate as binary OIDs.
+        result = OID(fmt, spelling.lower())
         if not any(char != "0" for char in result.object_oid):
             _fail(kind, "null native object reference")
         return result
@@ -154,6 +160,9 @@ def parse_tree(fmt: str, body: bytes) -> dict[bytes, tuple[bytes, str]]:
         if space < offset or zero <= space or zero + 1 + width > len(body):
             _fail("tree", "truncated native tree entry")
         mode, name = body[offset:space], body[space + 1 : zero]
+        # Git stores an octal spelling, including leading zeros. Keep the exact
+        # spelling in the retained body/OID while relations use semantic modes.
+        mode = mode.lstrip(b"0")
         if mode not in (b"40000", b"100644", b"100755", b"120000", b"160000"):
             _fail("tree", "unsupported native tree mode")
         if not name or b"/" in name or name in (b".", b"..") or name in result:
@@ -179,7 +188,9 @@ def parse_tag(fmt: str, body: bytes) -> Metadata:
     if not fields[2][1] or b"\n" in fields[2][1]:
         _fail("tag", "nonempty single-line native tag name required")
     extras = fields[3:]
-    if any(key in (b"object", b"type", b"tag") for key, _ in extras):
+    # Git resolves the initial ordered identity, even when later extension
+    # lines repeat object/type. Retain those bytes without inventing targets.
+    if any(key == b"tag" for key, _ in extras):
         _fail("tag", "repeated native tag structural header")
     taggers = [value for key, value in extras if key == b"tagger"]
     if len(taggers) > 1 or (taggers and extras[0][0] != b"tagger"):

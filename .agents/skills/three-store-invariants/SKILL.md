@@ -1,18 +1,74 @@
 ---
 name: three-store-invariants
-description: Diagnose the implemented Schema 21 Three-Store baseline under ADR 0002, including cross-store isolation, cache GC, split-write resumption, Core-only maintenance and search fencing, and verify target paired-snapshot coordination experiments. For the newer Git Core/Context target, first apply the current ADR index and scoped replacements; baseline quarantine-count and full-backup recipes are not target requirements.
+description: Preserve current separated responsibility stores, generated row mappings, scoped acquisition and recovery invariants. Diagnose the retired Schema 21 three-store implementation only from an explicitly pinned historical checkout; its archive/quarantine/counter recipes are not current requirements.
 ---
 
-# Three-Store Boundary Architectural Invariants (ADR 0002)
+# Responsibility-store invariants and historical three-store recipes
 
-**Applicability:** The concrete tables, methods and recipes below describe the **implemented Core Schema 21 / Operational 1 / Search 1 baseline**. For target work, read the [ADR index](../../../docs/adr/README.md) and [transition plan](../../../docs/architecture/git-core-context-transition-plan.md). [ADR 0029](../../../docs/adr/0029-independent-access-store.md) is the accepted five-store successor to historical ADR 0003; it preserves independently durable Context and INSERT-only Git Core while separating Access; [ADR 0014](../../../docs/adr/0014-history-and-notes-catalog-without-file-archive.md) excludes ordinary file-body archival. [ADR 0038](../../../docs/adr/0038-scoped-recovery-and-optional-initialization.md) replaces quarantine/count/release and same-DB continuation with immediate catalog recovery. [ADR 0036](../../../docs/adr/0036-ref-observations-and-shared-notes-mappings.md) fixes unauthenticated external-origin reports without application PKI/signatures. Preserve unaffected safety principles; do not copy superseded baseline mechanisms into the target or infer new execution permission from this skill.
+## Current separated runtime
 
-The **implemented baseline** physically separates three SQLite stores; the following inventory does not assign target authority:
+The ordinary CLI uses independent Core, Context, Access, Operational, Search,
+Filesystem and Worktrees roles. Explicitly select initialization scope; never
+add a duplicate Core table/view, SQL-routing compatibility wrapper or implicit
+ATTACH to make an old normal-format test pass. Read [the current runtime guide](../../../docs/current-runtime-reference.md),
+[ADR 0043](../../../docs/adr/0043-separated-persistence-class-mapping.md) and the
+[canonical mapping](../../../docs/architecture/persistence-model.json). The
+internal `p1` factory/module names no longer indicate a separate opt-in backend.
+
+Use actual owning connections and generated row conversions. Full row classes
+and DTO/query projections are distinct; a metadata-only projection must not
+fetch retained bodies to satisfy a serialization interface. Verify DDL-derived
+mapping/row staleness through `scripts/local-run.sh python
+scripts/persistence_model.py --check` and
+`scripts/local-run.sh python scripts/generate_persistence_rows.py --check`.
+These checks are structural, not semantic or retained-instance acceptance.
+
+Core facts remain INSERT-only. Context originals preserve their typed owner,
+source clock and provenance; current projections cannot pick an equal/unknown
+clock winner from later receipt time, a local revision or decoder version.
+Source inventory distinguishes Git UUIDs from Provider Repository keys.
+Historical whole inventory/claim/proof units may survive reordering, but an old
+complete proof cannot establish a newer incomplete scope. Source-owned writes
+require their real dependencies; separately authorized original provenance
+references may remain unresolved when registration metadata is absent.
+
+Actual acquisition work accumulates under one explicit request through retry,
+resume and mixed-Source batches. Credential references are frozen and resolved
+at use. Cached bytes/Operational success do not prove domain completeness.
+Registered cache roots/inventories must match before reuse or GC; changed,
+replaced, unregistered and symlink targets are retained. Completion must not
+strand positive disk reservations. Missing optional Search telemetry or cache
+progress cannot invalidate admitted facts or authorize physical deletion.
+
+For integrity/recovery follow [ADR 0038](../../../docs/adr/0038-scoped-recovery-and-optional-initialization.md):
+stop ordinary service on detected authoritative corruption, preserve the suspect
+source, perform explicit untrusted typed salvage, and restore/revalidate/merge
+into a fresh destination before activation. No same-DB repair, quarantine-count
+lifecycle, general file archive or implicit user-data conversion is supported.
+
+Retire old mechanism assertions through the exact baseline/blob/named-test
+[obligation map](../../../docs/implementation/separated-runtime-test-map.json).
+A reference checker or source-present function is not a test pass or semantic
+review. Preserve current functional negatives and actual primitive/SQL checks;
+never introduce old surrogates, mutable Core counters or hidden staging merely
+to reproduce former table/CLI spelling.
+
+## Historical Schema 21 procedures
+
+The concrete normal-format tables, methods and receipts in the following
+baseline sections describe the former **Core Schema 21 / Operational 1 / Search 1**
+implementation. Use them only with an explicitly pinned historical source; they
+are not current command recipes. Later sections also record scoped separated
+implementation lessons: apply their enduring invariants against current source,
+without treating their stage names or old test totals as current acceptance.
+The [ADR index](../../../docs/adr/README.md) determines scoped supersessions.
+
+The **historical baseline** physically separated three SQLite stores; this inventory does not assign current authority:
 - **Core Store (`catalog.sqlite3`)**: Authoritative domain facts, entities, immutable observations, coverage claims, code listings, Git DAG and intrinsic structures, and Exchange staging.
 - **Operational Store (`operational.sqlite3`)**: Transient execution state, jobs, job attempts, capacity reservations, and cache leases.
 - **Search Store (`search.sqlite3`)**: Disposable FTS5 virtual tables, rebuildable search document projections, and index generations.
 
-Use the baseline recipes only when diagnosing the current production implementation.
+Use the baseline recipes only when diagnosing that pinned historical implementation.
 For target implementation, apply each section's target boundary and the current
 accepted ADRs. Provider/Source/PR/Issue/review/text evidence moves to independently
 durable Context; Git Core keeps permitted Git facts and representations. No
@@ -68,13 +124,14 @@ suites when `/tmp` has a smaller capacity. Record disk exhaustion separately fro
 product errors; preserve JUnit/journals and rerun the affected exact nodes with
 sufficient capacity. Remove only confirmed completed disposable test directories,
 never another active worktree's fixtures or real catalogs.
-Run pytest through the intended worktree's `uv run --no-sync`, or prepend that
-venv's `bin` to `PATH` when invoking its Python directly: CLI helpers spawn
-`repo-catalog` by name. A correct parent import alone does not bind child commands.
+Run product tests through the intended checkout's verified `scripts/local-run.sh`
+(or that verified `.venv`), with explicit quiet/worker limits. Do not use a bare
+`uv run` or an unverified author worktree: CLI helpers spawn `repo-catalog` by
+name, and a correct parent import alone does not bind child commands.
 
 ---
 
-## Classified time and checksum policy for target work
+## Classified time and checksum policy for current work
 
 Read [ADR 0028](../../../docs/adr/0028-classified-times-and-sha256-exchange.md)
 before applying older time fixtures: nullable observation/Provider values must
@@ -466,7 +523,7 @@ suite does not cover a newly demonstrated counterexample.
 
 ### P4 verified extensions to section 9
 
-Apply to opt-in P4 Notes and future intrinsic group/read extensions; these do
+Apply to current Notes and intrinsic group/read extensions; these do
 not activate the public runtime or change accepted policy.
 
 - Exercise every new typed reader directly and through its public callers.
@@ -992,7 +1049,7 @@ BLOB byte length from storage metadata; `length(CAST(text AS BLOB))` may load
 the unbudgeted text first. See SQLite's [core functions](https://sqlite.org/lang_corefunc.html#octet_length).
 Exercise the synthetic regression with
 `scripts/local-run.sh pytest -q -n 2 tests/integration/p1/test_ref_observation_i1.py`.
-This is an opt-in Core boundary; it does not implement I2/I3 or establish release
+This is a scoped Core boundary; it does not by itself qualify other roles or establish release
 acceptance.
 
 ## Ref scans, named absence and retry identity
@@ -1055,7 +1112,7 @@ and physical copy, including when another good copy exists; a forged input is
 a refusal, while confirmed source corruption stops that catalog. Keep typed
 salvage's unsupported families explicitly partial until their own receiving
 validation exists. These tests do not establish release acceptance or activate
-the normal Schema 21 runtime.
+the former normal Schema 21 runtime (historical scope only).
 
 For typed salvage, test callbacks at the actual writer transaction as well as
 the checked reader. During a callback, withdraw both admission and checked-byte
