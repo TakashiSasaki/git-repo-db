@@ -129,7 +129,7 @@ For assembled acceptance, collect `tests/` with `-o addopts=` before applying
 ordinary/live/benchmark markers. A green focused cohort does not cover omitted
 nodes. Use the verified product environment for product checks and the separate
 `website/.venv` with its own lock for documentation checks, as described in
-`website/README.md`; do not add rendering dependencies to the product
+`website/README.md` on the `web` branch; do not add rendering dependencies to the product
 environment. Prepare the locked wheelhouse before offline packaging tests, and
 verify its manifest/lock and wheel digests. Dependency preparation is distinct
 from executing Provider acquisition.

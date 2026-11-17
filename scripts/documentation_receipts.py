@@ -29,6 +29,31 @@ def git(root, *args):
     )
 
 
+def web_branch_map(root, commit):
+    name = "docs/web-branch-test-map.json"
+    present = subprocess.run(
+        ["git", "cat-file", "-e", commit + ":" + name],
+        cwd=root,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return (
+        json.loads(git(root, "show", commit + ":" + name))
+        if present.returncode == 0
+        else None
+    )
+
+
+def verify_moved_product_obligations(mapping, product_nodes):
+    if mapping is None:
+        return
+    required = mapping.get("main_nodes")
+    if not required or not set(required).issubset(set(product_nodes or [])):
+        raise DocumentationGap(
+            "Moved ownership/runtime-reference product obligations missing"
+        )
+
+
 def checked_receipt(path, context, product, ir_hash, root):
     path = Path(path)
     if any(p.is_symlink() for p in (path, *path.parents)):
@@ -61,6 +86,7 @@ def checked_receipt(path, context, product, ir_hash, root):
     lock = git(root, "show", commit + ":website/uv.lock")
     if sha(lock) != value.get("documentation_lock_sha256"):
         raise DocumentationGap("Documentation dependency lock mismatch")
+    branch_map = web_branch_map(root, product["commit"])
     artifacts = value.get("artifact_sha256", {})
     required = {
         "tests.xml",
@@ -68,6 +94,8 @@ def checked_receipt(path, context, product, ir_hash, root):
         "producer.json",
         *{f"command-{i}.log" for i in range(6)},
     }
+    if branch_map is not None:
+        required.add("source-manifest.json")
     if set(artifacts) != required:
         raise DocumentationGap("Documentation execution artifact set mismatch")
     for name, digest in artifacts.items():
@@ -115,6 +143,35 @@ def checked_receipt(path, context, product, ir_hash, root):
             raise DocumentationGap("Unsafe producer input")
         if sha(git(root, "show", product["commit"] + ":" + name)) != digest:
             raise DocumentationGap("Producer committed input mismatch")
+    if branch_map is not None:
+        canonical_raw = (path.parent / "source-manifest.json").read_bytes()
+        canonical = json.loads(canonical_raw)
+        config = json.loads(git(root, "show", commit + ":product-source.json"))
+        if (
+            config.get("commit") != product["commit"]
+            or config.get("repository")
+            != "https://github.com/TakashiSasaki/resource-atlas.git"
+        ):
+            raise DocumentationGap("Web commit selects a different product source")
+        if (
+            canonical.get("product_source") != product
+            or canonical.get("ir_sha256") != ir_hash
+            or sha(canonical_raw) != inputs.get("canonical_source_manifest_sha256")
+        ):
+            raise DocumentationGap("Canonical-source handoff identity mismatch")
+        policy_path = "docs/web-source-policy.json"
+        policy = json.loads(git(root, "show", product["commit"] + ":" + policy_path))
+        expected = {
+            policy_path,
+            policy["canonical_index"],
+            *policy["public_adrs"],
+            *policy["support"],
+        }
+        if set(canonical.get("canonical_sources", {})) != expected:
+            raise DocumentationGap("Canonical publication selection mismatch")
+        for name, digest in canonical["canonical_sources"].items():
+            if sha(git(root, "show", product["commit"] + ":" + name)) != digest:
+                raise DocumentationGap("Canonical source digest mismatch")
     nodes = value.get("test_ids", [])
     cases = ET.parse(path.parent / "tests.xml").findall(".//testcase")
 
@@ -160,6 +217,9 @@ def checked_receipt(path, context, product, ir_hash, root):
         for n in row["current_nodes"]
         if n.startswith(("website/", "documentation/"))
     }
+    if branch_map is not None:
+        moved = {m["old_path"] for m in branch_map["moves"]}
+        obligations = {n for n in obligations if n.split("::", 1)[0] not in moved}
     if not obligations or not obligations.issubset(nodes):
         raise DocumentationGap("Historical documentation obligations missing")
     commands = value.get("commands", [])
@@ -179,7 +239,14 @@ def checked_receipt(path, context, product, ir_hash, root):
         ],
         ["-m", "pytest", "-q", "website/tests", "--collect-only"],
         None,
-        ["-m", "ruff", "check", "website/tools", "website/tests"],
+        [
+            "-m",
+            "ruff",
+            "check",
+            "website/tools",
+            "website/tests",
+            *(["scripts"] if branch_map is not None else []),
+        ],
         [
             "-m",
             "ruff",
@@ -187,8 +254,23 @@ def checked_receipt(path, context, product, ir_hash, root):
             "--check",
             "website/tools",
             "website/tests",
+            *(["scripts"] if branch_map is not None else []),
         ],
-        ["scripts/check_sqlite_validation_policy.py", "--scope", "documentation"],
+        (
+            [
+                "@product/scripts/check_sqlite_validation_policy.py",
+                "--root",
+                "@web",
+                "--scope",
+                "documentation",
+            ]
+            if branch_map is not None
+            else [
+                "scripts/check_sqlite_validation_policy.py",
+                "--scope",
+                "documentation",
+            ]
+        ),
     ]
     for i in (0, 1, 3, 4, 5):
         if commands[i][1:] != expected[i]:
@@ -267,7 +349,14 @@ def verify_provider(value, raw, directory, repository, root):
 
 
 def complete_documentation(
-    local, hosted, product, ir_hash, root, repository, provider_check=None
+    local,
+    hosted,
+    product,
+    ir_hash,
+    root,
+    repository,
+    provider_check=None,
+    product_nodes=None,
 ):
     """Return a verified conjunction; any missing or denied evidence stays a gap."""
     try:
@@ -275,6 +364,9 @@ def complete_documentation(
             raise DocumentationGap(
                 "Independent local and hosted documentation evidence required"
             )
+        verify_moved_product_obligations(
+            web_branch_map(root, product["commit"]), product_nodes
+        )
         a, _ = checked_receipt(local, "local", product, ir_hash, root)
         b, raw = checked_receipt(hosted, "hosted", product, ir_hash, root)
         if (

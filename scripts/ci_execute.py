@@ -1549,6 +1549,7 @@ def reconcile_release(
                 root,
                 plan_context.get("repository"),
                 provider_check=documentation_provider,
+                product_nodes=test_ids,
             )
         except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
             docs = {"status": "not_verified", "reason": str(exc)}

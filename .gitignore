@@ -13,3 +13,6 @@ artifacts/
 build/
 /node_modules/
 /dist/
+
+# Private cross-branch schema producer outputs (no website sources).
+/website/.build/
