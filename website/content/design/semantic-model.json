@@ -1,0 +1,364 @@
+{
+  "id": "semantic-model-overview",
+  "source_revision": "1531593d661dbf8e89cd2c79efeef856f48b1b52",
+  "source_tree": "e65e1ab6b119f001478315c25a3e9d3a2ed45a26",
+  "reviewed_at": "2026-11-16",
+  "scope": "指定コミットのコードと採択済み決定を読んだ、説明用の意味モデル俯瞰です。概念を用途に沿ってまとめた派生文書であり、新しいオントロジー、網羅的なクラス一覧、受理規則の正本ではありません。概念の数はテーブル数・配布物数・稼働中のデータベース数を表しません。",
+  "conclusion": "RDFによる記述は実装段階に進んでいます。スキーマ構造のRDF投影に加え、FilesystemとWorktreesでは観測・複合キー・不完全性を扱う意味のあるインスタンス検証もあります。ただし、Git・Context・Accessを含むアプリ全体の意味、操作の前提、導出関係を統一して記述する作業は未完了です。",
+  "runtime_scope": "通常のSchema 21、任意選択のP1／Access、独立したFilesystem／Worktreesを区別します。責務は7領域ですが、すべてが通常起動で有効になるという意味ではありません。LocalはFilesystemとWorktreesを組み合わせるだけで、独自のデータベースを持ちません。",
+  "rdf_scope_notes": {
+    "structural-only": "対応する実装構造はRDF投影の対象です。この概念の意味全体がRDFクラスや制約として形式化された、という意味ではありません。",
+    "instance-pilot": "Filesystem／Worktreesの限定的な使い捨てフィクスチャで、対応するインスタンスの意味を一部投影・検証します。任意の利用者カタログに対する検証ではありません。",
+    "unmapped": "この概念を直接表す実行可能なRDFの意味対応付けは、今回確認した投影にありません。"
+  },
+  "domains": [
+    {
+      "id": "core",
+      "label": "Core・Gitの事実",
+      "summary": "恒久的なRepository識別、Gitオブジェクトに関する属性付き主張、観測、履歴構造、Notes、許可された保持バイトを扱います。採択済みの分離設計では権威レコードは追記専用です。",
+      "citations": [{"path": "docs/adr/0029-independent-access-store.md", "line": 1}, {"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 123}]
+    },
+    {
+      "id": "context",
+      "label": "Context・サービス上の文脈",
+      "summary": "Provider上のResource、PR・Issue・レビュー・コメント、テキスト、親関係とRepository対応付けを扱います。出典・時刻・競合を保持し、Gitの検証権威と分けます。",
+      "citations": [{"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 662}, {"path": "packages/context/src/repo_catalog/domain/production_context.py", "line": 200}]
+    },
+    {
+      "id": "access",
+      "label": "Access・接続とローカル承認",
+      "summary": "Scope、ロケーター登録、接続設定、選択と承認を保持します。接続先の表記、ドメイン上の同一性、実行の許可を別々に扱います。",
+      "citations": [{"path": "packages/access/src/repo_catalog/domain/access_registry.py", "line": 1}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 1}]
+    },
+    {
+      "id": "operational",
+      "label": "Operational・実行と継続",
+      "summary": "要求、試行、ジョブ、進捗、一時キャッシュと資源の使用量を扱います。再構築可能性と、予算を守って要求を継続できることは同じではありません。",
+      "citations": [{"path": "src/repo_catalog/resources/operational.sql", "line": 14}, {"path": "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md", "line": 1}]
+    },
+    {
+      "id": "search",
+      "label": "Search・検索の投影",
+      "summary": "Core／Contextから検索用の文書や世代を導出します。検索結果自体はドメイン事実の権威にならず、元の証拠と独立した同一性を発明しません。",
+      "citations": [{"path": "src/repo_catalog/resources/search.sql", "line": 16}, {"path": "docs/adr/0029-independent-access-store.md", "line": 1}]
+    },
+    {
+      "id": "filesystem",
+      "label": "Filesystem・ファイルの観測",
+      "summary": "通常ディレクトリを含むルート、走査履歴、エントリー、ネイティブ属性、毎回計算するSHA-256と走査結果を扱います。通常ファイルの本文は保持しません。",
+      "citations": [{"path": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "line": 23}, {"path": "packages/filesystem/src/repo_catalog/filesystem/models.py", "line": 46}]
+    },
+    {
+      "id": "worktrees",
+      "label": "Worktrees・Git作業ツリーの構成",
+      "summary": "Gitのトポロジー観測、登録済みの兄弟worktree、任意のFilesystem走査参照と明示的なRepository関連付けを扱います。FilesystemやCoreがなくても独立して有効です。",
+      "citations": [{"path": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "line": 23}, {"path": "packages/worktrees/src/repo_catalog/worktrees/models.py", "line": 60}]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "repository", "domain": "core", "label": "恒久的なRepository",
+      "meaning": "URLやサービス上の名前が変わっても区別して扱うGitリポジトリのドメイン上の対象です。",
+      "key": "RepositoryのUUIDv4",
+      "invariants": ["URL・パス・HEAD・同一のハッシュから恒久的なRepository同一性を推定しません。", "Repositoryに関する報告も、出典を持つ主張として保持します。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 566}, {"path": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "line": 36}]
+    },
+    {
+      "id": "git-object", "domain": "core", "label": "名目上のGitオブジェクト",
+      "meaning": "commit・tree・blob・tagについて主張する対象です。識別子があることと、型・本文・検証が分かることを分けます。",
+      "key": "オブジェクト形式（sha1／sha256）と完全な小文字OID",
+      "invariants": ["同じOIDの対象をRepositoryごとに別のGitオブジェクトとして複製しません。", "OIDの存在だけでは型・本文の可用性・受信者による検証・グラフの閉包を証明しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/contracts/src/repo_catalog/domain/shared_values.py", "line": 40}, {"path": "packages/context/src/repo_catalog/domain/production_context.py", "line": 360}]
+    },
+    {
+      "id": "git-claim", "domain": "core", "label": "Git属性・構造の主張",
+      "meaning": "単一属性の主張と、commitの親・treeのエントリー・tagの対象などを表すまとまりです。元の出典と代替の主張を保持します。",
+      "key": "対象・属性または関係・値または完全なメンバー集合・スコープ・出典",
+      "invariants": ["親の実際の順序やtreeの名前・modeを失いません。", "不明・部分的・既知の空・完全を区別し、競合する主張を単一値に潰しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 123}, {"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 160}]
+    },
+    {
+      "id": "ref-observation", "domain": "core", "label": "Refの実観測と結果",
+      "meaning": "特定のRepository・ref名・出典・可視範囲で行った観測と、それに属する不変の結果です。直接参照・シンボリック参照・不在の報告を区別します。",
+      "key": "観測originのUUIDv4とRef観測のUUIDv7。結果はその組と元の出典を参照",
+      "invariants": ["新しい読み取りと、元の観測の再送・再解析を混同しません。", "不在は範囲付きの証拠を必要とし、未取得や未知を不在に変換しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 67}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 368}]
+    },
+    {
+      "id": "notes-mapping", "domain": "core", "label": "Notesの共有解釈と原報告",
+      "meaning": "特定のrootと解釈方式から、注釈対象のGitオブジェクトとnoteを結びます。共有できる解釈内容と、どの観測結果がそう報告したかを分けます。",
+      "key": "型付きroot・解釈種別／版／範囲・注釈対象OID・note OID・実際のパス",
+      "invariants": ["Mappingの原報告は正確なRef結果Claimとrootを参照します。", "グループの完全なメンバーと不明・部分的・既知の空・完全の状態を保持します。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 493}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 556}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 584}]
+    },
+    {
+      "id": "receiver-evidence", "domain": "core", "label": "出典と受信者側の検証証拠",
+      "meaning": "誰が何を報告したかと、受信者がどのバイトや構造を検査したかを区別する証拠です。",
+      "key": "元の出典・観測・座標・デコーダー／版・報告または受信者検査の資格",
+      "invariants": ["発行者名やorigin識別子だけでは真正性を保証しません。", "送信者の主張やダイジェスト一致を、受信者が行った全検証の代用にしません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/contracts/src/repo_catalog/domain/shared_values.py", "line": 59}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 728}, {"path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md", "line": 1}]
+    },
+    {
+      "id": "retained-representation", "domain": "core", "label": "許可された保持内容",
+      "meaning": "Gitメタデータや目的を検証したNotesについて、保持を認められた正確な表現とバイトです。",
+      "key": "対象OID・表現・正確な内容のダイジェスト等、型付き保持契約の座標",
+      "invariants": ["通常ファイル本文の新規アーカイブを意味しません。", "保持バイトの実際の出力には整合性の確認が必要です。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "docs/adr/0014-history-and-notes-catalog-without-file-archive.md", "line": 1}, {"path": "docs/adr/0022-receiver-verified-notes-role-admission.md", "line": 1}]
+    },
+    {
+      "id": "coverage", "domain": "core", "label": "範囲付きの取得・検証カバレッジ",
+      "meaning": "ある所有者と範囲について、いつどこまで把握できたかを述べる観測です。CoreとContextで共有する考え方です。",
+      "key": "型付き所有者・範囲・観測時刻・カバレッジ状態",
+      "invariants": ["不明・部分的・完全・該当なしを保持し、競合は導出結果として扱います。", "同一範囲の最新時刻を先に選び、最新が不明でも過去の完全を代用しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/contracts/src/repo_catalog/domain/p1_coverage.py", "line": 27}, {"path": "packages/contracts/src/repo_catalog/domain/coverage.py", "line": 37}, {"path": "packages/contracts/src/repo_catalog/domain/coverage.py", "line": 56}]
+    },
+    {
+      "id": "provider-source", "domain": "context", "label": "サービスと取得元の登録",
+      "meaning": "サービスの名前空間と、どの取得元・設定から情報を観測するかを区別します。取得元の一覧にも独自の範囲と完全性があります。",
+      "key": "サービスinstanceのUUIDv4、取得元registrationのUUIDv4、元の取得スコープ",
+      "invariants": ["取得元の報告を恒久的なRepositoryの同一性や実行許可と同一視しません。", "取得元一覧の到着順を新しい意味上の事実にしません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/context/src/repo_catalog/domain/production_context.py", "line": 294}, {"path": "src/repo_catalog/resources/catalog3.sql", "line": 17}]
+    },
+    {
+      "id": "resource", "domain": "context", "label": "Resourceとフィールド候補",
+      "meaning": "PR・Issue・review・comment・thread・documentなど、サービス上の対象です。値やテキストは元の出典・ソース時計・観測とともに扱います。",
+      "key": "サービスinstance UUIDv4・Resource種別・正規に符号化された元のProvider識別値",
+      "invariants": ["Provider識別値を勝手に正規化せず、文字列と配列の区別を保持します。", "欠落、明示null、比較できない時計、競合する値を区別します。", "テキストの正確な内容と、それを説明する取得メタデータを分けます。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 662}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 787}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 813}]
+    },
+    {
+      "id": "resource-parent", "domain": "context", "label": "Resource間の親・集合観測",
+      "meaning": "あるResourceの意味上の親やコレクションのメンバーを、独立した出典と範囲を持つ報告として表します。",
+      "key": "子Resource・関係種別・完全なメンバー・出典・範囲。コレクションは観測時刻と状態も保持",
+      "invariants": ["識別子の名前空間や配列の形だけから、親の存在や関係を推定しません。", "完全な空集合と、部分取得でメンバーがまだない状態を混同しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/context/src/repo_catalog/domain/resource_identification.py", "line": 1}, {"path": "packages/context/src/repo_catalog/domain/parent_report.py", "line": 53}, {"path": "packages/context/src/repo_catalog/domain/production_context.py", "line": 255}]
+    },
+    {
+      "id": "repository-mapping", "domain": "context", "label": "Repository対応付けと支持証拠",
+      "meaning": "ResourceがどのRepositoryを表すか、所有・base・head・移動元／先の関係を持つかという、型付きの報告とその評価です。",
+      "key": "Resource・関係種別・ソース時計・対象・出典からなる完全なClaimキー",
+      "invariants": ["競合・撤回・訂正・異議と元の支持証拠を残します。", "Providerだけ分かる未解決、明示null、選択により省略された対象を区別します。", "移動イベントの支持や親関係から、現在の所属を無条件に継承しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 845}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 1344}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 1808}]
+    },
+    {
+      "id": "access-scope", "domain": "access", "label": "接続対象のScope",
+      "meaning": "ロケーターや表示名とは独立して識別する、ローカルな接続対象の範囲です。",
+      "key": "ScopeのUUIDv4",
+      "invariants": ["登録は到達性や所有権、実行許可の証明ではありません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/access/src/repo_catalog/domain/access_registry.py", "line": 134}]
+    },
+    {
+      "id": "locator", "domain": "access", "label": "ロケーターの登録履歴",
+      "meaning": "ScopeやRepositoryをどこから参照するかを、実際の登録として残します。",
+      "key": "Scope登録ではScope UUID・登録時刻・元のURI。Repositoryロケーターは別の型付き対応付け",
+      "invariants": ["URIの構文検査は、到達可能性や対象の同一性を証明しません。", "接続場所を変更しても、ドメイン対象の識別を置き換えません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/access/src/repo_catalog/domain/access_registry.py", "line": 67}, {"path": "packages/access/src/repo_catalog/domain/access_registry.py", "line": 144}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 181}]
+    },
+    {
+      "id": "connection", "domain": "access", "label": "接続設定と割り当て",
+      "meaning": "file・HTTPS・SSHの接続方法と、ローカルの認証情報参照などを記述する設定です。",
+      "key": "Scopeと設定名、またはロケーターと設定を結ぶ完全な割り当てキー",
+      "invariants": ["認証情報への名前付き参照は、平文秘密や任意のシェルコマンドを意味しません。", "設定の存在だけでは実行を許可しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 81}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 203}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 225}]
+    },
+    {
+      "id": "approval", "domain": "access", "label": "選択とローカル承認",
+      "meaning": "どの対象・設定を確認し、そのローカルな実行を認めたかという情報です。",
+      "key": "レビュー計画と対象の完全な割り当て座標に結び付くローカルgrant",
+      "invariants": ["承認はGit事実やProvider報告の真正性を証明しません。", "接続設定やドメイン事実と実行権限を分けます。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 297}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 335}]
+    },
+    {
+      "id": "acquisition-request", "domain": "operational", "label": "取得要求と累積作業量",
+      "meaning": "利用者の一つの明示的な取得要求と、継続・再試行も含めて実際に使った有限の資源です。",
+      "key": "明示された要求の同一性と、その要求に属する継続・試行",
+      "invariants": ["自動再試行で累積予算をリセットしません。", "ロールバックや重複除去があっても、実際に行った検証や入力処理は消えません。"],
+      "rdf_scope": "unmapped",
+      "citations": [{"path": "docs/adr/0024-actual-notes-resource-work-accounting.md", "line": 1}, {"path": "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md", "line": 1}]
+    },
+    {
+      "id": "job-cache", "domain": "operational", "label": "ジョブ・試行・一時キャッシュ",
+      "meaning": "取得や検索構築などの実行状況、再開位置、一時的に使える入力を扱います。永続するドメイン事実とは役割が異なります。",
+      "key": "ジョブ・試行・進捗スコープ・キャッシュ参照など、それぞれの実行契約の座標",
+      "invariants": ["キャッシュの存在を新しい観測として捏造しません。", "一時データを失っても受理済みの事実は無効になりませんが、旧要求の安全な再開が保証されるわけではありません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "src/repo_catalog/resources/operational.sql", "line": 14}, {"path": "src/repo_catalog/resources/operational.sql", "line": 36}, {"path": "src/repo_catalog/resources/operational.sql", "line": 72}]
+    },
+    {
+      "id": "search-projection", "domain": "search", "label": "検索文書と索引世代",
+      "meaning": "選択したCore／Contextの状態から導出する、検索向けの表現です。",
+      "key": "元の対象への参照と、構築世代・読み取り境界",
+      "invariants": ["検索投影をドメインの権威に昇格させません。", "古い索引や未構築の索引から、元の対象が存在しないと結論しません。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "src/repo_catalog/resources/search.sql", "line": 16}, {"path": "src/repo_catalog/resources/search.sql", "line": 25}]
+    },
+    {
+      "id": "filesystem-root", "domain": "filesystem", "label": "ファイルシステムのルート",
+      "meaning": "どの名前空間・パス規則・ネイティブパスを走査したかという対象です。Gitリポジトリであることを必要としません。",
+      "key": "ソース名前空間・パス方言・損失なく保持したネイティブのルートパス",
+      "invariants": ["ルートのパスを恒久的なCore Repository UUIDと同一視しません。", "パスの生バイトやWindows／POSIXの解釈を保持します。"],
+      "rdf_scope": "structural-only",
+      "citations": [{"path": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "line": 36}, {"path": "docs/architecture/local-catalog-contract.md", "line": 22}]
+    },
+    {
+      "id": "filesystem-scan", "domain": "filesystem", "label": "Filesystemの走査観測",
+      "meaning": "あるルートを実際に調べた一回の発生です。走査中の区間を観測し、履歴として保持します。",
+      "key": "Filesystem名前空間UUIDv4・走査UUIDv7",
+      "invariants": ["原子的なファイルシステムのスナップショットとは主張しません。", "未完了の走査は有効な履歴であり、過去の走査のエントリーを自動で補いません。"],
+      "rdf_scope": "instance-pilot",
+      "citations": [{"path": "packages/filesystem/src/repo_catalog/filesystem/store.py", "line": 25}, {"path": "tools/schema-model/instance_model.py", "line": 120}, {"path": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "line": 42}]
+    },
+    {
+      "id": "filesystem-entry", "domain": "filesystem", "label": "走査内のエントリー・ハッシュ観測",
+      "meaning": "一回の走査で得たファイル・ディレクトリ・リンク等の属性です。通常ファイルの毎回の新規ハッシュ計算と、その成功・変化・エラーを区別します。",
+      "key": "名前空間UUID・走査UUID・生バイトの相対パス",
+      "invariants": ["ネイティブ時刻の精度と符号を保持し、観測時刻のマイクロ秒と混同しません。", "不安定・読み取り不能の入力に成功したダイジェストを与えません。", "ダイジェストの書式適合は実ファイルのバイトとの一致を証明しません。"],
+      "rdf_scope": "instance-pilot",
+      "citations": [{"path": "packages/filesystem/src/repo_catalog/filesystem/models.py", "line": 58}, {"path": "tools/schema-model/instance_model.py", "line": 177}, {"path": "tools/schema-model/instance_shapes.ttl", "line": 5}]
+    },
+    {
+      "id": "filesystem-outcome", "domain": "filesystem", "label": "走査の終了結果",
+      "meaning": "complete・partial・interrupted、件数・エラー件数・終了時刻を表します。ディレクトリ列挙とハッシュ処理の完全性は別に報告します。",
+      "key": "対応するFilesystem名前空間UUID・走査UUID",
+      "invariants": ["未終了の走査には終了結果がないことを認めます。", "partialは必ずしも正のエラー件数を意味しません。", "complete-with-errorsは適合しません。"],
+      "rdf_scope": "instance-pilot",
+      "citations": [{"path": "packages/filesystem/src/repo_catalog/filesystem/store.py", "line": 46}, {"path": "tools/schema-model/INSTANCE-PILOT.md", "line": 138}, {"path": "tools/schema-model/instance_shapes.ttl", "line": 50}]
+    },
+    {
+      "id": "worktree-observation", "domain": "worktrees", "label": "Gitトポロジーとworktreeの観測",
+      "meaning": "依頼したパスから観測したcommon directoryと登録worktree、HEAD・branch・bare・locked等の状態です。",
+      "key": "観測UUIDv7。観測内のworktreeは観測UUIDと生バイトのroot path",
+      "invariants": ["同じHEADやremote URLから恒久Repository同一性を推論しません。", "Filesystemカタログを必要とせず、観測対象のGitを変更しません。"],
+      "rdf_scope": "instance-pilot",
+      "citations": [{"path": "packages/worktrees/src/repo_catalog/worktrees/models.py", "line": 60}, {"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 45}, {"path": "tools/schema-model/instance_model.py", "line": 126}]
+    },
+    {
+      "id": "worktree-external-link", "domain": "worktrees", "label": "限定された外部関連付け",
+      "meaning": "worktreeからFilesystem走査への修飾参照と、明示的に報告したCore Repository関連付けです。前者だけを現在のインスタンスpilotが意味付きで扱います。",
+      "key": "走査参照はworktreeの完全キーとFilesystem名前空間UUID・走査UUID。Repository関連付けはcommon directoryとRepository UUID",
+      "invariants": ["外部の対象が与えられなければ未解決として保持し、破損としません。", "Filesystem走査後に関連付けが記録されなくても、その走査は独立して有効です。", "pilotは外部対象の存在や同一性を解決せず、Repositoryリンク全体を意味検証しません。"],
+      "rdf_scope": "instance-pilot",
+      "citations": [{"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 59}, {"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 65}, {"path": "tools/schema-model/instance_model.py", "line": 218}]
+    }
+  ],
+  "relations": [
+    {"source": "git-claim", "target": "git-object", "label": "Git対象について述べる", "kind": "claim", "note": "属性・関係の主張は、対象の存在だけから検証済みの事実にはなりません。", "citations": [{"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 123}, {"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 160}]},
+    {"source": "git-claim", "target": "receiver-evidence", "label": "元の出典を保持する", "kind": "claim", "note": "同じ値でも原報告の座標を保持します。", "citations": [{"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 123}, {"path": "packages/core/src/repo_catalog/domain/p1_core.py", "line": 160}]},
+    {"source": "ref-observation", "target": "repository", "label": "このRepositoryで観測する", "kind": "observation", "note": "ref名・取得元・可視範囲を伴う実際の観測です。", "citations": [{"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 67}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 368}]},
+    {"source": "ref-observation", "target": "git-object", "label": "既知のref対象を報告する", "kind": "claim", "note": "不在やrootlessの結果に架空のOIDを補いません。", "citations": [{"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 67}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 368}]},
+    {"source": "notes-mapping", "target": "ref-observation", "label": "正確な原結果に結び付く", "kind": "claim", "note": "Mapping内容と、それを報告したRef結果を区別します。", "citations": [{"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 493}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 556}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 584}]},
+    {"source": "notes-mapping", "target": "git-object", "label": "root・注釈対象・noteを結ぶ", "kind": "domain-reference", "note": "すべて同じGitオブジェクト形式の型付きOIDです。", "citations": [{"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 493}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 556}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 584}]},
+    {"source": "receiver-evidence", "target": "notes-mapping", "label": "受信者が限定範囲を検査する", "kind": "observation", "note": "原報告と独立した受信者側証拠を保持します。", "citations": [{"path": "packages/contracts/src/repo_catalog/domain/shared_values.py", "line": 59}, {"path": "packages/core/src/repo_catalog/domain/ref_observation.py", "line": 728}, {"path": "docs/adr/0036-ref-observations-and-shared-notes-mappings.md", "line": 1}]},
+    {"source": "retained-representation", "target": "git-object", "label": "許可されたバイトを表す", "kind": "domain-reference", "note": "通常ファイル本文の一般的なアーカイブではありません。", "citations": [{"path": "docs/adr/0014-history-and-notes-catalog-without-file-archive.md", "line": 1}, {"path": "docs/adr/0022-receiver-verified-notes-role-admission.md", "line": 1}]},
+    {"source": "coverage", "target": "repository", "label": "取得範囲と到達度を述べる", "kind": "claim", "note": "取得や検証の範囲を明示し、Repository全体の完全性へ拡張しません。", "citations": [{"path": "packages/contracts/src/repo_catalog/domain/p1_coverage.py", "line": 27}, {"path": "packages/contracts/src/repo_catalog/domain/coverage.py", "line": 37}, {"path": "packages/contracts/src/repo_catalog/domain/coverage.py", "line": 56}]},
+    {"source": "coverage", "target": "resource", "label": "フィールド・集合の範囲を述べる", "kind": "claim", "note": "CoreとContextで共有するスコープ付きのカバレッジです。", "citations": [{"path": "packages/contracts/src/repo_catalog/domain/p1_coverage.py", "line": 27}, {"path": "packages/contracts/src/repo_catalog/domain/coverage.py", "line": 37}, {"path": "packages/contracts/src/repo_catalog/domain/coverage.py", "line": 56}]},
+    {"source": "resource", "target": "provider-source", "label": "サービスの名前空間に属する", "kind": "domain-reference", "note": "サービスinstanceとProvider識別値を組にして識別します。", "citations": [{"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 662}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 787}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 813}]},
+    {"source": "resource-parent", "target": "resource", "label": "親や集合メンバーを報告する", "kind": "claim", "note": "識別名前空間から意味上の親関係を自動推論しません。", "citations": [{"path": "packages/context/src/repo_catalog/domain/resource_identification.py", "line": 1}, {"path": "packages/context/src/repo_catalog/domain/parent_report.py", "line": 53}, {"path": "packages/context/src/repo_catalog/domain/production_context.py", "line": 255}]},
+    {"source": "repository-mapping", "target": "resource", "label": "Resourceの関係を述べる", "kind": "claim", "note": "種別・ソース時計・出典を持つ完全なClaimを参照します。", "citations": [{"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 845}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 1344}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 1808}]},
+    {"source": "repository-mapping", "target": "repository", "label": "型付きRepository候補を示す", "kind": "domain-reference", "note": "対象未解決・明示null・競合・訂正を区別します。", "citations": [{"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 845}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 1344}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 1808}]},
+    {"source": "resource", "target": "git-object", "label": "役割付きでGit対象を参照する", "kind": "domain-reference", "note": "Contextからの報告であり、Gitの本文や閉包の検証を意味しません。", "citations": [{"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 662}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 787}, {"path": "packages/context/src/repo_catalog/domain/p1_context.py", "line": 813}, {"path": "packages/context/src/repo_catalog/domain/production_context.py", "line": 333}, {"path": "packages/context/src/repo_catalog/domain/production_context.py", "line": 360}]},
+    {"source": "locator", "target": "access-scope", "label": "Scopeの参照場所を登録する", "kind": "domain-reference", "note": "登録時刻と元のURIを持ち、Scopeの同一性を置き換えません。", "citations": [{"path": "packages/access/src/repo_catalog/domain/access_registry.py", "line": 67}, {"path": "packages/access/src/repo_catalog/domain/access_registry.py", "line": 144}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 181}]},
+    {"source": "connection", "target": "locator", "label": "接続方法を割り当てる", "kind": "execution", "note": "設定の登録と、その使用を許可することは別です。", "citations": [{"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 81}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 203}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 225}]},
+    {"source": "approval", "target": "connection", "label": "ローカルで実行を認める", "kind": "execution", "note": "対象と設定を確認した範囲だけに意味があります。", "citations": [{"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 297}, {"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 335}]},
+    {"source": "acquisition-request", "target": "job-cache", "label": "試行・継続を管理する", "kind": "execution", "note": "試行が変わっても同じ要求の累積作業量はリセットしません。", "citations": [{"path": "docs/adr/0024-actual-notes-resource-work-accounting.md", "line": 1}, {"path": "docs/adr/0025-cumulative-request-budgets-and-scoped-blockers.md", "line": 1}]},
+    {"source": "search-projection", "target": "resource", "label": "Contextから検索表現を導出する", "kind": "derivation", "note": "説明用の導出関係です。現在の構造RDFはderivedFromを実体化していません。", "citations": [{"path": "src/repo_catalog/resources/search.sql", "line": 16}, {"path": "src/repo_catalog/resources/search.sql", "line": 25}, {"path": "docs/adr/0029-independent-access-store.md", "line": 65}]},
+    {"source": "search-projection", "target": "git-object", "label": "選択したGit情報を投影する", "kind": "derivation", "note": "検索投影に元データの権威を与えません。", "citations": [{"path": "src/repo_catalog/resources/search.sql", "line": 16}, {"path": "src/repo_catalog/resources/search.sql", "line": 25}, {"path": "docs/adr/0029-independent-access-store.md", "line": 65}]},
+    {"source": "filesystem-scan", "target": "filesystem-root", "label": "このルートを実際に走査する", "kind": "observation", "note": "ある区間での観測であり、原子的なスナップショットではありません。", "citations": [{"path": "packages/filesystem/src/repo_catalog/filesystem/store.py", "line": 25}, {"path": "tools/schema-model/instance_model.py", "line": 120}, {"path": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md", "line": 42}]},
+    {"source": "filesystem-entry", "target": "filesystem-scan", "label": "この走査で観測した属性を持つ", "kind": "observation", "note": "他の走査の古い属性やハッシュで穴埋めしません。", "citations": [{"path": "packages/filesystem/src/repo_catalog/filesystem/models.py", "line": 58}, {"path": "tools/schema-model/instance_model.py", "line": 177}, {"path": "tools/schema-model/instance_shapes.ttl", "line": 5}]},
+    {"source": "filesystem-outcome", "target": "filesystem-scan", "label": "この走査の終了を報告する", "kind": "observation", "note": "終了前は結果がないことを認め、終了結果は同じ走査内の件数に対応します。", "citations": [{"path": "packages/filesystem/src/repo_catalog/filesystem/store.py", "line": 46}, {"path": "tools/schema-model/INSTANCE-PILOT.md", "line": 138}, {"path": "tools/schema-model/instance_shapes.ttl", "line": 50}]},
+    {"source": "worktree-external-link", "target": "worktree-observation", "label": "正確な観測worktreeを参照する", "kind": "domain-reference", "note": "走査参照は観測UUIDとroot pathで対象worktreeに結び付きます。", "citations": [{"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 59}, {"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 65}, {"path": "tools/schema-model/instance_model.py", "line": 218}]},
+    {"source": "worktree-external-link", "target": "filesystem-scan", "label": "任意の外部走査を参照する", "kind": "domain-reference", "note": "名前空間UUIDと走査UUIDの修飾参照です。pilotの対象解決状態は未解決です。", "citations": [{"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 59}, {"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 65}, {"path": "tools/schema-model/instance_model.py", "line": 218}]},
+    {"source": "worktree-external-link", "target": "repository", "label": "明示的なRepository関連付けを保持する", "kind": "claim", "note": "パス・HEAD・remoteから自動的に推定した同一性ではありません。この関係の意味検証はpilotの対象外です。", "citations": [{"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 59}, {"path": "packages/worktrees/src/repo_catalog/worktrees/catalog.py", "line": 65}, {"path": "tools/schema-model/instance_model.py", "line": 218}]},
+    {"source": "locator", "target": "repository", "label": "Repositoryロケーターの明示的な関連付け", "kind": "claim", "note": "RepositoryBindingの登録を表します。ScopeロケーターすべてがRepositoryを識別するわけではなく、到達性やCore側の検証を保証しません。", "citations": [{"path": "packages/access/src/repo_catalog/domain/access_connections.py", "line": 181}]},
+    {"source": "approval", "target": "acquisition-request", "label": "承認した設定でGit取得要求を実行する", "kind": "execution", "note": "明示的なAccess経由のGit取得経路の関係です。Contextの受理権限や、通常起動での自動実行を意味しません。", "citations": [{"path": "packages/git-acquisition/src/repo_catalog/application/access_acquisition.py", "line": 66}]},
+    {"source": "acquisition-request", "target": "repository", "label": "Git取得の対象Repositoryを指定する", "kind": "execution", "note": "明示的なGit／Notes取得要求のスコープを表します。すべての取得要求が同じ物理キーや起動依存を持つという意味ではありません。", "citations": [{"path": "packages/contracts/src/repo_catalog/domain/request_scope.py", "line": 4}, {"path": "packages/git-acquisition/src/repo_catalog/application/access_acquisition.py", "line": 76}]}
+  ],
+  "layers": [
+    {"id": "responsibility", "label": "責務領域", "summary": "Core・Context・Access・Operational・Search・Filesystem・Worktreesの7領域。権威、更新可否、履歴保持、再構築可能性を別の性質として扱います。", "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 31}]},
+    {"id": "format", "label": "実装された形式", "summary": "ソースrevision、スキーマ系統、役割、版の表現、DDL指紋。形式の数から稼働ファイル数を推定しません。", "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 36}]},
+    {"id": "module", "label": "モジュール・配布物・ソース", "summary": "コードの所有元、スキーマへの寄与、組み立て元、必須／任意のインストール依存を分けます。", "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 37}]},
+    {"id": "operation", "label": "操作", "summary": "選択した能力・入力範囲・必要な実装と対象・同一性の確認・許可される部分結果。権威ある操作レジストリーの整備が残っています。", "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 38}, {"path": "tools/schema-model/model.py", "line": 863}]},
+    {"id": "instance", "label": "インスタンス・観測・主張", "summary": "修飾された識別、元の出典、観測区間と検証できる範囲。時刻の違う観測が競合しても、それだけで論理矛盾とはしません。", "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 39}, {"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 60}]},
+    {"id": "constraint", "label": "制約・実行証拠", "summary": "安定した制約ID、決定の根拠、実装対応、検査種別、結果、未評価の範囲。採択・実装・実行済み検証を区別します。", "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 40}, {"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 68}]}
+  ],
+  "workstreams": [
+    {
+      "id": "structural-rdf", "label": "ソースに結び付く構造RDF", "status": "implemented",
+      "summary": "既存の全形式IRから、版付きのRDFグラフを生成するツールが実装されています。データモデルの意味全体ではなく、実装構造とその出典が中心です。",
+      "implemented": ["スキーマ・表・列・順序付き複合キー・外部キーの投影", "ソース所有元・配布物・責務領域・設定・修飾外部参照を区別", "元IR・ソース・入力ハッシュへの結び付けと、独立した期待対象の照合"],
+      "gaps": ["SQL CHECKのNULL規則、trigger、UDF、式indexの意味全体は翻訳していません。", "混在する通常形式の表ごとの意味上の権威は、構造投影から導出しません。"],
+      "citations": [{"path": "tools/schema-model/model.py", "line": 300}, {"path": "tools/schema-model/README.md", "line": 52}, {"path": "scripts/schema_catalog.py", "line": 309}]
+    },
+    {
+      "id": "structural-shacl", "label": "構造のSHACL検証とカバレッジ", "status": "implemented",
+      "summary": "限定したSHACL Core／SPARQLの構造制約と、対象の欠落を成功にしない検証契約があります。",
+      "implemented": ["所有元・FKの端点と列対応・PK順序・スキーマ所属の制約", "必要shapeの欠落・非活性化・未対応構文・タイムアウトを成功としない扱い", "正例と意図的に壊した対照例、独立した期待対象と選択対象の区別"],
+      "gaps": ["限定した実行可能な断片であり、全SHACL／OWLやSQLとの一般的な等価性を証明しません。"],
+      "citations": [{"path": "tools/schema-model/shapes.ttl", "line": 1}, {"path": "tools/schema-model/model.py", "line": 685}, {"path": "tools/schema-model/README.md", "line": 65}]
+    },
+    {
+      "id": "instance-values", "label": "Filesystem／Worktreesの値と参照pilot", "status": "partial",
+      "summary": "実際の一時SQLiteと公開APIから得た限定フィクスチャをRDFに投影します。物理構造だけでなく、走査・エントリー・複合キー・未解決参照という意味を扱っています。",
+      "implemented": ["行の出現と意味上のキーを分け、重複をRDF集合の重複除去で隠さない表現", "非UTF-8のパス、空のroot BLOB、正負のネイティブ時刻、SQL NULLの保持", "Entryの複合キー、同一走査の親、Worktree参照、未解決の任意外部参照"],
+      "gaps": ["任意の利用者DBからの抽出器ではありません。", "外部Filesystem／Core対象の解決と全Worktrees制約は未実装です。", "一時DBは停止後に読み、原子的な複数DBスナップショットを主張しません。"],
+      "citations": [{"path": "tools/schema-model/INSTANCE-PILOT.md", "line": 28}, {"path": "tools/schema-model/instance_model.py", "line": 64}, {"path": "tools/schema-model/instance_model.py", "line": 397}]
+    },
+    {
+      "id": "outcome-hash", "label": "走査終了・ハッシュ状態の意味検証", "status": "partial",
+      "summary": "終了結果とファイル種別・ハッシュ状態のpilotが追加されています。実スキャナーの限定シナリオとSQL境界例・合成反例を分けて記録します。",
+      "implemented": ["filesystem-outcomes-v1：完了・部分・中断、終了時刻、同一走査の件数とエラー", "filesystem-hash-v1：読み取り中の変化・読み取りエラー、種別／サイズ／ダイジェスト／理由の組", "64桁小文字hexの厳密な構文と、NUL等のSQL／グラフ側の否定対照"],
+      "gaps": ["正しい形式のダイジェストでも、実ファイルと一致する保証にはなりません。", "すべての競合・中断・並行遷移・SQL制約を網羅する証明ではありません。", "歴史的なNUL差分の証拠と、修正後の現行受理規則を区別します。"],
+      "citations": [{"path": "tools/schema-model/INSTANCE-PILOT.md", "line": 138}, {"path": "tools/schema-model/INSTANCE-PILOT.md", "line": 173}, {"path": "tools/schema-model/instance_shapes.ttl", "line": 5}]
+    },
+    {
+      "id": "whole-domain", "label": "アプリ全体の意味語彙と対応付け", "status": "not-implemented",
+      "summary": "7責務をまたいでGitのClaim、Contextの出典と競合、Accessの承認等を一貫して扱う完全な実行可能オントロジーは、現在の投影にはありません。採択済みの設計方針と説明用JSONは先行しています。",
+      "implemented": ["ADR 0040の6層と、意味の違う関係を分離する採択済み契約", "旧5ストアの説明用JSONと出典付き可視化。RDFの@contextを持つモデルではありません。"],
+      "gaps": ["Git／Context／Accessのインスタンスを横断するClaim・時計・信頼・カバレッジのRDF対応付け", "7責務すべてを扱う操作・能力・導出の権威あるレジストリー", "既存5ストア説明モデルは旧revisionに固定され、Filesystem／Worktreesを含みません。"],
+      "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 25}, {"path": "tools/schema-model/model.py", "line": 863}, {"path": "website/content/design/model.json", "line": 2}]
+    },
+    {
+      "id": "operation-proof", "label": "操作モデル・充足可能性・実装全体の証明", "status": "not-implemented",
+      "summary": "有限操作モデルや仕様の充足可能性は別の結果系統として設計されていますが、このpilotのデータ適合結果から証明済みとは言えません。",
+      "implemented": ["4つの独立した結果系統と、範囲・理由・未実行を記録する結果契約", "制約・入力・ソース・実行エンジンとその限界を結び付けるreceipt"],
+      "gaps": ["操作の状態空間、定数、境界、遷移の不変条件の実行可能な評価", "仕様全体の充足可能性と、翻訳境界を含む証明", "この解析で新たに実行した検証はありません。"],
+      "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 68}, {"path": "tools/schema-model/README.md", "line": 83}, {"path": "tools/schema-model/instance_model.py", "line": 397}]
+    }
+  ],
+  "result_families": [
+    {"id": "data_conformance", "label": "選択データの制約適合", "status": "not_run", "summary": "実装はあります。提出グラフと選択した制約の適合だけを扱います。本ページのコード調査では新規実行していません。", "citations": [{"path": "tools/schema-model/README.md", "line": 83}, {"path": "tools/schema-model/instance_model.py", "line": 292}]},
+    {"id": "spec_satisfiability", "label": "仕様の充足可能性", "status": "not_run", "summary": "データのSHACL適合から、仕様全体が充足可能だとは結論しません。現在のインスタンスpilotでは未実行です。", "citations": [{"path": "tools/schema-model/INSTANCE-PILOT.md", "line": 90}, {"path": "tools/schema-model/instance_model.py", "line": 397}]},
+    {"id": "operation_invariants", "label": "操作モデルの不変条件", "status": "not_run", "summary": "有限の状態・境界・仮定を持つ操作モデルの結果です。スナップショットのshape検査や個別APIテストで代用せず、現在のpilotでは未実行です。", "citations": [{"path": "docs/adr/0040-scoped-machine-readable-model-validation.md", "line": 76}, {"path": "tools/schema-model/instance_model.py", "line": 397}]},
+    {"id": "implementation_conformance", "label": "実装とモデルの対応", "status": "not_run", "summary": "フィクスチャ内のAPI確認や否定対照は限定された証拠です。pilotの適合結果を実装全体の証明にはせず、この結果系統は未実行のままです。", "citations": [{"path": "tools/schema-model/INSTANCE-PILOT.md", "line": 90}, {"path": "tools/schema-model/README.md", "line": 100}]}
+  ],
+  "next_steps": [
+    "7責務ごとの代表的な問いを決め、識別・主張・観測・権威・完全性を結ぶ小さな意味対応付けから追加する。テーブル名の置換だけで全体オントロジーとしない。",
+    "操作ごとの必要能力、任意対象が未解決のまま許される場合、導出元を、根拠付きの権威あるレジストリーとして整備する。",
+    "Git／Contextでは元の報告と受信者検査、ソース時計、部分取得、明示null、競合を保持した正例・否定対照を作り、意味を失わない投影を確かめる。",
+    "Filesystem／Worktreesの外部参照解決や対象範囲を拡張するときも、実際に与えられた対象だけを検証し、未解決と破損を分ける。",
+    "結果は4系統を独立に報告し、必要対象の欠落、未対応制約、タイムアウト、実行していない範囲を残す。単一のverifiedや全体完成率へ集約しない。"
+  ],
+  "reading_paths": [
+    {"id": "git-evidence", "label": "Gitの報告と検証を分けて読む", "summary": "同じOIDに対する報告と、受信者の検証証拠を区別します。読む順路であり、処理順やトランザクション境界を表しません。", "steps": ["repository", "ref-observation", "git-object", "git-claim", "receiver-evidence", "notes-mapping"]},
+    {"id": "provider-git", "label": "PR／Issueなどの文脈からGitへ", "summary": "サービスの名前空間、Resource、Repositoryへの主張、Git対象を辿ります。参照があるだけで本文や出典の真正性が証明されるわけではありません。", "steps": ["provider-source", "resource", "repository-mapping", "repository", "ref-observation", "git-object"]},
+    {"id": "access-request", "label": "接続設定の承認とGit取得範囲", "summary": "Scopeの場所・接続設定・ローカル承認・取得要求を区別します。Access経由の明示的なGit取得の例であり、認証情報や受理権限を共有する図ではありません。", "steps": ["access-scope", "locator", "connection", "approval", "acquisition-request", "repository"]},
+    {"id": "worktree-files", "label": "Worktreeとファイル走査の関連", "summary": "Worktreeの観測から、修飾された任意の走査参照を辿ります。パス・HEAD・ハッシュの一致からRepository同一性を推定しません。", "steps": ["worktree-observation", "worktree-external-link", "filesystem-scan", "filesystem-entry"]},
+    {"id": "search-source", "label": "検索結果から元の対象と範囲へ", "summary": "検索は投影です。元のResourceやRepository、取得範囲へ戻って解釈します。検索結果の有無は元データの存在・完全性の証明ではありません。", "steps": ["search-projection", "resource", "repository-mapping", "repository", "coverage"]}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "resource-atlas-semantic-viewer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Standalone authoring and preview entry for the semantic data-model documentation",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.8"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

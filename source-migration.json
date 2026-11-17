@@ -1,0 +1,541 @@
+{
+  "schema_version": 1,
+  "original_product_commit": "d52f365a3711e31c99185f1f92283bf052700198",
+  "meaning": "Historical relocation ledger; target presentation may evolve independently. Canonical product sources remain on main.",
+  "files": [
+    {
+      "source_path": "index.html",
+      "source_sha256": "de35172d1dae187e9376e8bba1de77cb032c85352913b325d4356c57b1d0b7dc",
+      "target_branch": "web",
+      "target_path": "index.html"
+    },
+    {
+      "source_path": "package-lock.json",
+      "source_sha256": "d83263ec994c5052b68a523ae9e2c62765cc0aa30e5333a3aa22b9c2d33bec04",
+      "target_branch": "web",
+      "target_path": "package-lock.json"
+    },
+    {
+      "source_path": "package.json",
+      "source_sha256": "03c796cd5c1a9c7e845343dee40fb1cfca7dd1a37c21f9958aefd67f1c046a67",
+      "target_branch": "web",
+      "target_path": "package.json"
+    },
+    {
+      "source_path": "vite.config.mjs",
+      "source_sha256": "140f4bbb4ec611d486f9cc2b9d2218c295d8944434b67db1837f9ea50ecd121c",
+      "target_branch": "web",
+      "target_path": "vite.config.mjs"
+    },
+    {
+      "source_path": "website/.gitignore",
+      "source_sha256": "e731ae45fc3bf57aed26d05adb7255fe35b0a422961431d41514ca8708f2c5f9",
+      "target_branch": "web",
+      "target_path": "website/.gitignore"
+    },
+    {
+      "source_path": "website/AGENTS.md",
+      "source_sha256": "efcd2196fe4d4f5f651dde24cd5cb0ecab47c612ba029b84f4de911770b98c07",
+      "target_branch": "web",
+      "target_path": "website/AGENTS.md"
+    },
+    {
+      "source_path": "website/README.md",
+      "source_sha256": "12188c16445b7421fef6efd3015659550f2f85e12bd8f2b26ff2560f907e21e9",
+      "target_branch": "web",
+      "target_path": "website/README.md"
+    },
+    {
+      "source_path": "website/content-inventory.json",
+      "source_sha256": "140cadd9e69a5b813770f094f61164a716663a2d82590cd956c03be6ab2ccae9",
+      "target_branch": "main",
+      "target_path": "docs/content-inventory.json"
+    },
+    {
+      "source_path": "website/content/adr/index.md",
+      "source_sha256": "a61f180e715203772e2005c4d0610e8c2fc440462247e80acb28f23b5d270d61",
+      "target_branch": "web",
+      "target_path": "website/content/adr/index.md"
+    },
+    {
+      "source_path": "website/content/architecture/index.md",
+      "source_sha256": "c0c908e05ea9c9ea8c262ada58ef318d4a394c267fc7da46bb35be96e25b572e",
+      "target_branch": "web",
+      "target_path": "website/content/architecture/index.md"
+    },
+    {
+      "source_path": "website/content/architecture/three-store-boundary.md",
+      "source_sha256": "4c04a31f3aa6670c7605b76bbb302a20d662ae3bc7434d22943b4d83fddb6a8e",
+      "target_branch": "web",
+      "target_path": "website/content/architecture/three-store-boundary.md"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/favicon-16.png",
+      "source_sha256": "e40721f9892ad5648ccd8c97b8baa56b79081ee87059d0e290a10734ed419a4b",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/favicon-16.png"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/favicon-32.png",
+      "source_sha256": "649381a9d899affd091cd90d6bb2d6b8aece4773ebb1b7779410bb45962ee8c1",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/favicon-32.png"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/icon-180.png",
+      "source_sha256": "dd83a9bdfd757b781986f27f235f2cad0f43b4e05dca6287c4b79e601ad6f0de",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/icon-180.png"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/icon-192.png",
+      "source_sha256": "72dd48448d6151f7e4b86cdb53d32374ff2d3276ae496b2c72f9cde047769e07",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/icon-192.png"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/icon-512.png",
+      "source_sha256": "fedc0b311025bcf163d5f56fbea71adf160866ad1d3656ce094b7c29dd53ea76",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/icon-512.png"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/icon-maskable-192.png",
+      "source_sha256": "933950211a2df86bf0a8465eb4007c954da509ee09337f561e400ef8043bb4d8",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/icon-maskable-192.png"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/icon-maskable-512.png",
+      "source_sha256": "812c4c3ec53f5a39683e5ec19756a9a9fbee44a503297164db0efa9a31f67c42",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/icon-maskable-512.png"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/icon-maskable.svg",
+      "source_sha256": "26e3a007cf99b3ba68beffa81d0729b85e629a20d33faa542ad0f93f6dc46b51",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/icon-maskable.svg"
+    },
+    {
+      "source_path": "website/content/assets/images/icons/icon.svg",
+      "source_sha256": "4a0b83ffa5ddcbb05d60721b65aa759acbf2afde245ef22216c294f682becf5c",
+      "target_branch": "web",
+      "target_path": "website/content/assets/images/icons/icon.svg"
+    },
+    {
+      "source_path": "website/content/design/model.json",
+      "source_sha256": "67354c271e25679b33b27af5d82c2b9624f4133af7655e368854c6622e4c8234",
+      "target_branch": "web",
+      "target_path": "website/content/design/model.json"
+    },
+    {
+      "source_path": "website/content/design/semantic-model.json",
+      "source_sha256": "2a0f19d5491db8e007bb5aa34085c89fc226f666feaa9ad6ad27a2f8fab51bdd",
+      "target_branch": "web",
+      "target_path": "website/content/design/semantic-model.json"
+    },
+    {
+      "source_path": "website/content/development/index.md",
+      "source_sha256": "db75c2a864d3e84cdc28db02e3a1a8c1b473f9a6ee562f67f095c3be65a2a3ca",
+      "target_branch": "web",
+      "target_path": "website/content/development/index.md"
+    },
+    {
+      "source_path": "website/content/index.md",
+      "source_sha256": "d4e8220188b3edff0320cd29223276dfb8df4e4c2fe3695f639e61c3b8deb058",
+      "target_branch": "web",
+      "target_path": "website/content/index.md"
+    },
+    {
+      "source_path": "website/content/manifest.json",
+      "source_sha256": "0b326df49f7640cb84d8f3c585629c4eef3511dd4f8a74cb1a1ab623aa453983",
+      "target_branch": "web",
+      "target_path": "website/content/manifest.json"
+    },
+    {
+      "source_path": "website/content/manifest.webmanifest",
+      "source_sha256": "0b326df49f7640cb84d8f3c585629c4eef3511dd4f8a74cb1a1ab623aa453983",
+      "target_branch": "web",
+      "target_path": "website/content/manifest.webmanifest"
+    },
+    {
+      "source_path": "website/content/pwa.js",
+      "source_sha256": "3880ccd79068e48c6ce45eb40723cb085a169d909872fbff11c72014aff60905",
+      "target_branch": "web",
+      "target_path": "website/content/pwa.js"
+    },
+    {
+      "source_path": "website/content/schema/dbml/index.md",
+      "source_sha256": "a82395b89c6668736e71fd7e147e59d7213205ee7c2ee51bf5dde82be520d754",
+      "target_branch": "web",
+      "target_path": "website/content/schema/dbml/index.md"
+    },
+    {
+      "source_path": "website/content/schema/mermaid/index.md",
+      "source_sha256": "c1b2f50e477245cace1f6f17fd990d56624b9caeb9ec8764cfae43ab6c3afde4",
+      "target_branch": "web",
+      "target_path": "website/content/schema/mermaid/index.md"
+    },
+    {
+      "source_path": "website/content/sw.js",
+      "source_sha256": "a98ce55be1fa4fc89499f39a66fced0399b8d4bba2abf5ba5bb252d0e865b9bc",
+      "target_branch": "web",
+      "target_path": "website/content/sw.js"
+    },
+    {
+      "source_path": "website/current-runtime-reference.md",
+      "source_sha256": "78f8cc16f6bd77e867129346911e3d4bd114230d296346b5bad4cd38fe03f648",
+      "target_branch": "main",
+      "target_path": "docs/current-runtime-reference.md"
+    },
+    {
+      "source_path": "website/mkdocs.yml",
+      "source_sha256": "2d6da7b0f00d17a319da2db44e6c75e62b86f12af4e8af68827e007f2c866ad5",
+      "target_branch": "web",
+      "target_path": "website/mkdocs.yml"
+    },
+    {
+      "source_path": "website/overrides/main.html",
+      "source_sha256": "29d6d43efd06528a1972096826f81526d6953d0a9f13647bc813bc617c685f6b",
+      "target_branch": "web",
+      "target_path": "website/overrides/main.html"
+    },
+    {
+      "source_path": "website/pyproject.toml",
+      "source_sha256": "0205a3f2e1e1a4a3176a714261a67b99533065081602099487d6c860adb24984",
+      "target_branch": "web",
+      "target_path": "website/pyproject.toml"
+    },
+    {
+      "source_path": "website/schema-model-inventory.md",
+      "source_sha256": "edb3218728056a713f06d58260992d26ac0d654018f6b1d62c58cc8a59b55690",
+      "target_branch": "web",
+      "target_path": "website/schema-model-inventory.md"
+    },
+    {
+      "source_path": "website/schema/README.md",
+      "source_sha256": "4844c4b5b13627615ab4d073a900ff565bf2043d70d8d41a87942a41df39219f",
+      "target_branch": "web",
+      "target_path": "website/schema/README.md"
+    },
+    {
+      "source_path": "website/schema/dbml/combined.dbml",
+      "source_sha256": "e6681c9812a4145782e00bf1d8ffe07302243cede0dbc5b31ac1b9f2f0930842",
+      "target_branch": "web",
+      "target_path": "website/schema/dbml/combined.dbml"
+    },
+    {
+      "source_path": "website/schema/dbml/core.dbml",
+      "source_sha256": "b39fb3cdd729d4988d00518d0be547eb41855612bba557f2559ae96440c54ae6",
+      "target_branch": "web",
+      "target_path": "website/schema/dbml/core.dbml"
+    },
+    {
+      "source_path": "website/schema/dbml/operational.dbml",
+      "source_sha256": "40180b7a5b8d821cd157353a4ed2805e4be5aa1c6420fc5ba109e6f686dc739c",
+      "target_branch": "web",
+      "target_path": "website/schema/dbml/operational.dbml"
+    },
+    {
+      "source_path": "website/schema/dbml/search.dbml",
+      "source_sha256": "d4e7c10b831292357ac69fdc6e4db676720c3242f37135ad79fd2bc3d2943db5",
+      "target_branch": "web",
+      "target_path": "website/schema/dbml/search.dbml"
+    },
+    {
+      "source_path": "website/schema/index.html",
+      "source_sha256": "c0571eaf45e7e5a0efffac33546f622e789898f538656e5d321a336df9765e9d",
+      "target_branch": "web",
+      "target_path": "website/schema/index.html"
+    },
+    {
+      "source_path": "website/schema/mermaid/core-cas.md",
+      "source_sha256": "45117dc7058c89307d168666cc696ce6632c6f221e40ae668e7985b4f69ad380",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/core-cas.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/core-coverage.md",
+      "source_sha256": "c0c2f596ec24a1e46866ea10c838dd1a2779638c4a6ff6e90d005ed12d0f8592",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/core-coverage.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/core-current-state.md",
+      "source_sha256": "7807c5fe57155805ef06ee1c31b7e2509b6eb258f1643a2610149810c04d2aa2",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/core-current-state.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/core-exchange.md",
+      "source_sha256": "92b7e166abc81c5227b7456879fc386ec3285f0aebe87404f12b35a92b1e933f",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/core-exchange.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/core-git.md",
+      "source_sha256": "7409cd732ab21a0199339645ba032d6b4c87f563b01c1e981a2d5ef4613a287b",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/core-git.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/core-identity.md",
+      "source_sha256": "05362466fb328f8949bd35ee6cca827dd2b67f79a4be8df7e7d9dc49b97b9f92",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/core-identity.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/core-overview.md",
+      "source_sha256": "cd8c270b976c8f85472263fa0e4f6c5e933b92068309686733e69621bc1e8e2d",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/core-overview.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/operational.md",
+      "source_sha256": "7866d99faba0db8000535684ed9f4351cade91736a5b4c20ba14cbab556a60e1",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/operational.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/overview.md",
+      "source_sha256": "3646cf56c44b9438416bff0b486df29d872aa1a9df8c69b30ba7131d35503a86",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/overview.md"
+    },
+    {
+      "source_path": "website/schema/mermaid/search.md",
+      "source_sha256": "7628995112748d24f3ee3066f633fd05ddcd3cb1a9e9e6f33acc0566ec67fcbe",
+      "target_branch": "web",
+      "target_path": "website/schema/mermaid/search.md"
+    },
+    {
+      "source_path": "website/tests/conftest.py",
+      "source_sha256": "0502ae0f4dfe640d91825c3d41813148a895990d3120967dc86f0b54c5574ead",
+      "target_branch": "web",
+      "target_path": "website/tests/conftest.py"
+    },
+    {
+      "source_path": "website/tests/test_build_docs_site.py",
+      "source_sha256": "321754a77ccfc63d1f207f5e3692dcefb2597fcfdd313ef3b32b5502d68575ee",
+      "target_branch": "web",
+      "target_path": "website/tests/test_build_docs_site.py"
+    },
+    {
+      "source_path": "website/tests/test_content_ownership.py",
+      "source_sha256": "bbfedb7dced3eaefc86e46e2e9b634e424f9f7d3f87e0589d94d1c197802807f",
+      "target_branch": "main",
+      "target_path": "tests/unit/test_content_ownership.py"
+    },
+    {
+      "source_path": "website/tests/test_design_viz.py",
+      "source_sha256": "ece835b7724c520e46d1bda4b5dc466238e6dcf65133928328841e87344d62d7",
+      "target_branch": "web",
+      "target_path": "website/tests/test_design_viz.py"
+    },
+    {
+      "source_path": "website/tests/test_destinations.py",
+      "source_sha256": "216f09336a8ba5224a02dc251c45fda21e819227154ded573d7c1b19840197aa",
+      "target_branch": "web",
+      "target_path": "website/tests/test_destinations.py"
+    },
+    {
+      "source_path": "website/tests/test_development_guide.py",
+      "source_sha256": "f4e7301b5c73431da91a4ea375b32154de0589a52e551f2aea4d78ef9740b387",
+      "target_branch": "web",
+      "target_path": "website/tests/test_development_guide.py"
+    },
+    {
+      "source_path": "website/tests/test_generate_pwa_icons.mjs",
+      "source_sha256": "5a4aa6e00c16e2d6be5db8b6c83a0f4b1d9ea7a65cae9ce6feddc2f1ba35ed8a",
+      "target_branch": "web",
+      "target_path": "website/tests/test_generate_pwa_icons.mjs"
+    },
+    {
+      "source_path": "website/tests/test_milestone_content.py",
+      "source_sha256": "c4e06a88a9fa9bcd76617dca99ffc35363895cf365ff4633c93ec26128a65bf3",
+      "target_branch": "web",
+      "target_path": "website/tests/test_milestone_content.py"
+    },
+    {
+      "source_path": "website/tests/test_private_metadata.py",
+      "source_sha256": "7690069ce7120768bf67955d4e25ff41a5c5089ed8f9600c8237c8f9143cf064",
+      "target_branch": "web",
+      "target_path": "website/tests/test_private_metadata.py"
+    },
+    {
+      "source_path": "website/tests/test_provenance.py",
+      "source_sha256": "77bc43c4c9c765dabae22d15ec15e9c828f486825d425f1bdb135014c03ff7e7",
+      "target_branch": "web",
+      "target_path": "website/tests/test_provenance.py"
+    },
+    {
+      "source_path": "website/tests/test_public_revision.py",
+      "source_sha256": "0549d4d49509131a03fd297ac29eae78d6e9f4db6c0b4c485e6f84c1bc617cc6",
+      "target_branch": "web",
+      "target_path": "website/tests/test_public_revision.py"
+    },
+    {
+      "source_path": "website/tests/test_pwa_node_runner.py",
+      "source_sha256": "2208d5cd22e8b1141f467a79e8d3b0775d62d4c3aa3cb2e9d50e113d60447bbd",
+      "target_branch": "web",
+      "target_path": "website/tests/test_pwa_node_runner.py"
+    },
+    {
+      "source_path": "website/tests/test_revision_dates.py",
+      "source_sha256": "79b7a68adb99308c08bde95e4feedc7fd1baeab719c283efc6f9843d54d0d547",
+      "target_branch": "web",
+      "target_path": "website/tests/test_revision_dates.py"
+    },
+    {
+      "source_path": "website/tests/test_runtime_reference.py",
+      "source_sha256": "4e69c6104903b1847d6886c263f244488deade21f8aad02e8a3c3502caca1cb8",
+      "target_branch": "web",
+      "target_path": "website/tests/test_runtime_reference.py"
+    },
+    {
+      "source_path": "website/tests/test_schema_commands.py",
+      "source_sha256": "a0b25d56bf287c02b395cc8754583a5ce4a0dc6bdf20c42d314a87823fdcd1d4",
+      "target_branch": "web",
+      "target_path": "website/tests/test_schema_commands.py"
+    },
+    {
+      "source_path": "website/tests/test_schema_profile.py",
+      "source_sha256": "22efc776f3ca5994973506b8ccf999721ecb5d032c49484adc642fc73fdb4ce3",
+      "target_branch": "web",
+      "target_path": "website/tests/test_schema_profile.py"
+    },
+    {
+      "source_path": "website/tests/test_schema_viz.py",
+      "source_sha256": "db4476b91ba4994ea8a36b6d166cc82796f0eeb3144b94c51d15aeaa944c4259",
+      "target_branch": "web",
+      "target_path": "website/tests/test_schema_viz.py"
+    },
+    {
+      "source_path": "website/tests/test_semantic_viz.py",
+      "source_sha256": "27abfe06c721abcd8ee7e93f1201f87773b0100af4f1db362632a53e69a201b9",
+      "target_branch": "web",
+      "target_path": "website/tests/test_semantic_viz.py"
+    },
+    {
+      "source_path": "website/tests/test_site_sitemap_pwa.py",
+      "source_sha256": "9a05cef39af3edf7e554927b1d5161d3fd1cdeff7b7fcf22917e1b45255e79f5",
+      "target_branch": "web",
+      "target_path": "website/tests/test_site_sitemap_pwa.py"
+    },
+    {
+      "source_path": "website/tools/__init__.py",
+      "source_sha256": "b1fa186e2b14cc946af2f3aef478a82545f64dbdc8c3fb4b4af0eed2cfd936d5",
+      "target_branch": "web",
+      "target_path": "website/tools/__init__.py"
+    },
+    {
+      "source_path": "website/tools/adr_publication.py",
+      "source_sha256": "53da26e1a1139bb97f36f5051c519d63361fb99c864fe55a40ec8ea04b1f96bc",
+      "target_branch": "web",
+      "target_path": "website/tools/adr_publication.py"
+    },
+    {
+      "source_path": "website/tools/build_docs_site.py",
+      "source_sha256": "d5496faa60fdf6ad691628ed94c4da84a65b20bb6bca8a8cc446004d91ad8b7d",
+      "target_branch": "web",
+      "target_path": "website/tools/build_docs_site.py"
+    },
+    {
+      "source_path": "website/tools/design_viewer.html",
+      "source_sha256": "2cd4f040aa21c67b08d2c8742edefa1cdab6a735330d21fd6985cabf86b2f598",
+      "target_branch": "web",
+      "target_path": "website/tools/design_viewer.html"
+    },
+    {
+      "source_path": "website/tools/design_viz.py",
+      "source_sha256": "5bdd8579073ad406083d67e65c4319d343698f71d7f4b4e1b6ffb8c75ad4055d",
+      "target_branch": "web",
+      "target_path": "website/tools/design_viz.py"
+    },
+    {
+      "source_path": "website/tools/generate_pwa_icons.js",
+      "source_sha256": "2ffd40f65a3534e16befdbc781a37364d749409c43c2b79e0896ca1bebe48274",
+      "target_branch": "web",
+      "target_path": "website/tools/generate_pwa_icons.js"
+    },
+    {
+      "source_path": "website/tools/inventory_content.py",
+      "source_sha256": "85ae71416889abc725dcae40b8fd66a435fa6337d0960b5a4344bfc899d9d777",
+      "target_branch": "main",
+      "target_path": "scripts/content_inventory.py"
+    },
+    {
+      "source_path": "website/tools/provenance.py",
+      "source_sha256": "3c1eb901fa3e8e187c248d663a0e55bf6778bba9c71c6379cc5d95d59dd30055",
+      "target_branch": "web",
+      "target_path": "website/tools/provenance.py"
+    },
+    {
+      "source_path": "website/tools/schema_viz.py",
+      "source_sha256": "a79d4de125a24940b96e45261d57c7ca7259d4e598bff99861b37941af6b0ebb",
+      "target_branch": "web",
+      "target_path": "website/tools/schema_viz.py"
+    },
+    {
+      "source_path": "website/tools/semantic_viz.py",
+      "source_sha256": "6ec67d12e9742791dd03f8e4a25fe9930f96bc242d94b5613a110627357452bf",
+      "target_branch": "web",
+      "target_path": "website/tools/semantic_viz.py"
+    },
+    {
+      "source_path": "website/tools/test_browser_smoke.js",
+      "source_sha256": "1b06ddc9107a86b4540ad0c12cffbd6d33d926db4f52251a30f90413610bf41d",
+      "target_branch": "web",
+      "target_path": "website/tools/test_browser_smoke.js"
+    },
+    {
+      "source_path": "website/tools/test_design_browser.mjs",
+      "source_sha256": "6fc83496674fb4b6ae7ae1647fc475755c731c4f44e22a7471dbe07bf6237e2e",
+      "target_branch": "web",
+      "target_path": "website/tools/test_design_browser.mjs"
+    },
+    {
+      "source_path": "website/tools/test_semantic_browser.mjs",
+      "source_sha256": "4b5ab1e621a24c9ffdcc84f2bde72d56a07d0709ec303b92b40c2f681d04caed",
+      "target_branch": "web",
+      "target_path": "website/tools/test_semantic_browser.mjs"
+    },
+    {
+      "source_path": "website/tools/verify_documentation.py",
+      "source_sha256": "b6b3410984880751e7f4804c073bc38f3bfcfb7cb189421e0b2ed7ac9b5c1407",
+      "target_branch": "web",
+      "target_path": "website/tools/verify_documentation.py"
+    },
+    {
+      "source_path": "website/uv.lock",
+      "source_sha256": "26e3968ade367fd7e1bef244f8a014df8a506301fe19eb2dab9730d87641ef9a",
+      "target_branch": "web",
+      "target_path": "website/uv.lock"
+    },
+    {
+      "source_path": "website/web/AGENTS.md",
+      "source_sha256": "35c6c09dd74b6c264841df8955ffce6ffc85a5f0b1c5b176b35aa6489ef8d5a2",
+      "target_branch": "web",
+      "target_path": "website/web/AGENTS.md"
+    },
+    {
+      "source_path": "website/web/app.js",
+      "source_sha256": "c4551e1a19711fde8a51e1d7d13b2649d503d8d05dc39d10d6b840c355961135",
+      "target_branch": "web",
+      "target_path": "website/web/app.js"
+    },
+    {
+      "source_path": "website/web/main.js",
+      "source_sha256": "a36a612b1904bb3b7f33823618a4db8ce47b75efc0e68d5edcc3a217acfad359",
+      "target_branch": "web",
+      "target_path": "website/web/main.js"
+    },
+    {
+      "source_path": "website/web/style.css",
+      "source_sha256": "5ad890900eb8bf98a8a1970315cb8656a62b13ad4a50cf01da70362a55c37dcd",
+      "target_branch": "web",
+      "target_path": "website/web/style.css"
+    }
+  ]
+}

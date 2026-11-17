@@ -1,0 +1,9 @@
+/node_modules/
+/dist/
+/website/.venv/
+/website/.build/
+/website/site/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
