@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import stat
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -228,6 +231,74 @@ def check_generated(model: dict, catalog: dict, root: Path = ROOT) -> list[str]:
     return errors
 
 
+def write_generated(modules: dict[str, str], root: Path = ROOT) -> None:
+    """Preflight the whole batch, then atomically replace each generated file.
+
+    This guards ordinary filesystem aliases, not hostile concurrent filesystem
+    changes. Replacement is atomic per file, not a transaction across the batch.
+    """
+    root_metadata = root.lstat()
+    if not stat.S_ISDIR(root_metadata.st_mode):
+        raise ValueError("generated row root must be a real directory")
+    destinations = []
+    for source, contents in modules.items():
+        relative = Path(source)
+        if (
+            relative.is_absolute()
+            or not relative.parts
+            or ".." in relative.parts
+            or relative.as_posix() != source
+        ):
+            raise ValueError(
+                "generated row path must be normalized and repository-relative"
+            )
+        path = root / relative
+        # lstat also detects dangling symlinks; exists()/is_file() would follow
+        # aliases. Inspect every existing parent before creating any directories.
+        parent = root
+        for component in relative.parts[:-1]:
+            parent /= component
+            try:
+                metadata = parent.lstat()
+            except FileNotFoundError:
+                continue
+            if not stat.S_ISDIR(metadata.st_mode):
+                raise ValueError(
+                    "generated row parent must be a real directory: " + str(parent)
+                )
+        mode = 0o644
+        try:
+            metadata = path.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+                raise ValueError(
+                    "generated row destination must be a regular single-link file: "
+                    + source
+                )
+            mode = stat.S_IMODE(metadata.st_mode)
+        destinations.append((path, contents.encode("utf-8"), mode))
+
+    staged = []
+    try:
+        for path, contents, mode in destinations:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            descriptor, temporary = tempfile.mkstemp(
+                prefix="." + path.name + ".", suffix=".tmp", dir=path.parent
+            )
+            temporary = Path(temporary)
+            staged.append((temporary, path))
+            with os.fdopen(descriptor, "wb") as output:
+                output.write(contents)
+            temporary.chmod(mode)
+        for temporary, path in staged:
+            temporary.replace(path)
+    finally:
+        for temporary, _ in staged:
+            temporary.unlink(missing_ok=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     action = parser.add_mutually_exclusive_group()
@@ -244,10 +315,7 @@ def main(argv: list[str] | None = None) -> int:
         errors = validate_model(model, catalog, inspect_row_types=not args.write)
         if not errors:
             if args.write:
-                for source, contents in render_modules(model, catalog).items():
-                    path = ROOT / source
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_bytes(contents.encode("utf-8"))
+                write_generated(render_modules(model, catalog), ROOT)
             else:
                 errors = check_generated(model, catalog, ROOT)
     except (OSError, ValueError, TypeError) as exc:

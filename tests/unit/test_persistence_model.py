@@ -2,7 +2,9 @@
 
 import copy
 import importlib.util
+import os
 import sqlite3
+import stat
 import subprocess
 import sys
 from dataclasses import FrozenInstanceError, fields, is_dataclass
@@ -589,3 +591,134 @@ def test_generator_handles_hidden_columns_and_fails_closed_for_unknown_sql_types
     column["type"] = "REAL"
     with pytest.raises(ValueError, match="unsupported row column type"):
         render_modules(model, changed)
+
+
+@pytest.mark.parametrize(
+    "alias_kind", ["hardlink", "destination-symlink", "parent-symlink", "directory"]
+)
+def test_generator_refuses_late_alias_before_changing_any_output(
+    model, catalog, tmp_path, monkeypatch, capsys, alias_kind
+):
+    root = tmp_path / "repository"
+    root.mkdir()
+    modules = render_modules(model, catalog)
+    targets = [root / source for source in modules]
+    for index, path in enumerate(targets):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(f"original output {index}\n".encode())
+    # Worktrees is the last generated domain: earlier valid outputs must survive
+    # refusal of this target. All outside files are disposable test sentinels.
+    invalid = targets[-1]
+    sentinel = tmp_path / "outside-sentinel.py"
+    sentinel.write_bytes(b"outside sentinel must not change\n")
+    invalid.unlink()
+    if alias_kind == "hardlink":
+        os.link(sentinel, invalid)
+    elif alias_kind == "destination-symlink":
+        invalid.symlink_to(sentinel)
+    elif alias_kind == "parent-symlink":
+        invalid.parent.rmdir()
+        outside = tmp_path / "outside-parent"
+        outside.mkdir()
+        sentinel = outside / invalid.name
+        sentinel.write_bytes(b"outside parent sentinel must not change\n")
+        invalid.parent.symlink_to(outside, target_is_directory=True)
+    else:
+        invalid.mkdir()
+
+    def snapshot(path):
+        metadata = path.lstat()
+        return (
+            metadata.st_mode,
+            metadata.st_ino,
+            metadata.st_nlink,
+            path.readlink() if path.is_symlink() else None,
+            path.read_bytes() if path.is_file() else None,
+        )
+
+    before = {path: snapshot(path) for path in targets}
+    outside_before = snapshot(sentinel)
+    tree_before = set(root.rglob("*"))
+    monkeypatch.setattr(generate_persistence_rows, "ROOT", root)
+    monkeypatch.setattr(generate_persistence_rows, "load_model", lambda: model)
+    monkeypatch.setattr(generate_persistence_rows, "build_catalog", lambda: catalog)
+    assert generate_persistence_rows.main(["--write"]) == 1
+    error = capsys.readouterr().err
+    expected = (
+        "real directory"
+        if alias_kind == "parent-symlink"
+        else "regular single-link file"
+    )
+    assert expected in error
+    assert {path: snapshot(path) for path in targets} == before
+    assert snapshot(sentinel) == outside_before
+    assert set(root.rglob("*")) == tree_before
+    assert not list(root.rglob("*.tmp"))
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "../outside.py",
+        "./later.py",
+        "nested/../later.py",
+        "nested//later.py",
+        ".",
+        "",
+        "absolute",
+    ],
+)
+def test_generator_refuses_late_non_normalized_path_before_writing(tmp_path, source):
+    root = tmp_path / "repository"
+    root.mkdir()
+    first = root / "first.py"
+    first.write_bytes(b"original first output\n")
+    sentinel = tmp_path / "outside.py"
+    sentinel.write_bytes(b"outside sentinel\n")
+    if source == "absolute":
+        source = sentinel.as_posix()
+    with pytest.raises(ValueError, match="normalized and repository-relative"):
+        generate_persistence_rows.write_generated(
+            {"first.py": "changed", source: "changed"}, root
+        )
+    assert first.read_bytes() == b"original first output\n"
+    assert sentinel.read_bytes() == b"outside sentinel\n"
+    assert set(root.iterdir()) == {first}
+
+
+def test_generator_replaces_inodes_preserves_modes_and_cleans_staging(
+    tmp_path, monkeypatch
+):
+    first, second = tmp_path / "first.py", tmp_path / "second.py"
+    first.write_bytes(b"old first")
+    second.write_bytes(b"old second")
+    first.chmod(0o640)
+    old_inode = first.stat().st_ino
+    generate_persistence_rows.write_generated(
+        {"first.py": "new first", "second.py": "new second"}, tmp_path
+    )
+    assert first.read_bytes() == b"new first" and second.read_bytes() == b"new second"
+    assert first.stat().st_ino != old_inode
+    assert stat.S_IMODE(first.stat().st_mode) == 0o640
+    assert set(tmp_path.iterdir()) == {first, second}
+
+    original_mkstemp = generate_persistence_rows.tempfile.mkstemp
+    calls = 0
+
+    def fail_second_temporary(**kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("disposable temporary-file failure")
+        return original_mkstemp(**kwargs)
+
+    monkeypatch.setattr(
+        generate_persistence_rows.tempfile, "mkstemp", fail_second_temporary
+    )
+    with pytest.raises(OSError, match="temporary-file failure"):
+        generate_persistence_rows.write_generated(
+            {"first.py": "never applied", "second.py": "never applied"}, tmp_path
+        )
+    assert first.read_bytes() == b"new first" and second.read_bytes() == b"new second"
+    assert stat.S_IMODE(first.stat().st_mode) == 0o640
+    assert set(tmp_path.iterdir()) == {first, second}
