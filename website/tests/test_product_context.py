@@ -28,9 +28,32 @@ def test_product_checkout_cannot_be_the_web_tree(monkeypatch):
 
 
 def test_wrong_selected_product_is_refused(monkeypatch):
-    monkeypatch.setattr(context, "selected_product", lambda: {"commit": "0" * 40})
+    snapshot = context.selected_product()
+    monkeypatch.setattr(
+        context, "selected_product", lambda: {**snapshot, "commit": "0" * 40}
+    )
     with pytest.raises(ValueError, match="does not match"):
         context.product_root()
+
+
+def test_another_preparation_does_not_retarget_loaded_product(tmp_path, monkeypatch):
+    original = context.selected_product()
+    location = tmp_path / "website/.build/inputs/product-location.json"
+    location.parent.mkdir(parents=True)
+    location.write_text(json.dumps({**original, "commit": "0" * 40}))
+    monkeypatch.setattr(context, "WEB_ROOT", tmp_path)
+    assert context.selected_product() == original
+
+
+def test_wrong_recorded_tree_is_refused_without_checking_remote(monkeypatch):
+    snapshot = context.selected_product()
+    monkeypatch.setattr(
+        context, "selected_product", lambda: {**snapshot, "tree": "0" * 40}
+    )
+    with pytest.raises(ValueError, match="tree differs"):
+        context.product_root()
+    with pytest.raises(ValueError, match="tree differs"):
+        context.verify_inputs()
 
 
 def test_tampered_private_handoff_is_refused(tmp_path, monkeypatch):

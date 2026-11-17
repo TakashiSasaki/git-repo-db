@@ -834,8 +834,10 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Clean staging and output directories before build",
     )
-    parser.add_argument("--product-source", required=True)
-    parser.add_argument("--documentation-source", required=True)
+    parser.add_argument("--product-source", default=selected_product()["commit"])
+    parser.add_argument(
+        "--documentation-source", default=run_cmd(["git", "rev-parse", "HEAD"])
+    )
     return parser.parse_args()
 
 

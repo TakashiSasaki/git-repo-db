@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 from tools.product_context import PRODUCT_ROOT, WEB_ROOT
+from tools.provenance import checked_blob
 
 ROOT = PRODUCT_ROOT
 MODEL = WEB_ROOT / "website/content/design/model.json"
@@ -64,11 +65,8 @@ def load_model(path: Path = MODEL) -> dict:
                 raise ValueError("Invalid design citation")
             paths.add(source["path"])
     for p in sorted(paths):
-        pinned = subprocess.check_output(
-            ["git", "show", f"{model['source_revision']}:{p}"], cwd=ROOT
-        )
-        if (ROOT / p).is_symlink() or (ROOT / p).read_bytes() != pinned:
-            raise ValueError(f"Design citation differs from selected source: {p}")
+        # Historical citations describe their recorded revision, not today's main.
+        checked_blob(ROOT, model["source_revision"], p)
     return model
 
 

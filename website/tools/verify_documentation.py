@@ -28,8 +28,13 @@ from tools.provenance import input_record  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--product-source", required=True)
-    parser.add_argument("--documentation-source", required=True)
+    parser.add_argument("--product-source", default=selected_product()["commit"])
+    parser.add_argument(
+        "--documentation-source",
+        default=subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip(),
+    )
     parser.add_argument(
         "--preview",
         action="store_true",

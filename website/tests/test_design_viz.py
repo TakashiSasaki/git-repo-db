@@ -134,6 +134,76 @@ def test_viewer_embeds_only_semantic_design_model():
     assert "width=device-width" in html
 
 
+def test_design_fact_links_keep_the_historical_revision():
+    import subprocess
+
+    html = generate_html()
+    model = load_model()
+    reference = re.search(r"function reference\(source\) \{.*?\n      \}", html, re.S)[
+        0
+    ]
+    source = model["stores"][0]["meaning"]["sources"][0]
+    program = (
+        "const model = "
+        + json.dumps({"source_revision": model["source_revision"]})
+        + "; const esc = x => String(x);\n"
+        + reference
+        + "\nprocess.stdout.write(reference("
+        + json.dumps(source)
+        + "));"
+    )
+    link = subprocess.check_output(["node", "-e", program], text=True)
+    assert (
+        f"https://github.com/TakashiSasaki/resource-atlas/blob/{model['source_revision']}/{source['path']}#{source['anchor']}"
+        in link
+    )
+
+
+def test_historical_design_citation_survives_current_main_changes(
+    tmp_path, monkeypatch
+):
+    import subprocess
+
+    from tools import design_viz
+
+    model = json.loads(design_viz.MODEL.read_text())
+    source = tmp_path / "product"
+    source.mkdir()
+
+    def git(*args):
+        return subprocess.check_output(["git", *args], cwd=source, text=True).strip()
+
+    def citations(value):
+        if isinstance(value, dict):
+            if "path" in value:
+                yield value["path"]
+            for item in value.values():
+                yield from citations(item)
+        elif isinstance(value, list):
+            for item in value:
+                yield from citations(item)
+
+    paths = sorted(set(citations(model)))
+    for name in paths:
+        path = source / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("historical canonical source\n")
+    git("init", "-q")
+    git("config", "user.name", "Web tests")
+    git("config", "user.email", "web-tests@example.invalid")
+    git("add", ".")
+    git("commit", "-qm", "historical citations")
+    model["source_revision"] = git("rev-parse", "HEAD")
+    model["source_tree"] = git("rev-parse", "HEAD^{tree}")
+    (source / paths[0]).unlink()
+    git("add", ".")
+    git("commit", "-qm", "main retired an old source")
+    model_path = tmp_path / "model.json"
+    model_path.write_text(json.dumps(model))
+    monkeypatch.setattr(design_viz, "ROOT", source)
+    assert design_viz.load_model(model_path) == model
+
+
 def test_moved_source_links_resolve_on_the_owning_branch():
     import subprocess
 

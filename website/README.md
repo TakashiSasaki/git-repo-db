@@ -2,8 +2,9 @@
 
 The orphan `web` branch contains editable website sources. Canonical ADRs,
 contracts, product code, ownership inventories and the current runtime guide
-belong on `main`. This branch's `product-source.json` deliberately pins the
-product commit used for complete site/schema work. See ADR 0041 on main.
+belong on `main`. This branch's `product-source.json` follows `ref: main`. Preparation
+resolves it once per attempt; no product SHA is maintained in this branch.
+See ADR 0042 on main.
 
 ## Frontend editing (Google AI Studio)
 
@@ -29,22 +30,26 @@ website/.venv/bin/python website/tools/schema_viz.py --ir website/.build/inputs/
 website/.venv/bin/python website/tools/schema_viz.py --ir website/.build/inputs/inventory.json --check
 ```
 
-The helper obtains full product history in an external cache, validates the exact
-selected commit, establishes its verified product Python, runs the neutral schema
+The helper resolves refs/heads/main once, obtains full history in an external
+cache, establishes the verified product Python, runs the neutral schema
 producer in a fresh product subprocess, and transfers checked inputs privately.
 It also creates the independent `website/.venv` with its locked dependencies.
-To reuse an already selected checkout use `--product-root /absolute/product/path`;
-an incompatible existing checkout is refused and left untouched.
+For local/offline work use `--product-root /absolute/product/path`. This uses
+that checkout's HEAD and records local-override mode, without claiming observation
+of remote main. A cached checkout with inconsistent bytes is left untouched.
+The private product-location.json records requested ref, selection mode, actual
+commit/tree and retrieval time after successful preparation. Build tools keep
+that snapshot for their whole process; later main updates require no restart.
 
-Choose the actual full web commit for `FULL_WEB_SHA` and read the selected full
-product commit from `product-source.json` as `FULL_PRODUCT_SHA`:
+Build and verification commands obtain source IDs automatically from the
+prepared snapshot and this web checkout:
 
 ```bash
 website/.venv/bin/python -m pytest -q website/tests
 website/.venv/bin/ruff check website/tools website/tests scripts
 website/.venv/bin/ruff format --check website/tools website/tests scripts
-website/.venv/bin/python website/tools/build_docs_site.py --product-source "$FULL_PRODUCT_SHA" --documentation-source "$FULL_WEB_SHA" --no-mermaid --check
-website/.venv/bin/python website/tools/verify_documentation.py --product-source "$FULL_PRODUCT_SHA" --documentation-source "$FULL_WEB_SHA" --preview
+website/.venv/bin/python website/tools/build_docs_site.py --no-mermaid --check
+website/.venv/bin/python website/tools/verify_documentation.py --preview
 ```
 
 `--no-mermaid`/`--preview` produces explicitly labelled placeholders and cannot
@@ -58,8 +63,11 @@ main ownership/runtime-reference tests; a green Vite build alone proves neither.
 
 ## Updates and publication
 
-Change canonical meaning on main, select its full commit in product-source.json,
-prepare inputs, then deliberately update derived presentation as needed. Generated
+Change canonical meaning on main. Refresh this lower-priority branch when useful:
+prepare current main, regenerate affected machine-derived outputs and review only
+changed explanations. Routine refreshes need no LLM generation. Lag or failure on
+web never blocks main. Actual schema changes may need regenerated presentation;
+a build record does not certify all handwritten explanations. Generated
 copies never become editable ADR authorities. Historical citation paths/revisions
 remain exact even if main has since moved a file. The normal/full-model viewers,
 semantic explorer, PWA, sitemap and schema URL partition retain their existing

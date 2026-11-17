@@ -172,10 +172,11 @@ try {
       await page.$eval("#result", (x) => x.textContent.includes("P 実装提案")),
     );
     const href = await page.$eval("#result .citations a", (x) => x.href);
-    await page.goto(href, { waitUntil: "networkidle0" });
-    assert((await page.title()).includes("ADR 0029"));
-    assert(await page.$("h1"));
-    await page.goBack({ waitUntil: "networkidle0" });
+    const citedRevision = await page.$eval("#design-model", (x) => JSON.parse(x.textContent).source_revision);
+    // Replaces current staged-ADR navigation: historical fact citations must
+    // retain their original revision. load_model checks the actual Git blob.
+    assert(href.startsWith(`https://github.com/TakashiSasaki/resource-atlas/blob/${citedRevision}/docs/adr/0029-`));
+    assert(new URL(href).hash);
     await heading("Scope Locator registrations — 意味キー・制約");
     // Search and view changes retain scope; a wrong model fails visibly.
     await page.goto(base + "/design/");

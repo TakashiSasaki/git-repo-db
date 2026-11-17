@@ -1,4 +1,4 @@
-"""Separate immutable product inputs from editable web sources."""
+"""Use one automatically recorded product snapshot for this process."""
 
 from __future__ import annotations
 
@@ -12,23 +12,45 @@ from pathlib import Path
 WEB_ROOT = Path(__file__).resolve().parents[2]
 
 
-def selected_product() -> dict:
+def prepared_snapshot() -> dict:
     value = json.loads((WEB_ROOT / "product-source.json").read_text())
     if value.get(
         "repository"
-    ) != "https://github.com/TakashiSasaki/resource-atlas.git" or not re.fullmatch(
-        r"[0-9a-f]{40}", value.get("commit", "")
+    ) != "https://github.com/TakashiSasaki/resource-atlas.git" or (
+        value.get("schema_version") != 2
+        or value.get("ref") != "main"
+        or "commit" in value
     ):
-        raise ValueError("A canonical repository and full product commit are required")
-    return value
+        raise ValueError("Product source must follow the canonical main branch")
+    location = WEB_ROOT / "website/.build/inputs/product-location.json"
+    if not location.is_file():
+        raise ValueError("Run python scripts/prepare_product.py to prepare main inputs")
+    snapshot = json.loads(location.read_text())
+    if (
+        snapshot.get("schema_version") != 2
+        or snapshot.get("repository") != value["repository"]
+        or snapshot.get("requested_ref") != value["ref"]
+        or snapshot.get("selection_mode") not in {"remote-ref", "local-override"}
+        or not re.fullmatch(r"[0-9a-f]{40}", snapshot.get("commit", ""))
+        or not re.fullmatch(r"[0-9a-f]{40}", snapshot.get("tree", ""))
+    ):
+        raise ValueError(
+            "Prepared source is incompatible; run scripts/prepare_product.py"
+        )
+    return snapshot
+
+
+# Freeze once: a later preparation must not retarget already imported modules.
+SNAPSHOT = prepared_snapshot()
+
+
+def selected_product() -> dict:
+    return dict(SNAPSHOT)
 
 
 def product_root() -> Path:
-    pin = selected_product()
-    location = WEB_ROOT / "website/.build/inputs/product-location.json"
-    configured = os.environ.get("RESOURCE_ATLAS_PRODUCT_ROOT")
-    if configured is None and location.is_file():
-        configured = json.loads(location.read_text())["path"]
+    snapshot = selected_product()
+    configured = os.environ.get("RESOURCE_ATLAS_PRODUCT_ROOT", snapshot["path"])
     if not configured:
         raise ValueError(
             "Product inputs are not prepared; run python scripts/prepare_product.py"
@@ -43,11 +65,16 @@ def product_root() -> Path:
     actual = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=root, text=True
     ).strip()
-    if actual != pin["commit"]:
-        raise ValueError("Product checkout does not match product-source.json")
+    if actual != snapshot["commit"]:
+        raise ValueError("Product checkout does not match this attempt's snapshot")
+    tree = subprocess.check_output(
+        ["git", "rev-parse", "HEAD^{tree}"], cwd=root, text=True
+    ).strip()
+    if tree != snapshot["tree"]:
+        raise ValueError("Product checkout tree differs from prepared snapshot")
     from tools.source_integrity import verify_checkout
 
-    verify_checkout(root, pin["commit"])
+    verify_checkout(root, snapshot["commit"])
     return root
 
 
@@ -60,12 +87,15 @@ def verify_inputs() -> str:
     source = base / "source-manifest.json"
     raw = source.read_bytes()
     handoff = json.loads(raw)
-    pin = selected_product()["commit"]
+    snapshot = selected_product()
+    pin = snapshot["commit"]
     tree = subprocess.check_output(
         ["git", "rev-parse", pin + "^{tree}"], cwd=PRODUCT_ROOT, text=True
     ).strip()
+    if tree != snapshot["tree"]:
+        raise ValueError("Product checkout tree differs from prepared snapshot")
     if handoff.get("product_source") != {"commit": pin, "tree": tree}:
-        raise ValueError("Canonical-source handoff differs from product pin")
+        raise ValueError("Canonical-source handoff differs from prepared snapshot")
     policy_path = "docs/web-source-policy.json"
     policy = json.loads(
         subprocess.check_output(

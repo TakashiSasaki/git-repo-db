@@ -27,12 +27,16 @@ Git-data commit with the connected GET tool. An unsigned commit may be imported
 locally only after reconstructing its exact bytes and reproducing its SHA. The
 API normalizes date fields to UTC and loses the original offset: this migration's
 client timezone produced +0900 headers. Verify the object ID rather than assuming
-that offset for other users. Signed or otherwise unreproducible objects need an
-exact supported representation; never relabel a local commit as the remote one.
+that offset for other users. A signed merge can be reconstructed from the returned verification.payload
+and verification.signature only when its exact bytes reproduce the object ID.
+Preserve the signature's final newline as an indented header continuation;
+stripping it failed the exact-ID check in the verified migration. Otherwise use
+an exact supported representation; never relabel a local commit as the remote one.
 
 Preserve existing local branches before switching to equivalent API-created
-commits. Pin product-source.json to the actual published product commit and
-prepare its inputs again. Keep product/web/IR identities separate and compare
+commits. Keep product-source.json on ref main under ADR 0042; preparation resolves it
+once and records actual source IDs automatically. Do not reintroduce a maintained
+SHA pin to publish through this fallback. Keep product/web/IR identities separate and compare
 working executable bytes with the committed product closure before imports and
 before/after execution; git-diff alone can miss hidden index flags.
 
@@ -40,4 +44,4 @@ Create refs only after reviewing the candidate, check expected existing heads,
 and verify refs afterward. Preserve the user's merge/publication authorization
 boundaries. For this migration, web must be preserved remotely before the main
 removal is integrated; pushing the branch does not authorize site deployment.
-Canonical branch responsibilities are specified by ADR 0041 on main.
+Canonical branch responsibilities are specified by ADR 0042 on main.

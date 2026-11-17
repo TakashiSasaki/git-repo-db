@@ -312,12 +312,11 @@
       }
       function reference(source) {
         const path = source.path;
-        const dest = path.startsWith("docs/adr/")
-          ? "/adr/" + path.split("/").pop().replace(/\.md$/, "/")
-          : "https://github.com/TakashiSasaki/resource-atlas/blob/" +
-            model.source_revision +
-            "/" +
-            path;
+        const dest =
+          "https://github.com/TakashiSasaki/resource-atlas/blob/" +
+          model.source_revision +
+          "/" +
+          path;
         return `<a href="${esc(dest + "#" + source.anchor)}">${esc(path.split("/").pop().replace(/\.md$/, ""))}</a>`;
       }
       function fact(f) {
