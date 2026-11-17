@@ -7895,6 +7895,38 @@
           ],
           "source_references": [
             {
+              "excerpt": "\"\"\"Full `p1.context.coverage_claims` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 241,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "CoverageClaimRow"
+            },
+            {
+              "excerpt": "\"coverage_claims\": CoverageClaimRow,",
+              "excerpt_truncated": false,
+              "line": 1059,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "<module>"
+            },
+            {
+              "excerpt": "\"\"\"Full `p1.core.coverage_claims` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 137,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "CoverageClaimRow"
+            },
+            {
+              "excerpt": "\"coverage_claims\": CoverageClaimRow,",
+              "excerpt_truncated": false,
+              "line": 1341,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "<module>"
+            },
+            {
               "excerpt": "\"\"\"INSERT INTO coverage_claims(",
               "excerpt_truncated": false,
               "line": 77,
@@ -8319,6 +8351,38 @@
             "coverage_scope_id"
           ],
           "source_references": [
+            {
+              "excerpt": "\"\"\"Full `p1.context.coverage_scopes` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 355,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "CoverageScopeRow"
+            },
+            {
+              "excerpt": "\"coverage_scopes\": CoverageScopeRow,",
+              "excerpt_truncated": false,
+              "line": 1061,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "<module>"
+            },
+            {
+              "excerpt": "\"\"\"Full `p1.core.coverage_scopes` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 176,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "CoverageScopeRow"
+            },
+            {
+              "excerpt": "\"coverage_scopes\": CoverageScopeRow,",
+              "excerpt_truncated": false,
+              "line": 1342,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "<module>"
+            },
             {
               "excerpt": "\"coverage_scopes\",",
               "excerpt_truncated": false,
@@ -14304,6 +14368,22 @@
           ],
           "source_references": [
             {
+              "excerpt": "\"\"\"Full `p1.core.git_objects` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 229,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "GitObjectRow"
+            },
+            {
+              "excerpt": "\"git_objects\": GitObjectRow,",
+              "excerpt_truncated": false,
+              "line": 1343,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "<module>"
+            },
+            {
               "excerpt": "if table == \"git_objects\" and items[\"verified\"] and not prior[\"verified\"]:",
               "excerpt_truncated": false,
               "line": 583,
@@ -17707,6 +17787,22 @@
           ],
           "source_references": [
             {
+              "excerpt": "\"\"\"Full `p1.core.ref_observations` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 989,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "RefObservationRow"
+            },
+            {
+              "excerpt": "\"ref_observations\": RefObservationRow,",
+              "excerpt_truncated": false,
+              "line": 1355,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "<module>"
+            },
+            {
               "excerpt": "\"INSERT INTO ref_observations(repository_uuidv4,snapshot_id,raw_ref_name,kind,object_format,target_oid,peeled_oid,target_type) VALUES(?,?,?,?,?,?,?,?)\",",
               "excerpt_truncated": false,
               "line": 407,
@@ -18204,6 +18300,22 @@
             "repository_uuidv4"
           ],
           "source_references": [
+            {
+              "excerpt": "\"\"\"Full `p1.core.repositories` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 1182,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "RepositoryRow"
+            },
+            {
+              "excerpt": "\"repositories\": RepositoryRow,",
+              "excerpt_truncated": false,
+              "line": 1358,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+              "scope": "<module>"
+            },
             {
               "excerpt": "\"query_kind\": \"owner-repositories\",",
               "excerpt_truncated": false,
@@ -24581,6 +24693,22 @@
           ],
           "source_references": [
             {
+              "excerpt": "\"\"\"Full `p1.context.source_repositories` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 954,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "SourceRepositoryRow"
+            },
+            {
+              "excerpt": "\"source_repositories\": SourceRepositoryRow,",
+              "excerpt_truncated": false,
+              "line": 1071,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "<module>"
+            },
+            {
               "excerpt": "\"source_repositories\",",
               "excerpt_truncated": false,
               "line": 137,
@@ -25356,6 +25484,22 @@
             "source_id"
           ],
           "source_references": [
+            {
+              "excerpt": "\"\"\"Full `p1.context.sources` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 983,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "SourceRegistrationRow"
+            },
+            {
+              "excerpt": "\"sources\": SourceRegistrationRow,",
+              "excerpt_truncated": false,
+              "line": 1072,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "<module>"
+            },
             {
               "excerpt": "self, acquisition, fmt, oid, target_type, peeled_oid, *, sources=None",
               "excerpt_truncated": false,
@@ -26669,6 +26813,22 @@
             "text_body_id"
           ],
           "source_references": [
+            {
+              "excerpt": "\"\"\"Full `p1.context.text_bodies` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 1035,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "TextBodyRow"
+            },
+            {
+              "excerpt": "\"text_bodies\": TextBodyRow,",
+              "excerpt_truncated": false,
+              "line": 1074,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+              "scope": "<module>"
+            },
             {
               "excerpt": "from repo_catalog.adapters.sqlite.text_bodies import intern_text_body",
               "excerpt_truncated": false,
@@ -32640,6 +32800,22 @@
           ],
           "source_references": [
             {
+              "excerpt": "\"\"\"Full `p1.operational.cache_locators` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 159,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+              "scope": "CacheLocatorRow"
+            },
+            {
+              "excerpt": "\"cache_locators\": CacheLocatorRow,",
+              "excerpt_truncated": false,
+              "line": 379,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+              "scope": "<module>"
+            },
+            {
               "excerpt": "\"SELECT cache_locator_id FROM cache_locators WHERE path=?\",",
               "excerpt_truncated": false,
               "line": 133,
@@ -35162,6 +35338,22 @@
             "search_document_id"
           ],
           "source_references": [
+            {
+              "excerpt": "\"\"\"Full `p1.search.search_documents` record.\"\"\"",
+              "excerpt_truncated": false,
+              "line": 92,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+              "scope": "SearchDocumentRow"
+            },
+            {
+              "excerpt": "\"search_documents\": SearchDocumentRow,",
+              "excerpt_truncated": false,
+              "line": 176,
+              "operation_hint": "registry_or_reference",
+              "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+              "scope": "<module>"
+            },
             {
               "excerpt": "\"SELECT search_document_id, source_key FROM search_documents WHERE kind=?\",",
               "excerpt_truncated": false,

@@ -2,7 +2,8 @@
 
 DDL owns columns, ordered keys and physical foreign keys. The JSON owns logical
 class assignments, observed Python type bindings and explicitly bounded gaps.
-This is structural correspondence checking, not semantic or serialization proof.
+Dedicated row types are generated from DDL; inputs/projections remain separate.
+This is structural correspondence checking, not admission/semantic proof.
 """
 
 from __future__ import annotations
@@ -37,14 +38,32 @@ TYPE_KINDS = {"abstract", "value", "dto", "query"}
 IDENTIFIER = re.compile(r"[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9]*\Z")
 
 
+def row_type_binding(record: dict) -> dict[str, str]:
+    """The declared per-domain module and logical short name own the row type."""
+    domain = record["domain"]
+    prefix = f"packages/{domain}/src/repo_catalog/"
+    path = (
+        prefix + f"{domain}/rows.py"
+        if domain in {"filesystem", "worktrees"}
+        else prefix + f"adapters/sqlite/{domain}_rows.py"
+    )
+    return {"path": path, "symbol": record["id"].split(".")[1] + "Row"}
+
+
 def load_model(path: Path = MODEL) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def validate_model(model: dict, catalog: dict, root: Path = ROOT) -> list[str]:
+def validate_model(
+    model: dict,
+    catalog: dict,
+    root: Path = ROOT,
+    *,
+    inspect_row_types: bool = True,
+) -> list[str]:
     """Validate finite design/DDL coverage and symbol presence, never live rows."""
     errors = validate_catalog(catalog)
-    if not isinstance(model, dict) or model.get("schema_version") != 1:
+    if not isinstance(model, dict) or model.get("schema_version") != 2:
         return [*errors, "unsupported persistence model/version"]
     domains = model.get("domains")
     if not isinstance(domains, dict) or set(domains) != set(TARGET_FORMATS):
@@ -68,22 +87,30 @@ def validate_model(model: dict, catalog: dict, root: Path = ROOT) -> list[str]:
     identities, rows, by_table = {}, Counter(), {}
     parsed_sources: dict[str, set[str]] = {}
 
-    def binding(record, persistent):
-        observed = record.get("python")
+    def binding(record, persistent, field="python"):
+        observed = record.get(field)
         if observed is None:
+            if field == "row_type":
+                errors.append(record.get("id", "?") + ": row_type binding is required")
             return
         ident = record.get("id", "?")
         if not isinstance(observed, dict):
             errors.append(ident + ": invalid Python binding")
             return
         expected_fields = (
-            {"path", "symbol", "role"} if persistent else {"path", "symbol"}
+            {"path", "symbol", "role"}
+            if persistent and field == "python"
+            else {"path", "symbol"}
         )
         if set(observed) != expected_fields:
             errors.append(ident + ": unexpected/missing Python binding fields")
-        if persistent and (
-            not isinstance(observed.get("role"), str)
-            or observed["role"] not in {"row-input", "projection"}
+        if (
+            persistent
+            and field == "python"
+            and (
+                not isinstance(observed.get("role"), str)
+                or observed["role"] not in {"row-input", "projection"}
+            )
         ):
             errors.append(ident + ": Python role must be row-input or projection")
         source, symbol = observed.get("path"), observed.get("symbol")
@@ -144,6 +171,8 @@ def validate_model(model: dict, catalog: dict, root: Path = ROOT) -> list[str]:
                 "note",
                 "table" if persistent else "sources",
             }
+            if persistent:
+                allowed.add("row_type")
             if set(record) != allowed:
                 errors.append(
                     ident
@@ -153,6 +182,13 @@ def validate_model(model: dict, catalog: dict, root: Path = ROOT) -> list[str]:
                 errors.append(ident + ": explanatory note is required")
             binding(record, persistent)
             if persistent:
+                binding_fields = record.get("row_type")
+                if binding_fields != row_type_binding(record):
+                    errors.append(
+                        ident + ": row_type must match its dedicated domain module/name"
+                    )
+                if inspect_row_types:
+                    binding(record, True, "row_type")
                 table = record.get("table")
                 if (
                     not isinstance(record.get("kind"), str)
@@ -278,7 +314,7 @@ def _cell(value: str) -> str:
 def _python(record: dict) -> str:
     binding = record.get("python")
     if binding is None:
-        return "no dedicated Python row type recorded"
+        return "no Python input/projection recorded"
     return f"{binding.get('role', record['kind'])}: `{binding['symbol']}` ({binding['path']})"
 
 
@@ -288,8 +324,9 @@ def render_markdown(model: dict, catalog: dict) -> str:
         "# Separated persistence class mapping",
         "",
         "Accepted target correspondence; normal startup remains unchanged. "
-        "DDL-derived fields/keys are implementation facts. Python bindings are "
-        "observed inputs/projections; AST presence does not prove row serialization.",
+        "DDL-derived fields/keys are implementation facts. Dedicated row types "
+        "are generated separately from observed Python inputs/projections; "
+        "AST presence does not prove row serialization or admission correctness.",
         "",
         "Seven responsibility roles do not require seven initialized/open DBs. "
         "Operational retains required durable work/recovery state; row kind "
@@ -324,8 +361,8 @@ def render_markdown(model: dict, catalog: dict) -> str:
                     for item in schema["definition_sources"]
                 ),
                 "",
-                "| Persistent class | Kind | Table | Ordered primary key | Python correspondence |",
-                "| --- | --- | --- | --- | --- |",
+                "| Persistent class | Kind | Table | Ordered primary key | Generated row type | Python input/projection |",
+                "| --- | --- | --- | --- | --- | --- |",
             ]
         )
         for row in model["classes"]:
@@ -343,6 +380,7 @@ def render_markdown(model: dict, catalog: dict) -> str:
                             row["kind"],
                             f"`{row['table']}`",
                             f"`({key})`",
+                            f"`{row['row_type']['symbol']}` ({row['row_type']['path']})",
                             _python(row),
                         ],
                     )
@@ -416,7 +454,7 @@ def render_markdown(model: dict, catalog: dict) -> str:
         [
             "",
             "Structural coverage and symbol checks do not prove SQL CHECK/trigger semantics, "
-            "admission/recovery correctness, complete Python field/key binding, "
+            "admission/recovery correctness, input/projection serialization, "
             "instance validity or formal semantic consistency.",
             "",
         ]
@@ -443,6 +481,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         model, catalog = load_model(args.model), build_catalog()
         errors = validate_model(model, catalog)
+        if not errors:
+            from scripts.generate_persistence_rows import check_generated
+
+            errors = check_generated(model, catalog)
     except (OSError, ValueError, TypeError) as exc:
         print("Persistence mapping failed: " + str(exc), file=sys.stderr)
         return 1

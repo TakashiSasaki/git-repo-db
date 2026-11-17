@@ -10093,6 +10093,15 @@
       "producer": "Focused positive/negative correspondence regressions.",
       "consumers": "Development pytest and independent review.",
       "publication": "not staged"
+    },
+    "scripts/generate_persistence_rows.py": {
+      "status": "repository-tool",
+      "owner": "scripts/",
+      "authority": "ADR 0043 generated persistence row contract; DDL owns fields and keys.",
+      "source": "scripts/generate_persistence_rows.py",
+      "producer": "Deterministic generation from actual separated DDL and canonical class assignments.",
+      "consumers": "Owning product distributions, persistence checker and focused tests.",
+      "publication": "not staged"
     }
   }
 }

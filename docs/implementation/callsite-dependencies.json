@@ -841,6 +841,80 @@
   ],
   "modules": [
     {
+      "path": "packages/access/src/repo_catalog/adapters/sqlite/access_rows.py",
+      "owner": "repo-catalog-access",
+      "sha256": "a7fbcf46962d1a1039fa8320ee436907a174e898b39b5a968668117179652b30",
+      "functions": [
+        {
+          "name": "_validate_value",
+          "line": 29,
+          "end_line": 37
+        },
+        {
+          "name": "__post_init__",
+          "line": 39,
+          "end_line": 41
+        },
+        {
+          "name": "_values",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "from_record",
+          "line": 51,
+          "end_line": 61
+        },
+        {
+          "name": "insert_bindings",
+          "line": 64,
+          "end_line": 83
+        },
+        {
+          "name": "key_values",
+          "line": 85,
+          "end_line": 87
+        }
+      ]
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "owner": "repo-catalog-context",
+      "sha256": "bf45c9d12dd6bddff423ccf007ad4f86245205223ae54ef4fb11a2ae67b7242f",
+      "functions": [
+        {
+          "name": "_validate_value",
+          "line": 29,
+          "end_line": 37
+        },
+        {
+          "name": "__post_init__",
+          "line": 39,
+          "end_line": 41
+        },
+        {
+          "name": "_values",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "from_record",
+          "line": 51,
+          "end_line": 61
+        },
+        {
+          "name": "insert_bindings",
+          "line": 64,
+          "end_line": 83
+        },
+        {
+          "name": "key_values",
+          "line": 85,
+          "end_line": 87
+        }
+      ]
+    },
+    {
       "path": "packages/context/src/repo_catalog/domain/resource_identity.py",
       "owner": "repo-catalog-context",
       "sha256": "a7b68deb5a40956360a7c8ad69bcff1c216020b4eb451e52e0ea61fb5d0c13a3",
@@ -954,6 +1028,191 @@
           "name": "unix_seconds_to_us",
           "line": 127,
           "end_line": 159
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "owner": "repo-catalog-core",
+      "sha256": "e9ae7120376f033a6c4240195a0583f03a168a2f083984610381ef6a847ac23e",
+      "functions": [
+        {
+          "name": "_validate_value",
+          "line": 29,
+          "end_line": 37
+        },
+        {
+          "name": "__post_init__",
+          "line": 39,
+          "end_line": 41
+        },
+        {
+          "name": "_values",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "from_record",
+          "line": 51,
+          "end_line": 61
+        },
+        {
+          "name": "insert_bindings",
+          "line": 64,
+          "end_line": 83
+        },
+        {
+          "name": "key_values",
+          "line": 85,
+          "end_line": 87
+        }
+      ]
+    },
+    {
+      "path": "packages/filesystem/src/repo_catalog/filesystem/rows.py",
+      "owner": "repo-catalog-filesystem",
+      "sha256": "793a692bd0664453fb835ba20aa906318d737d0c9d2e24bbf001850acc487438",
+      "functions": [
+        {
+          "name": "_validate_value",
+          "line": 29,
+          "end_line": 37
+        },
+        {
+          "name": "__post_init__",
+          "line": 39,
+          "end_line": 41
+        },
+        {
+          "name": "_values",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "from_record",
+          "line": 51,
+          "end_line": 61
+        },
+        {
+          "name": "insert_bindings",
+          "line": 64,
+          "end_line": 83
+        },
+        {
+          "name": "key_values",
+          "line": 85,
+          "end_line": 87
+        }
+      ]
+    },
+    {
+      "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+      "owner": "repo-catalog-operational",
+      "sha256": "71662bcde1f4c92d1689bdbf37bb2a5ad7110d471960406ff56ae7eb446a9065",
+      "functions": [
+        {
+          "name": "_validate_value",
+          "line": 29,
+          "end_line": 37
+        },
+        {
+          "name": "__post_init__",
+          "line": 39,
+          "end_line": 41
+        },
+        {
+          "name": "_values",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "from_record",
+          "line": 51,
+          "end_line": 61
+        },
+        {
+          "name": "insert_bindings",
+          "line": 64,
+          "end_line": 83
+        },
+        {
+          "name": "key_values",
+          "line": 85,
+          "end_line": 87
+        }
+      ]
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+      "owner": "repo-catalog-search",
+      "sha256": "a0e0c867a578c2eb2fae15a543b7ab613fa3f7e4da1c2213f3253e957e549dd5",
+      "functions": [
+        {
+          "name": "_validate_value",
+          "line": 29,
+          "end_line": 37
+        },
+        {
+          "name": "__post_init__",
+          "line": 39,
+          "end_line": 41
+        },
+        {
+          "name": "_values",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "from_record",
+          "line": 51,
+          "end_line": 61
+        },
+        {
+          "name": "insert_bindings",
+          "line": 64,
+          "end_line": 83
+        },
+        {
+          "name": "key_values",
+          "line": 85,
+          "end_line": 87
+        }
+      ]
+    },
+    {
+      "path": "packages/worktrees/src/repo_catalog/worktrees/rows.py",
+      "owner": "repo-catalog-worktrees",
+      "sha256": "a77e7394372e662bd1b408a454950222a175077f6a81661e0da8752d91aad2aa",
+      "functions": [
+        {
+          "name": "_validate_value",
+          "line": 29,
+          "end_line": 37
+        },
+        {
+          "name": "__post_init__",
+          "line": 39,
+          "end_line": 41
+        },
+        {
+          "name": "_values",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "from_record",
+          "line": 51,
+          "end_line": 61
+        },
+        {
+          "name": "insert_bindings",
+          "line": 64,
+          "end_line": 83
+        },
+        {
+          "name": "key_values",
+          "line": 85,
+          "end_line": 87
         }
       ]
     },
@@ -4735,6 +4994,222 @@
     "valid_ref_captures"
   ],
   "references": [
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 241,
+      "function": null,
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 355,
+      "function": null,
+      "subjects": [
+        "coverage_scopes"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 954,
+      "function": null,
+      "subjects": [
+        "source_repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 983,
+      "function": null,
+      "subjects": [
+        "sources"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 1035,
+      "function": null,
+      "subjects": [
+        "text_bodies"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 1059,
+      "function": null,
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 1061,
+      "function": null,
+      "subjects": [
+        "coverage_scopes"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 1071,
+      "function": null,
+      "subjects": [
+        "source_repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 1072,
+      "function": null,
+      "subjects": [
+        "sources"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/context/src/repo_catalog/adapters/sqlite/context_rows.py",
+      "line": 1074,
+      "function": null,
+      "subjects": [
+        "text_bodies"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 137,
+      "function": null,
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 176,
+      "function": null,
+      "subjects": [
+        "coverage_scopes"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 229,
+      "function": null,
+      "subjects": [
+        "git_objects"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 989,
+      "function": null,
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 1182,
+      "function": null,
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 1341,
+      "function": null,
+      "subjects": [
+        "coverage_claims"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 1342,
+      "function": null,
+      "subjects": [
+        "coverage_scopes"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 1343,
+      "function": null,
+      "subjects": [
+        "git_objects"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 1355,
+      "function": null,
+      "subjects": [
+        "ref_observations"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/core/src/repo_catalog/adapters/sqlite/core_rows.py",
+      "line": 1358,
+      "function": null,
+      "subjects": [
+        "repositories"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+      "line": 159,
+      "function": null,
+      "subjects": [
+        "cache_locators"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/operational/src/repo_catalog/adapters/sqlite/operational_rows.py",
+      "line": 379,
+      "function": null,
+      "subjects": [
+        "cache_locators"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+      "line": 92,
+      "function": null,
+      "subjects": [
+        "search_documents"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/search/src/repo_catalog/adapters/sqlite/search_rows.py",
+      "line": 176,
+      "function": null,
+      "subjects": [
+        "search_documents"
+      ],
+      "sql_operations": []
+    },
     {
       "path": "src/repo_catalog/adapters/filesystem/cache.py",
       "line": 55,

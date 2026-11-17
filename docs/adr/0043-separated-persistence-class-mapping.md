@@ -82,3 +82,21 @@ than claiming all of these capabilities absent:
 This increment implements the mapping, structural checker/report and focused
 regressions. It does not implement those four runtime phases, establish complete
 formal consistency or change deployment/release/required-check settings.
+
+## Owner-approved implementation follow-up
+
+The owner subsequently selected the full sequence through ordinary CLI cutover
+and normal-code retirement, with a dedicated Python row class and conversion
+for every selected table, then requested implementation. Compatible existing
+capabilities carry forward; command syntax compatibility does not. The ordinary
+CLI will be organized by responsibility/use and initialization will require an
+explicit domain or paired scope. These choices do not activate all seven stores
+or authorize conversion/deletion of old user databases.
+
+The first implementation step generates frozen typed row classes from DDL and
+class assignments, with separate complete-row decoding, writable INSERT bindings
+and ordered keys. Version 2 of the mapping adds `row_type` without changing the
+meaning of observed `python` input/projection bindings. The generator has explicit
+`--write` and read-only `--check` modes; ordinary checking remains read-only.
+Runtime cutover and legacy retirement require their later adapter/behavior/test
+obligations; the existence of generated classes alone does not complete them.
