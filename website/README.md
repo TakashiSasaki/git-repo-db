@@ -66,5 +66,16 @@ semantic explorer, PWA, sitemap and schema URL partition retain their existing
 publication boundaries. The current custom domain is unchanged.
 
 The web workflow tests/builds on push and retains preview/verification evidence.
-Production deployment requires manually selecting its `deploy` input. A normal
-push, migration or successful build does not publish a new site.
+For manual execution, select branch `web` in Actions → pages → Run workflow.
+Main retains only a same-path registration notice required by GitHub; running
+that notice on main stops with branch-selection instructions and performs no build.
+With a working GitHub CLI, complete hosted verification without deployment is:
+
+```sh
+gh workflow run pages.yml --ref web -f deploy=false
+```
+
+An explicitly authorized production deployment uses the same command with
+`-f deploy=true`. The `deploy` input defaults to false. A normal push, migration
+or successful build does not publish a new site. The migration's local preview
+checks do not claim that a hosted manual dispatch or deployment has been run.
