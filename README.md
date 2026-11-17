@@ -12,7 +12,7 @@ Git構造・参照観測・Blob原文のMD5/SHA-1/SHA-256・対象本文を永�
 Google AI Studioへのインポート、Node/Viteの起動は
 [`web` ブランチ](https://github.com/TakashiSasaki/resource-atlas/tree/web)で行います。
 サイトは固定した本体コミットの原文・スキーマ情報を読み取り、表示を作成します。
-[分離と受け渡しの規約](docs/adr/0041-independent-web-branch.md)を参照してください。
+[分離と受け渡しの規約](docs/adr/0042-asynchronous-web-main-tracking.md)を参照してください。
 
 ## ドキュメント・スキーマ可視化
 

@@ -46,7 +46,7 @@ snapshot after evaluating the results.
 For each explicit entry, `status` describes the assessed scope of the file;
 `owner` is its intended location; `source` names the record itself and
 `baseline_git_object` identifies its original mode and blob when present at the
-pinned product revision. `authority` describes how the record relates to accepted
+recorded product execution snapshot. `authority` describes how the record relates to accepted
 decisions, while `producer`, `consumers`, and `publication` identify the
 creation path, known uses, and existing staging intent. `source_heading`, cited
 ADRs and status evidence are aids to review, not new authorities.

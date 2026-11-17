@@ -44,6 +44,18 @@ def web_branch_map(root, commit):
     )
 
 
+def verify_web_tracking_config(config):
+    """Validate tracking policy, without requiring a maintained product SHA."""
+    if (
+        config.get("schema_version") != 2
+        or config.get("repository")
+        != "https://github.com/TakashiSasaki/resource-atlas.git"
+        or config.get("ref") != "main"
+        or "commit" in config
+    ):
+        raise DocumentationGap("Web source must follow canonical main")
+
+
 def verify_moved_product_obligations(mapping, product_nodes):
     if mapping is None:
         return
@@ -147,12 +159,7 @@ def checked_receipt(path, context, product, ir_hash, root):
         canonical_raw = (path.parent / "source-manifest.json").read_bytes()
         canonical = json.loads(canonical_raw)
         config = json.loads(git(root, "show", commit + ":product-source.json"))
-        if (
-            config.get("commit") != product["commit"]
-            or config.get("repository")
-            != "https://github.com/TakashiSasaki/resource-atlas.git"
-        ):
-            raise DocumentationGap("Web commit selects a different product source")
+        verify_web_tracking_config(config)
         if (
             canonical.get("product_source") != product
             or canonical.get("ir_sha256") != ir_hash

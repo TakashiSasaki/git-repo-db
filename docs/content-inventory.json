@@ -10002,12 +10002,12 @@
       "static_consumer_references": [],
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent."
     },
-    "docs/adr/0041-independent-web-branch.md": {
+    "docs/adr/0042-asynchronous-web-main-tracking.md": {
       "status": "adr-source-or-governance",
       "owner": "docs/adr/",
-      "authority": "ADR 0041 and preserved ADR 0035 obligations.",
-      "source": "docs/adr/0041-independent-web-branch.md",
-      "producer": "ADR 0041 branch separation.",
+      "authority": "ADR 0042 and preserved ADR 0035 obligations.",
+      "source": "docs/adr/0042-asynchronous-web-main-tracking.md",
+      "producer": "Owner-approved asynchronous main tracking policy.",
       "consumers": "Product/web handoff and associated verification.",
       "publication": "not staged",
       "status_in_source": "accepted"
