@@ -154,6 +154,18 @@ def fixture_transaction(directory, grants):
         yield FixtureContext(context, admission)
 
 
+@contextmanager
+def fixture_reviewed_transfer_transaction(directory, grants):
+    """Real Context facade on a verified fresh-memory I3-I5 test capability."""
+    from tests.support.i6a import isolated_context_db
+
+    service, _ = fixture_service(grants)
+    admission = fixture_context(service)
+    with isolated_context_db() as db:
+        with _isolated_tx_scope(db, directory, service, admission) as context:
+            yield FixtureContext(context, admission)
+
+
 def _extract_directory_context_grants(directory) -> DependencySet:
     if directory is None:
         return DependencySet()

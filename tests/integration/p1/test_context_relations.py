@@ -1,7 +1,9 @@
 """ADR 0030 I1 counterexamples, including Transfer admission bypasses."""
 
+import json
 import sqlite3
 from contextlib import contextmanager
+from dataclasses import replace
 
 import pytest
 
@@ -10,7 +12,7 @@ from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_context_relations,
 )
-from repo_catalog.domain.context_admission import DependencySet
+from repo_catalog.domain.context_admission import AdmissionRefused, DependencySet
 from repo_catalog.domain.p1_context import (
     CoverageScope,
     EventReportKey,
@@ -35,7 +37,10 @@ from repo_catalog.domain.recovery import BackupValidationError
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from tests.integration.context_originals import synthetic_parent
 from tests.support.authorized_context import FixtureContextStore
-from tests.support.context_admission import fixture_transaction
+from tests.support.context_admission import (
+    fixture_reviewed_transfer_transaction,
+)
+from tests.support.i6a import isolated_context_db
 
 REPO_1 = "9ebbe38a-f937-40e6-a99c-701835ebcf10"
 REPO_2 = "c58b4f17-f58c-4a33-8bc6-eb52c42337d1"
@@ -48,6 +53,134 @@ KEY_EVENT = ResourceKey.timeline_event(KEY_ISSUE, "event-99")
 
 PROVENANCE_1 = canonical({"source": "provider.example", "evidence": "event-1"})
 PROVENANCE_2 = canonical({"source": "provider.example", "evidence": "event-2"})
+
+
+def transfer_fixture_mapping(repository):
+    """Declare fixed synthetic mapping evidence before any attempted admission."""
+    provider = ResourceKey.from_native(
+        SERVICE, "repository", "provider-a" if repository == REPO_1 else "provider-b"
+    )
+    return ResourceRepositoryRelation(
+        provider,
+        "represents_repository",
+        FieldClock("mapping", 1),
+        canonical(repository),
+        PROVENANCE_1,
+        1,
+    )
+
+
+def reviewed_transfer_report(report):
+    """Supply truthful fixture support for the report's fixed synthetic targets."""
+    relations = (*report.from_relations, *report.to_relations)
+    if all(
+        not r.is_resolved_target or r.embedded_support is not None for r in relations
+    ):
+        return report
+    supports, providers = [], {}
+    for role in ("transfer_from_repository", "transfer_to_repository"):
+        targets = {
+            r.target_json
+            for r in relations
+            if r.relation_kind == role and r.is_resolved_target
+        }
+        if len(targets) > 1:
+            return report  # Competing mappings remain unqualified under I5.
+        if targets:
+            target = next(iter(targets))
+            if target not in (canonical(REPO_1), canonical(REPO_2)):
+                return report  # No invented mapping to an unregistered target.
+            mapping = transfer_fixture_mapping(json.loads(target))
+            providers[role] = mapping.resource
+            supports.append(
+                (role, MappingSupport(mapping.resource, (mapping.claim_key,)))
+            )
+        else:
+            providers[role] = report.endpoint_declaration.endpoint_for(role)
+    original = json.loads(report.provenance_json)
+    provenance = encode_transfer_supported_provenance(
+        original["source"], original["evidence"], supports
+    )
+    return replace(
+        report,
+        report_key=EventReportKey(report.event_resource, report.clock, provenance),
+        endpoint_declaration=ProviderEndpointDeclaration(
+            providers["transfer_from_repository"], providers["transfer_to_repository"]
+        ),
+        from_relations=tuple(
+            replace(
+                r,
+                provenance_json=provenance,
+                event_report_members_json=None,
+                event_report_scope_json=None,
+            )
+            for r in report.from_relations
+        ),
+        to_relations=tuple(
+            replace(
+                r,
+                provenance_json=provenance,
+                event_report_members_json=None,
+                event_report_scope_json=None,
+            )
+            for r in report.to_relations
+        ),
+    )
+
+
+def seed_reviewed_transfer_dependencies(db):
+    """Independent fixed Parent observations and genuine mapping claims."""
+    for mapping in (transfer_fixture_mapping(REPO_1), transfer_fixture_mapping(REPO_2)):
+        declaration = RI.unscoped(mapping.resource)
+        db.execute(
+            "INSERT OR IGNORE INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id) VALUES(?,?,?,?,?,?,?)",
+            (*mapping.resource.coordinates(), *declaration.columns),
+        )
+        db.execute(
+            "INSERT OR IGNORE INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,target_json,clock_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            (
+                *mapping.resource.coordinates(),
+                mapping.relation_kind,
+                mapping.target_json,
+                mapping.clock_json,
+                mapping.provenance_json,
+                mapping.observed_at_us,
+            ),
+        )
+    for native in ("event-99", "failed-transfer", "timeline-77", "ev-101", "ev-102"):
+        event = ResourceKey.timeline_event(KEY_ISSUE, native)
+        declaration = RI.scoped(event, KEY_ISSUE, "timeline_event", native)
+        db.execute(
+            "INSERT OR IGNORE INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id,identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id) VALUES(?,?,?,?,?,?,?)",
+            (*event.coordinates(), *declaration.columns),
+        )
+        parent = synthetic_parent(event, KEY_ISSUE)
+        db.execute(
+            "INSERT OR IGNORE INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+            (*parent.report_key.coordinates(), parent.observed_at_us),
+        )
+
+
+@contextmanager
+def stored_transfer_fault(db):
+    """Inject retained-data faults, then restore exact schema before typed reads."""
+    triggers = db.execute(
+        "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('resource_relations','resource_repository_relations')"
+    ).fetchall()
+    original_schema = schema.schema_rows(db)
+    db.execute("PRAGMA foreign_keys=OFF")
+    db.execute("PRAGMA ignore_check_constraints=ON")
+    for name, _sql in triggers:
+        db.execute(f'DROP TRIGGER "{name}"')
+    try:
+        yield
+    finally:
+        for _name, sql in triggers:
+            db.execute(sql)
+        db.execute("PRAGMA ignore_check_constraints=OFF")
+        db.execute("PRAGMA foreign_keys=ON")
+        assert schema.schema_rows(db) == original_schema
+        schema.verify_connection(db)
 
 
 def relation_grants():
@@ -141,9 +274,9 @@ def relation_grants():
 @pytest.mark.parametrize("result_api", [False, True])
 @pytest.mark.parametrize("role", ["transfer_from_repository", "transfer_to_repository"])
 def test_transfer_generic_admission_requires_complete_report(
-    context_db, tmp_path, production, result_api, role
+    transfer_context_db, tmp_path, production, result_api, role
 ):
-    db, store, _ = context_db
+    db, store, _ = transfer_context_db
 
     @contextmanager
     def selected_store():
@@ -153,9 +286,12 @@ def test_transfer_generic_admission_requires_complete_report(
         catalog = tmp_path / "production"
         catalog.mkdir()
         schema.initialize(catalog / "context.sqlite3", "context", REPO_1, SERVICE)
-        with fixture_transaction(catalog, relation_grants()) as facade:
+        with fixture_reviewed_transfer_transaction(
+            catalog, relation_grants()
+        ) as facade:
             facade.provider(SERVICE, "github", "{}")
             facade.repository(REPO_1)
+            facade.repository(REPO_2)
             facade.resource(KEY_ISSUE)
             facade.resource(
                 KEY_EVENT,
@@ -163,13 +299,16 @@ def test_transfer_generic_admission_requires_complete_report(
                     KEY_EVENT, KEY_ISSUE, "timeline_event", "event-99"
                 ),
             )
+            seed_reviewed_transfer_dependencies(facade.db)
             yield facade
         assert not (catalog / "p1-recovery-stop.json").exists()
 
     with selected_store() as selected:
         # Genuine Issue-parented Timeline Event identity alone says nothing
         # about whether this was a Transfer event.
-        assert not selected.db.execute("SELECT 1 FROM resource_relations").fetchall()
+        assert not selected.db.execute(
+            "SELECT 1 FROM resource_relations WHERE relation_kind='transfer_event_report'"
+        ).fetchall()
         endpoint = ResourceRepositoryRelation(
             KEY_EVENT, role, FieldClock("event", 1), canonical(REPO_1), PROVENANCE_1, 1
         )
@@ -178,10 +317,12 @@ def test_transfer_generic_admission_requires_complete_report(
             if result_api
             else selected.admit_repository_relation
         )
-        with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
+        with pytest.raises(
+            ValueError, match="Transfer endpoints require admit_transfer_event"
+        ):
             admit(endpoint)
         assert not selected.db.execute(
-            "SELECT 1 FROM resource_repository_relations"
+            "SELECT 1 FROM resource_repository_relations WHERE relation_kind IN ('transfer_from_repository','transfer_to_repository')"
         ).fetchall()
         report = TransferEventReport(
             EventReportKey(KEY_EVENT, endpoint.clock, PROVENANCE_1),
@@ -195,10 +336,13 @@ def test_transfer_generic_admission_requires_complete_report(
             ),
             endpoints=((role, canonical(REPO_1)),),
         )
+        report = reviewed_transfer_report(report)
         assert selected.admit_transfer_event(report) == "insert"
         assert selected.admit_transfer_event(report) == "duplicate"
         # Even exact replay/addition must use the report-level equality check.
-        with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
+        with pytest.raises(
+            ValueError, match="Transfer endpoints require admit_transfer_event"
+        ):
             admit(endpoint)
         assert selected.transfer_event_reports() == (report,)
         validate_stored_context_relations(selected.db)
@@ -216,8 +360,8 @@ def test_transfer_generic_admission_requires_complete_report(
         "missing_clock",
     ],
 )
-def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
-    db, store, _ = context_db
+def test_transfer_stored_type_is_never_inferred(transfer_context_db, scope_state):
+    db, store, _ = transfer_context_db
     report = TransferEventReport.from_targets(
         KEY_EVENT,
         clock=FieldClock("event", 1),
@@ -228,60 +372,64 @@ def test_transfer_stored_type_is_never_inferred(context_db, scope_state):
         endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
         endpoints=(("transfer_from_repository", canonical(REPO_1)),),
     )
+    report = reviewed_transfer_report(report)
     endpoint = report.from_relations[0]
-    # SQL can constrain the Event Resource/FK, but cannot prove Provider event
-    # semantics. Model incomplete/untrusted stored data without disabling guards.
-    db.execute(
-        """INSERT INTO resource_repository_relations(
-        service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,
-        clock_json,target_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)""",
-        (*endpoint.claim_key.coordinates(), endpoint.observed_at_us),
-    )
-    if scope_state != "absent":
-        scope = {
-            "clock": {"domain": "event", "at_us": 1},
-            "provided_roles": ["transfer_from_repository"],
-            "from_provider_repository_id": None,
-            "to_provider_repository_id": None,
-        }
-        if scope_state != "missing_type":
-            scope["event_type"] = "transferred"
-        if scope_state == "wrong_type":
-            scope["event_type"] = "closed"
-        if scope_state == "provided_roles":
-            scope["provided_roles"] = []
-        if scope_state == "missing_clock":
-            scope.pop("clock")
-        members = "[]"
-        if scope_state == "members":
-            members = canonical([[SERVICE, "repository", canonical("not-declared")]])
-        if scope_state == "missing_provider":
-            scope["from_provider_repository_id"] = canonical("missing-provider")
-            members = canonical(
-                [[SERVICE, "repository", canonical("missing-provider")]]
+    scope = json.loads(report.scope_json)
+    members = report.members_json
+    if scope_state == "missing_type":
+        scope.pop("event_type")
+    elif scope_state == "wrong_type":
+        scope["event_type"] = "closed"
+    elif scope_state == "provided_roles":
+        scope["provided_roles"] = []
+    elif scope_state == "missing_clock":
+        scope.pop("clock")
+    elif scope_state == "members":
+        members = canonical([[SERVICE, "repository", canonical("not-declared")]])
+    elif scope_state == "missing_provider":
+        scope["from_provider_repository_id"] = canonical("missing-provider")
+        members = canonical([[SERVICE, "repository", canonical("missing-provider")]])
+    encoded_scope = canonical(scope)
+    # Each fault changes one original coordinate of an otherwise complete I5
+    # report. Restore the exact trusted schema/settings before either reader.
+    with stored_transfer_fault(db):
+        if scope_state != "absent":
+            db.execute(
+                "INSERT INTO resource_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,members_json,provenance_json,scope_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    *KEY_EVENT.coordinates(),
+                    "transfer_event_report",
+                    members,
+                    report.provenance_json,
+                    encoded_scope,
+                    1,
+                ),
             )
         db.execute(
-            "INSERT INTO resource_relations VALUES(?,?,?,?,?,?,?,?)",
+            "INSERT INTO resource_repository_relations(service_instance_uuidv4,resource_kind,provider_resource_id,relation_kind,clock_json,target_json,provenance_json,observed_at_us,event_report_members_json,event_report_scope_json) VALUES(?,?,?,?,?,?,?,?,?,?)",
             (
-                *KEY_EVENT.coordinates(),
-                "transfer_event_report",
+                *endpoint.claim_key.coordinates(),
+                endpoint.observed_at_us,
                 members,
-                PROVENANCE_1,
-                canonical(scope),
-                1,
+                encoded_scope,
             ),
         )
-    with pytest.raises(ValueError, match="[Tt]ransfer|event_type"):
-        store.transfer_event_reports()
-    with pytest.raises(BackupValidationError, match="[Tt]ransfer|event_type"):
+    if scope_state == "absent":
+        # A projection of original reports must not invent one from an orphan
+        # endpoint. Explicit authority validation still refuses that stored fault.
+        assert store.transfer_event_reports() == ()
+    else:
+        with pytest.raises(ValueError):
+            store.transfer_event_reports()
+    with pytest.raises(BackupValidationError):
         validate_stored_context_relations(db)
 
 
-def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
-    db, store, _ = context_db
+def test_transfer_report_fk_failure_rolls_back_whole_unit(transfer_context_db):
+    db, store, _ = transfer_context_db
     event = ResourceKey.timeline_event(KEY_ISSUE, "failed-transfer")
-    # Authorize this fixture-owned missing coordinate before admission so the
-    # ordinary stage/FK boundary is reached without minting grants after denial.
+    # ADR 0030/0031 and accepted I5 require qualified support before SQL.
+    # An unregistered target fails early without fabricated mapping evidence.
     missing_repository = canonical("e969c72a-82b4-4aeb-b217-3b7679c1371b")
     report = TransferEventReport.from_targets(
         event,
@@ -297,13 +445,44 @@ def test_transfer_report_fk_failure_rolls_back_whole_unit(context_db):
         ),
     )
     before = list(db.iterdump())
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(AdmissionRefused) as failure:
         store.admit_transfer_event(report)
+    assert failure.value.code in {"MISSING_DEPENDENCY", "UNQUALIFIED_MAPPING"}
     assert list(db.iterdump()) == before
 
 
-def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
-    _, store, _ = context_db
+def test_supported_transfer_sql_failure_rolls_back_whole_unit(transfer_context_db):
+    db, store, _ = transfer_context_db
+    report = reviewed_transfer_report(
+        TransferEventReport.from_targets(
+            KEY_EVENT,
+            clock=FieldClock("event", 1),
+            provenance_json=PROVENANCE_1,
+            observed_at_us=1,
+            parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+            endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, KEY_REPO),
+            endpoints=(
+                ("transfer_from_repository", canonical(REPO_1)),
+                ("transfer_to_repository", canonical(REPO_2)),
+            ),
+            from_target_json=canonical(REPO_1),
+            to_target_json=canonical(REPO_2),
+        )
+    )
+    db.execute("""CREATE TRIGGER fixture_second_endpoint_failure
+        BEFORE INSERT ON resource_repository_relations
+        WHEN NEW.relation_kind='transfer_to_repository'
+        BEGIN SELECT RAISE(ABORT,'fixture second endpoint failure'); END""")
+    before = list(db.iterdump())
+    with pytest.raises(sqlite3.IntegrityError, match="fixture second endpoint failure"):
+        store.admit_transfer_event(report)
+    assert list(db.iterdump()) == before
+    db.execute("DROP TRIGGER fixture_second_endpoint_failure")
+    assert store.admit_transfer_event(report) == "insert"
+
+
+def test_transfer_supports_both_endpoints_without_cross_borrowing(transfer_context_db):
+    _, store, _ = transfer_context_db
     provider_a = ResourceKey.from_native(SERVICE, "repository", "provider-a")
     provider_b = ResourceKey.from_native(SERVICE, "repository", "provider-b")
     claims = []
@@ -365,9 +544,9 @@ def test_transfer_supports_both_endpoints_without_cross_borrowing(context_db):
     validate_stored_context_relations(store.db)
 
 
-def test_partial_transfer_alternatives_remain_selection_truncated(context_db):
+def test_partial_transfer_alternatives_remain_selection_truncated(transfer_context_db):
     """Retained node: R09 now withholds a partial original instead of admitting a fragment."""
-    _, store, _ = context_db
+    _, store, _ = transfer_context_db
     report = TransferEventReport.from_targets(
         KEY_EVENT,
         clock=FieldClock("event", 1),
@@ -387,7 +566,46 @@ def test_partial_transfer_alternatives_remain_selection_truncated(context_db):
     assert selected_again is report
     assert len(selected_again.from_relations) == 2
     assert not selected_again.has_selection_omission
-    assert store.admit_transfer_event(report) == "insert"
+    # ADR 0030/0031 I5: one Provider mapping to competing repositories is
+    # unqualified; selection completeness cannot promote those alternatives.
+    for target, stamp in ((REPO_1, 1), (REPO_2, 2)):
+        store.admit_repository_relation(
+            ResourceRepositoryRelation(
+                KEY_REPO,
+                "represents_repository",
+                FieldClock("provider.updated_at", stamp),
+                canonical(target),
+                PROVENANCE_1 if target == REPO_1 else PROVENANCE_2,
+                stamp * 10,
+            )
+        )
+    before = store.db.execute("SELECT * FROM resource_repository_relations").fetchall()
+    with pytest.raises(AdmissionRefused, match="UNQUALIFIED_MAPPING"):
+        store.admit_transfer_event(report)
+    assert (
+        store.db.execute("SELECT * FROM resource_repository_relations").fetchall()
+        == before
+    )
+    assert store.evaluate_provider_repository(KEY_REPO).state == "conflict"
+    assert len(store.mapping_dispositions(KEY_REPO)) == 0
+
+
+@pytest.fixture
+def transfer_context_db(tmp_path):
+    """Reviewed I3-I5 tests use only the explicit fresh-memory capability."""
+    with isolated_context_db() as db:
+        db.execute("INSERT INTO providers VALUES(?,?,?)", (SERVICE, "github", "{}"))
+        db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_1, "{}"))
+        db.execute("INSERT INTO repository_context VALUES(?,?)", (REPO_2, "{}"))
+        db.execute("INSERT INTO sources VALUES(?,?,?)", (SOURCE, SERVICE, "{}"))
+        store = FixtureContextStore(db, relation_grants())
+        try:
+            store.resource(KEY_REPO, REPO_1)
+            store.resource(KEY_ISSUE, REPO_1)
+            seed_reviewed_transfer_dependencies(db)
+            yield db, store, tmp_path / "reviewed-memory-context"
+        finally:
+            store.close()
 
 
 @pytest.fixture
@@ -413,6 +631,37 @@ def context_db(tmp_path):
     yield db, store, path
     store.close()
     db.close()
+
+
+def test_ordinary_context_keeps_both_transfer_fences(context_db):
+    db, store, _ = context_db
+    endpoint = ResourceRepositoryRelation(
+        KEY_EVENT,
+        "transfer_from_repository",
+        FieldClock("event", 1),
+        canonical(REPO_1),
+        PROVENANCE_1,
+        1,
+    )
+    report = TransferEventReport.from_targets(
+        KEY_EVENT,
+        clock=endpoint.clock,
+        provenance_json=PROVENANCE_1,
+        parent_report=synthetic_parent(KEY_EVENT, KEY_ISSUE),
+        endpoint_declaration=ProviderEndpointDeclaration(KEY_REPO, "not_reported"),
+        endpoints=(("transfer_from_repository", canonical(REPO_1)),),
+        from_target_json=canonical(REPO_1),
+        observed_at_us=1,
+    )
+    before = list(db.iterdump())
+    for operation, value in (
+        (store.admit_repository_relation, endpoint),
+        (store.admit_transfer_event, report),
+    ):
+        with pytest.raises(ValueError, match="I2_TRANSFER_UNSUPPORTED"):
+            operation(value)
+        assert list(db.iterdump()) == before
+    assert schema.schema_rows(db) == schema.expected_schema("context")
 
 
 # Counterexample 1: Conflicting immutable mappings in reverse arrival order, exact resend and newer source clocks: all alternatives survive.
@@ -635,8 +884,8 @@ def test_counterexample_4_invalid_roles_and_targets(context_db):
 
 
 # Counterexample 5: One-sided, null, two-sided, unresolved-endpoint and separate-report Transfer cases: no invented endpoint or cross-report pairing.
-def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
-    _, store, _ = context_db
+def test_counterexample_5_transfer_cases_no_invented_endpoints(transfer_context_db):
+    _, store, _ = transfer_context_db
     ev_key = EventReportKey(KEY_EVENT, FieldClock("provider.timeline", 1), PROVENANCE_1)
 
     # One-sided transfer: only from_relations
@@ -687,6 +936,7 @@ def test_counterexample_5_transfer_cases_no_invented_endpoints(context_db):
     )
     assert len(report_both.from_relations) == 1
     assert len(report_both.to_relations) == 1
+    report_both = reviewed_transfer_report(report_both)
     assert store.admit_transfer_event(report_both) == "insert"
 
 
@@ -1303,8 +1553,10 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
 
 
 # Verification that Transfer Event roles derive only from genuine 'transferred' events.
-def test_transfer_event_genuine_type_enforcement_across_typed_paths(context_db):
-    _, store, _ = context_db
+def test_transfer_event_genuine_type_enforcement_across_typed_paths(
+    transfer_context_db,
+):
+    _, store, _ = transfer_context_db
     ev_res = ResourceKey.timeline_event(KEY_ISSUE, "timeline-77")
     clk = FieldClock("github:event", 1)
 
@@ -1341,15 +1593,16 @@ def test_transfer_event_genuine_type_enforcement_across_typed_paths(context_db):
             ("transfer_to_repository", canonical(REPO_2)),
         ),
     )
+    valid_report = reviewed_transfer_report(valid_report)
     outcome = store.admit_transfer_event(valid_report)
     assert outcome == "insert"
 
 
 # Verification of generator selected_repositories across multiple events and endpoint preservation.
 def test_transfer_event_reports_generator_selected_repositories_and_invariants(
-    context_db,
+    transfer_context_db,
 ):
-    _, store, _ = context_db
+    _, store, _ = transfer_context_db
     ev1 = ResourceKey.timeline_event(KEY_ISSUE, "ev-101")
     ev2 = ResourceKey.timeline_event(KEY_ISSUE, "ev-102")
 
@@ -1381,6 +1634,8 @@ def test_transfer_event_reports_generator_selected_repositories_and_invariants(
             ("transfer_to_repository", "null"),
         ),
     )
+    rep1 = reviewed_transfer_report(rep1)
+    rep2 = reviewed_transfer_report(rep2)
     assert store.admit_transfer_event(rep1) == "insert"
     assert store.admit_transfer_event(rep2) == "insert"
 

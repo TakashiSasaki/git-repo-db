@@ -6,6 +6,8 @@ import hashlib
 import sqlite3
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
+
 from repo_catalog.adapters.sqlite.core_recovery import (
     CoreRecoveryAdapter,
     _bounded_utf8,
@@ -176,7 +178,15 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
             total_bytes = 0
             cursor = conn.execute("SELECT sha256, text_value FROM text_bodies")
             while row := cursor.fetchone():
-                expected_sha, text_value = row
+                try:
+                    text_row = ROW_TYPES["text_bodies"].from_record(
+                        dict(zip(ROW_TYPES["text_bodies"].COLUMNS, row, strict=True))
+                    )
+                except (ValueError, TypeError) as error:
+                    raise BackupValidationError(
+                        "Invalid Context text_bodies row representation"
+                    ) from error
+                expected_sha, text_value = text_row.sha256, text_row.text_value
                 if not isinstance(text_value, str):
                     raise BackupValidationError("Context text body must be a string")
                 actual_sha = hashlib.sha256(text_value.encode("utf-8")).hexdigest()

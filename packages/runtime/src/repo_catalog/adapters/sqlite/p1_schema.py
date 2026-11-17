@@ -8,6 +8,7 @@ with arbitrary DDL/filesystem access can replace the database or these guards.
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import re
 import sqlite3
@@ -284,9 +285,16 @@ def initialize(
             raise SchemaError("WAL unavailable")
         # executescript's implicit COMMIT is avoided by putting BEGIN in the script.
         db.executescript("BEGIN IMMEDIATE;\n" + compose(store))
+        identity_type = _identity_row_type(store)
+        columns, values = identity_type.insert_bindings(
+            {
+                "store_role": store,
+                "repository_uuidv4": repository_uuidv4,
+                "catalog_instance_uuidv4": catalog_instance_uuidv4,
+            }
+        )
         db.execute(
-            "INSERT INTO store_identity VALUES(?,?,?)",
-            (store, repository_uuidv4, catalog_instance_uuidv4),
+            f"INSERT INTO store_identity ({','.join(columns)}) VALUES(?,?,?)", values
         )
         if store == "core":
             from repo_catalog.adapters.sqlite.core_schema_functions import (
@@ -304,14 +312,32 @@ def initialize(
         db.close()
 
 
+def _identity_row_type(store: str):
+    """Load only the selected domain's generated codec, never optional peers."""
+    return importlib.import_module(
+        f"repo_catalog.adapters.sqlite.{store}_rows"
+    ).ROW_TYPES["store_identity"]
+
+
 def validate(db: sqlite3.Connection, store: str) -> None:
     if schema_rows(db) != expected_schema(store):
         raise SchemaError(f"{store} physical schema differs from packaged target")
     verify_connection(db, store)
     rows = db.execute("SELECT * FROM store_identity").fetchall()
-    if len(rows) != 1 or rows[0][0] != store:
+    if len(rows) != 1:
         raise SchemaError("store identity missing or wrong role")
-    if not uuid4(rows[0][1]) or not uuid4(rows[0][2]):
+    try:
+        identity_type = _identity_row_type(store)
+        identity = identity_type.from_record(
+            dict(zip(identity_type.COLUMNS, rows[0], strict=True))
+        )
+    except (ValueError, TypeError) as exc:
+        raise SchemaError("invalid store identity row") from exc
+    if identity.store_role != store:
+        raise SchemaError("store identity missing or wrong role")
+    if not uuid4(identity.repository_uuidv4) or not uuid4(
+        identity.catalog_instance_uuidv4
+    ):
         raise SchemaError("invalid catalog or repository identity")
 
 

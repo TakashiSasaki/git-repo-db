@@ -20,6 +20,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
+
 from repo_catalog.adapters.sqlite.core_coordination import (
     _file_gate,
     catalog_completion,
@@ -1484,6 +1486,18 @@ class CoreRecoveryAdapter:
                 "SELECT object_format, object_oid, physical_copy_uuidv4, native_type, body, size, digest_sha256 FROM retained_metadata"
             )
             while row := cursor.fetchone():
+                try:
+                    ROW_TYPES["retained_metadata"].from_record(
+                        dict(
+                            zip(
+                                ROW_TYPES["retained_metadata"].COLUMNS, row, strict=True
+                            )
+                        )
+                    )
+                except (ValueError, TypeError) as error:
+                    raise BackupValidationError(
+                        "Invalid retained_metadata row representation"
+                    ) from error
                 (
                     obj_fmt,
                     object_oid,

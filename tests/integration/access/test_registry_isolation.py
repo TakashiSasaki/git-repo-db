@@ -7,31 +7,35 @@ from scripts.audit_callsite_dependencies import (
     ISOLATED_TARGET_MODULES,
     is_baseline_source,
     isolated_runtime_imports,
+    owned_source,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
 OWNED = {
-    "packages/access/src/repo_catalog/domain/access_backup.py",
-    "packages/access/src/repo_catalog/domain/ports/access_backup.py",
-    "packages/access/src/repo_catalog/adapters/sqlite/access_backup.py",
-    "packages/access/src/repo_catalog/application/access_maintenance.py",
-    "packages/access/src/repo_catalog/cli/access_maintenance.py",
-    "src/repo_catalog/domain/native_acquisition.py",
-    "src/repo_catalog/adapters/git/access_native.py",
-    "src/repo_catalog/application/access_acquisition.py",
-    "src/repo_catalog/cli/access_acquisition.py",
-    "packages/access/src/repo_catalog/domain/access_registry.py",
-    "packages/access/src/repo_catalog/domain/access_connections.py",
-    "packages/access/src/repo_catalog/domain/access_workflow.py",
-    "packages/access/src/repo_catalog/domain/ports/access_workflow.py",
-    "packages/access/src/repo_catalog/application/access_workflow.py",
-    "packages/access/src/repo_catalog/adapters/filesystem/access_executor.py",
-    "packages/access/src/repo_catalog/cli/access_workflow.py",
-    "packages/access/src/repo_catalog/domain/ports/access_connections.py",
-    "packages/access/src/repo_catalog/adapters/sqlite/access_connections.py",
-    "packages/access/src/repo_catalog/domain/ports/access_registry.py",
-    "packages/access/src/repo_catalog/adapters/sqlite/access_schema.py",
-    "packages/access/src/repo_catalog/adapters/sqlite/access_registry.py",
+    owned_source(relative)
+    for relative in (
+        "domain/access_backup.py",
+        "domain/ports/access_backup.py",
+        "adapters/sqlite/access_backup.py",
+        "application/access_maintenance.py",
+        "cli/access_maintenance.py",
+        "domain/native_acquisition.py",
+        "adapters/git/access_native.py",
+        "application/access_acquisition.py",
+        "cli/access_acquisition.py",
+        "domain/access_registry.py",
+        "domain/access_connections.py",
+        "domain/access_workflow.py",
+        "domain/ports/access_workflow.py",
+        "application/access_workflow.py",
+        "adapters/filesystem/access_executor.py",
+        "cli/access_workflow.py",
+        "domain/ports/access_connections.py",
+        "adapters/sqlite/access_connections.py",
+        "domain/ports/access_registry.py",
+        "adapters/sqlite/access_schema.py",
+        "adapters/sqlite/access_registry.py",
+    )
 }
 
 

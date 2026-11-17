@@ -12,6 +12,8 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
+
 from repo_catalog.adapters.sqlite.p1_core import (
     Core,
     _completed_read,
@@ -234,6 +236,21 @@ _EXCHANGE_METADATA_ROWS = {
         ("object_format", "object_oid"),
         0,
     ),
+}
+
+
+# These existing Exchange projections contain complete rows. Body/proof/key-only
+# projections remain scoped and do not acquire omitted fields for row decoding.
+_EXCHANGE_FULL_ROWS = {
+    "repositories": ROW_TYPES["repositories"],
+    "repository_claims": ROW_TYPES["repository_claims"],
+    "scalar_claims": ROW_TYPES["scalar_claims"],
+    "relation_groups": ROW_TYPES["relation_groups"],
+    "git_observations": ROW_TYPES["git_observations"],
+    "coverage_scopes": ROW_TYPES["coverage_scopes"],
+    "coverage_claims": ROW_TYPES["coverage_claims"],
+    "coverage_proofs": ROW_TYPES["core_coverage_proofs"],
+    "git_objects": ROW_TYPES["git_objects"],
 }
 
 
@@ -499,6 +516,14 @@ class GitCore(Core):
                         if row is None:
                             self._integrity_stop(
                                 (selector, "metadata changed in snapshot")
+                            )
+                        row_type = _EXCHANGE_FULL_ROWS.get(selector)
+                        if row_type is not None:
+                            record = dict(zip(spec[1], row, strict=True))
+                            self._stored(
+                                selector,
+                                row_type.from_record,
+                                {name: record[name] for name in row_type.COLUMNS},
                             )
                         result.append(row)
                     return result
@@ -1135,9 +1160,12 @@ class GitCore(Core):
                     )
                 work.require("input_bytes", total)
                 try:
-                    row = self._ref_note_one(
-                        "SELECT * FROM retained_metadata WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
-                        (*object_oid.key, physical_copy_uuidv4),
+                    row = self._stored_row(
+                        "retained_metadata",
+                        self._ref_note_one(
+                            "SELECT * FROM retained_metadata WHERE object_format=? AND object_oid=? AND physical_copy_uuidv4=?",
+                            (*object_oid.key, physical_copy_uuidv4),
+                        ),
                     )
                 except BaseException:
                     abandon = getattr(work, "abandon", None)

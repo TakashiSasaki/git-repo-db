@@ -12,10 +12,13 @@ import sqlite3
 from collections.abc import Callable, Iterable
 from functools import wraps
 
+from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
+
 from repo_catalog.adapters.sqlite.context_admission import (
     AdmissionTransactions,
     admission_checked,
 )
+from repo_catalog.adapters.sqlite.context_row_bindings import context_write_values
 from repo_catalog.domain.context_admission import AdmissionRefused, dependencies
 from repo_catalog.domain.p1_context import (
     RELATION_KINDS,
@@ -153,7 +156,19 @@ class ContextStore(AdmissionTransactions):
             """INSERT INTO resources(service_instance_uuidv4,resource_kind,provider_resource_id,
             identifier_namespace_kind,identifier_namespace_id,document_kind,provider_document_id)
             VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING""",
-            (*key.coordinates(), *declaration.columns),
+            context_write_values(
+                ROW_TYPES["resources"],
+                (
+                    "service_instance_uuidv4",
+                    "resource_kind",
+                    "provider_resource_id",
+                    "identifier_namespace_kind",
+                    "identifier_namespace_id",
+                    "document_kind",
+                    "provider_document_id",
+                ),
+                (*key.coordinates(), *declaration.columns),
+            ),
         )
 
     def identification(self, key: ResourceKey) -> ResourceIdentification:
@@ -236,7 +251,24 @@ class ContextStore(AdmissionTransactions):
                         service_instance_uuidv4,resource_kind,provider_resource_id,
                         relation_kind,clock_json,target_json,provenance_json,observed_at_us
                     ) VALUES(?,?,?,?,?,?,?,?)""",
-                    (*coords, relation.observed_at_us),
+                    context_write_values(
+                        ROW_TYPES["resource_repository_relations"],
+                        (
+                            "service_instance_uuidv4",
+                            "resource_kind",
+                            "provider_resource_id",
+                            "relation_kind",
+                            "clock_json",
+                            "target_json",
+                            "provenance_json",
+                            "observed_at_us",
+                        ),
+                        (*coords, relation.observed_at_us),
+                        null_columns=(
+                            "event_report_members_json",
+                            "event_report_scope_json",
+                        ),
+                    ),
                 )
             except sqlite3.IntegrityError as error:
                 if "stale current repository relation candidate" in str(error):
@@ -328,7 +360,26 @@ class ContextStore(AdmissionTransactions):
                     disposition_kind,disposition_clock_json,disposition_provenance_json,
                     observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json
                 ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (*key_coords, *expected_payload),
+                context_write_values(
+                    ROW_TYPES["repository_mapping_dispositions"],
+                    (
+                        "service_instance_uuidv4",
+                        "resource_kind",
+                        "provider_resource_id",
+                        "relation_kind",
+                        "claim_clock_json",
+                        "claim_target_json",
+                        "claim_provenance_json",
+                        "disposition_kind",
+                        "disposition_clock_json",
+                        "disposition_provenance_json",
+                        "observed_at_us",
+                        "replacement_clock_json",
+                        "replacement_target_json",
+                        "replacement_provenance_json",
+                    ),
+                    (*key_coords, *expected_payload),
+                ),
             )
             self.db.execute("RELEASE p1_mapping_disposition")
             return "insert"
@@ -564,13 +615,27 @@ class ContextStore(AdmissionTransactions):
                 """INSERT INTO resource_relations(
                     service_instance_uuidv4, resource_kind, provider_resource_id,
                     relation_kind, members_json, provenance_json, scope_json, observed_at_us
-                ) VALUES (?, ?, ?, 'transfer_event_report', ?, ?, ?, ?)""",
-                (
-                    *event_res.coordinates(),
-                    report.members_json,
-                    report.provenance_json,
-                    report.scope_json,
-                    report.observed_at_us,
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                context_write_values(
+                    ROW_TYPES["resource_relations"],
+                    (
+                        "service_instance_uuidv4",
+                        "resource_kind",
+                        "provider_resource_id",
+                        "relation_kind",
+                        "members_json",
+                        "provenance_json",
+                        "scope_json",
+                        "observed_at_us",
+                    ),
+                    (
+                        *event_res.coordinates(),
+                        "transfer_event_report",
+                        report.members_json,
+                        report.provenance_json,
+                        report.scope_json,
+                        report.observed_at_us,
+                    ),
                 ),
             )
 
@@ -581,15 +646,30 @@ class ContextStore(AdmissionTransactions):
                         relation_kind, target_json, clock_json, provenance_json,
                         observed_at_us, event_report_members_json, event_report_scope_json
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        *event_res.coordinates(),
-                        r.relation_kind,
-                        r.target_json,
-                        r.clock.encode(),
-                        r.provenance_json,
-                        r.observed_at_us,
-                        report.members_json,
-                        report.scope_json,
+                    context_write_values(
+                        ROW_TYPES["resource_repository_relations"],
+                        (
+                            "service_instance_uuidv4",
+                            "resource_kind",
+                            "provider_resource_id",
+                            "relation_kind",
+                            "target_json",
+                            "clock_json",
+                            "provenance_json",
+                            "observed_at_us",
+                            "event_report_members_json",
+                            "event_report_scope_json",
+                        ),
+                        (
+                            *event_res.coordinates(),
+                            r.relation_kind,
+                            r.target_json,
+                            r.clock.encode(),
+                            r.provenance_json,
+                            r.observed_at_us,
+                            report.members_json,
+                            report.scope_json,
+                        ),
                     ),
                 )
 
@@ -723,6 +803,15 @@ class ContextStore(AdmissionTransactions):
 
         results: list[MappingDisposition] = []
         for row in rows:
+            ROW_TYPES["repository_mapping_dispositions"].from_record(
+                dict(
+                    zip(
+                        ROW_TYPES["repository_mapping_dispositions"].COLUMNS,
+                        row,
+                        strict=True,
+                    )
+                )
+            )
             res = ResourceKey(row[0], row[1], row[2])
             claim_key = MappingClaimKey(
                 resource=res,
@@ -1077,7 +1166,20 @@ class ContextStore(AdmissionTransactions):
             observed_at_us = row[6]
 
             parsed_scope = _parse_canonical_json(scope_json)
-            clock = FieldClock.from_json(canonical(parsed_scope["clock"]))
+            # Only required coordinates extracted from persisted JSON belong to
+            # this decode boundary. Caller filters/iterators were handled above.
+            try:
+                original_clock = parsed_scope["clock"]
+                original_parent = (
+                    parsed_scope["parent_members_json"],
+                    parsed_scope["parent_provenance_json"],
+                    parsed_scope["parent_scope_json"],
+                )
+            except KeyError as error:
+                raise ValueError(
+                    f"Stored Transfer scope is missing required field {error.args[0]!r}"
+                ) from error
+            clock = FieldClock.from_json(canonical(original_clock))
             report_key = EventReportKey(
                 event_resource=ev_key,
                 clock=clock,
@@ -1109,12 +1211,7 @@ class ContextStore(AdmissionTransactions):
                 ParentReportKey,
             )
 
-            parent_key = ParentReportKey(
-                ev_key,
-                parsed_scope["parent_members_json"],
-                parsed_scope["parent_provenance_json"],
-                parsed_scope["parent_scope_json"],
-            )
+            parent_key = ParentReportKey(ev_key, *original_parent)
             parent_row = self.db.execute(
                 "SELECT observed_at_us FROM resource_relations WHERE "
                 "service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? "
@@ -1157,7 +1254,14 @@ class ContextStore(AdmissionTransactions):
         if prior is not None and prior[0] != text_value:
             raise ValueError("Exact UTF8 text digest collision")
         if prior is None:
-            self.db.execute("INSERT INTO text_bodies VALUES(?,?)", (digest, text_value))
+            self.db.execute(
+                "INSERT INTO text_bodies VALUES(?,?)",
+                context_write_values(
+                    ROW_TYPES["text_bodies"],
+                    ROW_TYPES["text_bodies"].WRITE_COLUMNS,
+                    (digest, text_value),
+                ),
+            )
         return digest
 
     def candidates(
@@ -1230,13 +1334,26 @@ class ContextStore(AdmissionTransactions):
                 )
             self.db.execute(
                 "INSERT INTO field_candidates(service_instance_uuidv4,resource_kind,provider_resource_id,field_name,value_json,clock_json,provenance_json,observed_at_us) VALUES(?,?,?,?,?,?,?,?)",
-                (
-                    *candidate.resource.coordinates(),
-                    candidate.field_name,
-                    candidate.value_json,
-                    candidate.clock.encode(),
-                    candidate.provenance_json,
-                    candidate.observed_at_us,
+                context_write_values(
+                    ROW_TYPES["field_candidates"],
+                    (
+                        "service_instance_uuidv4",
+                        "resource_kind",
+                        "provider_resource_id",
+                        "field_name",
+                        "value_json",
+                        "clock_json",
+                        "provenance_json",
+                        "observed_at_us",
+                    ),
+                    (
+                        *candidate.resource.coordinates(),
+                        candidate.field_name,
+                        candidate.value_json,
+                        candidate.clock.encode(),
+                        candidate.provenance_json,
+                        candidate.observed_at_us,
+                    ),
                 ),
             )
             self.db.execute("RELEASE p1_field")
@@ -1285,7 +1402,16 @@ class ContextStore(AdmissionTransactions):
         columns = ("owner_kind", "owner_coordinates_json", *fields)
         self.db.execute(
             f"INSERT INTO coverage_scopes({','.join(columns)}) VALUES({','.join('?' for _ in columns)}) ON CONFLICT(owner_kind,owner_coordinates_json) DO NOTHING",
-            (scope.owner_kind, scope.encoded, *fields.values()),
+            context_write_values(
+                ROW_TYPES["coverage_scopes"],
+                columns,
+                (scope.owner_kind, scope.encoded, *fields.values()),
+                null_columns=tuple(
+                    name
+                    for name in ROW_TYPES["coverage_scopes"].WRITE_COLUMNS
+                    if name not in columns
+                ),
+            ),
         )
 
     def admit_coverage(self, claim: CoverageClaim) -> str:
@@ -1294,12 +1420,24 @@ class ContextStore(AdmissionTransactions):
             """INSERT INTO coverage_claims(owner_kind,owner_coordinates_json,observed_at_us,coverage_state,details_json)
           SELECT ?,?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us>?)
           AND NOT EXISTS(SELECT 1 FROM coverage_claims WHERE owner_kind=? AND owner_coordinates_json=? AND observed_at_us=? AND coverage_state=?) RETURNING coverage_state""",
-            (
-                claim.scope.owner_kind,
-                claim.scope.encoded,
-                claim.observed_at_us,
-                claim.state,
-                claim.details_json,
+            context_write_values(
+                ROW_TYPES["coverage_claims"],
+                (
+                    "owner_kind",
+                    "owner_coordinates_json",
+                    "observed_at_us",
+                    "coverage_state",
+                    "details_json",
+                ),
+                (
+                    claim.scope.owner_kind,
+                    claim.scope.encoded,
+                    claim.observed_at_us,
+                    claim.state,
+                    claim.details_json,
+                ),
+            )
+            + (
                 claim.scope.owner_kind,
                 claim.scope.encoded,
                 claim.observed_at_us,
@@ -1434,5 +1572,15 @@ class ContextStore(AdmissionTransactions):
             raise ValueError("Required portable Core identity is absent")
         self.db.execute(
             "INSERT INTO core_references VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
-            (*resource.coordinates(), role, object_format, object_oid, provenance_json),
+            context_write_values(
+                ROW_TYPES["core_references"],
+                ROW_TYPES["core_references"].WRITE_COLUMNS,
+                (
+                    *resource.coordinates(),
+                    role,
+                    object_format,
+                    object_oid,
+                    provenance_json,
+                ),
+            ),
         )

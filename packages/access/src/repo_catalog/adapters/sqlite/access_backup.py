@@ -26,6 +26,8 @@ from repo_catalog.adapters.sqlite import access_schema as schema
 from repo_catalog.domain.access_backup import AccessBackupLimits, ScopeFork
 from repo_catalog.domain.access_registry import AccessRegistryError, registration_time
 
+from .access_row_bindings import insert_values
+
 FORMAT = "git-repo-db/access-backup-v1"
 FILES = frozenset(("manifest.json", "manifest.sha256", "access.sqlite3"))
 MAX_MANIFEST_BYTES = 16_384
@@ -608,14 +610,21 @@ class AccessBackup:
             before = _counts(db, budget)
             db.execute(
                 "INSERT INTO access_scopes VALUES(?,?)",
-                (new, request.target_scope.display_name),
+                insert_values(
+                    "access_scopes", (new, request.target_scope.display_name)
+                ),
             )
             db.execute(
-                "INSERT INTO scope_locators VALUES(?,?,?)", request.registration.key
+                "INSERT INTO scope_locators VALUES(?,?,?)",
+                insert_values("scope_locators", request.registration.key),
             )
             db.execute(
                 "INSERT INTO scope_locator_controls VALUES(?,?,?,0)",
-                request.registration.key,
+                insert_values(
+                    "scope_locator_controls",
+                    request.registration.key,
+                    constants={"enabled": 0},
+                ),
             )
             # Copy CURRENT intended settings only, all disabled; never clone prior grants/history.
             for table, columns in (

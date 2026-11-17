@@ -4,6 +4,8 @@ import hashlib
 import json
 import sqlite3
 
+from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
+
 from repo_catalog.adapters.sqlite.core_recovery_validation import (
     StoredAuthorityInvariantError,
     bounded_domain_exists,
@@ -102,6 +104,15 @@ def validate_stored_context_relations(connection: sqlite3.Connection) -> None:
                       observed_at_us,replacement_clock_json,replacement_target_json,replacement_provenance_json
             FROM repository_mapping_dispositions"""
         ):
+            ROW_TYPES["repository_mapping_dispositions"].from_record(
+                dict(
+                    zip(
+                        ROW_TYPES["repository_mapping_dispositions"].COLUMNS,
+                        row,
+                        strict=True,
+                    )
+                )
+            )
             res = ResourceKey(row[0], row[1], row[2])
             claim_key = MappingClaimKey(
                 resource=res,

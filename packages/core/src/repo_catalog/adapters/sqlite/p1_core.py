@@ -16,6 +16,8 @@ from contextlib import contextmanager, nullcontext
 from functools import wraps
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
+
 from repo_catalog.domain.p1_core import (
     OID,
     CoreCoverageScope,
@@ -418,7 +420,10 @@ class Core:
             self._reading = True
             try:
                 self._db.execute("BEGIN")
-                self._db.execute("SELECT * FROM store_identity").fetchall()
+                self._stored_rows(
+                    "store_identity",
+                    self._db.execute("SELECT * FROM store_identity").fetchall(),
+                )
             finally:
                 self._reading = False
         try:
@@ -440,6 +445,17 @@ class Core:
             self._integrity_stop((scope, "invalid-stored-value", str(error)))
         except (ValueError, TypeError, KeyError, IndexError, RecursionError) as error:
             self._integrity_stop((scope, "invalid-stored-value", str(error)))
+
+    def _stored_row(self, table, row):
+        """Check a materialized full row without broadening any SQL projection."""
+        if row is not None:
+            self._stored(table, ROW_TYPES[table].from_record, row)
+        return row
+
+    def _stored_rows(self, table, rows):
+        for row in rows:
+            self._stored_row(table, row)
+        return rows
 
     def _provenance_value(
         self,
@@ -463,17 +479,15 @@ class Core:
 
     def _insert(self, table: str, values: tuple) -> None:
         # Every caller supplies a fixed internal table name; no user SQL reaches here.
+        row_type = ROW_TYPES[table]
+        names, values = row_type.insert_bindings(
+            dict(zip(row_type.WRITE_COLUMNS, values, strict=True))
+        )
         result = self._db.execute(
-            f"INSERT INTO {table} VALUES({','.join('?' for _ in values)}) ON CONFLICT DO NOTHING",
+            f"INSERT INTO {table}({','.join(names)}) VALUES({','.join('?' for _ in values)}) ON CONFLICT DO NOTHING",
             values,
         )
         if result.rowcount == 0:
-            names = [
-                column[0]
-                for column in self._db.execute(
-                    f"SELECT * FROM {table} LIMIT 0"
-                ).description
-            ]
             row = self._db.execute(
                 f"SELECT 1 FROM {table} WHERE {' AND '.join(name + ' IS ?' for name in names)}",
                 values,
@@ -1142,9 +1156,12 @@ class Core:
                 "QUERY_BUDGET", event.identity, "finite enumeration links limit"
             )
         self._charge(work, "input_bytes", total)
-        rows = self._ref_note_many(
-            "SELECT * FROM ref_enumeration_links WHERE enumeration_origin_uuidv4=? AND enumeration_uuidv7=? ORDER BY position",
-            event.identity,
+        rows = self._stored_rows(
+            "ref_enumeration_links",
+            self._ref_note_many(
+                "SELECT * FROM ref_enumeration_links WHERE enumeration_origin_uuidv4=? AND enumeration_uuidv7=? ORDER BY position",
+                event.identity,
+            ),
         )
         if len(rows) != event.link_count:
             self._integrity_stop((event.identity, "enumeration-link-count"))
@@ -1224,10 +1241,13 @@ class Core:
         metadata_limit_code: str = "BUDGET",
     ) -> None:
         if work is None:
-            row = self._db.execute(
-                "SELECT * FROM ref_observations WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=?",
-                key.key,
-            ).fetchone()
+            row = self._stored_row(
+                "ref_observations",
+                self._db.execute(
+                    "SELECT * FROM ref_observations WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=?",
+                    key.key,
+                ).fetchone(),
+            )
         else:
             row = self._bounded_stored_row(
                 "ref_observations",
@@ -1281,10 +1301,13 @@ class Core:
             )
         identity = claim.identity
         if work is None:
-            row = self._db.execute(
-                "SELECT * FROM ref_observation_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND provenance=?",
-                identity,
-            ).fetchone()
+            row = self._stored_row(
+                "ref_observation_claims",
+                self._db.execute(
+                    "SELECT * FROM ref_observation_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND provenance=?",
+                    identity,
+                ).fetchone(),
+            )
         else:
             row = self._bounded_stored_row(
                 "ref_observation_claims",
@@ -1464,9 +1487,12 @@ class Core:
                     "QUERY_BUDGET", key, "ref projection exceeds finite input limits"
                 )
             self._charge(work, "input_bytes", input_bytes)
-            rows = self.sql(
-                "SELECT * FROM ref_observations WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=?",
-                key.key,
+            rows = self._stored_rows(
+                "ref_observations",
+                self.sql(
+                    "SELECT * FROM ref_observations WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=?",
+                    key.key,
+                ),
             )
             if not rows:
                 raise CoreFailure(
@@ -1489,9 +1515,12 @@ class Core:
                 max_metadata_bytes=max_bytes,
                 metadata_limit_code="QUERY_BUDGET",
             )
-            rows = self.sql(
-                "SELECT * FROM ref_observation_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? ORDER BY provenance",
-                key.key,
+            rows = self._stored_rows(
+                "ref_observation_claims",
+                self.sql(
+                    "SELECT * FROM ref_observation_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? ORDER BY provenance",
+                    key.key,
+                ),
             )
             claims = tuple(
                 self._stored(
@@ -1783,7 +1812,7 @@ class Core:
         work.charge("input_bytes", reserved if row is not None else 0)
         if row is None:
             self._integrity_stop((table, parameters, "disappeared-stored-row"))
-        return row
+        return self._stored_row(table, row)
 
     def _fetch_ref_note_copy(
         self,
@@ -2195,9 +2224,12 @@ class Core:
             # The full text is fetched only after its bounded byte cost is
             # charged; the preflight above materializes integer lengths only.
             self._charge(work, "input_bytes", input_bytes)
-            reported_rows = self.sql(
-                "SELECT * FROM notes_mapping_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
-                (*coordinates, annotated_object_oid.object_oid),
+            reported_rows = self._stored_rows(
+                "notes_mapping_claims",
+                self.sql(
+                    "SELECT * FROM notes_mapping_claims WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
+                    (*coordinates, annotated_object_oid.object_oid),
+                ),
             )
             reports = []
             for row in reported_rows:
@@ -2221,9 +2253,12 @@ class Core:
                 report = self._stored(ref_claim.identity, decode_report, row)
                 self._assert_stored_mapping(report.mapping, ref_claim.identity)
                 reports.append(report)
-            group_rows = self.sql(
-                "SELECT * FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? ORDER BY group_scope,provenance",
-                coordinates,
+            group_rows = self._stored_rows(
+                "notes_mapping_groups",
+                self.sql(
+                    "SELECT * FROM notes_mapping_groups WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? ORDER BY group_scope,provenance",
+                    coordinates,
+                ),
             )
             groups = []
             for row in group_rows:
@@ -2256,9 +2291,12 @@ class Core:
                                 (ref_claim.identity, "missing-group-object", object_oid)
                             )
                 groups.append(group)
-            evidence_rows = self.sql(
-                "SELECT * FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
-                (*coordinates, annotated_object_oid.object_oid),
+            evidence_rows = self._stored_rows(
+                "notes_mapping_evidence",
+                self.sql(
+                    "SELECT * FROM notes_mapping_evidence WHERE observation_origin_uuidv4=? AND ref_observation_uuidv7=? AND ref_claim_provenance=? AND object_format=? AND root_object_oid=? AND interpretation_kind=? AND interpretation_version=? AND interpretation_scope=? AND annotated_object_oid=? ORDER BY provenance",
+                    (*coordinates, annotated_object_oid.object_oid),
+                ),
             )
             evidence = []
             for row in evidence_rows:
@@ -3059,6 +3097,7 @@ class Core:
                 self._integrity_stop((scope, "missing-ref-coverage-claim-parent"))
         result = []
         for row in rows:
+            self._stored_row("ref_coverage_proofs", row)
             identity = (
                 row["observation_origin_uuidv4"],
                 row["ref_observation_uuidv7"],
@@ -3520,9 +3559,12 @@ class Core:
     @_completed_read
     @_decoded_read
     def read_metadata(self, object_oid: OID) -> bytes:
-        rows = self.sql(
-            "SELECT * FROM retained_metadata WHERE object_format=? AND object_oid=? ORDER BY physical_copy_uuidv4",
-            object_oid.key,
+        rows = self._stored_rows(
+            "retained_metadata",
+            self.sql(
+                "SELECT * FROM retained_metadata WHERE object_format=? AND object_oid=? ORDER BY physical_copy_uuidv4",
+                object_oid.key,
+            ),
         )
         if not rows:
             raise CoreFailure(

@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
+from repo_catalog.adapters.sqlite.core_coordination import persist_catalog_stop
 from repo_catalog.application.production_query import ProductionQueryService
 from tests.integration.p6.conftest import REPOSITORY, populate_rich_catalog
 
@@ -16,6 +16,15 @@ import importlib.abc
 import sys
 class BlockOptional(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
+        # Model uninstalled optional feature entry points. The real CLI catches
+        # only exact missing-module errors and falls back to its Core owner.
+        if fullname in (
+            "repo_catalog.cli.query_features",
+            "repo_catalog.cli.search_query_features",
+            "repo_catalog.cli.paired_query_features",
+            "repo_catalog.cli.context_query_features",
+        ):
+            raise ModuleNotFoundError("optional feature absent", name=fullname)
         if fullname.startswith("repo_catalog.") and any(
             part in fullname for part in ("context", "search", "resource_identification", "parent_report")
         ):
@@ -44,10 +53,10 @@ def test_explicit_core_query_without_optional_imports(tmp_path, coexisting):
         (catalog / "search.sqlite3").unlink()
     result = run_guarded(
         """
-from repo_catalog.application.production_query import ProductionQueryService
+from repo_catalog.application.core_query import CoreQueryService
 from repo_catalog.domain.p1_core import OID
-from repo_catalog.domain.production_query import PageRequest
-service = ProductionQueryService(sys.argv[1], mode="core_only")
+from repo_catalog.domain.query_contracts import PageRequest
+service = CoreQueryService(sys.argv[1], mode="core_only")
 assert service.detect_mode() == "core_only"
 assert service.get_repository_view().repository_uuidv4 == sys.argv[2]
 assert service.get_git_object(OID("sha1", sys.argv[3]), include_bytes=True).retained_bytes.verified
@@ -57,7 +66,7 @@ assert service.list_git_objects(PageRequest(limit=1, cursor=first.next_cursor)).
 assert service.list_ref_observations().items
 assert service.snapshot_token().context_sha256 is None
 if sys.argv[4] == "absent":
-    assert ProductionQueryService(sys.argv[1]).snapshot_token().mode == "core_only"
+    assert CoreQueryService(sys.argv[1]).snapshot_token().mode == "core_only"
 """,
         catalog,
         REPOSITORY,
@@ -105,10 +114,10 @@ def test_core_snapshot_rechecks_stop_during_operation(tmp_path):
     run_guarded(
         """
 from pathlib import Path
-from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
+from repo_catalog.application.core_query import CoreQueryService
+from repo_catalog.adapters.sqlite.core_coordination import persist_catalog_stop
 from repo_catalog.domain.p1_core import CoreFailure
-service = ProductionQueryService(sys.argv[1], mode="core_only")
+service = CoreQueryService(sys.argv[1], mode="core_only")
 try:
     with service.open_snapshot():
         persist_catalog_stop(Path(sys.argv[1]), "detected authoritative corruption")
@@ -132,8 +141,8 @@ def test_explicit_core_ignores_coexisting_identity_while_auto_requires_pair(tmp_
     initialize(catalog / "context.sqlite3", "context", REPOSITORY, str(uuid4()))
     run_guarded(
         """
-from repo_catalog.application.production_query import ProductionQueryService
-service = ProductionQueryService(sys.argv[1], mode="core_only")
+from repo_catalog.application.core_query import CoreQueryService
+service = CoreQueryService(sys.argv[1], mode="core_only")
 assert service.get_repository_view().repository_uuidv4 == sys.argv[2]
 """,
         catalog,

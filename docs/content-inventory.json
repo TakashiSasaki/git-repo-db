@@ -10102,6 +10102,15 @@
       "producer": "Deterministic generation from actual separated DDL and canonical class assignments.",
       "consumers": "Owning product distributions, persistence checker and focused tests.",
       "publication": "not staged"
+    },
+    "docs/implementation/separated-runtime-test-map.json": {
+      "status": "canonical-design-input",
+      "owner": "docs/implementation/",
+      "authority": "Owner-approved ADR 0043 test obligation carry-forward; source references are not semantic/execution proof.",
+      "source": "docs/implementation/separated-runtime-test-map.json",
+      "producer": "Source-reviewed baseline nodes, exact original Git blobs and named successor tests.",
+      "consumers": "Retirement checker, independent implementation review and development validation.",
+      "publication": "not staged"
     }
   }
 }

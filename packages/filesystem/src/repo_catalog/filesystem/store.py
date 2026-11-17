@@ -15,6 +15,7 @@ import time
 import uuid
 from pathlib import Path
 
+from ._row_bindings import insert_values, read_record, read_values
 from .efu import export_efu
 from .models import FileEntry, FilesystemError, ScanResult, native_path, occurrence_uuid
 from .scanner import walk
@@ -138,7 +139,10 @@ class FilesystemCatalog:
         self.database = Path(database).absolute()
         self._db = db
         self.readonly = readonly
-        metadata = dict(db.execute("SELECT key,value FROM catalog_metadata"))
+        metadata = dict(
+            read_values("catalog_metadata", row)
+            for row in db.execute("SELECT key,value FROM catalog_metadata")
+        )
         if metadata.get("schema_version") != str(SCHEMA_VERSION):
             raise FilesystemError("unsupported filesystem catalog schema")
         self.namespace_uuid = metadata["namespace_uuid"]
@@ -164,13 +168,16 @@ class FilesystemCatalog:
             with db:
                 db.executemany(
                     "INSERT INTO catalog_metadata VALUES (?,?)",
-                    {
-                        "schema_version": str(SCHEMA_VERSION),
-                        "namespace_uuid": namespace_uuid,
-                        "path_dialect": os.name,
-                        "path_encoding": sys.getfilesystemencoding(),
-                        "path_errors": sys.getfilesystemencodeerrors(),
-                    }.items(),
+                    [
+                        insert_values("catalog_metadata", values)
+                        for values in {
+                            "schema_version": str(SCHEMA_VERSION),
+                            "namespace_uuid": namespace_uuid,
+                            "path_dialect": os.name,
+                            "path_encoding": sys.getfilesystemencoding(),
+                            "path_errors": sys.getfilesystemencodeerrors(),
+                        }.items()
+                    ],
                 )
             return cls(database, db, False)
         except BaseException:
@@ -202,7 +209,10 @@ class FilesystemCatalog:
     def verify(self):
         _verify_schema(self._db)
         if (
-            dict(self._db.execute("SELECT key,value FROM catalog_metadata"))
+            dict(
+                read_values("catalog_metadata", row)
+                for row in self._db.execute("SELECT key,value FROM catalog_metadata")
+            )
             != self._identity_metadata
         ):
             raise FilesystemError("filesystem catalog identity changed")
@@ -295,12 +305,15 @@ class FilesystemCatalog:
         with self._db:
             self._db.execute(
                 "INSERT INTO scans VALUES (?,?,?,?,?)",
-                (
-                    self.namespace_uuid,
-                    scan_uuid,
-                    root,
-                    time.time_ns() // 1000,
-                    json.dumps([p.hex() for p in exclusions]),
+                insert_values(
+                    "scans",
+                    (
+                        self.namespace_uuid,
+                        scan_uuid,
+                        root,
+                        time.time_ns() // 1000,
+                        json.dumps([p.hex() for p in exclusions]),
+                    ),
                 ),
             )
         entries = errors = 0
@@ -315,7 +328,7 @@ class FilesystemCatalog:
                 with self._db:
                     self._db.executemany(
                         "INSERT INTO entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        batch,
+                        [insert_values("entries", values) for values in batch],
                     )
             except BaseException:
                 storage_failed = True
@@ -369,6 +382,24 @@ class FilesystemCatalog:
             with self._db:
                 self._db.execute(
                     "INSERT INTO scan_outcomes VALUES (?,?,?,?,?,?)",
+                    insert_values(
+                        "scan_outcomes",
+                        (
+                            self.namespace_uuid,
+                            scan_uuid,
+                            time.time_ns() // 1000,
+                            status,
+                            entries,
+                            errors,
+                        ),
+                    ),
+                )
+            raise
+        with self._db:
+            self._db.execute(
+                "INSERT INTO scan_outcomes VALUES (?,?,?,?,?,?)",
+                insert_values(
+                    "scan_outcomes",
                     (
                         self.namespace_uuid,
                         scan_uuid,
@@ -377,18 +408,6 @@ class FilesystemCatalog:
                         entries,
                         errors,
                     ),
-                )
-            raise
-        with self._db:
-            self._db.execute(
-                "INSERT INTO scan_outcomes VALUES (?,?,?,?,?,?)",
-                (
-                    self.namespace_uuid,
-                    scan_uuid,
-                    time.time_ns() // 1000,
-                    status,
-                    entries,
-                    errors,
                 ),
             )
         return self.get_scan(scan_uuid)
@@ -439,7 +458,7 @@ class FilesystemCatalog:
             "SELECT * FROM entries WHERE namespace_uuid=? AND scan_uuid=? ORDER BY relative_path",
             (self.namespace_uuid, scan_uuid),
         ):
-            values = dict(row)
+            values = read_record("entries", row)
             path_module = ntpath if self.path_dialect == "nt" else posixpath
             values["absolute_path"] = (
                 path_module.join(scan.root_path, values["relative_path"])

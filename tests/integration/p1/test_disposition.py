@@ -161,8 +161,10 @@ def test_i6a_admission_modules_are_explicitly_owned_without_prefix_exclusion():
         "domain/ports/context_authorization.py",
         "adapters/sqlite/context_admission.py",
     ):
-        assert "src/repo_catalog/" + path in baseline.ISOLATED_TARGET_MODULES
-        future = ROOT / ("src/repo_catalog/" + path.replace(".py", "_future.py"))
+        owned = baseline.owned_source(path)
+        assert owned in baseline.ISOLATED_TARGET_MODULES
+        assert (ROOT / owned).is_file()
+        future = ROOT / owned.replace(".py", "_future.py")
         assert baseline.is_baseline_source(future)
 
 
@@ -173,9 +175,12 @@ def test_ref_salvage_is_explicitly_opt_in_without_prefix_exclusion():
     baseline = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(baseline)
     assert (
-        "src/repo_catalog/adapters/sqlite/ref_salvage.py"
+        baseline.owned_source("adapters/sqlite/ref_salvage.py")
         in baseline.ISOLATED_TARGET_MODULES
     )
     assert baseline.is_baseline_source(
-        ROOT / "src/repo_catalog/adapters/sqlite/ref_salvage_future.py"
+        ROOT
+        / baseline.owned_source("adapters/sqlite/ref_salvage.py").replace(
+            ".py", "_future.py"
+        )
     )
