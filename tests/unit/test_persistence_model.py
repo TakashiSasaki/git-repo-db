@@ -152,6 +152,53 @@ def test_new_ddl_table_requires_a_mapping_without_a_fixed_table_count(model, cat
     assert validate_model(extended, changed) == []
 
 
+@pytest.mark.parametrize(
+    "section, identifier, change",
+    [
+        ("python", "Core.ScalarClaim", {"verified": True}),
+        ("python", "Core.ScalarClaim", {"columns": ["field"]}),
+        ("python", "Core.ScalarClaim", {"role": None}),
+        ("type-python", "Core.OID", {"verified": True}),
+        ("type-python", "Core.OID", {"role": "row-input"}),
+        ("external", "worktrees.filesystem-scan", {"physical_foreign_key": True}),
+        ("external", "worktrees.filesystem-scan", {"source_columns": ["root_path"]}),
+    ],
+)
+def test_nested_bindings_reject_copied_ddl_or_proof_fields(
+    model, catalog, section, identifier, change
+):
+    broken = copy.deepcopy(model)
+    if section == "external":
+        target = next(
+            item for item in broken["external_references"] if item["id"] == identifier
+        )
+    elif section == "type-python":
+        target = next(
+            item for item in broken["nonpersistent_types"] if item["id"] == identifier
+        )["python"]
+    else:
+        target = row(broken, identifier)["python"]
+    target.update(change)
+    assert any(
+        "binding fields" in error or "Python role" in error
+        for error in validate_model(broken, catalog)
+    )
+
+
+@pytest.mark.parametrize(
+    "section, field", [("python", "symbol"), ("python", "role"), ("external", "target")]
+)
+def test_incomplete_nested_bindings_fail(model, catalog, section, field):
+    broken = copy.deepcopy(model)
+    target = (
+        row(broken, "Core.ScalarClaim")["python"]
+        if section == "python"
+        else broken["external_references"][0]
+    )
+    del target[field]
+    assert any("binding fields" in error for error in validate_model(broken, catalog))
+
+
 def test_report_keeps_actual_keys_and_resolves_implicit_physical_fk_order(
     model, catalog
 ):

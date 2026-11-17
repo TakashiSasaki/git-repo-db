@@ -76,6 +76,11 @@ def validate_model(model: dict, catalog: dict, root: Path = ROOT) -> list[str]:
         if not isinstance(observed, dict):
             errors.append(ident + ": invalid Python binding")
             return
+        expected_fields = (
+            {"path", "symbol", "role"} if persistent else {"path", "symbol"}
+        )
+        if set(observed) != expected_fields:
+            errors.append(ident + ": unexpected/missing Python binding fields")
         if persistent and (
             not isinstance(observed.get("role"), str)
             or observed["role"] not in {"row-input", "projection"}
@@ -214,6 +219,8 @@ def validate_model(model: dict, catalog: dict, root: Path = ROOT) -> list[str]:
         ):
             continue
         ref = registry[record["id"]]
+        if set(record) != {"id", "source", "target"}:
+            errors.append(ref["id"] + ": unexpected/missing external binding fields")
         source = by_table.get((ref["source_store"], ref["source_table"]))
         target_domain = ref.get("target_domain")
         target_id = record.get("target")
