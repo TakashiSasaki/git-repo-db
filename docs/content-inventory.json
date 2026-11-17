@@ -10056,6 +10056,43 @@
       "producer": "ADR 0041 branch separation.",
       "consumers": "Product/web handoff and associated verification.",
       "publication": "not staged"
+    },
+    "docs/adr/0043-separated-persistence-class-mapping.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Owner-accepted ADR 0043, additive to ADRs 0037/0039/0040.",
+      "source": "docs/adr/0043-separated-persistence-class-mapping.md",
+      "producer": "Owner-approved separated design/mapping-first plan.",
+      "consumers": "Canonical mapping checker, agents and independent review.",
+      "publication": "not staged",
+      "status_in_source": "accepted"
+    },
+    "docs/architecture/persistence-model.json": {
+      "status": "canonical-design-input",
+      "owner": "docs/architecture/",
+      "authority": "ADR 0043 class assignments; DDL remains authoritative for columns and keys.",
+      "source": "docs/architecture/persistence-model.json",
+      "producer": "Curated mapping of the selected separated DDL and observed Python types.",
+      "consumers": "scripts/persistence_model.py and tests/unit/test_persistence_model.py; repository design review.",
+      "publication": "not staged"
+    },
+    "scripts/persistence_model.py": {
+      "status": "repository-tool",
+      "owner": "scripts/",
+      "authority": "Executable structural correspondence checker/report under ADR 0043; not semantic proof.",
+      "source": "scripts/persistence_model.py",
+      "producer": "Authored repository tooling using scripts/schema_catalog.py.",
+      "consumers": "Product design review, coding agents and focused tests.",
+      "publication": "not staged"
+    },
+    "tests/unit/test_persistence_model.py": {
+      "status": "product-boundary-test",
+      "owner": "tests/unit/",
+      "authority": "ADR 0043 structural mapping and read-only report contract.",
+      "source": "tests/unit/test_persistence_model.py",
+      "producer": "Focused positive/negative correspondence regressions.",
+      "consumers": "Development pytest and independent review.",
+      "publication": "not staged"
     }
   }
 }

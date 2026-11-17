@@ -5,6 +5,7 @@ Read the current scope before implementation. This index describes accepted targ
 ## Find the right starting point
 
 - **Store responsibilities and Access:** [ADR 0029](0029-independent-access-store.md) and [Access design](../architecture/access-store-design.md).
+- **Separated persistent classes and tables:** [ADR 0043](0043-separated-persistence-class-mapping.md) and [canonical mapping](../architecture/persistence-model.json).
 - **Independent local files and worktrees:** [ADR 0039](0039-independent-filesystem-and-worktree-catalogs.md) and [operation contract](../architecture/local-catalog-contract.md).
 - **Context and Exchange:** [ADR 0030](0030-context-repository-relations-and-selective-exchange.md) and [ADR 0031](0031-generalized-context-resources.md).
 - **RefObservation, Claims and shared Notes Mapping:** [ADR 0036](0036-ref-observations-and-shared-notes-mappings.md).
@@ -91,6 +92,8 @@ exceptions require explicit owner approval.
 
 | [0042](0042-asynchronous-web-main-tracking.md) | Asynchronous main tracking, automatic diagnostic snapshots and independent web branch | 2026-11-17 | Owner accepted replacing fixed SHA maintenance; fully replaces 0041 and preserves branch ownership, full IR, historical evidence and explicit release obligations. |
 
+| [0043](0043-separated-persistence-class-mapping.md) | Separated persistence classes, canonical table mapping and fresh-start implementation sequence | 2026-11-17 | Owner-approved design/mapping-first plan; current DDL is the basis, with structural tooling and no runtime cutover or retained-data migration. |
+
 ## Proposed Records
 
 None.
@@ -103,7 +106,7 @@ acceptance-delta and CI evidence. Retired 0026 remains in [pinned history](https
 not as a contradictory accepted file. Acceptance does not implement installation
 guarantees or authorize product implementation, migration or release.
 
-**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0042** (includes accepted 0042 and retired 0041; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0040 allocation checked the index, fetched reachable history, live remote branches and open PRs on 2026-11-07; no later design allocation was found. Owner accepted ADR 0040 on 2026-11-09; implementation, verification and release remain separate.
+**Allocation/adoption:** ADR 0011 was explicitly adopted through [governance PR #52](https://github.com/TakashiSasaki/git-repo-db/pull/52) on 2026-10-15, after the accepted design stack was merged by PR #69. It does not renumber ADRs 0012–0027, retire still-binding historical decisions or authorize bulk migration. **Highest allocated ADR ID: 0043** (includes accepted 0043 and retired 0041; 0011 is not a free gap). Allocation includes publicly proposed as well as accepted records. Future allocations must inspect this watermark, Git history and live remote branches before assigning a new four-digit ID. ADR 0040 allocation checked the index, fetched reachable history, live remote branches and open PRs on 2026-11-07; no later design allocation was found. Owner accepted ADR 0040 on 2026-11-09; implementation, verification and release remain separate.
 
 The [transition plan](../architecture/git-core-context-transition-plan.md) describes the redesigned implementation sequence. Old Phase 2 handoffs and accepted records remain evidence of their original decisions, subject to the explicit scoped override in ADR 0014. Neither old wording nor a passing documentation check is authority to implement an excluded file-storage path.
 
