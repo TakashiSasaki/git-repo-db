@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+GITHUB_HTTP_SCOPE = "https://github.com/"
 
 
 def run(command, cwd, *, env=None):
@@ -30,9 +31,13 @@ def git_environment():
         ).decode()
         environment.update(
             {
-                "GIT_CONFIG_COUNT": str(index + 1),
-                f"GIT_CONFIG_KEY_{index}": "http.https://github.com/.extraheader",
-                f"GIT_CONFIG_VALUE_{index}": "AUTHORIZATION: basic " + credential,
+                "GIT_CONFIG_COUNT": str(index + 2),
+                # ls-remote inside actions/checkout inherits its existing header.
+                # An empty value resets this multivalue before adding our token.
+                f"GIT_CONFIG_KEY_{index}": f"http.{GITHUB_HTTP_SCOPE}.extraheader",
+                f"GIT_CONFIG_VALUE_{index}": "",
+                f"GIT_CONFIG_KEY_{index + 1}": f"http.{GITHUB_HTTP_SCOPE}.extraheader",
+                f"GIT_CONFIG_VALUE_{index + 1}": "AUTHORIZATION: basic " + credential,
             }
         )
     return environment

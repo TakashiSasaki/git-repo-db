@@ -10,6 +10,13 @@ container's GH_TOKEN can have different authentication states; reconnecting the
 app need not replace a running container's token. Never print credentials, ask
 for tokens in chat, disable TLS, or claim a failed CLI login succeeded.
 
+Git commands such as ls-remote run inside an actions/checkout worktree inherit
+its local Authorization extraheader. Adding a second header produced HTTP 400
+Duplicate header: Authorization. Reset the scoped multivalue with an empty
+environment-only Git config entry before adding the requested token entry. Keep
+credentials out of arguments and disk config. prepare_product.py implements this;
+test_main_tracking.py checks the headers actually sent by Git to a local server.
+
 For an already authorized publication, the connected Git-data tools can upload
 UTF-8 tree entries and base64 binary blobs. Preserve modes and paths. Check every
 binary blob ID and require the resulting remote tree ID to equal the tested

@@ -2,6 +2,8 @@
 
 import importlib.util
 import subprocess
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -91,3 +93,38 @@ def test_local_override_records_head_without_remote_resolution(remote, monkeypat
     assert snapshot["commit"] == git(remote, "rev-parse", "HEAD")
     assert snapshot["selection_mode"] == "local-override"
     assert snapshot["requested_ref"] == "main"
+
+
+def test_git_sends_one_authorization_header_inside_checkout(remote, monkeypatch):
+    received = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            received.append(self.headers.get_all("Authorization"))
+            self.send_response(500)  # Only headers are under test, not a Git server.
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    with HTTPServer(("127.0.0.1", 0), Handler) as server:
+        server.timeout = 5
+        scope = f"http://127.0.0.1:{server.server_port}/"
+        git(remote, "config", f"http.{scope}.extraheader", "AUTHORIZATION: inherited")
+        monkeypatch.setattr(prepare, "GITHUB_HTTP_SCOPE", scope)
+        monkeypatch.setenv("GH_TOKEN", "test-only-not-a-real-token")
+        worker = threading.Thread(target=server.handle_request, daemon=True)
+        worker.start()
+        try:
+            subprocess.run(
+                ["git", "ls-remote", scope, "refs/heads/main"],
+                cwd=remote,
+                env=prepare.git_environment(),
+                capture_output=True,
+                timeout=10,
+            )
+        finally:
+            worker.join(timeout=6)
+    assert len(received) == 1 and len(received[0]) == 1
+    assert received[0][0].startswith("basic ")
