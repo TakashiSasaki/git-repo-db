@@ -13,7 +13,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
-
 from repo_catalog.adapters.sqlite.p1_core import (
     Core,
     _completed_read,

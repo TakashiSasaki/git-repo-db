@@ -4,7 +4,6 @@ import json
 from uuid import UUID
 
 from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
-
 from repo_catalog.adapters.sqlite.p1_schema import canonical
 from repo_catalog.domain.p1_core import register_functions as register_core
 from repo_catalog.domain.ref_observation import valid_ref_absence

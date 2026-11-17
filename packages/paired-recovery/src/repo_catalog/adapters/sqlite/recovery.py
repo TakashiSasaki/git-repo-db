@@ -7,7 +7,6 @@ import sqlite3
 from pathlib import Path
 
 from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
-
 from repo_catalog.adapters.sqlite.core_recovery import (
     CoreRecoveryAdapter,
     _bounded_utf8,

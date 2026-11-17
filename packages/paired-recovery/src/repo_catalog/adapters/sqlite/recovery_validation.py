@@ -5,7 +5,6 @@ import json
 import sqlite3
 
 from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
-
 from repo_catalog.adapters.sqlite.core_recovery_validation import (
     StoredAuthorityInvariantError,
     bounded_domain_exists,

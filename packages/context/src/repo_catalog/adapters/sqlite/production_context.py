@@ -15,8 +15,6 @@ from contextlib import ExitStack, closing, contextmanager
 from functools import wraps
 from pathlib import Path
 
-from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
-
 from repo_catalog.adapters.sqlite.catalog_runtime import (
     catalog_completion,
     catalog_gate,
@@ -24,6 +22,7 @@ from repo_catalog.adapters.sqlite.catalog_runtime import (
 )
 from repo_catalog.adapters.sqlite.context_admission import admission_checked
 from repo_catalog.adapters.sqlite.context_row_bindings import context_write_values
+from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.context_registration import registration_json

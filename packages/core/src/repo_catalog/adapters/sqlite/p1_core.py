@@ -17,7 +17,6 @@ from functools import wraps
 from pathlib import Path
 
 from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
-
 from repo_catalog.domain.p1_core import (
     OID,
     CoreCoverageScope,

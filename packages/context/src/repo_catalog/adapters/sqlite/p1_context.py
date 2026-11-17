@@ -12,13 +12,12 @@ import sqlite3
 from collections.abc import Callable, Iterable
 from functools import wraps
 
-from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
-
 from repo_catalog.adapters.sqlite.context_admission import (
     AdmissionTransactions,
     admission_checked,
 )
 from repo_catalog.adapters.sqlite.context_row_bindings import context_write_values
+from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
 from repo_catalog.domain.context_admission import AdmissionRefused, dependencies
 from repo_catalog.domain.p1_context import (
     RELATION_KINDS,

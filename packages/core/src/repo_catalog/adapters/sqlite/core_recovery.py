@@ -20,8 +20,6 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
-
 from repo_catalog.adapters.sqlite.core_coordination import (
     _file_gate,
     catalog_completion,
@@ -39,6 +37,7 @@ from repo_catalog.adapters.sqlite.core_recovery_validation import (
     validate_stored_ref_authority,
     validate_stored_text_encoding,
 )
+from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_schema import (
     SchemaError,

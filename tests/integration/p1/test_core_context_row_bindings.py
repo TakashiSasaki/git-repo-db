@@ -4,8 +4,8 @@ from dataclasses import replace
 from uuid import uuid4
 
 import pytest
-from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES as CONTEXT_ROWS
 
+from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES as CONTEXT_ROWS
 from repo_catalog.adapters.sqlite.git_core import GitCore
 from repo_catalog.adapters.sqlite.p1_core import Core
 from repo_catalog.adapters.sqlite.p1_schema import initialize
