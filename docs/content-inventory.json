@@ -1580,6 +1580,16 @@
       "consumer_scan": "Literal unique-filename references in docs, documentation, src, scripts, tests and workflows; excludes frozen collections and files over 1 MiB. Dynamic uses and ambiguous basenames are not proven absent.",
       "status_in_source": "accepted"
     },
+    "docs/adr/0044-repository-store-rename.md": {
+      "status": "adr-source-or-governance",
+      "owner": "docs/adr/",
+      "authority": "Owner-accepted Repository store name and fresh-start formats under ADR 0044.",
+      "source": "docs/adr/0044-repository-store-rename.md",
+      "producer": "Owner-approved scope and implementation plan.",
+      "consumers": "ADR index, agent guide and Repository store implementation.",
+      "publication": "not staged",
+      "status_in_source": "accepted"
+    },
     "docs/adr/README.md": {
       "status": "adr-source-or-governance",
       "owner": "docs/adr/",
