@@ -152,6 +152,14 @@ def main(argv: list[str] | None = None) -> int:
                 {
                     "status": report.status,
                     "git_acquired": True,
+                    "acquisition_scope": {
+                        "object_format": report.object_format,
+                        "selected_objects": len(set(request.select_object_oids)),
+                        "selected_objects_with_metadata": report.selected_metadata_count,
+                        "refs_requested": request.include_refs,
+                        "notes_requested": request.notes is not None,
+                        "retain_metadata_bytes": request.retain_bytes,
+                    },
                     "repository_uuidv4": report.repository_uuidv4,
                     "capture_origin_uuidv4": report.capture_origin_uuidv4,
                     "capture_uuidv4": report.capture_uuidv4,

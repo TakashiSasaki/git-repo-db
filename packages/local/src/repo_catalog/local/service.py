@@ -7,11 +7,13 @@ import ntpath
 import os
 import posixpath
 import tempfile
+from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
 from repo_catalog.filesystem import FilesystemCatalog, ScanResult, export_efu
+from repo_catalog.filesystem.models import FilesystemError
 from repo_catalog.worktrees import DiscoveryResult, WorktreeCatalog
 
 GIT_COLUMNS = (
@@ -120,6 +122,43 @@ def _root_exclusions(paths: set[bytes], root: Path) -> set[bytes]:
     return result
 
 
+def _verify_repository_links(links, database):
+    if database is None:
+        return {
+            "status": "not_requested",
+            "total": len(links),
+            "checked": 0,
+            "issues": [],
+        }
+    try:
+        from repo_catalog.application.separated_initialization import read_role_snapshot
+
+        with read_role_snapshot(database, "repository") as db:
+            missing = {
+                uuid
+                for uuid in {link["repository_uuid"] for link in links}
+                if db.execute(
+                    "SELECT 1 FROM repositories WHERE repository_uuidv4=?", (uuid,)
+                ).fetchone()
+                is None
+            }
+    except ModuleNotFoundError as error:
+        raise ValueError(
+            "Repository link verification requires the Repository and runtime distributions"
+        ) from error
+    issues = [
+        {**link, "reason": "REPOSITORY_UUID_NOT_IN_SELECTED_DB"}
+        for link in links
+        if link["repository_uuid"] in missing
+    ]
+    return {
+        "status": "partial" if issues else "complete",
+        "total": len(links),
+        "checked": len(links),
+        "issues": issues,
+    }
+
+
 class LocalCatalog:
     """Optional application service over two separately initialized stores."""
 
@@ -199,6 +238,59 @@ class LocalCatalog:
                     _key(db + suffix) for suffix in ("", "-wal", "-shm", "-journal")
                 )
         return paths
+
+    def verify(self, *, repository_database: Path | None = None):
+        """Verify selected stores and their recorded references without scanning sources."""
+        worktrees = self.worktrees
+        if worktrees is None:
+            raise ValueError(
+                "Reference verification requires an explicit Worktrees database"
+            )
+        topology = worktrees.verify()
+        # Scan references are committed after the target scan. Read the
+        # reference list before looking up targets in the other store.
+        references = worktrees.list_scan_references()
+        links = worktrees.list_repository_links()
+        filesystem = self.filesystem.verify()
+        scans = {}
+        target_statuses = Counter()
+        issues = []
+        for reference in references:
+            if reference["filesystem_namespace_uuid"] != self.filesystem.namespace_uuid:
+                issues.append(
+                    {**reference, "reason": "FILESYSTEM_NAMESPACE_NOT_SELECTED"}
+                )
+                continue
+            scan_uuid = reference["filesystem_scan_uuid"]
+            if scan_uuid not in scans:
+                try:
+                    scans[scan_uuid] = self.filesystem.get_scan(scan_uuid)
+                except FilesystemError:
+                    scans[scan_uuid] = None
+            scan = scans[scan_uuid]
+            if scan is None:
+                issues.append({**reference, "reason": "SCAN_NOT_FOUND"})
+            elif self.filesystem.path_dialect != worktrees.path_dialect or not _within(
+                reference["root_path"],
+                scan.root_path,
+                dialect=self.filesystem.path_dialect,
+            ):
+                issues.append({**reference, "reason": "SCAN_ROOT_MISMATCH"})
+            else:
+                target_statuses[scan.status] += 1
+
+        repositories = _verify_repository_links(links, repository_database)
+        return {
+            "status": "partial" if issues or repositories["issues"] else "complete",
+            "filesystem": filesystem,
+            "worktrees": topology,
+            "scan_references": {
+                "checked": len(references),
+                "matched_target_statuses": dict(target_statuses),
+                "issues": issues,
+            },
+            "repository_links": repositories,
+        }
 
     def scan(
         self, roots: Iterable[Path], *, include_git_admin: bool = False

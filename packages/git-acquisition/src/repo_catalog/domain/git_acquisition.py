@@ -195,3 +195,4 @@ class GitAcquisitionReport:
     ref_inventory_verifications: tuple[RefNotesInventoryVerification, ...] = ()
     ref_inventory_projections: tuple[RefNotesInventoryProjection | None, ...] = ()
     deferred_ref_claims: tuple[RefObservationClaim, ...] = ()
+    selected_metadata_count: int | None = None

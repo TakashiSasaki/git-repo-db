@@ -31,7 +31,7 @@ def _jsonable(value):
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="repo-catalog-local")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("init", "scan", "export"):
+    for name in ("init", "scan", "export", "verify"):
         command = commands.add_parser(name)
         command.add_argument("--filesystem-db", required=True, type=Path)
         command.add_argument("--worktrees-db", required=name != "export", type=Path)
@@ -40,6 +40,8 @@ def main(argv=None) -> int:
         elif name == "scan":
             command.add_argument("roots", nargs="+", type=Path)
             command.add_argument("--include-git-admin", action="store_true")
+        elif name == "verify":
+            command.add_argument("--repository-db", type=Path)
         else:
             command.add_argument("--scan", required=True, action="append")
             command.add_argument("--output", required=True, type=Path)
@@ -60,12 +62,14 @@ def main(argv=None) -> int:
             with LocalCatalog.open(
                 args.filesystem_db,
                 args.worktrees_db,
-                readonly=args.command == "export",
+                readonly=args.command in ("export", "verify"),
             ) as catalog:
                 if args.command == "scan":
                     result = catalog.scan(
                         args.roots, include_git_admin=args.include_git_admin
                     )
+                elif args.command == "verify":
+                    result = catalog.verify(repository_database=args.repository_db)
                 else:
                     result = catalog.export_efu(
                         args.scan,
@@ -76,7 +80,11 @@ def main(argv=None) -> int:
                         path_map=tuple(args.path_map) if args.path_map else None,
                     )
         payload = _jsonable(result)
-        status = getattr(result, "status", "complete")
+        status = (
+            result.get("status", "complete")
+            if isinstance(result, dict)
+            else getattr(result, "status", "complete")
+        )
         if getattr(result, "skipped", 0):
             status = "partial"
         if isinstance(payload, dict):

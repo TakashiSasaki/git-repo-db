@@ -7,6 +7,7 @@ Operational, Search, or the older POSIX catalog runtime.
 ```sh
 repo-catalog-local init --filesystem-db files.sqlite3 --worktrees-db worktrees.sqlite3
 repo-catalog-local scan --filesystem-db files.sqlite3 --worktrees-db worktrees.sqlite3 /path/to/checkout
+repo-catalog-local verify --filesystem-db files.sqlite3 --worktrees-db worktrees.sqlite3
 repo-catalog-local export --filesystem-db files.sqlite3 --worktrees-db worktrees.sqlite3 --scan SCAN_UUID --output files.efu
 ```
 
@@ -32,3 +33,14 @@ works with this entire composition distribution uninstalled.
 The default export refuses partial scans. `--allow-partial` selects their
 actually observed entries explicitly. Exports replace their selected destination
 atomically only after all selected entries serialize successfully.
+
+Verification opens the selected catalogs read-only. It checks the filesystem
+namespace, scan ID and scan root for each recorded worktree reference. A scan
+can reference a worktree rooted inside its scan root. The result reports the
+statuses of matched scans.
+
+Add `--repository-db PATH` to verify that linked Repository UUIDs exist in
+that Repository database. This option requires the Repository and runtime
+distributions. The default two-database result reports Repository links as
+`not_requested`. A reference outside the selected catalogs or a mismatched
+scan root produces a partial result and exit code 2.

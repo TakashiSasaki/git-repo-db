@@ -85,10 +85,11 @@ def test_distant_bare_and_missing_registered_worktree(tmp_path):
     shutil.rmtree(checkout)
     missing = discover_topology(bare)
     assert missing.status == "partial"
-    assert any(
-        entry.root_path == native_path(checkout) and entry.error
-        for entry in missing.entries
+    assert missing.errors == ("WORKTREE_PATH_MISSING",)
+    missing_entry = next(
+        entry for entry in missing.entries if entry.root_path == native_path(checkout)
     )
+    assert missing_entry.error == "WORKTREE_PATH_MISSING"
     assert (bare / "worktrees").exists()
 
 

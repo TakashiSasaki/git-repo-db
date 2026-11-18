@@ -396,6 +396,15 @@ class WorktreeCatalog:
             )
         )
 
+    def list_scan_references(self):
+        return tuple(
+            read_record("scan_references", row)
+            for row in self._db.execute(
+                "SELECT * FROM scan_references ORDER BY "
+                "observation_uuid,root_path,filesystem_namespace_uuid,filesystem_scan_uuid"
+            )
+        )
+
     def link_repository(self, common_dir, repository_uuid, *, observation_uuid=None):
         self._write()
         uuid_value(repository_uuid, 4)
@@ -428,6 +437,14 @@ class WorktreeCatalog:
             for row in self._db.execute(
                 "SELECT repository_uuid FROM repository_links WHERE common_dir=? ORDER BY repository_uuid",
                 (path,),
+            )
+        )
+
+    def list_repository_links(self):
+        return tuple(
+            read_record("repository_links", row)
+            for row in self._db.execute(
+                "SELECT * FROM repository_links ORDER BY common_dir,repository_uuid"
             )
         )
 

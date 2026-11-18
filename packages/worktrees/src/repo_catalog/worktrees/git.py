@@ -245,11 +245,17 @@ def discover_topology(
             entries = []
             for entry in listed:
                 try:
-                    actual = (
-                        initial
-                        if entry.root_path == initial.root_path
-                        else _inspect(git, entry.root_path)
-                    )
+                    if entry.root_path == initial.root_path:
+                        actual = initial
+                    else:
+                        try:
+                            os.stat(entry.root_path)
+                        except FileNotFoundError:
+                            raise WorktreeError(
+                                "WORKTREE_PATH_MISSING",
+                                "registered worktree path is missing",
+                            ) from None
+                        actual = _inspect(git, entry.root_path)
                     if actual.common_dir != common:
                         raise WorktreeError(
                             "TOPOLOGY_CHANGED", "worktree common directory changed"

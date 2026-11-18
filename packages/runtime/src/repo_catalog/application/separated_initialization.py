@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
-from contextlib import closing
+from contextlib import closing, contextmanager
 from pathlib import Path
 from uuid import uuid4
 
@@ -18,7 +18,8 @@ ROLES = {
 }
 
 
-def inspect_role(path, role):
+@contextmanager
+def read_role_snapshot(path, role):
     if sqlite3.sqlite_version_info < p1_schema.MIN_SQLITE:
         raise p1_schema.SchemaError(
             "SQLite runtime is below the supported WAL safety floor"
@@ -38,6 +39,11 @@ def inspect_role(path, role):
             raise p1_schema.SchemaError("database integrity check failed")
         if db.execute("PRAGMA foreign_key_check").fetchone() is not None:
             raise p1_schema.SchemaError("database foreign key check failed")
+        yield db
+
+
+def inspect_role(path, role):
+    with read_role_snapshot(path, role) as db:
         return tuple(
             db.execute(
                 "SELECT repository_uuidv4,catalog_instance_uuidv4 FROM store_identity"

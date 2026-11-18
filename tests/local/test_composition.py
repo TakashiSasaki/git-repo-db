@@ -1,7 +1,8 @@
-"""Real Git/filesystem integration, without other catalog implementations."""
+"""Real Git/filesystem integration and explicit catalog reference verification."""
 
 import csv
 import hashlib
+import json
 import os
 import shutil
 import sqlite3
@@ -362,3 +363,91 @@ def test_physical_root_alias_is_scanned_once_and_self_databases_stay_excluded(tm
         assert not any(
             name.startswith(("files.sqlite3", "worktrees.sqlite3")) for name in entries
         )
+
+
+def test_verify_selected_catalog_references(tmp_path, capsys):
+    from uuid import uuid4
+
+    from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.local.cli import main
+
+    source = repository(tmp_path / "inputs" / "repo")
+    filesystem_db = tmp_path / "filesystem.sqlite3"
+    worktrees_db = tmp_path / "worktrees.sqlite3"
+    repository_db = tmp_path / "repository.sqlite3"
+    repository_uuid = str(uuid4())
+    initialize(repository_db, "repository", repository_uuid, str(uuid4()))
+
+    with LocalCatalog.initialize(filesystem_db, worktrees_db) as catalog:
+        observation = catalog.worktrees.discover(source)
+        scan = catalog.filesystem.scan(source.parent)
+        catalog.worktrees.record_scan_reference(
+            observation.observation_uuid,
+            observation.entries[0].root_path,
+            scan.namespace_uuid,
+            scan.scan_uuid,
+        )
+        catalog.worktrees.link_repository(observation.common_dir, repository_uuid)
+
+    args = [
+        "verify",
+        "--filesystem-db",
+        str(filesystem_db),
+        "--worktrees-db",
+        str(worktrees_db),
+    ]
+    paths = (filesystem_db, worktrees_db, repository_db)
+    before = [path.read_bytes() for path in paths]
+    assert main(args) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["scan_references"] == {
+        "checked": 1,
+        "matched_target_statuses": {"complete": 1},
+        "issues": [],
+    }
+    assert result["repository_links"] == {
+        "status": "not_requested",
+        "total": 1,
+        "checked": 0,
+        "issues": [],
+    }
+    assert main([*args, "--repository-db", str(repository_db)]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["repository_links"] == {
+        "status": "complete",
+        "total": 1,
+        "checked": 1,
+        "issues": [],
+    }
+    assert before == [path.read_bytes() for path in paths]
+
+    unrelated = tmp_path / "unrelated"
+    unrelated.mkdir()
+    with LocalCatalog.open(filesystem_db, worktrees_db) as catalog:
+        outside = catalog.filesystem.scan(unrelated)
+        for namespace, target in (
+            (str(uuid4()), scan.scan_uuid),
+            (scan.namespace_uuid, observation.observation_uuid),
+            (scan.namespace_uuid, outside.scan_uuid),
+        ):
+            catalog.worktrees.record_scan_reference(
+                observation.observation_uuid,
+                observation.entries[0].root_path,
+                namespace,
+                target,
+            )
+        catalog.worktrees.link_repository(observation.common_dir, str(uuid4()))
+
+    before = [path.read_bytes() for path in paths]
+    assert main([*args, "--repository-db", str(repository_db)]) == 2
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "partial"
+    assert {x["reason"] for x in result["scan_references"]["issues"]} == {
+        "FILESYSTEM_NAMESPACE_NOT_SELECTED",
+        "SCAN_NOT_FOUND",
+        "SCAN_ROOT_MISMATCH",
+    }
+    assert [x["reason"] for x in result["repository_links"]["issues"]] == [
+        "REPOSITORY_UUID_NOT_IN_SELECTED_DB"
+    ]
+    assert before == [path.read_bytes() for path in paths]
