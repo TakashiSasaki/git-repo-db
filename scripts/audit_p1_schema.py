@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs/implementation/p1-disposition.json"
 BASELINE = ROOT / "docs/implementation/schema-inventory.json"
 DISPOSITIONS = ROOT / "docs/implementation/table-disposition.json"
-STORES = ("core", "context", "operational", "search")
+STORES = ("repository", "context", "operational", "search")
 
 
 def introspect() -> dict[str, Any]:
@@ -177,13 +177,13 @@ def validate_routes(manifest: dict[str, Any], actual: dict[str, Any]) -> None:
             if not contract.get(required):
                 raise ValueError(f"{qualified}: missing {required} contract")
         if contract["durability"] != (
-            "authoritative" if owner in ("core", "context") else "reconstructible"
+            "authoritative" if owner in ("repository", "context") else "reconstructible"
         ):
             raise ValueError(f"{qualified}: incorrect durability owner")
         table = actual[owner]["tables"][name]
         if not table["primary_key"]:
             raise ValueError(f"{qualified}: no direct semantic primary key")
-        if owner == "core" and not (
+        if owner == "repository" and not (
             any("UPDATE" in sql.upper() for sql in table["triggers"].values())
             and any("DELETE" in sql.upper() for sql in table["triggers"].values())
         ):

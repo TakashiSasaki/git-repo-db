@@ -1,4 +1,4 @@
-"""Authoritative Context reads without concrete Core or paired code."""
+"""Authoritative Context reads without concrete Repository or paired code."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from repo_catalog.domain.query_contracts import (
     QueryError,
     SnapshotFenceToken,
 )
-from repo_catalog.domain.shared_values import CoreFailure, uuid4_value
+from repo_catalog.domain.shared_values import RepositoryFailure, uuid4_value
 
 
 @dataclass
@@ -39,7 +39,7 @@ class PinnedContextSnapshot:
     mode: str
     token: SnapshotFenceToken
     context: Context
-    core: object = None
+    repository_store: object = None
 
 
 class ContextReader:
@@ -252,7 +252,7 @@ class ContextReader:
                 else None
             )
         except (
-            CoreFailure,
+            RepositoryFailure,
             ValueError,
             TypeError,
             AttributeError,
@@ -285,7 +285,7 @@ class ContextReader:
         with self.open_snapshot(required_store="context") as snap:
             assert snap.context is not None
             token_str = snap.token.encode()
-            validate_core = self._context_core_resolver(snap)
+            validate_repository = self._context_repository_resolver(snap)
 
             def views():
                 for key in snap.context.resources(kind=resource_kind):
@@ -298,7 +298,7 @@ class ContextReader:
                         snap.context,
                         key,
                         include_text=False,
-                        validate_core=validate_core,
+                        validate_repository=validate_repository,
                     )
                     if repository_uuidv4 is not None and not view.matches_repository(
                         repository_uuidv4
@@ -328,7 +328,7 @@ class ContextReader:
                         snap.context,
                         view.resource,
                         include_text=True,
-                        validate_core=validate_core,
+                        validate_repository=validate_repository,
                     )
                     for view in selected.items
                 ),
@@ -349,11 +349,11 @@ class ContextReader:
                 snap.context,
                 resource_key,
                 include_text=include_text,
-                validate_core=self._context_core_resolver(snap),
+                validate_repository=self._context_repository_resolver(snap),
             )
 
-    def _context_core_resolver(self, snapshot):
-        """No Core facts can be resolved by the standalone Context reader."""
+    def _context_repository_resolver(self, snapshot):
+        """No Repository facts can be resolved by the standalone Context reader."""
         return None
 
     @_stored_view
@@ -363,7 +363,7 @@ class ContextReader:
         resource_key: ResourceKey,
         *,
         include_text: bool = True,
-        validate_core: Callable[[str, str], bool] | None = None,
+        validate_repository: Callable[[str, str], bool] | None = None,
     ) -> ContextResourceView:
         from repo_catalog.domain.p1_context import ResourceKey
         from repo_catalog.domain.production_context import CollectionObservation
@@ -482,7 +482,9 @@ class ContextReader:
             for cr in col_rows
         )
 
-        core_deps = context.core_dependencies(resource_key, validate=validate_core)
+        repository_deps = context.repository_dependencies(
+            resource_key, validate=validate_repository
+        )
 
         return ContextResourceView(
             resource=resource_key,
@@ -497,7 +499,7 @@ class ContextReader:
             resolved_texts=resolved_texts,
             relations=tuple(all_relations),
             collections=collections,
-            core_dependencies=core_deps,
+            repository_dependencies=repository_deps,
         )
 
     def read_context_text(self, text_sha256: str) -> ByteReadResult:
@@ -531,7 +533,7 @@ class ContextReader:
 
 
 class ContextQueryService(ContextReader, QueryReader):
-    """Pilot: Context Resource/text reads only; paired/Core/Search APIs are absent."""
+    """Pilot: Context Resource/text reads only; paired/Repository/Search APIs are absent."""
 
     def __init__(self, *args, mapping_evidence=None, **kwargs):
         if mapping_evidence is not None:
@@ -544,14 +546,14 @@ class ContextQueryService(ContextReader, QueryReader):
 
     def detect_mode(self):
         self._check_stop()
-        if self._requested_mode in ("paired", "core_only") or (
+        if self._requested_mode in ("paired", "repository_only") or (
             self._requested_mode == "auto"
-            and (self.directory / "core.sqlite3").is_file()
+            and (self.directory / "repository.sqlite3").is_file()
         ):
             raise QueryError(
                 "MISSING_CAPABILITY",
                 "query",
-                "Core/paired Query capability is not installed; select context_only explicitly",
+                "Repository/paired Query capability is not installed; select context_only explicitly",
             )
         if not (self.directory / "context.sqlite3").is_file():
             raise QueryError(
@@ -581,7 +583,7 @@ class ContextQueryService(ContextReader, QueryReader):
                 mode="context_only",
                 repository_uuidv4=repo_id,
                 catalog_instance_uuidv4=inst_id,
-                core_sha256=None,
+                repository_sha256=None,
                 context_sha256=ctx_hash,
             )
             yield PinnedContextSnapshot(

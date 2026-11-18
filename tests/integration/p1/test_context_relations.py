@@ -1457,7 +1457,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     context_db,
 ):
     _, store, _ = context_db
-    # 1. Provider Repository A and B both map to Core REPO_1
+    # 1. Provider Repository A and B both map to Repository REPO_1
     prov_a = ResourceKey.from_native(SERVICE, "repository", "org/repo-a")
     prov_b = ResourceKey.from_native(SERVICE, "repository", "org/repo-b")
     store.resource(prov_a)
@@ -1487,7 +1487,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     assert len(res_1) == 1
     assert res_1[0].support_status == "missing_supporting_binding"
     assert res_1[0].supporting_bindings == ()
-    assert not res_1[0].is_core_resolved_active
+    assert not res_1[0].is_repository_resolved_active
 
     # Now create Issue 2 with explicit MappingSupport referencing claim_a
     issue_2 = ResourceKey.from_native(SERVICE, "issue", "102")
@@ -1511,7 +1511,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     assert len(res_2) == 1
     assert res_2[0].support_status == "active"
     assert res_2[0].supporting_bindings == (ck_a,)
-    assert res_2[0].is_core_resolved_active
+    assert res_2[0].is_repository_resolved_active
 
     # 4. If A's claim is withdrawn, the effect is strictly confined to A's ClaimKey
     disp_clk = FieldClock("github:audit", 50)
@@ -1531,7 +1531,7 @@ def test_counterexample_18_mapping_claim_support_isolation_and_no_speculative_bo
     # Issue 2's support is now disposed
     res_2_withdrawn = store.repository_relations(issue_2, evidence=ev_withdraw_a)
     assert res_2_withdrawn[0].support_status == "supporting_binding_disposed"
-    assert not res_2_withdrawn[0].is_core_resolved_active
+    assert not res_2_withdrawn[0].is_repository_resolved_active
 
     # 5. Admitting B's Mapping Claim must NOT retroactively supply missing support to Issue 1
     # nor substitute for Issue 2's specific disposed ClaimKey

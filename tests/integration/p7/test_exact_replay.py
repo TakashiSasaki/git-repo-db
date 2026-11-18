@@ -11,7 +11,7 @@ from repo_catalog.application.recovery import RecoveryService
 
 
 def _row(catalog, table):
-    with sqlite3.connect(catalog / "core.sqlite3") as conn:
+    with sqlite3.connect(catalog / "repository.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         return dict(conn.execute(f"SELECT * FROM {table} LIMIT 1").fetchone())
 
@@ -37,7 +37,7 @@ def _merge(catalog, tmp_path, candidate):
 
 
 def _authority(catalog):
-    with sqlite3.connect(catalog / "core.sqlite3") as conn:
+    with sqlite3.connect(catalog / "repository.sqlite3") as conn:
         tables = conn.execute(
             "SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name"
         ).fetchall()
@@ -107,7 +107,7 @@ def test_missing_physical_identity_is_only_observation(
 def test_empty_metadata_body_is_admissible(restored_catalog, tmp_path):
     import hashlib
 
-    from repo_catalog.domain.p1_core import native_object_oid
+    from repo_catalog.domain.p1_repository import native_object_oid
 
     candidate = _candidate(restored_catalog, "retained_metadata")
     candidate["payload"].update(
@@ -144,7 +144,7 @@ def test_context_resources_are_explicit_observations_not_false_replays(
     candidate = {
         "candidate_type": "context_resource",
         "extraction_status": "clean",
-        "extraction_provenance": {"store": "context", "table": "core_references"},
+        "extraction_provenance": {"store": "context", "table": "repository_references"},
         "payload": {
             "repository_uuidv4": str(uuid4()),
             "object_format": "sha1",

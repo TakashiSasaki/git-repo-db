@@ -14,7 +14,7 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     canonical,
 )
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from tests.support.authorized_context import FixtureContextStore
 
@@ -163,12 +163,12 @@ def test_context_independent_transaction_rollback_and_restart(context):
     assert store.candidates(KEY, "title")[0].value_json == '"durable"'
 
 
-def test_context_only_resource_needs_no_core_or_source_membership(context):
+def test_context_only_resource_needs_no_repository_or_source_membership(context):
     db, store, path = context
     detached = ResourceKey.from_native(SERVICE, "issue", "detached")
     store.resource(detached, None)
     assert db.execute("SELECT count(*) FROM source_repositories").fetchone()[0] == 0
-    # File-backed I6-A writes acquire the catalog gate; no Core/Operational
+    # File-backed I6-A writes acquire the catalog gate; no Repository/Operational
     # store or Source membership is created by detached Context registration.
     assert sorted(p.name for p in path.parent.iterdir()) == [
         "context.sqlite3",
@@ -176,16 +176,16 @@ def test_context_only_resource_needs_no_core_or_source_membership(context):
     ]
 
 
-def test_portable_core_reference_validated_and_no_sender_promotion(context):
+def test_portable_repository_reference_validated_and_no_sender_promotion(context):
     db, store, _ = context
     sender = canonical(
         {"source": "remote", "evidence": "event-8", "sender_verified": True}
     )
     with pytest.raises(ValueError, match="absent"):
-        store.link_core(KEY, "head", "sha1", "a" * 40, sender, lambda *_: False)
-    store.link_core(KEY, "head", "sha1", "a" * 40, sender, lambda *_: True)
+        store.link_repository(KEY, "head", "sha1", "a" * 40, sender, lambda *_: False)
+    store.link_repository(KEY, "head", "sha1", "a" * 40, sender, lambda *_: True)
     assert db.execute(
-        "SELECT object_format,object_oid,provenance_json FROM core_references"
+        "SELECT object_format,object_oid,provenance_json FROM repository_references"
     ).fetchone() == ("sha1", "a" * 40, sender)
     assert "receiver_verified" not in sender
 

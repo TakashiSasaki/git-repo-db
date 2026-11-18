@@ -15,7 +15,9 @@ from tests.integration.p6.conftest import populate_rich_catalog
     "invalid", ["wrong_type", "mutated_key", "include_text", "digest"]
 )
 def test_invalid_context_read_input_does_not_stop_authority(tmp_path, reader, invalid):
-    data = populate_rich_catalog(tmp_path, include_core=False, include_context=True)
+    data = populate_rich_catalog(
+        tmp_path, include_repository=False, include_context=True
+    )
     key = data["pr_key"]
     service = reader(tmp_path, mode="context_only")
     bad = replace(key)
@@ -40,7 +42,9 @@ def test_invalid_context_read_input_does_not_stop_authority(tmp_path, reader, in
 @pytest.mark.parametrize("reader", [ContextQueryService, ProductionQueryService])
 @pytest.mark.parametrize("field", ["identifier_namespace", "parent"])
 def test_list_rebuilds_key_fields_without_instance_coordinates(tmp_path, reader, field):
-    data = populate_rich_catalog(tmp_path, include_core=False, include_context=True)
+    data = populate_rich_catalog(
+        tmp_path, include_repository=False, include_context=True
+    )
     key = replace(data["pr_key"])
     original = key.coordinates()
     object.__setattr__(key, "coordinates", lambda: original)
@@ -87,7 +91,9 @@ def test_list_rejects_string_subclasses_outside_corruption_boundary(
         def __ne__(self, other):
             raise json.JSONDecodeError("caller comparison", "", 0)
 
-    data = populate_rich_catalog(tmp_path, include_core=False, include_context=True)
+    data = populate_rich_catalog(
+        tmp_path, include_repository=False, include_context=True
+    )
     service = reader(tmp_path, mode="context_only")
     if field in {"cursor", "expected_token"}:
         page = PageRequest()

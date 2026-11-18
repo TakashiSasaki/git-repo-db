@@ -63,7 +63,7 @@ def admit_package(
                 repository_uuidv4s=frozenset(),
                 source_uuidv4s=grants.sources,
                 object_oids=frozenset(),
-                include_core=False,
+                include_repository=False,
             ),
         },
     )
@@ -207,7 +207,7 @@ def test_http_original_producer_survives_new_owner_and_detached_exchange_until_r
         # Omit original Source and Provider Repository registrations deliberately:
         # the captured typed identifiers in provenance remain unresolved reports.
         selection = ExchangeSelectionScope(
-            include_core=False,
+            include_repository=False,
             repository_uuidv4s=(),
             object_oids=(),
             resource_keys=(repo_b, issue, comment),
@@ -300,7 +300,7 @@ def test_http_original_producer_survives_new_owner_and_detached_exchange_until_r
                     "SELECT 1 FROM sources WHERE source_registration_uuidv4=?",
                     (case.source,),
                 ).fetchone()
-            assert not (directory / "core.sqlite3").exists()
+            assert not (directory / "repository.sqlite3").exists()
 
         stamp[0] = 30_000_000
         refresh_request = fetch_request(

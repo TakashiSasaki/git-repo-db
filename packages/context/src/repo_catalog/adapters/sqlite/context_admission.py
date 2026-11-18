@@ -42,8 +42,8 @@ MUTATIONS = frozenset(
         "admit_transfer_event",
         "scope",
         "admit_coverage",
-        "link_core",
-        "report_core_reference",
+        "link_repository",
+        "report_repository_reference",
     }
 )
 
@@ -66,7 +66,7 @@ def _dependencies(name, values):
     for key, value in values.items():
         if key.endswith("provenance_json") and value is not None:
             result |= DependencySet(sources=extract_provenance_sources(value))
-    if name == "link_core":
+    if name == "link_repository":
         from repo_catalog.domain.shared_values import OID
 
         result |= DependencySet(

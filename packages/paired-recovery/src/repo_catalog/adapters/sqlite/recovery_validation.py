@@ -1,15 +1,15 @@
-"""Context-specific Recovery validation, explicitly composed with Core helpers."""
+"""Context-specific Recovery validation, explicitly composed with Repository helpers."""
 
 import hashlib
 import json
 import sqlite3
 
 from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
-from repo_catalog.adapters.sqlite.core_recovery_validation import (
+from repo_catalog.adapters.sqlite.repository_recovery_validation import (
     StoredAuthorityInvariantError,
     bounded_domain_exists,
 )
-from repo_catalog.adapters.sqlite.core_recovery_validation import (
+from repo_catalog.adapters.sqlite.repository_recovery_validation import (
     validate_stored_admission_guards as _validate_stored_admission_guards,
 )
 from repo_catalog.domain.p1_context import (
@@ -24,7 +24,7 @@ from repo_catalog.domain.p1_context import (
     canonical,
     validate_provider_repository_scope,
 )
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.parent_report import validate_parent_report
 from repo_catalog.domain.recovery import BackupValidationError
 
@@ -355,7 +355,7 @@ def verify_existing_context_text(connection, digest, expected_bytes, max_bytes, 
         return False
     size = row[0]
     if size > max_bytes:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "BUDGET", "context_text", "existing text exceeds finite payload limit"
         )
     work.require("input_bytes", size)

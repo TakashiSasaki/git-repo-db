@@ -3,7 +3,7 @@
 from contextlib import closing
 from dataclasses import replace
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.exchange import ExchangeSelectionScope
@@ -14,14 +14,14 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
     Provenance,
     RelationGroup,
+    RepositoryCoverageScope,
     ScalarClaim,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.production_context import CollectionObservation
 from repo_catalog.domain.provider_acquisition import make_provenance
 from tests.integration.p5.test_pr_assessment import Fixture
@@ -76,10 +76,10 @@ def context_history(fixture, count):
 def test_selected_context_sql_and_work_ignore_unrelated_same_service_capture_history(
     tmp_path,
 ):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     fixture.code()
     selection = ExchangeSelectionScope(
-        include_core=False,
+        include_repository=False,
         object_oids=(),
         resource_keys=(fixture.parent,),
         source_uuidv4s=(),
@@ -107,16 +107,18 @@ def test_selected_context_sql_and_work_ignore_unrelated_same_service_capture_his
     assert not (tmp_path / "p1-recovery-stop.json").exists()
 
 
-def test_selected_core_sql_and_work_ignore_unrelated_object_claim_group_and_scope_history(
+def test_selected_repository_sql_and_work_ignore_unrelated_object_claim_group_and_scope_history(
     tmp_path,
 ):
     fixture = Fixture(tmp_path)
-    selected_scope = CoreCoverageScope(
+    selected_scope = RepositoryCoverageScope(
         "object", (*fixture.head.key, "reported-inventory")
     )
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        core.admit_coverage_scope(selected_scope)
-        core.admit_coverage(CoverageClaim(selected_scope, 100, "partial"))
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_coverage_scope(selected_scope)
+        repository_store.admit_coverage(CoverageClaim(selected_scope, 100, "partial"))
     selection = ExchangeSelectionScope(
         include_context=False,
         resource_keys=(),
@@ -125,8 +127,13 @@ def test_selected_core_sql_and_work_ignore_unrelated_object_claim_group_and_scop
         repository_uuidv4s=(fixture.repository,),
     )
     before, before_sql = measured_export(tmp_path, selection)
-    assert before.core["retained_metadata"] and before.core["coverage_claims"]
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
+    assert (
+        before.repository_store["retained_metadata"]
+        and before.repository_store["coverage_claims"]
+    )
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
         for index in range(1500):
             oid = OID("sha1", f"{index + 10000:040x}")
             original = Provenance(
@@ -136,13 +143,13 @@ def test_selected_core_sql_and_work_ignore_unrelated_object_claim_group_and_scop
                 "fixture",
                 "1",
             )
-            core.admit_claim(ScalarClaim(oid, "type", "commit", original))
-            core.admit_group(
+            repository_store.admit_claim(ScalarClaim(oid, "type", "commit", original))
+            repository_store.admit_group(
                 RelationGroup(oid, "commit_parents", "all", "known_empty", (), original)
             )
-            scope = CoreCoverageScope("object", (*oid.key, "reported-inventory"))
-            core.admit_coverage_scope(scope)
-            core.admit_coverage(
+            scope = RepositoryCoverageScope("object", (*oid.key, "reported-inventory"))
+            repository_store.admit_coverage_scope(scope)
+            repository_store.admit_coverage(
                 CoverageClaim(
                     scope,
                     100,
@@ -150,7 +157,7 @@ def test_selected_core_sql_and_work_ignore_unrelated_object_claim_group_and_scop
                 )
             )
     after, after_sql = measured_export(tmp_path, selection)
-    assert after.core == before.core
+    assert after.repository_store == before.repository_store
     assert after_sql <= before_sql * 1.2 + 4000
     assert (
         after.selection_report["work"] <= before.selection_report["work"] * 1.2 + 4000
@@ -160,7 +167,7 @@ def test_selected_core_sql_and_work_ignore_unrelated_object_claim_group_and_scop
             selection, max_work=before.selection_report["work"] * 2 + 6000
         )
     )
-    assert bounded.core == before.core
+    assert bounded.repository_store == before.repository_store
     assert not any(
         row["reason"] in {"work_limit", "resource_limit"}
         for row in bounded.selection_report["omissions"]
@@ -169,7 +176,7 @@ def test_selected_core_sql_and_work_ignore_unrelated_object_claim_group_and_scop
 
 
 def selected_members(path, count):
-    fixture = Fixture(path, core=False)
+    fixture = Fixture(path, repository_store=False)
     children = tuple(
         ResourceKey.from_native(fixture.service, "issue", f"selected-{index:05}")
         for index in range(count)
@@ -207,7 +214,7 @@ def selected_members(path, count):
             required_scope_json="{}",
         )
     selection = ExchangeSelectionScope(
-        include_core=False,
+        include_repository=False,
         object_oids=(),
         resource_keys=(fixture.parent,),
         source_uuidv4s=(),
@@ -240,27 +247,29 @@ def test_selected_metadata_cursor_cannot_accept_sql_or_project_retained_bodies(
 ):
     import pytest
 
-    from repo_catalog.domain.p1_core import CoreFailure
+    from repo_catalog.domain.p1_repository import RepositoryFailure
     from repo_catalog.domain.query_work import UnlimitedWorkBudget
 
     fixture = Fixture(tmp_path)
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
         with pytest.raises(TypeError):
-            core._open_export_metadata_cursor(
+            repository_store._open_export_metadata_cursor(
                 "repositories",
                 (),
                 lengths=False,
                 selected_query="SELECT body FROM retained_metadata",
             )
-        with pytest.raises(CoreFailure) as refused:
-            core._open_export_metadata_cursor(
+        with pytest.raises(RepositoryFailure) as refused:
+            repository_store._open_export_metadata_cursor(
                 "repositories",
                 (),
                 lengths=False,
                 selection_mode="SELECT body FROM retained_metadata",
             )
         assert refused.value.code == "QUERY_BUDGET"
-        rows = core.exchange_metadata_rows(
+        rows = repository_store.exchange_metadata_rows(
             "retained_metadata", (), UnlimitedWorkBudget(), keys=(fixture.head.key,)
         )
         assert rows and all(

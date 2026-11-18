@@ -56,13 +56,13 @@ from repo_catalog.domain.parent_report import validate_parent_report
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ContextError,
-    CoreDependency,
-    CoreReference,
+    RepositoryDependency,
+    RepositoryReference,
     ResourceObservation,
     ResourceRelation,
     SourceInventory,
     json_value,
-    validate_reported_core_reference,
+    validate_reported_repository_reference,
 )
 from repo_catalog.domain.resource_identification import (
     ResourceIdentification,
@@ -264,8 +264,8 @@ _EXPORT_CONTEXT_ROWS = {
         "SELECT sha256 FROM text_bodies ORDER BY sha256",
         ("sha256",),
     ),
-    "core_references": (
-        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json FROM core_references ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json",
+    "repository_references": (
+        "SELECT service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json FROM repository_references ORDER BY service_instance_uuidv4,resource_kind,provider_resource_id,role,object_format,object_oid,provenance_json",
         (
             "service_instance_uuidv4",
             "resource_kind",
@@ -338,7 +338,7 @@ _EXPORT_CONTEXT_FULL_ROWS = {
     "source_repositories": ROW_TYPES["source_repositories"],
     "source_inventories": ROW_TYPES["source_inventory_evidence"],
     "mapping_dispositions": ROW_TYPES["repository_mapping_dispositions"],
-    "core_references": ROW_TYPES["core_references"],
+    "repository_references": ROW_TYPES["repository_references"],
     "claims": ROW_TYPES["coverage_claims"],
     "proofs": ROW_TYPES["coverage_proofs"],
     "source_proofs": ROW_TYPES["source_coverage_proofs"],
@@ -654,7 +654,7 @@ class Context(ContextStore):
         validation_work=None,
         _identity_sink=None,
     ) -> Iterator[Context]:
-        """Pin Context alone; no claimed Core pairing or derivative dependency."""
+        """Pin Context alone; no claimed Repository pairing or derivative dependency."""
         directory = Path(directory)
         with ExitStack() as stack:
             with catalog_gate(directory, exclusive=False):
@@ -821,7 +821,7 @@ class Context(ContextStore):
     def identity_evidence_snapshot(
         self, *, max_evidence=10000, max_bytes=16 * 1024 * 1024
     ):
-        """Service-only snapshot from this Context capability; never opens Core."""
+        """Service-only snapshot from this Context capability; never opens Repository."""
         from repo_catalog.domain.identity_assertions import identity_values
         from repo_catalog.domain.shared_values import Provenance
 
@@ -1621,7 +1621,7 @@ class Context(ContextStore):
 
     def admit_field(self, candidate: FieldCandidate) -> str:
         self._check(write=True)
-        validate_reported_core_reference(candidate)
+        validate_reported_repository_reference(candidate)
         if self.db.execute(
             "SELECT 1 FROM resources WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=?",
             candidate.resource.coordinates(),
@@ -1880,7 +1880,7 @@ class Context(ContextStore):
                 "resource_kind",
                 "provider_resource_id",
             ),
-            "core_references": (
+            "repository_references": (
                 "service_instance_uuidv4",
                 "resource_kind",
                 "provider_resource_id",
@@ -2001,7 +2001,7 @@ class Context(ContextStore):
         with self._stored("coverage"):
             return self._coverage_in_snapshot(scope)
 
-    def link_core(
+    def link_repository(
         self,
         resource: ResourceKey,
         role: str,
@@ -2011,27 +2011,27 @@ class Context(ContextStore):
         validate: Callable[[str, str], bool],
     ):
         self._check(write=True)
-        return super().link_core(
+        return super().link_repository(
             resource, role, object_format, object_oid, provenance_json, validate
         )
 
-    def report_core_reference(
+    def report_repository_reference(
         self,
-        reference: CoreReference,
+        reference: RepositoryReference,
         *,
         clock: FieldClock,
         observed_at_us: int | None,
     ) -> str:
-        """Preserve an attributed portable reference without claiming Core exists.
+        """Preserve an attributed portable reference without claiming Repository exists.
 
         The current attributed field is distinct from P1 required dependencies.
-        Required links use ``link_core`` after actual nominal resolution. A
+        Required links use ``link_repository`` after actual nominal resolution. A
         missing reported OID cannot turn a sound pair into a corrupt catalog.
         """
         return self.admit_field(
             FieldCandidate(
                 reference.resource,
-                "reported_core_reference:" + reference.role,
+                "reported_repository_reference:" + reference.role,
                 canonical(reference.object_oid.key),
                 clock,
                 reference.provenance_json,
@@ -2039,22 +2039,22 @@ class Context(ContextStore):
             )
         )
 
-    def core_dependencies(
+    def repository_dependencies(
         self,
         resource: ResourceKey,
         validate: Callable[[str, str], bool] | None = None,
-    ) -> tuple[CoreDependency, ...]:
+    ) -> tuple[RepositoryDependency, ...]:
         self._check()
-        with self._stored("core_reference"):
+        with self._stored("repository_reference"):
             references = tuple(
-                CoreReference(resource, row[0], OID(row[1], row[2]), row[3])
+                RepositoryReference(resource, row[0], OID(row[1], row[2]), row[3])
                 for row in self.db.execute(
-                    "SELECT role,object_format,object_oid,provenance_json FROM core_references WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? ORDER BY role,object_format,object_oid,provenance_json",
+                    "SELECT role,object_format,object_oid,provenance_json FROM repository_references WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? ORDER BY role,object_format,object_oid,provenance_json",
                     resource.coordinates(),
                 )
             )
         required = tuple(
-            CoreDependency(
+            RepositoryDependency(
                 reference,
                 bool(validate and validate(*reference.object_oid.key)),
                 required=True,
@@ -2063,25 +2063,25 @@ class Context(ContextStore):
         )
         reported = []
         for row in self.db.execute(
-            "SELECT DISTINCT field_name FROM field_candidates WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND field_name GLOB 'reported_core_reference:*' ORDER BY field_name",
+            "SELECT DISTINCT field_name FROM field_candidates WHERE service_instance_uuidv4=? AND resource_kind=? AND provider_resource_id=? AND field_name GLOB 'reported_repository_reference:*' ORDER BY field_name",
             resource.coordinates(),
         ):
             for candidate in self.candidates(resource, row[0]):
-                with self._stored("core_reference"):
+                with self._stored("repository_reference"):
                     value = json.loads(candidate.value_json)
                     if (
                         not isinstance(value, list)
                         or len(value) != 2
                         or any(not isinstance(item, str) for item in value)
                     ):
-                        raise ContextError("REFERENCE_VALUE", "core_reference")
+                        raise ContextError("REFERENCE_VALUE", "repository_reference")
                     object_oid = OID(*value)
                 reported.append(
-                    CoreDependency(
-                        CoreReference(
+                    RepositoryDependency(
+                        RepositoryReference(
                             resource,
                             candidate.field_name.removeprefix(
-                                "reported_core_reference:"
+                                "reported_repository_reference:"
                             ),
                             object_oid,
                             candidate.provenance_json,

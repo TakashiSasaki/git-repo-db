@@ -60,7 +60,7 @@ def initialize(directory):
     init_catalog_stores(
         directory,
         repository_uuidv4=REPOSITORY,
-        stores=("core", "context", "operational"),
+        stores=("repository", "context", "operational"),
     )
 
 

@@ -141,7 +141,7 @@ def test_git_acquisition_minimum(
     basic = tmp_path / "basic"
     run(["uv", "venv", basic, "--python", sys.executable, "--offline"], outside, env)
     basic_python = basic / "bin/python"
-    target = "access" if access else "core"
+    target = "access" if access else "repository"
     run(
         [
             "uv",
@@ -161,7 +161,7 @@ def test_git_acquisition_minimum(
     program = """
 import importlib.metadata,importlib.util,json
 names={d.metadata['Name'] for d in importlib.metadata.distributions() if d.metadata['Name'].startswith('repo-catalog')}
-expected={'repo-catalog-access'} if ACCESS else {'repo-catalog-core','repo-catalog-runtime','repo-catalog-contracts'}
+expected={'repo-catalog-access'} if ACCESS else {'repo-catalog-repository','repo-catalog-runtime','repo-catalog-contracts'}
 assert names==expected,names
 for module in ('application.git_acquisition','domain.git_acquisition','adapters.git.native'):
  try: found=importlib.util.find_spec('repo_catalog.'+module)

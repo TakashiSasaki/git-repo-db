@@ -10,7 +10,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.p1_schema import initialize
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 
 
 def git(path: Path, *args: str, data: bytes | None = None) -> bytes:
@@ -109,7 +109,7 @@ def init_catalog_stores(
     *,
     repository_uuidv4: str | None = None,
     catalog_instance_uuidv4: str | None = None,
-    stores: tuple[str, ...] = ("core", "context", "operational"),
+    stores: tuple[str, ...] = ("repository", "context", "operational"),
 ) -> tuple[str, str]:
     directory.mkdir(parents=True, exist_ok=True)
     repo_id = repository_uuidv4 or str(uuid4())

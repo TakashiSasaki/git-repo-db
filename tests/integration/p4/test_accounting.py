@@ -20,7 +20,7 @@ from repo_catalog.domain.p1_coordination import (
     NotesLimits,
     RequestIdentity,
 )
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def test_failed_reservation_does_not_collide_on_resumed_attempt(accounting):
     work = budget(accounting)
     work.require("input_bytes", 8)
     work.charge("input_bytes", 8)
-    with pytest.raises(CoreFailure, match="finite cumulative"):
+    with pytest.raises(RepositoryFailure, match="finite cumulative"):
         work.require("input_bytes", 3)
     ledger.increase_limit(request, "input_bytes", 20)
     work.require("input_bytes", 3)
@@ -125,7 +125,7 @@ def test_failed_work_keeps_full_reservation_and_can_continue(accounting, excepti
     with work.measured("proof_steps", 2) as meter:
         meter.actual = 2
     assert ledger.usage(request)["proof_steps"] == 10
-    with pytest.raises(CoreFailure, match="finite cumulative"):
+    with pytest.raises(RepositoryFailure, match="finite cumulative"):
         with work.measured("proof_steps", 1):
             pytest.fail("work ran before reservation succeeded")
 
@@ -241,7 +241,7 @@ with work.measured('input_bytes', 8) as meter:
         retry = str(uuid4())
         resumed.attempt(request, retry)
         work = NotesWorkBudget(resumed, request, retry, NotesLimits())
-        with pytest.raises(CoreFailure, match="finite cumulative"):
+        with pytest.raises(RepositoryFailure, match="finite cumulative"):
             work.require("input_bytes", 4)
         resumed.increase_limit(request, "input_bytes", 12)
         with work.measured("input_bytes", 4) as meter:
@@ -269,7 +269,7 @@ def test_concurrent_connections_share_one_finite_attempt_budget(accounting):
         for future in futures:
             future.result(timeout=15)
     assert accounting[2].usage(request)["metadata_units"] == 10
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         budget(accounting).require("metadata_units", 1)
     assert error.value.code == "BUDGET"
     assert error.value.scope == (request, "metadata_units")

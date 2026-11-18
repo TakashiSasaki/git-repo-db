@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     )
     from repo_catalog.domain.production_context import (
         CollectionObservation,
-        CoreDependency,
+        RepositoryDependency,
         ResourceRelation,
         SourceInventory,
     )
@@ -112,7 +112,7 @@ class SourceView:
 
 @dataclass(frozen=True)
 class ContextResourceView:
-    """Authoritative Context resource view with field winners, relations, collections, and Core refs."""
+    """Authoritative Context resource view with field winners, relations, collections, and Repository refs."""
 
     resource: ResourceKey
     repository_uuidv4: str | None
@@ -126,12 +126,12 @@ class ContextResourceView:
     resolved_texts: dict[str, str | None]
     relations: tuple[ResourceRelation, ...]
     collections: tuple[CollectionObservation, ...]
-    core_dependencies: tuple[CoreDependency, ...]
+    repository_dependencies: tuple[RepositoryDependency, ...]
 
     def matches_repository(self, repository_uuidv4: str) -> bool:
         """Current candidate membership, including explicit Mapping alternatives.
 
-        No parent inheritance, historical Core-target fallback or Transfer edge.
+        No parent inheritance, historical Repository-target fallback or Transfer edge.
         Qualification remains available on each role even when a candidate matches.
         """
         return any(
@@ -162,7 +162,7 @@ class ContextResourceView:
                 }
                 for col in self.collections
             ],
-            "core_dependencies": [
+            "repository_dependencies": [
                 {
                     "available": dep.available,
                     "object_oid": list(dep.reference.object_oid.key),
@@ -170,7 +170,7 @@ class ContextResourceView:
                     "required": dep.required,
                     "role": dep.reference.role,
                 }
-                for dep in self.core_dependencies
+                for dep in self.repository_dependencies
             ],
             "document_kind": self.document_kind,
             "fields": {

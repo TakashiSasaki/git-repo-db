@@ -5,8 +5,8 @@ from __future__ import annotations
 from contextlib import AbstractContextManager
 from typing import Protocol
 
-from repo_catalog.domain.p1_core import OID, NativeObject
-from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.p1_repository import OID, NativeObject
+from repo_catalog.domain.ports.p1_repository import WorkBudget
 from repo_catalog.domain.ref_observation import NotesMappingEvidence
 from repo_catalog.domain.request_scope import request_scope as request_scope
 

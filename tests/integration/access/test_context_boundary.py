@@ -11,7 +11,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite import p1_schema
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import ProviderAcquisition
 from repo_catalog.application.exchange import ExchangeService
@@ -37,7 +37,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import Provenance, RepositoryClaim
+from repo_catalog.domain.p1_repository import Provenance, RepositoryClaim
 from repo_catalog.domain.production_context import ContextError
 from tests.support.context_admission import fixture_transaction
 
@@ -58,11 +58,11 @@ def registration_grants(*resources):
     )
 
 
-def catalog(path, *, core=True, context=True):
+def catalog(path, *, repository_store=True, context=True):
     path.mkdir()
     instance = str(uuid4())
     for role in (
-        (("core",) if core else ())
+        (("repository",) if repository_store else ())
         + (("context",) if context else ())
         + ("operational",)
     ):
@@ -212,7 +212,7 @@ def _resign(data):
 )
 @pytest.mark.parametrize("mode", ["inside-json", "extra-envelope"])
 @pytest.mark.parametrize("context_selected", [True, False])
-def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
+def test_resigned_exchange_rejects_registration_leaks_before_repository_admission(
     directory, section, mode, context_selected
 ):
     pkg = ExchangeService(directory).export_package(
@@ -220,7 +220,7 @@ def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
     )
     data = pkg.to_dict()
     candidate = "a" * 40
-    data["core"]["git_objects"].append(
+    data["repository"]["git_objects"].append(
         {"object_format": "sha1", "object_oid": candidate}
     )
     field = (
@@ -239,15 +239,17 @@ def test_resigned_exchange_rejects_registration_leaks_before_core_admission(
             data, new_request=True, permitted_repository_uuidv4s=(REPO,)
         )
     assert "SECRET-CANARY" not in str(error.value)
-    with closing(GitCore(directory / "core.sqlite3")) as core:
-        assert not core.sql(
+    with closing(
+        GitRepositoryStore(directory / "repository.sqlite3")
+    ) as repository_store:
+        assert not repository_store.sql(
             "SELECT 1 FROM git_objects WHERE object_oid=?", (candidate,)
         )
     assert not (directory / "p1-recovery-stop.json").exists()
     assert not (directory / "access.sqlite3").exists()
 
 
-def test_reported_urls_and_historical_core_provenance_survive_exchange(
+def test_reported_urls_and_historical_repository_provenance_survive_exchange(
     directory, tmp_path
 ):
     key = ResourceKey.from_native(SERVICE, "endpoint", "actual-provider-coordinate")
@@ -262,8 +264,10 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
     with fixture_transaction(directory, registration_grants(key)) as ctx:
         ctx.resource(key)
         ctx.admit_field(observed)
-    with closing(GitCore(directory / "core.sqlite3")) as core:
-        core.admit_repository_claim(
+    with closing(
+        GitRepositoryStore(directory / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_repository_claim(
             RepositoryClaim(
                 REPO,
                 "endpoint",
@@ -274,7 +278,7 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
     package = ExchangeService(directory).export_package(
         selection=ExchangeSelectionScope(all_selected=True)
     )
-    assert package.format == "git-repo-db/adr0036-exchange-v8"
+    assert package.format == "git-repo-db/adr0036-exchange-v9"
     target = catalog(tmp_path / "target")
     ExchangeService(target).import_package(
         package,
@@ -285,10 +289,10 @@ def test_reported_urls_and_historical_core_provenance_survive_exchange(
     with Context.snapshot(target) as ctx:
         assert ctx.candidates(key, "url") == (observed,)
         assert ctx.source_repositories(SOURCE) == (REPO,)
-    with closing(GitCore(target / "core.sqlite3")) as core:
-        assert core.sql("SELECT value FROM repository_claims")[0][0] == canonical(
-            "ssh://historical.example/repo"
-        )
+    with closing(GitRepositoryStore(target / "repository.sqlite3")) as repository_store:
+        assert repository_store.sql("SELECT value FROM repository_claims")[0][
+            0
+        ] == canonical("ssh://historical.example/repo")
     again = ExchangeService(target).export_package(
         selection=ExchangeSelectionScope(all_selected=True)
     )
@@ -322,11 +326,11 @@ def test_read_outputs_recheck_instead_of_sanitizing_invalid_registration(
     assert (directory / "p1-recovery-stop.json").exists()
 
 
-def test_context_only_round_trip_and_core_only_paths_need_no_access(tmp_path):
-    left = catalog(tmp_path / "left", core=False)
-    right = catalog(tmp_path / "right", core=False)
+def test_context_only_round_trip_and_repository_only_paths_need_no_access(tmp_path):
+    left = catalog(tmp_path / "left", repository_store=False)
+    right = catalog(tmp_path / "right", repository_store=False)
     package = ExchangeService(left).export_package(
-        selection=ExchangeSelectionScope(all_selected=True, include_core=False)
+        selection=ExchangeSelectionScope(all_selected=True, include_repository=False)
     )
     ExchangeService(right).import_package(
         package,
@@ -339,9 +343,9 @@ def test_context_only_round_trip_and_core_only_paths_need_no_access(tmp_path):
     }
     with Context.snapshot(right) as ctx:
         assert ctx.source_repositories(SOURCE) == (REPO,)
-    core_only = catalog(tmp_path / "core-only", context=False)
+    repository_only = catalog(tmp_path / "repository-only", context=False)
     assert (
-        ExchangeService(core_only)
+        ExchangeService(repository_only)
         .export_package(selection=ExchangeSelectionScope(all_selected=True))
         .context
         is None
@@ -406,8 +410,8 @@ def test_repository_claim_direct_values_round_trip_without_scalar_tag_decode(
     claim = RepositoryClaim(
         REPO, field, value, Provenance("reporter", "event", "field", "decoder", "1")
     )
-    with closing(GitCore(left / "core.sqlite3")) as core:
-        core.admit_repository_claim(claim)
+    with closing(GitRepositoryStore(left / "repository.sqlite3")) as repository_store:
+        repository_store.admit_repository_claim(claim)
     package = ExchangeService(left).export_package(
         selection=ExchangeSelectionScope(all_selected=True, include_context=False)
     )
@@ -423,14 +427,18 @@ def test_repository_claim_direct_values_round_trip_without_scalar_tag_decode(
         permitted_repository_uuidv4s=(REPO,),
         grants=registration_grants(),
     )
-    with closing(GitCore(right / "core.sqlite3")) as core:
-        assert [tuple(row) for row in core.sql("SELECT * FROM repository_claims")] == [
-            claim.key
-        ]
+    with closing(GitRepositoryStore(right / "repository.sqlite3")) as repository_store:
+        assert [
+            tuple(row)
+            for row in repository_store.sql("SELECT * FROM repository_claims")
+        ] == [claim.key]
     reverse = ExchangeService(right).export_package(
         selection=ExchangeSelectionScope(all_selected=True, include_context=False)
     )
-    assert reverse.core["repository_claims"] == package.core["repository_claims"]
+    assert (
+        reverse.repository_store["repository_claims"]
+        == package.repository_store["repository_claims"]
+    )
 
 
 def test_current_p1_routes_are_explicitly_overridden_and_schema_guarded():
@@ -439,7 +447,7 @@ def test_current_p1_routes_are_explicitly_overridden_and_schema_guarded():
     assert check()[0] == 25
 
 
-def test_core_only_export_still_stops_for_invalid_coexisting_context(directory):
+def test_repository_only_export_still_stops_for_invalid_coexisting_context(directory):
     db = raw(directory / "context.sqlite3")
     db.execute("PRAGMA ignore_check_constraints=ON")
     db.execute(

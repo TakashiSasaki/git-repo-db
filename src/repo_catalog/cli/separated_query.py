@@ -35,7 +35,7 @@ def main(argv=None):
         "notes-inventories",
         "note-bytes",
     ):
-        from repo_catalog.cli.core_evidence_query import main as evidence
+        from repo_catalog.cli.repository_evidence_query import main as evidence
 
         return evidence(values)
     if values and values[0] in (
@@ -51,7 +51,7 @@ def main(argv=None):
         return context(values)
     if values and values[0] in ("-h", "--help"):
         print(
-            "Additional Core commands: repository log tree path path-history diff compare digest coverage ref-observation ref-enumeration notes-mapping notes-inventories note-bytes"
+            "Additional Repository commands: repository log tree path path-history diff compare digest coverage ref-observation ref-enumeration notes-mapping notes-inventories note-bytes"
         )
         print(
             "Additional Context commands: providers sources resource resources text context-coverage"

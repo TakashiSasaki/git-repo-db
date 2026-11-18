@@ -9,18 +9,18 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import (
-    CoreRecoveryAdapter,
-    RecoveryWorkBudget,
-    stop_catalog,
-)
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import (
     initialize,
     register_functions,
 )
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite.repository_recovery import (
+    RecoveryWorkBudget,
+    RepositoryRecoveryAdapter,
+    stop_catalog,
+)
 from repo_catalog.application.identity_assertions import IdentityAssertions
 from repo_catalog.domain.context_admission import (
     AdmissionSelection,
@@ -56,23 +56,25 @@ def context_authority(endpoints, records):
 
 
 def status(directory, paired):
-    with closing(GitCore(directory / "core.sqlite3")) as core:
+    with closing(
+        GitRepositoryStore(directory / "repository.sqlite3")
+    ) as repository_store:
         if paired:
             with Context.snapshot(directory) as context:
-                return IdentityAssertions(core, context).status()
-        return IdentityAssertions(core).status()
+                return IdentityAssertions(repository_store, context).status()
+        return IdentityAssertions(repository_store).status()
 
 
 def prepare(tmp_path, paired):
     source = tmp_path / "source"
     source.mkdir()
     repository, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "context") if paired else ("core",):
+    for role in ("repository", "context") if paired else ("repository",):
         initialize(source / f"{role}.sqlite3", role, repository, instance)
     endpoints = [str(uuid4()) for _ in range(3)]
-    with closing(GitCore(source / "core.sqlite3")) as core:
+    with closing(GitRepositoryStore(source / "repository.sqlite3")) as repository_store:
         for endpoint in endpoints:
-            core.admit_repository(endpoint)
+            repository_store.admit_repository(endpoint)
     records = {}
     for kind in ("repository", "service") if paired else ("repository",):
         a, b, c = endpoints
@@ -95,12 +97,12 @@ def prepare(tmp_path, paired):
                 context.provider(endpoint, "identity-recovery-test")
     else:
         authorization = admission = None
-    adapter = SQLiteRecoveryAdapter() if paired else CoreRecoveryAdapter()
+    adapter = SQLiteRecoveryAdapter() if paired else RepositoryRecoveryAdapter()
     backup = tmp_path / "baseline"
     scope = BackupScope.PAIRED if paired else BackupScope.GIT_ONLY
     adapter.create_consistent_backup(source, backup, scope)
-    with closing(GitCore(source / "core.sqlite3")) as core:
-        service = IdentityAssertions(core)
+    with closing(GitRepositoryStore(source / "repository.sqlite3")) as repository_store:
+        service = IdentityAssertions(repository_store)
         first, second, cancelled, before, unresolved = records["repository"]
         service.admit(
             "cancellation", before, original(before), entity_kind="repository"
@@ -147,7 +149,7 @@ def prepare(tmp_path, paired):
     )
 
 
-@pytest.mark.parametrize("paired", [False, True], ids=["core_only", "paired"])
+@pytest.mark.parametrize("paired", [False, True], ids=["repository_only", "paired"])
 def test_backup_stop_salvage_fresh_restore_merge_activate_preserves_identity(
     tmp_path, paired
 ):
@@ -190,12 +192,17 @@ def test_backup_stop_salvage_fresh_restore_merge_activate_preserves_identity(
     assert status(restored, paired) == expected
     # Fixed Exchange projections expose only these complete typed metadata rows.
     work = RecoveryWorkBudget()
-    with closing(GitCore(restored / "core.sqlite3")) as core:
+    with closing(
+        GitRepositoryStore(restored / "repository.sqlite3")
+    ) as repository_store:
         for table, count in (
             ("repository_identity_assertions", 4),
             ("repository_identity_cancellations", 1),
         ):
-            rows = [tuple(row) for row in core.exchange_metadata_rows(table, (), work)]
+            rows = [
+                tuple(row)
+                for row in repository_store.exchange_metadata_rows(table, (), work)
+            ]
             assert len(rows) == count and rows == sorted(rows)
     if paired:
         with Context.snapshot(restored) as context:
@@ -226,7 +233,7 @@ def test_backup_stop_salvage_fresh_restore_merge_activate_preserves_identity(
         assert not (restored / "search.sqlite3").exists()
 
 
-@pytest.mark.parametrize("paired", [False, True], ids=["core_only", "paired"])
+@pytest.mark.parametrize("paired", [False, True], ids=["repository_only", "paired"])
 def test_typed_identity_conflicts_and_forged_candidate_flags_do_not_choose_winners(
     tmp_path, paired
 ):
@@ -283,7 +290,7 @@ def test_typed_identity_conflicts_and_forged_candidate_flags_do_not_choose_winne
     assert replay.replayed_units > 0
 
 
-def test_service_identity_recovery_refuses_missing_local_grant_and_core_only_scope(
+def test_service_identity_recovery_refuses_missing_local_grant_and_repository_only_scope(
     tmp_path,
 ):
     adapter, _, backup, repository, salvage, _, _, _, _, _ = prepare(tmp_path, True)
@@ -292,16 +299,20 @@ def test_service_identity_recovery_refuses_missing_local_grant_and_core_only_sco
     denied = adapter.merge_salvage(restored, salvage)
     assert denied.rejected_units == 5
     assert not status(restored, True)["service_equivalence_closure"]
-    core_only = tmp_path / "core-only"
-    core_only.mkdir()
-    initialize(core_only / "core.sqlite3", "core", repository, str(uuid4()))
-    core_adapter = CoreRecoveryAdapter()
-    core_backup = tmp_path / "core-backup"
-    core_adapter.create_consistent_backup(core_only, core_backup, BackupScope.GIT_ONLY)
-    target = tmp_path / "core-restored"
-    core_adapter.restore_backup(core_backup, target, repository)
+    repository_only = tmp_path / "repository-only"
+    repository_only.mkdir()
+    initialize(
+        repository_only / "repository.sqlite3", "repository", repository, str(uuid4())
+    )
+    repository_adapter = RepositoryRecoveryAdapter()
+    repository_backup = tmp_path / "repository-backup"
+    repository_adapter.create_consistent_backup(
+        repository_only, repository_backup, BackupScope.GIT_ONLY
+    )
+    target = tmp_path / "repository-restored"
+    repository_adapter.restore_backup(repository_backup, target, repository)
     with pytest.raises(RecoveryCapabilityError):
-        core_adapter.merge_salvage(target, salvage)
+        repository_adapter.merge_salvage(target, salvage)
     assert not (target / "context.sqlite3").exists()
 
 
@@ -353,8 +364,8 @@ def rehash_backup(backup):
 @pytest.mark.parametrize(
     "role,table",
     [
-        ("core", "repository_identity_assertions"),
-        ("core", "repository_identity_cancellations"),
+        ("repository", "repository_identity_assertions"),
+        ("repository", "repository_identity_cancellations"),
         ("context", "service_identity_assertions"),
         ("context", "service_identity_cancellations"),
     ],
@@ -404,14 +415,14 @@ def test_identity_validation_limit_is_indeterminate_and_preserves_sound_authorit
     restored = tmp_path / "restored"
     adapter.restore_backup(backup, restored, repository)
     adapter.merge_salvage(restored, salvage)
-    from repo_catalog.adapters.sqlite.core_recovery_validation import (
+    from repo_catalog.adapters.sqlite.repository_recovery_validation import (
         RefValidationBudgetError,
     )
 
     # Five current identity rows are sound but exceed this deliberate one-row
     # validation allowance. Backup reports its finite limit without diagnosis.
     assert len(status(restored, False)["identity_relations"]) == 4
-    bounded = CoreRecoveryAdapter(
+    bounded = RepositoryRecoveryAdapter(
         validation_budget=replace(RecoveryBudget(), max_input_records=1)
     )
     with pytest.raises(
@@ -427,7 +438,7 @@ def test_identity_validation_limit_is_indeterminate_and_preserves_sound_authorit
 @pytest.mark.parametrize(
     "role,table",
     [
-        ("core", "repository_identity_assertions"),
+        ("repository", "repository_identity_assertions"),
         ("context", "service_identity_cancellations"),
     ],
 )

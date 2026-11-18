@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from repo_catalog.adapters.git.notes import GitNotesSource
-from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.p1_repository import OID, RepositoryFailure
 
 
 @dataclass(frozen=True)
@@ -16,11 +16,11 @@ class NativeMetadataWalk:
 
     def intent(self, source, roots):
         if self.source is not source or self.roots != roots:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "REQUEST", "metadata-walk", "exact original source/roots required"
             )
         if type(self.max_objects) is not int or not 0 < self.max_objects <= 100_000:
-            raise CoreFailure("REQUEST", "metadata-walk", "finite object count")
+            raise RepositoryFailure("REQUEST", "metadata-walk", "finite object count")
         return ["native-metadata-closure", 1, self.max_objects]
 
     def discover(self, work):
@@ -41,7 +41,7 @@ def metadata_object_oids(source, roots, work, *, max_objects=100_000):
             for oid in roots
         )
     ):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "metadata-walk", "bounded typed native roots required"
         )
     # The existing native output port prepays real bytes and finite process work
@@ -65,18 +65,18 @@ def metadata_object_oids(source, roots, work, *, max_objects=100_000):
         work.require("metadata_units", 1)
         work.charge("metadata_units", 1)
         if len(result) + len(missing) >= max_objects:
-            raise CoreFailure("BUDGET", "metadata-walk", "finite object count")
+            raise RepositoryFailure("BUDGET", "metadata-walk", "finite object count")
         absent = line.startswith(b"?")
         raw = line[1:] if absent else line
         try:
             oid = OID(source.object_format, raw.decode("ascii"))
         except (UnicodeError, ValueError, TypeError) as error:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "GIT_INPUT", "metadata-walk", "invalid native OID"
             ) from error
         (missing if absent else result).append(oid)
     if len(set(result)) != len(result) or len(set(missing)) != len(missing):
-        raise CoreFailure("GIT_INPUT", "metadata-walk", "duplicate native OID")
+        raise RepositoryFailure("GIT_INPUT", "metadata-walk", "duplicate native OID")
     if not set(roots) <= set(result) | set(missing):
-        raise CoreFailure("GIT_INPUT", "metadata-walk", "native root omitted")
+        raise RepositoryFailure("GIT_INPUT", "metadata-walk", "native root omitted")
     return tuple(result), tuple(missing)

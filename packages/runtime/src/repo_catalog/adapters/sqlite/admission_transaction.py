@@ -9,7 +9,7 @@ from repo_catalog.domain.p1_coordination import CoordinationError
 def rollback_after_failure(connection, original):
     """Finish a failed owner boundary without masking its initiating error.
 
-    A Core capability may already have discarded this connection after its own
+    A Repository capability may already have discarded this connection after its own
     rollback failed. Every other cleanup failure is retained as a diagnostic and
     forces connection discard, so pending writes cannot become a later commit.
     """

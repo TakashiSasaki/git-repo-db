@@ -6,11 +6,11 @@ import json
 
 from repo_catalog.domain.exchange import ExchangeError
 from repo_catalog.domain.identity_assertions import identity_values
-from repo_catalog.domain.p1_core import Provenance
+from repo_catalog.domain.p1_repository import Provenance
 
 IDENTITY_SECTIONS = {
-    "repository_identity_assertions": ("core", "relation", "repository"),
-    "repository_identity_cancellations": ("core", "cancellation", "repository"),
+    "repository_identity_assertions": ("repository", "relation", "repository"),
+    "repository_identity_cancellations": ("repository", "cancellation", "repository"),
     "service_identity_assertions": ("context", "relation", "service"),
     "service_identity_cancellations": ("context", "cancellation", "service"),
 }

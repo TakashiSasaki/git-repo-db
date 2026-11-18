@@ -5,8 +5,8 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.application.core_recovery import CoreRecoveryService
 from repo_catalog.application.recovery import RecoveryService
+from repo_catalog.application.repository_recovery import RepositoryRecoveryService
 from repo_catalog.domain.recovery import (
     BackupScope,
     RecoveryBudget,
@@ -91,10 +91,10 @@ def test_merge_request_cannot_switch_verified_baseline(
     assert not service.is_stopped(destination)
 
 
-def test_core_refuses_implicit_paired_scope_without_marking_corruption(
+def test_repository_refuses_implicit_paired_scope_without_marking_corruption(
     synthetic_catalog, tmp_path
 ):
-    service = CoreRecoveryService()
+    service = RepositoryRecoveryService()
     output = tmp_path / "unavailable.jsonl"
     with pytest.raises(RecoveryCapabilityError):
         service.extract_salvage(synthetic_catalog, output)

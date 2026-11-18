@@ -1,13 +1,12 @@
 {
-  "format": "repo-catalog/p1-isolated-4",
+  "format": "repo-catalog/p1-isolated-5",
   "stores": {
     "context": {
-      "ddl_sha256": "8009b078694df2127bb9c9799119216b8e187f225219bba62ff2b82153d352f0",
-      "sqlite_schema_sha256": "76ed0264e4f99dc5478df415aea887021e4bb48e598e177a13c8337c6cf3e1b3",
+      "ddl_sha256": "a9ec0d1381d9f270e763919bb1c0023fbee7d420e8cf623a3a0f0095bbf2328e",
+      "sqlite_schema_sha256": "1dac015458ab2f396f57baaea46ce44cfd62294eff407a4ad7842a27a7f191eb",
       "tables": [
         "collection_terminals",
         "collections",
-        "core_references",
         "coverage_claims",
         "coverage_proofs",
         "coverage_scopes",
@@ -15,6 +14,7 @@
         "providers",
         "repository_context",
         "repository_mapping_dispositions",
+        "repository_references",
         "resource_relations",
         "resource_repository_relations",
         "resources",
@@ -28,11 +28,24 @@
         "text_bodies"
       ]
     },
-    "core": {
-      "ddl_sha256": "7b33bbbfb8977f59f3d1db338fd9148d65645f6c75ec8d73bff95c5431290cc6",
-      "sqlite_schema_sha256": "a225c268bfd1f1dbfc492947510372d65712f6687a1a83155cf250839f00e96a",
+    "operational": {
+      "ddl_sha256": "f965c4667459ab1ab78f2bda1a0d4cbcbace94a3c7f5356844bff9839c59af18",
+      "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
       "tables": [
-        "core_coverage_proofs",
+        "acquisition_attempts",
+        "acquisition_requests",
+        "cache_locators",
+        "request_budgets",
+        "request_continuations",
+        "retry_state",
+        "store_identity",
+        "work_accounting"
+      ]
+    },
+    "repository": {
+      "ddl_sha256": "c4903d0776df25608f8330e0612caf3dab4328d205106d12942f88a7f9d43327",
+      "sqlite_schema_sha256": "62984bda371642a6f84f57cdd418c16a90ec3ecc1b6604eb44980d1908a28673",
+      "tables": [
         "coverage_claims",
         "coverage_scopes",
         "git_objects",
@@ -52,6 +65,7 @@
         "relation_groups",
         "repositories",
         "repository_claims",
+        "repository_coverage_proofs",
         "repository_identity_assertions",
         "repository_identity_cancellations",
         "retained_metadata",
@@ -59,22 +73,8 @@
         "store_identity"
       ]
     },
-    "operational": {
-      "ddl_sha256": "76598c5a630d4044c5a123587911a62411d55946072ba071109dd7db52f029a5",
-      "sqlite_schema_sha256": "143d52275fd4cf57d5c0d4c7d93c715f1736ed64468718288252dffbcf82e189",
-      "tables": [
-        "acquisition_attempts",
-        "acquisition_requests",
-        "cache_locators",
-        "request_budgets",
-        "request_continuations",
-        "retry_state",
-        "store_identity",
-        "work_accounting"
-      ]
-    },
     "search": {
-      "ddl_sha256": "a1bce192ebf67bc3846f47a5bc63ba2927a97bddf65eb62706ec2e9f9fc5d303",
+      "ddl_sha256": "7d59c8823ee6f55b0ec6d83b531c2181778121653a6c96f78f565455ad4b479d",
       "sqlite_schema_sha256": "d432248c191d1d5a5a1b74be6b0fb2a5923a794cf9c75e38ccb7483a6089ed2e",
       "tables": [
         "search_documents",

@@ -45,7 +45,7 @@ def prepare_workspace_metadata(source):
     """Use current synchronized build metadata with tiny, non-runtime fixtures.
 
     These cache/configuration attacks test builders, not product behavior. Each
-    declared member needs its own finite source input; no real Core fixture or
+    declared member needs its own finite source input; no real Repository fixture or
     repeated behavioral acceptance is required for every hostile uv setting.
     """
     from scripts.check_sdist_contract import ROOT_FILES, distribution_workspace

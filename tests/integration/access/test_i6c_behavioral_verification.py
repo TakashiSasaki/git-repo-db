@@ -7,14 +7,14 @@ Verifies:
 3. Exact admitted/omitted rowsets and atomic-unit semantics in SQLite tables
    (repository_context, resources, resource_repository_relations, resource_relations,
    repository_mapping_dispositions, sources, source_repositories).
-4. Both Context-only (ExchangeService.import_package) and paired Core+Context
+4. Both Context-only (ExchangeService.import_package) and paired Repository+Context
    (PairedAcquisitionCoordinator) import paths.
 5. Genuine handle issued by another authorization service passed into product routes fails closed.
 6. Permission revocation triggered at actual transaction/COMMIT boundaries.
 7. Exact replay and cached receipt behavior after revocation (fail-closed receipt invariants).
 8. Source, MappingClaim, and Disposition permissions verified independently with withholding tests.
-9. Authorized paired Provider acquisition and supported Core-first failure/recovery bookkeeping
-   (Core commit durable, Context rolled back, operational recovery state tracked).
+9. Authorized paired Provider acquisition and supported Repository-first failure/recovery bookkeeping
+   (Repository commit durable, Context rolled back, operational recovery state tracked).
 10. Retention of both Transfer SQL fences (i2_transfer_stage_fence, i2_transfer_report_stage_fence)
     and ordinary Transfer refusal with UnsupportedResourceStage.
 """
@@ -31,7 +31,7 @@ import pytest
 
 from repo_catalog.adapters.github.production_intake import github_repository_id
 from repo_catalog.adapters.sqlite import p1_schema
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import (
     PairedAcquisitionCoordinator,
@@ -71,17 +71,17 @@ def _init_catalog_stores(
     *,
     repo_id: str | None = None,
     instance_id: str | None = None,
-    include_core: bool = True,
+    include_repository: bool = True,
     include_context: bool = True,
     include_operational: bool = True,
 ) -> tuple[str, str]:
     directory.mkdir(parents=True, exist_ok=True)
     repository_uuidv4 = repo_id or str(uuid4())
     catalog_instance_uuidv4 = instance_id or str(uuid4())
-    if include_core:
+    if include_repository:
         p1_schema.initialize(
-            directory / "core.sqlite3",
-            "core",
+            directory / "repository.sqlite3",
+            "repository",
             repository_uuidv4,
             catalog_instance_uuidv4,
         )
@@ -413,24 +413,27 @@ def test_obligation_1_2_3_single_package_receiver_selections_and_rowsets(
 
 
 # =============================================================================
-# OBLIGATION 4: Both Context-Only and Paired Core+Context Import Paths
+# OBLIGATION 4: Both Context-Only and Paired Repository+Context Import Paths
 # =============================================================================
 
 
 def test_obligation_4_context_only_and_paired_import_paths(tmp_path: Path) -> None:
-    """Obligation 4: Exercise both Context-only (ExchangeService.import_package) and Paired Core+Context (PairedAcquisitionCoordinator).
+    """Obligation 4: Exercise both Context-only (ExchangeService.import_package) and Paired Repository+Context (PairedAcquisitionCoordinator).
 
     Asserts:
-    - Context-only path executes when receiver has no Core store; imports Context cleanly.
-    - Paired Core+Context coordinator path executes atomic Core-first and Context-second steps.
-    - SQLite rows in Core and Context verify persistence on their respective paths.
+    - Context-only path executes when receiver has no Repository store; imports Context cleanly.
+    - Paired Repository+Context coordinator path executes atomic Repository-first and Context-second steps.
+    - SQLite rows in Repository and Context verify persistence on their respective paths.
     """
     # 4A: Context-only import path
     ctx_only_dir = tmp_path / "context_only_receiver"
     repo_id, inst_id = _init_catalog_stores(
-        ctx_only_dir, include_core=False, include_context=True, include_operational=True
+        ctx_only_dir,
+        include_repository=False,
+        include_context=True,
+        include_operational=True,
     )
-    assert not (ctx_only_dir / "core.sqlite3").exists()
+    assert not (ctx_only_dir / "repository.sqlite3").exists()
 
     res_key = ResourceKey(inst_id, "issue", encode_identity(["ctx_only_1"]))
     grants = DependencySet(
@@ -451,7 +454,7 @@ def test_obligation_4_context_only_and_paired_import_paths(tmp_path: Path) -> No
         sender_dir,
         repo_id=repo_id,
         instance_id=inst_id,
-        include_core=False,
+        include_repository=False,
         include_context=True,
         include_operational=True,
     )
@@ -467,9 +470,9 @@ def test_obligation_4_context_only_and_paired_import_paths(tmp_path: Path) -> No
         ctx.resource(res_key, identification=ResourceIdentification.unscoped(res_key))
 
     ctx_pkg = ExchangeService(sender_dir).export_package(
-        selection=ExchangeSelectionScope(all_selected=True, include_core=False)
+        selection=ExchangeSelectionScope(all_selected=True, include_repository=False)
     )
-    assert ctx_pkg.core is None
+    assert ctx_pkg.repository_store is None
 
     # Import into context-only receiver
     report = ExchangeService(ctx_only_dir).import_package(
@@ -480,9 +483,9 @@ def test_obligation_4_context_only_and_paired_import_paths(tmp_path: Path) -> No
         new_request=True,
     )
     assert report.context_imported is True
-    assert report.core_imported is False
+    assert report.repository_imported is False
     assert report.admitted_context_resources == 1
-    assert not (ctx_only_dir / "core.sqlite3").exists()
+    assert not (ctx_only_dir / "repository.sqlite3").exists()
 
     with closing(sqlite3.connect(ctx_only_dir / "context.sqlite3")) as db:
         assert (
@@ -493,7 +496,7 @@ def test_obligation_4_context_only_and_paired_import_paths(tmp_path: Path) -> No
             == 1
         )
 
-    # 4B: Paired Core+Context path via PairedAcquisitionCoordinator
+    # 4B: Paired Repository+Context path via PairedAcquisitionCoordinator
     paired_dir = tmp_path / "paired_catalog"
     paired_repo, paired_inst = _init_catalog_stores(paired_dir)
 
@@ -514,8 +517,8 @@ def test_obligation_4_context_only_and_paired_import_paths(tmp_path: Path) -> No
         paired_dir, authorization=auth_pair, admission=adm_pair
     )
 
-    def core_step(core: GitCore) -> None:
-        core.admit_repository(paired_repo)
+    def repository_step(repository_store: GitRepositoryStore) -> None:
+        repository_store.admit_repository(paired_repo)
 
     def context_step(ctx: Context) -> None:
         ctx.provider(paired_inst, "synthetic", "{}")
@@ -524,16 +527,16 @@ def test_obligation_4_context_only_and_paired_import_paths(tmp_path: Path) -> No
             paired_res, identification=ResourceIdentification.unscoped(paired_res)
         )
 
-    res = coord.admit_paired(core_fn=core_step, context_fn=context_step)
-    assert res.admission.core_committed is True
+    res = coord.admit_paired(repository_fn=repository_step, context_fn=context_step)
+    assert res.admission.repository_committed is True
     assert res.admission.context_committed is True
 
-    with closing(sqlite3.connect(paired_dir / "core.sqlite3")) as db:
-        core_repos = [
+    with closing(sqlite3.connect(paired_dir / "repository.sqlite3")) as db:
+        repository_repos = [
             r[0]
             for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
         ]
-        assert paired_repo in core_repos
+        assert paired_repo in repository_repos
 
     with closing(sqlite3.connect(paired_dir / "context.sqlite3")) as db:
         ctx_repos = [
@@ -624,7 +627,7 @@ def test_obligation_5_foreign_authorization_handle_rejected(tmp_path: Path) -> N
     )
     with pytest.raises(AdmissionRefused) as exc:
         coord.admit_paired(
-            core_fn=lambda c: None,
+            repository_fn=lambda c: None,
             context_fn=lambda x: None,
         )
     assert exc.value.code == "PERMISSION_DENIED"
@@ -1062,19 +1065,19 @@ def test_obligation_8_independent_source_mapping_claim_and_disposition_permissio
 
 
 # =============================================================================
-# OBLIGATION 9: Paired Core-First Failure and Operational Recovery Bookkeeping
+# OBLIGATION 9: Paired Repository-First Failure and Operational Recovery Bookkeeping
 # =============================================================================
 
 
-def test_obligation_9_paired_core_first_failure_and_operational_recovery_state(
+def test_obligation_9_paired_repository_first_failure_and_operational_recovery_state(
     tmp_path: Path,
 ) -> None:
-    """Obligation 9: Execute authorized paired Provider acquisition and supported Core-first failure/recovery.
+    """Obligation 9: Execute authorized paired Provider acquisition and supported Repository-first failure/recovery.
 
     Asserts:
-    - Core commit commits first and is durable.
+    - Repository commit commits first and is durable.
     - Context fails second and is rolled back.
-    - Operational database tracks exact recovery state (adr0030-partial with core_committed=true, context_committed=false).
+    - Operational database tracks exact recovery state (adr0030-partial with repository_committed=true, context_committed=false).
     - Cross-store atomic rollback is NOT assumed.
     """
     sender_dir = tmp_path / "p9_sender"
@@ -1082,8 +1085,10 @@ def test_obligation_9_paired_core_first_failure_and_operational_recovery_state(
     repo_id, inst_s = _init_catalog_stores(sender_dir)
     _init_catalog_stores(receiver_dir)
 
-    with closing(GitCore(sender_dir / "core.sqlite3")) as core:
-        core.admit_repository(repo_id)
+    with closing(
+        GitRepositoryStore(sender_dir / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_repository(repo_id)
 
     res_key = ResourceKey(inst_s, "issue", encode_identity(["p9_issue"]))
     auth_s, adm_s, _ = create_local_admission_service(
@@ -1118,7 +1123,7 @@ def test_obligation_9_paired_core_first_failure_and_operational_recovery_state(
 
     def cut_fail_context(point: str) -> None:
         if point == "during_context":
-            raise RuntimeError("Injected Context failure after Core commit")
+            raise RuntimeError("Injected Context failure after Repository commit")
 
     req = RequestIdentity(str(uuid4()), str(uuid4()))
     with pytest.raises(AdmissionFailure) as exc_info:
@@ -1132,17 +1137,17 @@ def test_obligation_9_paired_core_first_failure_and_operational_recovery_state(
             new_request=True,
         )
 
-    # 1. Outcome reflects Core committed, Context aborted
-    assert exc_info.value.outcome.core_committed is True
+    # 1. Outcome reflects Repository committed, Context aborted
+    assert exc_info.value.outcome.repository_committed is True
     assert exc_info.value.outcome.context_committed is False
 
-    # 2. Durable Core state: repository is present
-    with closing(sqlite3.connect(receiver_dir / "core.sqlite3")) as db:
-        core_repos = [
+    # 2. Durable Repository state: repository is present
+    with closing(sqlite3.connect(receiver_dir / "repository.sqlite3")) as db:
+        repository_repos = [
             r[0]
             for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
         ]
-        assert repo_id in core_repos
+        assert repo_id in repository_repos
 
     # 3. Rolled-back Context state: repository and resources are NOT present
     with closing(sqlite3.connect(receiver_dir / "context.sqlite3")) as db:
@@ -1165,7 +1170,7 @@ def test_obligation_9_paired_core_first_failure_and_operational_recovery_state(
         ]
         assert len(partial_records) == 1
         assert partial_records[0] == {
-            "core_committed": True,
+            "repository_committed": True,
             "context_committed": False,
         }
 
@@ -1182,20 +1187,20 @@ def test_obligation_9_paired_core_first_failure_and_operational_recovery_state(
         paired_cat, authorization=auth_p, admission=adm_p
     )
 
-    def core_step(core: GitCore) -> None:
-        core.admit_repository(paired_repo)
+    def repository_step(repository_store: GitRepositoryStore) -> None:
+        repository_store.admit_repository(paired_repo)
 
     def failing_ctx_step(ctx: Context) -> None:
         ctx.repository(paired_repo, "{}")
         raise RuntimeError("Injected Context crash in paired coordinator")
 
     with pytest.raises(AdmissionFailure) as exc_coord:
-        coord.admit_paired(core_fn=core_step, context_fn=failing_ctx_step)
+        coord.admit_paired(repository_fn=repository_step, context_fn=failing_ctx_step)
 
-    assert exc_coord.value.outcome.core_committed is True
+    assert exc_coord.value.outcome.repository_committed is True
     assert exc_coord.value.outcome.context_committed is False
 
-    with closing(sqlite3.connect(paired_cat / "core.sqlite3")) as db:
+    with closing(sqlite3.connect(paired_cat / "repository.sqlite3")) as db:
         assert (
             db.execute(
                 "SELECT count(*) FROM repositories WHERE repository_uuidv4=?",

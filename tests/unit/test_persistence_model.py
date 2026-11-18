@@ -80,7 +80,7 @@ def test_current_separated_ddl_has_exactly_one_class_per_table(model, catalog):
     assert len(actual) == len(expected)
     assert set(actual) == expected
     assert (
-        row(model, "Core.CoverageClaim")["table"]
+        row(model, "Repository.CoverageClaim")["table"]
         == row(model, "Context.CoverageClaim")["table"]
     )
     assert all(not store.startswith("normal.") for store, _ in actual)
@@ -95,23 +95,23 @@ def test_current_separated_ddl_has_exactly_one_class_per_table(model, catalog):
             "duplicate class identity",
         ),
         (
-            lambda m: row(m, "Core.Repository").update(table="not_a_table"),
+            lambda m: row(m, "Repository.Repository").update(table="not_a_table"),
             "unknown target table",
         ),
         (
-            lambda m: row(m, "Core.Repository").update(domain="context"),
+            lambda m: row(m, "Repository.Repository").update(domain="context"),
             "responsibility ownership",
         ),
         (
-            lambda m: row(m, "Core.Repository").update(kind="dto"),
+            lambda m: row(m, "Repository.Repository").update(kind="dto"),
             "persistent class kind",
         ),
         (
-            lambda m: row(m, "Core.Repository").update(primary_key=["made_up"]),
+            lambda m: row(m, "Repository.Repository").update(primary_key=["made_up"]),
             "must be derived",
         ),
         (
-            lambda m: m["domains"]["core"].update(store="normal.core"),
+            lambda m: m["domains"]["repository"].update(store="normal.repository"),
             "wrong target format",
         ),
         (
@@ -119,16 +119,20 @@ def test_current_separated_ddl_has_exactly_one_class_per_table(model, catalog):
             "cannot own a table",
         ),
         (
-            lambda m: m["nonpersistent_types"][0]["sources"].append("Core.Missing"),
+            lambda m: m["nonpersistent_types"][0]["sources"].append(
+                "Repository.Missing"
+            ),
             "unknown source class",
         ),
         (
-            lambda m: m["nonpersistent_types"][0]["sources"].append("Core.OID"),
+            lambda m: m["nonpersistent_types"][0]["sources"].append("Repository.OID"),
             "source must be a persistent class",
         ),
         (lambda m: m["external_references"].pop(), "reference coverage differs"),
         (
-            lambda m: m["external_references"][0].update(source="Core.Repository"),
+            lambda m: m["external_references"][0].update(
+                source="Repository.Repository"
+            ),
             "external source class differs",
         ),
         (
@@ -140,35 +144,39 @@ def test_current_separated_ddl_has_exactly_one_class_per_table(model, catalog):
             "declared domain",
         ),
         (
-            lambda m: row(m, "Core.ScalarClaim")["python"].update(symbol="Gone"),
+            lambda m: row(m, "Repository.ScalarClaim")["python"].update(symbol="Gone"),
             "Python class not found",
         ),
         (
-            lambda m: row(m, "Core.ScalarClaim")["python"].update(path="../outside.py"),
+            lambda m: row(m, "Repository.ScalarClaim")["python"].update(
+                path="../outside.py"
+            ),
             "repository-relative",
         ),
         (
-            lambda m: row(m, "Core.ScalarClaim")["python"].update(
+            lambda m: row(m, "Repository.ScalarClaim")["python"].update(
                 path="scripts/persistence_model.py"
             ),
             "product distribution",
         ),
         (
-            lambda m: row(m, "Core.ScalarClaim")["python"].update(
+            lambda m: row(m, "Repository.ScalarClaim")["python"].update(
                 role="complete-row-proof"
             ),
             "Python role",
         ),
         (
-            lambda m: row(m, "Core.Repository").update(row_type=None),
+            lambda m: row(m, "Repository.Repository").update(row_type=None),
             "row_type binding is required",
         ),
         (
-            lambda m: row(m, "Core.Repository")["row_type"].update(symbol="GoneRow"),
+            lambda m: row(m, "Repository.Repository")["row_type"].update(
+                symbol="GoneRow"
+            ),
             "dedicated domain module/name",
         ),
         (
-            lambda m: row(m, "Core.Repository")["row_type"].update(
+            lambda m: row(m, "Repository.Repository")["row_type"].update(
                 path="packages/context/src/repo_catalog/adapters/sqlite/context_rows.py"
             ),
             "dedicated domain module/name",
@@ -210,12 +218,12 @@ def test_new_ddl_table_requires_a_mapping_without_a_fixed_table_count(model, cat
 @pytest.mark.parametrize(
     "section, identifier, change",
     [
-        ("python", "Core.ScalarClaim", {"verified": True}),
-        ("python", "Core.ScalarClaim", {"columns": ["field"]}),
-        ("python", "Core.ScalarClaim", {"role": None}),
-        ("row_type", "Core.ScalarClaim", {"columns": ["field"]}),
-        ("type-python", "Core.OID", {"verified": True}),
-        ("type-python", "Core.OID", {"role": "row-input"}),
+        ("python", "Repository.ScalarClaim", {"verified": True}),
+        ("python", "Repository.ScalarClaim", {"columns": ["field"]}),
+        ("python", "Repository.ScalarClaim", {"role": None}),
+        ("row_type", "Repository.ScalarClaim", {"columns": ["field"]}),
+        ("type-python", "Repository.OID", {"verified": True}),
+        ("type-python", "Repository.OID", {"role": "row-input"}),
         ("external", "worktrees.filesystem-scan", {"physical_foreign_key": True}),
         ("external", "worktrees.filesystem-scan", {"source_columns": ["root_path"]}),
     ],
@@ -249,7 +257,7 @@ def test_nested_bindings_reject_copied_ddl_or_proof_fields(
 def test_incomplete_nested_bindings_fail(model, catalog, section, field):
     broken = copy.deepcopy(model)
     target = (
-        row(broken, "Core.ScalarClaim")["python"]
+        row(broken, "Repository.ScalarClaim")["python"]
         if section == "python"
         else broken["external_references"][0]
     )
@@ -268,7 +276,7 @@ def test_report_keeps_actual_keys_and_resolves_implicit_physical_fk_order(
     assert "`(namespace_uuid, scan_uuid, relative_path)`" in report
     assert "`(observation_uuid, root_path)`" in report
     assert (
-        "Core.GitObject | entity | `git_objects` | `(object_format, object_oid)`"
+        "Repository.GitObject | entity | `git_objects` | `(object_format, object_oid)`"
         in report
     )
     refs = physical_references(catalog, "p1.operational", "work_accounting")
@@ -302,7 +310,7 @@ def test_aggregate_values_and_optional_links_remain_distinct_from_rows(model, ca
         for item in model["classes"]
         if item.get("python")
     }
-    assert row(model, "Core.Repository")["python"] is None
+    assert row(model, "Repository.Repository")["python"] is None
     report = render_markdown(model, catalog)
     external = report.split("## Registered optional external references", 1)[1].split(
         "## Nonpersistent types", 1

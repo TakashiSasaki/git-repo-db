@@ -1,20 +1,26 @@
-"""A real SQLITE_FULL never leaves half-admitted metadata in current Core."""
+"""A real SQLITE_FULL never leaves half-admitted metadata in current Repository."""
 
 import sqlite3
 from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.p1_core import Core
-from repo_catalog.domain.p1_core import ScalarClaim
-from tests.integration.p1.test_core import Budget, core, native, oid, provenance
+from repo_catalog.adapters.sqlite.p1_repository import RepositoryStore
+from repo_catalog.domain.p1_repository import ScalarClaim
+from tests.integration.p1.test_repository import (
+    Budget,
+    native,
+    oid,
+    provenance,
+    repository_store,
+)
 
-__all__ = ["core"]
+__all__ = ["repository_store"]
 
 
 def page_limit(owner, value=None):
     # Fault injection configures the disposable raw writer before admission.
-    # The normal Core authorizer is restored before any product work runs.
+    # The normal Repository authorizer is restored before any product work runs.
     owner._db.set_authorizer(None)
     try:
         if value is None:
@@ -24,8 +30,10 @@ def page_limit(owner, value=None):
         owner._db.set_authorizer(owner._authorize)
 
 
-def test_actual_sqlite_full_preserves_prior_claim_and_rolls_back_native_unit(core):
-    owner, path, _ = core
+def test_actual_sqlite_full_preserves_prior_claim_and_rolls_back_native_unit(
+    repository_store,
+):
+    owner, path, _ = repository_store
     original = ScalarClaim(oid("a"), "type", "commit", provenance())
     owner.admit_claim(original)
     before = owner.sql("SELECT * FROM git_objects")
@@ -50,7 +58,7 @@ def test_actual_sqlite_full_preserves_prior_claim_and_rolls_back_native_unit(cor
             if isinstance(cause, BaseException):
                 pending.append(cause)
     assert full, raised.value
-    reopened = Core(path)
+    reopened = RepositoryStore(path)
     try:
         assert reopened.sql("SELECT * FROM git_objects") == before
         assert reopened.scalar(oid("a"), "type").alternatives

@@ -5,8 +5,7 @@ import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import (
     expected_schema,
     register_functions,
@@ -16,7 +15,8 @@ from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.adapters.sqlite.recovery_validation import (
     verify_existing_context_text,
 )
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.adapters.sqlite.repository_recovery import RecoveryWorkBudget
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.recovery import CorruptionDetectedError, RecoveryBudget
 
 
@@ -80,8 +80,8 @@ def test_existing_retained_text_damage_stops_destination_without_mutation(
             ).fetchall()
             == before
         )
-    with pytest.raises(CoreFailure) as stopped:
-        GitCore(restored_catalog / "core.sqlite3")
+    with pytest.raises(RepositoryFailure) as stopped:
+        GitRepositoryStore(restored_catalog / "repository.sqlite3")
     assert stopped.value.code == "RECOVERY_STOP"
 
 
@@ -106,7 +106,7 @@ def test_existing_text_refusal_precedes_byte_materialization(restored_catalog, r
             if refusal == "verification_budget"
             else RecoveryWorkBudget()
         )
-        with pytest.raises(CoreFailure) as failure:
+        with pytest.raises(RepositoryFailure) as failure:
             verify_existing_context_text(
                 db,
                 digest,

@@ -1,4 +1,4 @@
-"""Shared authored advisory grammar at Python and actual Core/Context SQL edges."""
+"""Shared authored advisory grammar at Python and actual Repository/Context SQL edges."""
 
 import json
 import sqlite3
@@ -37,7 +37,7 @@ BAD_DETAILS = (
 )
 
 
-@pytest.fixture(params=["core", "context"])
+@pytest.fixture(params=["repository", "context"])
 def advisory_database(tmp_path, request):
     role = request.param
     repository = str(uuid4())

@@ -7,24 +7,26 @@ import pytest
 
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.context_search import ContextSearchService
-from repo_catalog.application.core_search import CoreSearchService
+from repo_catalog.application.repository_search import RepositorySearchService
 from repo_catalog.domain.query_contracts import QueryError
 from repo_catalog.domain.search_query import SearchQuery
 from tests.integration.p6.conftest import populate_rich_catalog
 
 
-@pytest.mark.parametrize("role", ["core", "context"])
+@pytest.mark.parametrize("role", ["repository", "context"])
 @pytest.mark.parametrize("operation", ["search", "rebuild"])
 def test_index_port_error_preserves_identity_without_authority_stop(
     tmp_path, role, operation
 ):
     populate_rich_catalog(
-        tmp_path, include_core=role == "core", include_context=role == "context"
+        tmp_path,
+        include_repository=role == "repository",
+        include_context=role == "context",
     )
-    service = (CoreSearchService if role == "core" else ContextSearchService)(
-        tmp_path, mode=role + "_only"
-    )
-    kind = "git_metadata" if role == "core" else "context_text"
+    service = (
+        RepositorySearchService if role == "repository" else ContextSearchService
+    )(tmp_path, mode=role + "_only")
+    kind = "git_metadata" if role == "repository" else "context_text"
     marker = json.JSONDecodeError("external index port", "", 0)
 
     class Broken:
@@ -46,14 +48,16 @@ def test_index_port_error_preserves_identity_without_authority_stop(
     assert service.search(SearchQuery("e", (kind,))).hits
 
 
-@pytest.mark.parametrize("role", ["core", "context"])
+@pytest.mark.parametrize("role", ["repository", "context"])
 def test_stale_cursor_refuses_before_authority_extraction(tmp_path, role):
     populate_rich_catalog(
-        tmp_path, include_core=role == "core", include_context=role == "context"
+        tmp_path,
+        include_repository=role == "repository",
+        include_context=role == "context",
     )
-    service = (CoreSearchService if role == "core" else ContextSearchService)(
-        tmp_path, mode=role + "_only"
-    )
+    service = (
+        RepositorySearchService if role == "repository" else ContextSearchService
+    )(tmp_path, mode=role + "_only")
     query = SearchQuery("e", limit=1)
     first = service.search(query)
     assert first.next_cursor
@@ -62,7 +66,7 @@ def test_stale_cursor_refuses_before_authority_extraction(tmp_path, role):
             db.execute('UPDATE providers SET configuration_json=\'{"name":"changed"}\'')
         else:
             # A genuine additional attributed claim changes authority; no update
-            # of admitted Core facts is needed for this synthetic writer.
+            # of admitted Repository facts is needed for this synthetic writer.
             row = db.execute(
                 "SELECT repository_uuidv4,provenance FROM repository_claims WHERE field='name' LIMIT 1"
             ).fetchone()
@@ -88,15 +92,17 @@ def test_stale_cursor_refuses_before_authority_extraction(tmp_path, role):
     assert not (tmp_path / "p1-recovery-stop.json").exists()
 
 
-@pytest.mark.parametrize("role", ["core", "context"])
+@pytest.mark.parametrize("role", ["repository", "context"])
 def test_index_result_does_not_keep_caller_comparison_behavior(tmp_path, role):
     populate_rich_catalog(
-        tmp_path, include_core=role == "core", include_context=role == "context"
+        tmp_path,
+        include_repository=role == "repository",
+        include_context=role == "context",
     )
-    service = (CoreSearchService if role == "core" else ContextSearchService)(
-        tmp_path, mode=role + "_only"
-    )
-    kind = "git_metadata" if role == "core" else "context_text"
+    service = (
+        RepositorySearchService if role == "repository" else ContextSearchService
+    )(tmp_path, mode=role + "_only")
+    kind = "git_metadata" if role == "repository" else "context_text"
     with service.open_snapshot() as snap:
         docs, _ = service._extract_documents(snap, kind)
     matches = {k: v for k, v in docs.items() if "e" in v}

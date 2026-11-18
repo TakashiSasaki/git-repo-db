@@ -13,7 +13,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect, validate
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import GitAcquisition, ProviderAcquisition
@@ -95,8 +95,8 @@ def receive(path, package, permitted, **kwargs):
     )
 
 
-def core_repositories(path):
-    with connect(path / "core.sqlite3", "core") as db:
+def repository_repositories(path):
+    with connect(path / "repository.sqlite3", "repository") as db:
         return {r[0] for r in db.execute("SELECT repository_uuidv4 FROM repositories")}
 
 
@@ -311,10 +311,14 @@ def test_independent_selection_does_not_turn_dependencies_into_permission(
     )
     package = ExchangeService(source).export_package(selection=selected)
     receive(recipient, package, (r1, r2))
-    assert core_repositories(recipient) == ({seed, r1} if "R" in roots else {seed})
-    with closing(GitCore(recipient / "core.sqlite3")) as core:
-        assert core.catalog_identity() == (seed, instance)
-        present = core.sql(
+    assert repository_repositories(recipient) == (
+        {seed, r1} if "R" in roots else {seed}
+    )
+    with closing(
+        GitRepositoryStore(recipient / "repository.sqlite3")
+    ) as repository_store:
+        assert repository_store.catalog_identity() == (seed, instance)
+        present = repository_store.sql(
             "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
             oids["commit2"].key,
         )
@@ -347,9 +351,9 @@ def test_omitted_selection_needs_explicit_all_and_empty_overrides_all(assembled)
         selection=selection(all_selected=True)
     )
     assert not empty_package.context["resources"]
-    assert not empty_package.core["git_objects"]
+    assert not empty_package.repository_store["git_objects"]
     assert r1 not in [
-        r["repository_uuidv4"] for r in empty_package.core["repositories"]
+        r["repository_uuidv4"] for r in empty_package.repository_store["repositories"]
     ]
 
 
@@ -533,11 +537,11 @@ def test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_
     recovery = RecoveryService()
     receipt = recovery.create_consistent_backup(receiver, backup)
     assert receipt.scope == BackupScope.PAIRED and receipt.verified_clean
-    assert set(receipt.manifest.stores) == {"core", "context"}
+    assert set(receipt.manifest.stores) == {"repository", "context"}
     result = recovery.restore_backup(backup, restored, seed)
     assert result.revalidated_clean
     assert context_rows(restored) == before
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         with connect(restored / f"{role}.sqlite3", role) as db:
             validate(db, role)
             assert not db.execute("PRAGMA foreign_key_check").fetchall()
@@ -549,21 +553,23 @@ def test_received_paired_backup_preserves_complete_rows_keys_provenance_and_oid_
         "retained_notes",
     ):
         with (
-            connect(receiver / "core.sqlite3", "core") as a,
-            connect(restored / "core.sqlite3", "core") as b,
+            connect(receiver / "repository.sqlite3", "repository") as a,
+            connect(restored / "repository.sqlite3", "repository") as b,
         ):
             assert sorted(
                 (tuple(row) for row in a.execute(f'SELECT * FROM "{table}"')), key=repr
             ) == sorted(
                 (tuple(row) for row in b.execute(f'SELECT * FROM "{table}"')), key=repr
             )
-    with closing(GitCore(restored / "core.sqlite3")) as core:
-        assert core.read_metadata(oids["commit2"])
+    with closing(
+        GitRepositoryStore(restored / "repository.sqlite3")
+    ) as repository_store:
+        assert repository_store.read_metadata(oids["commit2"])
     assert not any(
         (restored / f"{role}.sqlite3").exists()
         for role in ("operational", "search", "access")
     )
-    assert core_repositories(restored) == {seed, r1, r2}
+    assert repository_repositories(restored) == {seed, r1, r2}
     assert all(
         b"i5 separate non-executable access canary" not in p.read_bytes()
         for p in backup.rglob("*")
@@ -668,7 +674,7 @@ def test_transfer_reports_never_mix_across_observations_or_identifier_namespaces
     seed, _ = init_catalog_stores(restricted)
     report = receive(restricted, package, (r1,))
     assert report.omissions
-    assert core_repositories(restricted) == {seed, r1}
+    assert repository_repositories(restricted) == {seed, r1}
     with Context.snapshot(restricted) as ctx:
         # The two-sided report cannot be rewritten into an apparently original one-sided report.
         assert not any(
@@ -706,7 +712,7 @@ def test_selected_source_inventory_cannot_expand_repository_registration(
     )
     report = receive(recipient, package, (r1, r2))
     assert report.omissions or package.selection_report["omissions"]
-    assert core_repositories(recipient) == {seed, r1}
+    assert repository_repositories(recipient) == {seed, r1}
     with Context.snapshot(recipient) as ctx:
         assert not ctx.db.execute(
             "SELECT 1 FROM source_repositories WHERE repository_uuidv4=?", (r2,)

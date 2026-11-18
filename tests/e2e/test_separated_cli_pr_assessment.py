@@ -60,7 +60,7 @@ def test_normal_cli_pr_assessment_requires_actual_listing_and_respects_finite_wo
         capsys, case, "pr-code", "--no-require-git", "--max-work", 0, expected=2
     )
     assert error["code"] == "INVALID_INPUT"
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "operational.sqlite3").exists()
     assert not (case.directory / "p1-recovery-stop.json").exists()
 
@@ -94,7 +94,7 @@ def test_normal_cli_pr_documents_preflights_all_thread_children_before_paginatio
     )
     assert next_page["state"] == "complete" and len(next_page["items"]) == 1
     assert next_page["items"] != result["items"]
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
 
 
 def test_normal_cli_selected_thread_remains_complete_when_unrelated_sibling_fails(
@@ -170,4 +170,4 @@ def test_normal_cli_selected_thread_remains_complete_when_unrelated_sibling_fail
         capsys, case, "pr-documents", "--thread-id", "thread-one", "--resolved"
     )
     assert mismatch["state"] == "complete" and mismatch["total_count"] == 0
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()

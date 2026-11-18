@@ -26,7 +26,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from repo_catalog.adapters.git.native import GitNativeSource
-from repo_catalog.domain.p1_core import CoreFailure, encode
+from repo_catalog.domain.p1_repository import RepositoryFailure, encode
 
 _BLOCK = 65536
 _OVERHEAD = 2 * _BLOCK
@@ -34,7 +34,7 @@ _OVERHEAD = 2 * _BLOCK
 
 def _finite(value, scope):
     if type(value) is not int or not 0 < value < 2**63 - _OVERHEAD:
-        raise CoreFailure("BUDGET", scope, "positive finite limit required")
+        raise RepositoryFailure("BUDGET", scope, "positive finite limit required")
     return value
 
 
@@ -44,7 +44,7 @@ def _location(locator):
         or len(locator) > 8192
         or any(ord(c) < 33 for c in locator)
     ):
-        raise CoreFailure("REMOTE_URL", "git", "explicit remote URL required")
+        raise RepositoryFailure("REMOTE_URL", "git", "explicit remote URL required")
     try:
         value = urlsplit(locator)
         if value.scheme not in {"https", "http", "ssh"} or not value.hostname:
@@ -72,7 +72,7 @@ def _location(locator):
         _ = value.port
         return value
     except (ValueError, TypeError):
-        raise CoreFailure("REMOTE_URL", "git", "unsafe remote URL") from None
+        raise RepositoryFailure("REMOTE_URL", "git", "unsafe remote URL") from None
 
 
 def _environment():
@@ -132,7 +132,7 @@ class RemoteGitSource(GitNativeSource):
         self.transfer_body_bytes = transfer_body_bytes
         super().__init__(path, metadata_bytes=metadata_bytes)
         if self.object_format != object_format:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NATIVE_FORMAT", "remote-git", "remote object format mismatch"
             )
 
@@ -156,7 +156,9 @@ class _Transfer:
         self.count += amount
         self.guard()
         if self.count > self.limit:
-            raise CoreFailure("BUDGET", "remote-transfer", "finite transfer body limit")
+            raise RepositoryFailure(
+                "BUDGET", "remote-transfer", "finite transfer body limit"
+            )
 
 
 def _handler(location, transfer, credentials, username, timeout):
@@ -183,21 +185,21 @@ def _handler(location, transfer, credentials, username, timeout):
                     "/repo/info/refs?service=git-upload-pack",
                     "/repo/git-upload-pack",
                 }:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "REMOTE_PROTOCOL", "git", "unexpected Git HTTP operation"
                     )
                 suffix = self.path.removeprefix("/repo")
                 if (self.command == "GET") != suffix.startswith("/info/refs?"):
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "REMOTE_PROTOCOL", "git", "unexpected Git HTTP method"
                     )
                 if self.headers.get("Transfer-Encoding"):
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "REMOTE_PROTOCOL", "git", "unbounded request framing"
                     )
                 length = int(self.headers.get("Content-Length", "0"))
                 if not 0 <= length <= transfer.limit - transfer.count:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "BUDGET", "remote-transfer", "finite upload body limit"
                     )
                 cls = (
@@ -238,7 +240,9 @@ def _handler(location, transfer, credentials, username, timeout):
                     transfer.guard()
                     chunk = self.rfile.read(min(_BLOCK, length))
                     if not chunk:
-                        raise CoreFailure("REMOTE_PROTOCOL", "git", "truncated upload")
+                        raise RepositoryFailure(
+                            "REMOTE_PROTOCOL", "git", "truncated upload"
+                        )
                     transfer.count_bytes(len(chunk))
                     connection.send(chunk)
                     length -= len(chunk)
@@ -246,7 +250,7 @@ def _handler(location, transfer, credentials, username, timeout):
                 # Never follow redirects, forward cookies, or copy an upstream
                 # credential challenge into Git's local client/helper channel.
                 if upstream.status != 200:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "REMOTE_HTTP", "git", "remote Git request refused"
                     )
                 self.send_response(200)
@@ -266,8 +270,8 @@ def _handler(location, transfer, credentials, username, timeout):
             except BaseException as error:
                 transfer.error = (
                     error
-                    if isinstance(error, CoreFailure)
-                    else CoreFailure(
+                    if isinstance(error, RepositoryFailure)
+                    else RepositoryFailure(
                         "REMOTE_NETWORK", "git", "remote Git transport failed"
                     )
                 )
@@ -290,7 +294,7 @@ def _disk_guard(path, limit, work):
             except FileNotFoundError:
                 continue  # Git atomically renames temporary object files.
             if total > limit:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "BUDGET", "remote-cache", "finite temporary disk limit"
                 )
 
@@ -345,21 +349,21 @@ def validate_remote_transport(
         or not math.isfinite(timeout_seconds)
         or timeout_seconds <= 0
     ):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "BUDGET", "remote-timeout", "positive finite timeout required"
         )
     if object_format not in {"sha1", "sha256"}:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "NATIVE_FORMAT", "remote-git", "explicit sha1/sha256 required"
         )
     if type(username) is not str or any(c in username for c in "\r\n:"):
-        raise CoreFailure("REMOTE_CREDENTIAL", "git", "invalid HTTP username")
+        raise RepositoryFailure("REMOTE_CREDENTIAL", "git", "invalid HTTP username")
     if location.scheme == "ssh" and credentials is not None:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REMOTE_CREDENTIAL", "git", "HTTP credentials cannot authorize SSH"
         )
     if refspecs is not None and type(refspecs) not in {tuple, list}:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REF", "remote-git", "explicit finite refspec sequence required"
         )
     specs = (
@@ -383,7 +387,9 @@ def validate_remote_transport(
             for s in specs
         )
     ):
-        raise CoreFailure("REF", "remote-git", "bounded explicit refspecs required")
+        raise RepositoryFailure(
+            "REF", "remote-git", "bounded explicit refspecs required"
+        )
     if ssh_username is not None and (
         type(ssh_username) is not str
         or not ssh_username
@@ -392,7 +398,7 @@ def validate_remote_transport(
             for c in ssh_username
         )
     ):
-        raise CoreFailure("REMOTE_CREDENTIAL", "ssh", "invalid SSH username")
+        raise RepositoryFailure("REMOTE_CREDENTIAL", "ssh", "invalid SSH username")
     for reference in (ssh_identity_file, ssh_known_hosts_file):
         if reference is not None and (
             type(reference) is not str
@@ -400,7 +406,7 @@ def validate_remote_transport(
             or len(reference) > 16384
             or "\0" in reference
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "REMOTE_CREDENTIAL", "ssh", "bounded local path reference required"
             )
     return location, specs
@@ -471,7 +477,7 @@ def fetch_remote(
         def check():
             guard()
             if time.monotonic() >= deadline:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "REMOTE_TIMEOUT", "git", "finite remote transfer timeout"
                 )
             _disk_guard(cache, disk_bytes, work)
@@ -495,7 +501,7 @@ def fetch_remote(
             wrapper = root / "ssh-meter"
             binary = shutil.which("ssh")
             if binary is None:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "REMOTE_EXECUTOR", "ssh", "SSH executable unavailable"
                 )
             config_file.write_text(
@@ -566,11 +572,11 @@ def fetch_remote(
                 value = json.loads(meter_file.read_text(encoding="ascii"))
                 transfer.count = value["bytes"]
                 if value["limited"]:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "BUDGET", "remote-transfer", "finite SSH body limit"
                     )
             if process.returncode:
-                raise CoreFailure("REMOTE_GIT", "git", "remote Git fetch failed")
+                raise RepositoryFailure("REMOTE_GIT", "git", "remote Git fetch failed")
             measured = transfer.count
         finally:
             if process is not None:

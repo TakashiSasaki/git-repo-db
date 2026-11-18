@@ -135,7 +135,7 @@ def extract_context_documents(
                 )
             )
             summaries[key] = {
-                "kind": "stored_core_target_relation",
+                "kind": "stored_repository_target_relation",
                 **repository_relation_summary(relation),
             }
 

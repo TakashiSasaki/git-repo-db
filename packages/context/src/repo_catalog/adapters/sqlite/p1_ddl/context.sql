@@ -209,7 +209,7 @@ THEN EXISTS(SELECT 1 FROM json_each(NEW.members_json) j WHERE NOT EXISTS(
  AND (NEW.collection_kind NOT IN('reviews','comments','threads','documents') OR
   (r.identifier_namespace_kind=NEW.resource_kind AND r.identifier_namespace_id=NEW.provider_resource_id)))) ELSE 0 END
 BEGIN SELECT RAISE(ABORT,'Collection member namespace/resource mismatch'); END;
-CREATE TABLE core_references(
+CREATE TABLE repository_references(
  service_instance_uuidv4 TEXT NOT NULL,
  resource_kind TEXT NOT NULL,
  provider_resource_id TEXT NOT NULL,
@@ -326,8 +326,8 @@ CREATE TRIGGER collections_no_update BEFORE UPDATE ON collections BEGIN SELECT R
 CREATE TRIGGER collections_no_delete BEFORE DELETE ON collections BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
 CREATE TRIGGER collection_terminals_no_update BEFORE UPDATE ON collection_terminals BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
 CREATE TRIGGER collection_terminals_no_delete BEFORE DELETE ON collection_terminals BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
-CREATE TRIGGER core_references_no_update BEFORE UPDATE ON core_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
-CREATE TRIGGER core_references_no_delete BEFORE DELETE ON core_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
+CREATE TRIGGER repository_references_no_update BEFORE UPDATE ON repository_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
+CREATE TRIGGER repository_references_no_delete BEFORE DELETE ON repository_references BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
 CREATE TRIGGER coverage_scopes_no_update BEFORE UPDATE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
 CREATE TRIGGER coverage_scopes_no_delete BEFORE DELETE ON coverage_scopes BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;
 CREATE TRIGGER coverage_proofs_no_update BEFORE UPDATE ON coverage_proofs BEGIN SELECT RAISE(ABORT,'immutable Context evidence'); END;

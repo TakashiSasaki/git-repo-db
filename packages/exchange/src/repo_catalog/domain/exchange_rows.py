@@ -2,7 +2,7 @@
 
 import json
 
-from repo_catalog.domain.p1_core import encode
+from repo_catalog.domain.p1_repository import encode
 
 ROW_KEYS = {
     "context": {
@@ -19,7 +19,7 @@ ROW_KEYS = {
                 "terminal_state",
             ),
         ),
-        "core_references": (
+        "repository_references": (
             (
                 "object_format",
                 "object_oid",
@@ -166,7 +166,7 @@ ROW_KEYS = {
         ),
         "text_bodies": (("sha256", "text_value"),),
     },
-    "core": {
+    "repository": {
         "coverage_claims": (
             (
                 "coverage_state",
@@ -368,9 +368,9 @@ for _section, _fields in {
         "structures_json",
     ),
 }.items():
-    ROW_KEYS["core"][_section] = (tuple(sorted(_fields)),)
+    ROW_KEYS["repository"][_section] = (tuple(sorted(_fields)),)
 
-for _store, _prefix in (("core", "repository"), ("context", "service")):
+for _store, _prefix in (("repository", "repository"), ("context", "service")):
     ROW_KEYS[_store][_prefix + "_identity_assertions"] = (
         ("provenance", "record_json", "relation_uuidv4"),
     )
@@ -397,7 +397,7 @@ ROW_KEYS["context"]["coverage_proofs"] += (
 )
 
 
-def validate_rows(core, context):
+def validate_rows(repository_store, context):
     # Local import keeps envelope validation independent of application services.
     from repo_catalog.domain.exchange import ExchangeError, _parse_json
 
@@ -409,7 +409,7 @@ def validate_rows(core, context):
         validate_required_observation_us,
     )
 
-    for store, data in (("core", core), ("context", context)):
+    for store, data in (("repository", repository_store), ("context", context)):
         if data is None:
             continue
         for section, rows in data.items():
@@ -426,13 +426,13 @@ def validate_rows(core, context):
                     )
 
                     decode_identity_row(section, row)
-                if store == "core" and section == "scalar_claims":
+                if store == "repository" and section == "scalar_claims":
                     from repo_catalog.domain.scalar_wire import scalar_value_json
 
                     scalar_value_json(row)
                 if store == "context" and section == "resources":
                     is_staged_paired = (
-                        core is not None
+                        repository_store is not None
                         and row.get("resource_kind")
                         in (
                             "review",
@@ -452,7 +452,7 @@ def validate_rows(core, context):
                     )
                     if is_staged_paired:
                         # Staged identification for paired packages is deferred to
-                        # preflight_i2_resources so Core-only selection succeeds.
+                        # preflight_i2_resources so Repository-only selection succeeds.
                         pass
                     else:
                         try:
@@ -592,15 +592,15 @@ def validate_rows(core, context):
                         raise ExchangeError(
                             "MALFORMED_ROW", [store, section], "invalid typed reference"
                         ) from error
-                if store == "core" and section == "coverage_proofs":
+                if store == "repository" and section == "coverage_proofs":
                     members = json.loads(row["members_json"])
                     if not isinstance(members, list) or any(
                         not isinstance(m, list) or len(m) != 2 for m in members
                     ):
                         raise ExchangeError(
-                            "MALFORMED_ROW", ["core", section, "typed_members"]
+                            "MALFORMED_ROW", ["repository", section, "typed_members"]
                         )
-                if store == "core" and section in (
+                if store == "repository" and section in (
                     "ref_observations",
                     "ref_observation_claims",
                     "ref_enumeration_observations",
@@ -661,7 +661,7 @@ def _transfer_scope_references(row, scope):
 # Other row types have their entire asserted value in the key; authority flags
 # are payload, so contradictory sender annotations do not get an arrival winner.
 IDENTITY_KEYS = {
-    "core": {
+    "repository": {
         "ref_observations": ("observation_origin_uuidv4", "ref_observation_uuidv7"),
         "ref_observation_claims": (
             "observation_origin_uuidv4",
@@ -765,11 +765,11 @@ IDENTITY_KEYS = {
 }
 
 
-def validate_replay_consistency(core, context):
+def validate_replay_consistency(repository_store, context):
     from repo_catalog.domain.exchange import ExchangeError
-    from repo_catalog.domain.p1_core import _performed
+    from repo_catalog.domain.p1_repository import _performed
 
-    for store, data in (("core", core), ("context", context)):
+    for store, data in (("repository", repository_store), ("context", context)):
         if data is None:
             continue
         for section, rows in data.items():

@@ -25,7 +25,7 @@ from tests.integration.p1.test_coordination import (
     admit_fixture,
     build,
     context_unit,
-    core_unit,
+    repository_unit,
 )
 from tests.support.context_reader_probe import field_original_update_fault
 
@@ -50,7 +50,7 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capabili
             )
         )
 
-    admit_fixture(coordinator, core_unit, context)
+    admit_fixture(coordinator, repository_unit, context)
     with closing(connect(directory / "context.sqlite3", "context")) as db:
         # Fault injection into a disposable store, outside supported admission.
         # This produces real invalid UTF-8 TEXT, so integrity_check cannot run
@@ -67,14 +67,16 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capabili
         # Trusted test connections avoid initial validation intercepting this
         # already damaged fixture before testing the capability validation path.
         with (
-            closing(connect(directory / "core.sqlite3", "core")) as core,
+            closing(
+                connect(directory / "repository.sqlite3", "repository")
+            ) as repository_store,
             closing(connect(directory / "context.sqlite3", "context")) as context,
         ):
             readers = [
                 ReadSnapshot(
                     db, coordinator._check_running, coordinator._record_corruption
                 )
-                for db in (core, context)
+                for db in (repository_store, context)
             ]
             with pytest.raises(CoordinationError, match="CORRUPTION"):
                 validate_pair(*readers)
@@ -89,7 +91,7 @@ def test_paired_validation_udf_failure_persists_stop(tmp_path, damaged, capabili
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
         PairCoordinator(directory).admit(lambda tx: None, lambda tx: None)
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
-        with PairCoordinator(directory).core_snapshot():
+        with PairCoordinator(directory).repository_snapshot():
             pytest.fail("derivative loss cleared the stop")
 
 
@@ -98,12 +100,12 @@ def test_cancelled_validation_does_not_diagnose_corruption(tmp_path, monkeypatch
     build(directory)
     original = p1_coordination.validate_pair
 
-    def interrupted(core, context, **options):
-        core.set_progress_handler(lambda: 1, 1)
+    def interrupted(repository_store, context, **options):
+        repository_store.set_progress_handler(lambda: 1, 1)
         try:
-            return original(core, context, **options)
+            return original(repository_store, context, **options)
         finally:
-            core.set_progress_handler(None, 0)
+            repository_store.set_progress_handler(None, 0)
 
     monkeypatch.setattr(p1_coordination, "validate_pair", interrupted)
     with pytest.raises(sqlite3.OperationalError) as error:

@@ -95,7 +95,7 @@
     "reason": "External original subject/Claim attribution is preserved; local checks are distinct evidence."
   },
   {
-    "retired_node": "tests/integration/p4/test_acquisition.py::test_real_sqlite_core_commit_denial_rolls_back_body_unit",
+    "retired_node": "tests/integration/p4/test_acquisition.py::test_real_sqlite_repository_commit_denial_rolls_back_body_unit",
     "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_body_real_commit_denial_rolls_back_and_retry_keeps_work",
     "reason": "Actual SQLITE_TRANSACTION COMMIT denial after body INSERT leaves no body row or open transaction; retry retains work and copy identity."
   },
@@ -149,7 +149,7 @@
     "reason": "Damaged stored proof structure causes persistent stop on replay/read."
   },
   {
-    "retired_node": "tests/integration/p4/test_inventory.py::test_inventory_atomic_rollback_on_core_insert_failure",
+    "retired_node": "tests/integration/p4/test_inventory.py::test_inventory_atomic_rollback_on_repository_insert_failure",
     "replacement_node": "tests/integration/p4/test_ref_note_atomicity.py::test_ref_group_insert_failure_rolls_back_new_objects_and_keeps_original",
     "reason": "Actual exception after Group INSERT rolls back its new nominal objects and Group; original independent Group survives; retry costs work."
   },

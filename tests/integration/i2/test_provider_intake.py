@@ -58,7 +58,7 @@ from tests.support.context_admission import (
 
 
 def setup(path):
-    r1, _ = init_catalog_stores(path, stores=("core", "context", "operational"))
+    r1, _ = init_catalog_stores(path, stores=("repository", "context", "operational"))
     r2, service = str(uuid4()), str(uuid4())
     ProviderAcquisition(path).admit_batch(
         ProviderIntakeBatch(
@@ -120,7 +120,7 @@ def timeline(service, event=100, *, label="event", **payload):
     )
 
 
-def test_pr_base_head_have_distinct_core_and_exact_provider_support(tmp_path):
+def test_pr_base_head_have_distinct_repository_and_exact_provider_support(tmp_path):
     s, r1, r2 = setup(tmp_path)
     a, b = mapping(s, "1", r1, "A"), mapping(s, "2", r2, "B")
     ProviderAcquisition(tmp_path).admit_batch(
@@ -670,13 +670,15 @@ def test_issue_ownership_keeps_incomparable_source_clock_domains(tmp_path):
 def test_oid_url_name_and_source_membership_are_not_mapping_evidence(tmp_path):
     from contextlib import closing
 
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.domain.acquisition import SourceRegistration
-    from repo_catalog.domain.p1_core import OID
+    from repo_catalog.domain.p1_repository import OID
 
     s, r1, _ = setup(tmp_path)
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        core.admit_object(OID("sha1", "a" * 40))
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_object(OID("sha1", "a" * 40))
     ProviderAcquisition(tmp_path).admit_batch(
         ProviderIntakeBatch(
             s,
@@ -707,7 +709,7 @@ def test_oid_url_name_and_source_membership_are_not_mapping_evidence(tmp_path):
         key = ResourceKey.from_native(s, "pull_request", "7")
         (role,) = ctx.provider_repository_roles(key)
         assert role.state == "unresolved_provider_only" and not role.resolved_candidates
-        assert ctx.core_dependencies(key) and not ctx.repository_relations(key)
+        assert ctx.repository_dependencies(key) and not ctx.repository_relations(key)
         assert not ctx.db.execute(
             "SELECT 1 FROM resource_repository_relations"
         ).fetchall()

@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from repo_catalog.domain.git_native import parse_metadata
-from repo_catalog.domain.p1_core import OID, CoreFailure, NativeObject
+from repo_catalog.domain.p1_repository import OID, NativeObject, RepositoryFailure
 
 
 @dataclass(frozen=True)
@@ -32,14 +32,14 @@ class NativeRef:
 class GitNativeSource:
     def __init__(self, path: Path, *, metadata_bytes: int = 64 * 1024 * 1024):
         if type(metadata_bytes) is not int or not 0 < metadata_bytes < 2**63:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "BUDGET", path, "positive finite metadata byte limit required"
             )
         self.path = Path(path).resolve()
         self.metadata_bytes = metadata_bytes
         fmt = self._run("rev-parse", "--show-object-format=storage").strip()
         if fmt not in (b"sha1", b"sha256"):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NATIVE_FORMAT", path, "unsupported Git storage object format"
             )
         self.object_format = fmt.decode("ascii")
@@ -83,11 +83,11 @@ class GitNativeSource:
                 timeout=30,
             )
         except (OSError, subprocess.TimeoutExpired) as error:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "GIT_INPUT", self.path, "local Git command failed: " + str(error)
             ) from error
         if result.returncode:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "GIT_INPUT", self.path, result.stderr.decode("utf-8", "replace").strip()
             )
         return result.stdout
@@ -98,7 +98,7 @@ class GitNativeSource:
 
             return GitNotesSource(self).metadata(object_oid, work)
         if object_oid.object_format != self.object_format:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NATIVE_FORMAT",
                 object_oid,
                 "Git storage format differs from requested OID",
@@ -113,25 +113,25 @@ class GitNativeSource:
             .split()
         )
         if header == [object_oid.object_oid.encode(), b"missing"]:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "OBJECT_UNAVAILABLE",
                 object_oid,
                 "requested native object is unavailable locally",
             )
         if len(header) != 3 or header[0] != object_oid.object_oid.encode():
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "GIT_INPUT", object_oid, "unexpected native object header"
             )
         kind = header[1].decode("ascii")
         if kind not in ("commit", "tree", "tag"):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "RETENTION_PURPOSE",
                 object_oid,
                 "ordinary blob bodies are excluded from metadata input",
             )
         size = int(header[2])
         if size < 0 or size > self.metadata_bytes:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "BUDGET", object_oid, "native metadata exceeds finite input limit"
             )
         # cat-file's <type> form emits the exact representation, never pretty
@@ -145,7 +145,7 @@ class GitNativeSource:
                 **self._process_options(),
             )
         except OSError as error:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "GIT_INPUT", object_oid, "local Git could not start"
             ) from error
         try:
@@ -157,7 +157,7 @@ class GitNativeSource:
                 while len(body) <= size:
                     remaining = deadline - time.monotonic()
                     if remaining <= 0 or not selector.select(remaining):
-                        raise CoreFailure(
+                        raise RepositoryFailure(
                             "GIT_INPUT", object_oid, "local Git output timed out"
                         )
                     chunk = os.read(
@@ -167,18 +167,18 @@ class GitNativeSource:
                         break
                     body.extend(chunk)
             if len(body) != size:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "GIT_INPUT",
                     object_oid,
                     "native object size changed or output was truncated",
                 )
             if process.wait(timeout=max(0.001, deadline - time.monotonic())):
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "OBJECT_UNAVAILABLE", object_oid, "native object could not be read"
                 )
             body = bytes(body)
         except (OSError, subprocess.TimeoutExpired) as error:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "GIT_INPUT", object_oid, "local Git output failed"
             ) from error
         finally:
@@ -214,10 +214,10 @@ class GitNativeSource:
             active.require("metadata_units", 1)
             active.charge("metadata_units", 1)
             if len(result) >= source.discovery_refs:
-                raise CoreFailure("BUDGET", "refs", "finite ref count")
+                raise RepositoryFailure("BUDGET", "refs", "finite ref count")
             pieces = line.split(b"\0")
             if len(pieces) != 5:
-                raise CoreFailure("GIT_INPUT", "refs", "malformed ref record")
+                raise RepositoryFailure("GIT_INPUT", "refs", "malformed ref record")
             name, target, kind, peeled, symbolic = pieces
             object_oid = OID(self.object_format, target.decode("ascii"))
             if kind == b"tag":
@@ -232,7 +232,9 @@ class GitNativeSource:
                     active,
                 )
                 if len(terminal) != len(target) + 1 or not terminal.endswith(b"\n"):
-                    raise CoreFailure("GIT_INPUT", "refs", "malformed peeled target")
+                    raise RepositoryFailure(
+                        "GIT_INPUT", "refs", "malformed peeled target"
+                    )
                 peeled = terminal[:-1]
             result.append(
                 NativeRef(
@@ -257,7 +259,7 @@ class GitNativeSource:
             or not name.startswith(b"refs/")
             or b"\0" in name
         ):
-            raise CoreFailure("REF", name, "exact full ref required")
+            raise RepositoryFailure("REF", name, "exact full ref required")
         work.require("metadata_units", 1)
         work.charge("metadata_units", 1)
         work.require("input_bytes", len(name))
@@ -273,7 +275,7 @@ class GitNativeSource:
                 timeout=30,
             )
             if valid.returncode != 0:
-                raise CoreFailure("REF", name, "invalid exact Git ref name")
+                raise RepositoryFailure("REF", name, "invalid exact Git ref name")
             work.require("metadata_units", 1)
             work.charge("metadata_units", 1)
             work.require("input_bytes", len(name))
@@ -288,9 +290,11 @@ class GitNativeSource:
                 timeout=30,
             )
         except (OSError, subprocess.TimeoutExpired) as error:
-            raise CoreFailure("GIT_INPUT", name, "named ref lookup failed") from error
+            raise RepositoryFailure(
+                "GIT_INPUT", name, "named ref lookup failed"
+            ) from error
         if result.returncode == 0:
             return True
         if result.returncode == 2:
             return False
-        raise CoreFailure("GIT_INPUT", name, "named ref lookup did not complete")
+        raise RepositoryFailure("GIT_INPUT", name, "named ref lookup did not complete")

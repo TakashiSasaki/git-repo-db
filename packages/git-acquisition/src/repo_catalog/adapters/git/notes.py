@@ -16,14 +16,14 @@ from dataclasses import dataclass
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.notes import account_proof_bundle
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreFailure,
     NativeObject,
+    RepositoryFailure,
     account_verification,
     encode,
 )
-from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ports.p1_repository import WorkBudget
 from repo_catalog.domain.ref_observation import NotesMappingEvidence
 
 
@@ -62,7 +62,7 @@ class GitNotesSource:
     ):
         for value in (discovery_bytes, discovery_refs, timeout_seconds):
             if type(value) is not int or not 0 < value < 2**63:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "BUDGET", "notes-source", "positive finite bound required"
                 )
         self.source = source
@@ -86,7 +86,7 @@ class GitNotesSource:
                 if encode(json.loads(declared)) != declared:
                     raise ValueError
             except (ValueError, TypeError, RecursionError):
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "NOTES_SCOPE", "source", "canonical adapter scope required"
                 ) from None
             return declared
@@ -98,7 +98,7 @@ class GitNotesSource:
         """Reserve before every read; exceptions retain unsettled upper bounds.
 
         Input is counted here; hash and parser passes are independently counted
-        below and at the receiving Core. Memory contains only bounded incidental
+        below and at the receiving Repository. Memory contains only bounded incidental
         input. Child output is killed at a byte limit or deadline.
         """
         _prepay(work, "metadata_units")  # actual attempted Git operation
@@ -112,7 +112,9 @@ class GitNotesSource:
                 **self.source._process_options(),
             )
         except OSError as error:
-            raise CoreFailure("GIT_INPUT", self.source.path, str(error)) from error
+            raise RepositoryFailure(
+                "GIT_INPUT", self.source.path, str(error)
+            ) from error
         body = bytearray()
         deadline = time.monotonic() + self.timeout_seconds
         try:
@@ -126,7 +128,7 @@ class GitNotesSource:
                 while True:
                     remaining = deadline - time.monotonic()
                     if remaining <= 0 or not selector.select(remaining):
-                        raise CoreFailure(
+                        raise RepositoryFailure(
                             "GIT_INPUT", args, "local Git output timed out"
                         )
                     # One sentinel detects an oversized output without ever
@@ -141,12 +143,16 @@ class GitNotesSource:
                     if consume is not None:
                         consume(chunk)
                     if len(body) > cap:
-                        raise CoreFailure("BUDGET", args, "finite native output limit")
+                        raise RepositoryFailure(
+                            "BUDGET", args, "finite native output limit"
+                        )
             if process.wait(timeout=max(0.001, deadline - time.monotonic())):
-                raise CoreFailure("GIT_INPUT", args, "local Git command failed")
+                raise RepositoryFailure("GIT_INPUT", args, "local Git command failed")
             return bytes(body)
         except (OSError, subprocess.TimeoutExpired) as error:
-            raise CoreFailure("GIT_INPUT", args, "local Git output failed") from error
+            raise RepositoryFailure(
+                "GIT_INPUT", args, "local Git output failed"
+            ) from error
         finally:
             if process.poll() is None:
                 process.kill()
@@ -156,7 +162,7 @@ class GitNotesSource:
 
     def _native(self, object_oid, kinds, cap, work):
         if object_oid.object_format != self.object_format:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NATIVE_FORMAT",
                 object_oid,
                 "Git storage format differs from requested OID",
@@ -172,31 +178,33 @@ class GitNotesSource:
             .split()
         )
         if header == [object_oid.object_oid.encode(), b"missing"]:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "OBJECT_UNAVAILABLE", object_oid, "native object unavailable locally"
             )
         if len(header) != 3 or header[0] != object_oid.object_oid.encode():
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "GIT_INPUT", object_oid, "unexpected native object header"
             )
         kind = header[1].decode("ascii", "replace")
         if kind not in kinds:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "RETENTION_PURPOSE",
                 object_oid,
                 "native type outside the requested Notes role",
             )
         size_raw = header[2]
         if not size_raw.isdigit() or len(size_raw) > 19:
-            raise CoreFailure("GIT_INPUT", object_oid, "invalid declared native size")
+            raise RepositoryFailure(
+                "GIT_INPUT", object_oid, "invalid declared native size"
+            )
         size = int(size_raw)
         if size > cap:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "BUDGET", object_oid, "native body exceeds configured per-object limit"
             )
         body = self._output(("cat-file", kind, object_oid.object_oid), size, work)
         if len(body) != size:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NATIVE_INTEGRITY",
                 object_oid,
                 "native size changed or output truncated",
@@ -231,7 +239,9 @@ class GitNotesSource:
             proof.ref_claim.identity,
         )
         if root.object_format != self.object_format:
-            raise CoreFailure("NATIVE_FORMAT", scope, "proof storage format mismatch")
+            raise RepositoryFailure(
+                "NATIVE_FORMAT", scope, "proof storage format mismatch"
+            )
         return self._native(note, ("blob",), work.limits.note_bytes, work)
 
     def _scan(self, nominated, work, observed):
@@ -247,12 +257,12 @@ class GitNotesSource:
                 _prepay(work, "metadata_units")
                 records += 1
                 if records > self.discovery_refs:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "BUDGET", "notes-discovery", "finite ref record limit"
                     )
                 pieces = bytes(line).split(b"\0")
                 if len(pieces) != 2:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "GIT_INPUT", "notes-discovery", "malformed ref record"
                     )
                 name, raw_oid = pieces
@@ -260,7 +270,7 @@ class GitNotesSource:
                     continue
                 object_oid = OID(self.object_format, raw_oid.decode("ascii"))
                 if name in observed:
-                    raise CoreFailure("GIT_INPUT", name, "duplicate ref record")
+                    raise RepositoryFailure("GIT_INPUT", name, "duplicate ref record")
                 observed[name] = object_oid
 
         self._output(
@@ -275,19 +285,21 @@ class GitNotesSource:
             consume,
         )
         if pending:
-            raise CoreFailure("GIT_INPUT", "notes-discovery", "unterminated ref record")
+            raise RepositoryFailure(
+                "GIT_INPUT", "notes-discovery", "unterminated ref record"
+            )
 
     def discover(
         self, work: WorkBudget, nominated: tuple[str, ...] = ()
     ) -> RefInventory:
         if not isinstance(nominated, tuple) or len(nominated) > self.discovery_refs:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "BUDGET", "notes-discovery", "finite nominated tuple required"
             )
         _prepay(work, "metadata_units", len(nominated))
         names = tuple(sorted(set(os.fsencode(n) for n in nominated)))
         if sum(len(n) for n in names) > self.discovery_bytes:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "BUDGET", "notes-discovery", "finite nominated ref byte limit"
             )
         for name in names:
@@ -305,7 +317,7 @@ class GitNotesSource:
                     for component in components
                 )
             ):
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "NOTES_SCOPE", name, "exact valid full nominated ref required"
                 )
         first, second = {}, {}
@@ -333,7 +345,7 @@ class GitNotesSource:
                 True,
                 scans=tuple(scans),
             )
-        except CoreFailure as error:
+        except RepositoryFailure as error:
             current = first if not scans else second
             if current and len(scans) < 2:
                 scans.append(RefScanSnapshot(tuple(current.items()), "partial"))

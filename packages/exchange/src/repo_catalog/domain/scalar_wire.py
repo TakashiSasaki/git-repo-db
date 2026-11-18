@@ -1,13 +1,13 @@
 """Explicit ASCII wire variant for Git's reversible surrogateescape scalars.
 
-Only Core scalar claims use this grammar. Context text and ordinary package JSON
+Only Repository scalar claims use this grammar. Context text and ordinary package JSON
 retain strict UTF-8 validation. The tag is representation, never verification.
 """
 
 import json
 
 from repo_catalog.domain.exchange import ExchangeError, _parse_json
-from repo_catalog.domain.p1_core import encode
+from repo_catalog.domain.p1_repository import encode
 
 SCALAR_ENCODING = "git-surrogateescape-json-v1"
 

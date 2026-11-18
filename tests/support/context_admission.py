@@ -21,7 +21,7 @@ from repo_catalog.domain.context_admission import (
     dependencies,
     extract_provenance_sources,
 )
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.resource_stage import _isolated_dir_fixtures
 
 
@@ -306,21 +306,21 @@ def _extract_directory_context_grants(directory) -> DependencySet:
         try:
             with sqlite3.connect(db_path) as db:
                 for row in db.execute(
-                    "SELECT object_format, object_oid FROM core_references"
+                    "SELECT object_format, object_oid FROM repository_references"
                 ):
-                    from repo_catalog.domain.p1_core import OID
+                    from repo_catalog.domain.p1_repository import OID
 
                     object_oids.add(OID(row[0], row[1]))
         except Exception:
             pass
-        core_path = dir_path / "core.sqlite3"
-        if core_path.is_file():
+        repository_path = dir_path / "repository.sqlite3"
+        if repository_path.is_file():
             try:
-                with sqlite3.connect(core_path) as cdb:
+                with sqlite3.connect(repository_path) as cdb:
                     for row in cdb.execute(
                         "SELECT object_format, object_oid FROM git_objects"
                     ):
-                        from repo_catalog.domain.p1_core import OID
+                        from repo_catalog.domain.p1_repository import OID
 
                         object_oids.add(OID(row[0], row[1]))
             except Exception:
@@ -354,8 +354,8 @@ def extract_unit_dependencies(unit, directory=None) -> DependencySet:
     if getattr(unit, "provenance_json", None):
         sources.update(extract_provenance_sources(unit.provenance_json))
     oids = set(deps.object_oids)
-    if getattr(unit, "core_references", None):
-        for cr, clock, us in unit.core_references:
+    if getattr(unit, "repository_references", None):
+        for cr, clock, us in unit.repository_references:
             if hasattr(cr, "object_oid"):
                 oids.add(
                     cr.object_oid
@@ -433,10 +433,10 @@ def extract_batch_dependencies(batch, directory=None) -> DependencySet:
         deps |= dependencies(batch.collections)
     if getattr(batch, "coverage_claims", ()):
         deps |= dependencies(batch.coverage_claims)
-    if getattr(batch, "core_references", ()):
+    if getattr(batch, "repository_references", ()):
         oids = {
             OID(cr.object_format, cr.object_oid)
-            for cr, clock, us in batch.core_references
+            for cr, clock, us in batch.repository_references
         }
         deps |= DependencySet(object_oids=frozenset(oids))
 
@@ -692,7 +692,7 @@ def _get_or_create_isolated_fixture(directory):
             "resource_relations",
             "collections",
             "collection_terminals",
-            "core_references",
+            "repository_references",
             "coverage_scopes",
             "coverage_proofs",
             "source_inventory_evidence",
@@ -766,14 +766,14 @@ class AuthorizedProviderAcquisition(ProviderAcquisition):
         self,
         context,
         *,
-        core=None,
+        repository_store=None,
         operational=None,
         authorization=None,
         admission=None,
     ):
         super().__init__(
             context,
-            core=core,
+            repository_store=repository_store,
             operational=operational,
             authorization=authorization,
             admission=admission,
@@ -806,7 +806,7 @@ class AuthorizedProviderAcquisition(ProviderAcquisition):
         batch,
         *,
         context=None,
-        core=None,
+        repository_store=None,
         authorization=None,
         admission=None,
     ):
@@ -843,7 +843,7 @@ class AuthorizedProviderAcquisition(ProviderAcquisition):
             return super().admit_batch(
                 batch,
                 context=context,
-                core=core,
+                repository_store=repository_store,
             )
         finally:
             self.authorization = self._explicit_authorization
@@ -854,7 +854,7 @@ class AuthorizedProviderAcquisition(ProviderAcquisition):
         unit,
         *,
         context=None,
-        core=None,
+        repository_store=None,
         authorization=None,
         admission=None,
     ):
@@ -883,7 +883,7 @@ class AuthorizedProviderAcquisition(ProviderAcquisition):
             return super().admit_unit(
                 unit,
                 context=context,
-                core=core,
+                repository_store=repository_store,
             )
         finally:
             self.authorization = self._explicit_authorization
@@ -894,7 +894,7 @@ class AuthorizedProviderAcquisition(ProviderAcquisition):
         units,
         *,
         context=None,
-        core=None,
+        repository_store=None,
         authorization=None,
         admission=None,
     ):
@@ -920,7 +920,7 @@ class AuthorizedProviderAcquisition(ProviderAcquisition):
             return super().admit_units(
                 units,
                 context=context,
-                core=core,
+                repository_store=repository_store,
             )
         finally:
             self.authorization = self._explicit_authorization
@@ -936,7 +936,7 @@ class AuthorizedPairedAcquisitionCoordinator(PairedAcquisitionCoordinator):
         git_input=None,
         notes_source=None,
         provider_batch=None,
-        core_fn=None,
+        repository_fn=None,
         context_fn=None,
         cut=lambda point: None,
         reconcile_dependencies=True,
@@ -986,9 +986,11 @@ class AuthorizedPairedAcquisitionCoordinator(PairedAcquisitionCoordinator):
                     def resource(self, rk):
                         self.resources.add(rk)
 
-                    def link_core(self, rk, role, fmt, object_oid, prov, val=None):
+                    def link_repository(
+                        self, rk, role, fmt, object_oid, prov, val=None
+                    ):
                         self.resources.add(rk)
-                        from repo_catalog.domain.p1_core import OID
+                        from repo_catalog.domain.p1_repository import OID
 
                         self.oids.add(OID(fmt, object_oid))
 
@@ -1021,7 +1023,7 @@ class AuthorizedPairedAcquisitionCoordinator(PairedAcquisitionCoordinator):
                 git_input=git_input,
                 notes_source=notes_source,
                 provider_batch=provider_batch,
-                core_fn=core_fn,
+                repository_fn=repository_fn,
                 context_fn=context_fn,
                 cut=cut,
                 reconcile_dependencies=reconcile_dependencies,
@@ -1032,7 +1034,7 @@ class AuthorizedPairedAcquisitionCoordinator(PairedAcquisitionCoordinator):
             self.authorization = orig_auth
             self.admission = orig_adm
 
-    def reconcile_core_dependencies(self):
+    def reconcile_repository_dependencies(self):
         auth = self.authorization
         adm = self.admission
         if auth is None or adm is None:
@@ -1049,7 +1051,7 @@ class AuthorizedPairedAcquisitionCoordinator(PairedAcquisitionCoordinator):
             )
             self.authorization = auth
             self.admission = adm
-        return super().reconcile_core_dependencies()
+        return super().reconcile_repository_dependencies()
 
 
 class AuthorizedExchangeService(ExchangeService):

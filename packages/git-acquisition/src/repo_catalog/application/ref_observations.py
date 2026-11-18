@@ -1,6 +1,6 @@
 """Issue and replay actual bounded local ref enumeration observations.
 
-Operational pins the entire result before Core admission; no native object
+Operational pins the entire result before Repository admission; no native object
 bodies are staged here. A lost pin cannot be reconstructed from a fresh scan.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from repo_catalog.application.query_encoding import _charge, encode_metered
-from repo_catalog.domain.p1_core import OID, CoreFailure, Provenance, encode
+from repo_catalog.domain.p1_repository import OID, Provenance, RepositoryFailure, encode
 from repo_catalog.domain.ref_observation import (
     RefAbsenceEvidence,
     RefEnumerationLink,
@@ -62,7 +62,7 @@ class EnumeratedRef:
                 or self.peeled is not None
             )
         ):
-            raise CoreFailure("REF", "scan", "invalid original ref result")
+            raise RepositoryFailure("REF", "scan", "invalid original ref result")
 
 
 @dataclass(frozen=True)
@@ -80,11 +80,13 @@ class RefScan:
             or self.state != "complete"
             and self.completion is not None
         ):
-            raise CoreFailure("ENUMERATION", "scan", "invalid original scan result")
+            raise RepositoryFailure(
+                "ENUMERATION", "scan", "invalid original scan result"
+            )
 
 
 def pin_scan(
-    core,
+    repository_store,
     progress,
     work,
     *,
@@ -114,12 +116,14 @@ def pin_scan(
             if not isinstance(result, RefScan) or len(result.refs) > ref_limit + len(
                 nominated
             ):
-                raise CoreFailure("BUDGET", slot, "bounded scan result required")
+                raise RepositoryFailure("BUDGET", slot, "bounded scan result required")
             names = set()
             for ref in result.refs:
                 _charge(work, "metadata_units", 1)
                 if not isinstance(ref, EnumeratedRef):
-                    raise CoreFailure("ENUMERATION", slot, "typed scan item required")
+                    raise RepositoryFailure(
+                        "ENUMERATION", slot, "typed scan item required"
+                    )
                 if (
                     ref.name in names
                     or not (
@@ -129,7 +133,7 @@ def pin_scan(
                     or ref.absent
                     and (result.state != "complete" or ref.name not in nominated)
                 ):
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "ENUMERATION", slot, "scan result outside original scope"
                     )
                 names.add(ref.name)
@@ -146,7 +150,7 @@ def pin_scan(
                 )
             )
             if size > max_pinned or size >= 2**63:
-                raise CoreFailure("BUDGET", slot, "finite pinned scan size")
+                raise RepositoryFailure("BUDGET", slot, "finite pinned scan size")
             _charge(work, "metadata_units", 1 + len(result.refs))
             work.require("input_bytes", size)
             try:
@@ -179,7 +183,7 @@ def pin_scan(
                 }
                 serialized = encode(candidate)
                 if len(serialized) > size:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "BUDGET", slot, "scan encoding exceeded reservation"
                     )
             except BaseException:
@@ -194,7 +198,9 @@ def pin_scan(
                 slot, candidate, max_pinned, encoded=serialized
             )
     if saved.get("binding") != binding:
-        raise CoreFailure("INCOMPATIBLE_REPLAY", slot, "scan slot cannot be rebound")
+        raise RepositoryFailure(
+            "INCOMPATIBLE_REPLAY", slot, "scan slot cannot be rebound"
+        )
     event = RefEnumerationObservation(
         origin,
         saved["event"],
@@ -275,5 +281,5 @@ def pin_scan(
             derivation = "item"
         links.append(RefEnumerationLink(event, obs, claim, derivation, position))
     links = tuple(links)
-    core.admit_ref_enumeration(event, links, work)
+    repository_store.admit_ref_enumeration(event, links, work)
     return RefEnumerationResult(event, links)

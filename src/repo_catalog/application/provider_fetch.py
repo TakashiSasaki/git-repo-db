@@ -27,8 +27,8 @@ from repo_catalog.domain.context_admission import AdmissionRefused
 from repo_catalog.domain.models import CatalogError, Waiting
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey, canonical
 from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
-from repo_catalog.domain.p1_core import CoreFailure, uuid4_value
 from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import RepositoryFailure, uuid4_value
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     SourceInventory,
@@ -434,7 +434,7 @@ class GitHubProviderFetch:
                 if next_url:
                     self.http.validate_url(next_url)
                 url = next_url
-        except (CatalogError, CoreFailure, AcquisitionError) as error:
+        except (CatalogError, RepositoryFailure, AcquisitionError) as error:
             if error.code == "CANCELLED":
                 raise
             if parent is not None and observed_page:
@@ -683,7 +683,7 @@ class GitHubProviderFetch:
                 )
         except (
             CatalogError,
-            CoreFailure,
+            RepositoryFailure,
             AcquisitionError,
             AdmissionRefused,
             KeyError,
@@ -822,7 +822,7 @@ class GitHubProviderFetch:
                             sections,
                             detail.get("node_id", item.get("node_id")),
                         )
-                    except (CatalogError, CoreFailure, AcquisitionError) as error:
+                    except (CatalogError, RepositoryFailure, AcquisitionError) as error:
                         if (
                             self.git_roles is not None
                             and not isinstance(error, Waiting)
@@ -987,7 +987,7 @@ class GitHubProviderFetch:
                     "reviews",
                     "review_comments",
                 }:
-                    self.git_roles.record(parent, unit.core_references)
+                    self.git_roles.record(parent, unit.repository_references)
                 yield unit.primary_resource
 
         anchor = None
@@ -1158,10 +1158,10 @@ class GitHubProviderFetch:
                         )
                         self._emit(
                             observations=unit.observations,
-                            core_references=unit.core_references,
+                            repository_references=unit.repository_references,
                         )
                         if self.git_roles is not None:
-                            self.git_roles.record(parent, unit.core_references)
+                            self.git_roles.record(parent, unit.repository_references)
                         return unit
 
                     header_unit = self._independent(admit_header)
@@ -1240,12 +1240,12 @@ class GitHubProviderFetch:
                                 self._emit(review_comments=(intake,))
                                 if self.git_roles is not None:
                                     self.git_roles.record(
-                                        parent, normalized.core_references
+                                        parent, normalized.repository_references
                                     )
                                 comment_members.append(normalized.primary_resource)
                         except (
                             CatalogError,
-                            CoreFailure,
+                            RepositoryFailure,
                             AcquisitionError,
                             KeyError,
                             TypeError,
@@ -1326,7 +1326,7 @@ class GitHubProviderFetch:
                     break
         except (
             CatalogError,
-            CoreFailure,
+            RepositoryFailure,
             AcquisitionError,
             KeyError,
             TypeError,
@@ -1494,9 +1494,10 @@ def acquire_github(
             raise CatalogError(
                 "INVALID_ARGUMENT", "Git roles require an explicit sync operation"
             )
-        if not (Path(catalog) / "core.sqlite3").is_file():
+        if not (Path(catalog) / "repository.sqlite3").is_file():
             raise CatalogError(
-                "STORE_UNAVAILABLE", "Explicit Git role work requires initialized Core"
+                "STORE_UNAVAILABLE",
+                "Explicit Git role work requires initialized Repository",
             )
     owner = _name(document.get("owner"))
     request = RequestIdentity(*document["request_identity"])
@@ -1645,7 +1646,7 @@ def acquire_github(
             )
         acquisition = ProviderAcquisition(
             catalog,
-            core=catalog,
+            repository_store=catalog,
             operational=catalog,
             authorization=authorization,
             admission=admission,
@@ -1717,7 +1718,7 @@ def acquire_github(
                     owner, document.get("repository"), sections=document.get("sections")
                 )
             failure = fetch.partial_failure
-        except (CatalogError, CoreFailure, AcquisitionError) as error:
+        except (CatalogError, RepositoryFailure, AcquisitionError) as error:
             if error.code in {"RECOVERY_REQUIRED", "CORRUPT", "INTEGRITY"}:
                 raise
             failure = error.code

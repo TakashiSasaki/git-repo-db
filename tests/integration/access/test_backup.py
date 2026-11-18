@@ -168,7 +168,7 @@ def test_restore_is_continuation_not_fresh_registrations(source, bundle, tmp_pat
             store.current_grant(R1, S1)
     assert rows(source) == old
     assert {p.name: p.read_bytes() for p in bundle.iterdir()} == original_bundle
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()
     assert not (tmp_path / "context.sqlite3").exists()
 
 
@@ -752,7 +752,7 @@ def test_cli_diagnostics_do_not_echo_secret_paths(tmp_path):
     assert value not in result.stderr
 
 
-def test_core_and_context_optional_no_default_activation():
+def test_repository_and_context_optional_no_default_activation():
     from repo_catalog.adapters.sqlite.p1_schema import STORES
     from scripts.audit_callsite_dependencies import owned_source, source_owner
 

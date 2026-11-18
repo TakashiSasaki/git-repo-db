@@ -31,7 +31,7 @@ from scripts import ci_python_runtime as runtime
 WINDOWS_TRIPLE = "x86_64-pc-windows-msvc"
 SCHEMA = "repo-catalog-local-runtime/1"
 UNWANTED_MODULES = (
-    "repo_catalog.adapters.sqlite.git_core",
+    "repo_catalog.adapters.sqlite.git_repository",
     "repo_catalog.adapters.sqlite.production_context",
     "repo_catalog.adapters.sqlite.access_schema",
     "repo_catalog.adapters.sqlite.catalog_runtime",

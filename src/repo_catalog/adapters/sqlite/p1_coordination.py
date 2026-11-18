@@ -11,24 +11,6 @@ from __future__ import annotations
 from repo_catalog.adapters.sqlite.context_transaction import (
     AdmissionTransaction as AdmissionTransaction,
 )
-from repo_catalog.adapters.sqlite.core_coordination import (
-    ReadSnapshot as ReadSnapshot,
-)
-from repo_catalog.adapters.sqlite.core_coordination import (
-    SnapshotReadLimits as SnapshotReadLimits,
-)
-from repo_catalog.adapters.sqlite.core_coordination import (
-    apply_snapshot_read_limits as apply_snapshot_read_limits,
-)
-from repo_catalog.adapters.sqlite.core_coordination import (
-    catalog_completion as catalog_completion,
-)
-from repo_catalog.adapters.sqlite.core_coordination import (
-    catalog_gate as catalog_gate,
-)
-from repo_catalog.adapters.sqlite.core_coordination import (
-    persist_catalog_stop as persist_catalog_stop,
-)
 from repo_catalog.adapters.sqlite.operational_coordination import (
     NotesWorkBudget as NotesWorkBudget,
 )
@@ -49,6 +31,24 @@ from repo_catalog.adapters.sqlite.paired_coordination import (
 )
 from repo_catalog.adapters.sqlite.paired_coordination import (
     validate_pair as validate_pair,
+)
+from repo_catalog.adapters.sqlite.repository_coordination import (
+    ReadSnapshot as ReadSnapshot,
+)
+from repo_catalog.adapters.sqlite.repository_coordination import (
+    SnapshotReadLimits as SnapshotReadLimits,
+)
+from repo_catalog.adapters.sqlite.repository_coordination import (
+    apply_snapshot_read_limits as apply_snapshot_read_limits,
+)
+from repo_catalog.adapters.sqlite.repository_coordination import (
+    catalog_completion as catalog_completion,
+)
+from repo_catalog.adapters.sqlite.repository_coordination import (
+    catalog_gate as catalog_gate,
+)
+from repo_catalog.adapters.sqlite.repository_coordination import (
+    persist_catalog_stop as persist_catalog_stop,
 )
 from repo_catalog.adapters.sqlite.search_projection import (
     SearchProjection as SearchProjection,

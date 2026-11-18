@@ -1,4 +1,4 @@
-"""ADR 0036 Core admission, isolation and checked Notes evidence."""
+"""ADR 0036 Repository admission, isolation and checked Notes evidence."""
 
 import sqlite3
 from dataclasses import replace
@@ -6,10 +6,15 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.p1_core import Core
+from repo_catalog.adapters.sqlite.p1_repository import RepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
-from repo_catalog.domain.p1_core import OID, CoreCoverageScope, CoreFailure, Provenance
 from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
+    OID,
+    Provenance,
+    RepositoryCoverageScope,
+    RepositoryFailure,
+)
 from repo_catalog.domain.ref_observation import (
     NotesMapping,
     NotesMappingClaim,
@@ -20,9 +25,9 @@ from repo_catalog.domain.ref_observation import (
     RefObservationClaim,
     RefObservationKey,
 )
-from tests.integration.p1.test_core import Budget, provenance
-from tests.integration.p1.test_core import core as core
 from tests.integration.p1.test_notes import mapping as old_mapping
+from tests.integration.p1.test_repository import Budget, provenance
+from tests.integration.p1.test_repository import repository_store as repository_store
 
 V7A = "01890f47-0000-7000-8000-000000000001"
 V7B = "01890f47-0000-7000-8000-000000000002"
@@ -50,14 +55,14 @@ def received(coordinate):
     )
 
 
-def test_observation_identity_claim_replay_conflicts_and_absence(core):
-    c, path, repository = core
+def test_observation_identity_claim_replay_conflicts_and_absence(repository_store):
+    c, path, repository = repository_store
     one = subject(repository)
     two = subject(repository, V7B, one.ref_observation_key.observation_origin_uuidv4)
     c.admit_ref_observation(one)
     c.admit_ref_observation(one)
     c.admit_ref_observation(two)
-    with pytest.raises(CoreFailure, match="inconsistent"):
+    with pytest.raises(RepositoryFailure, match="inconsistent"):
         c.admit_ref_observation(replace(one, visibility_scope="other"))
     unknown = RefObservationClaim(one.ref_observation_key, provenance("r1"), "present")
     c.admit_ref_observation_claim(unknown)
@@ -71,14 +76,14 @@ def test_observation_identity_claim_replay_conflicts_and_absence(core):
     c.admit_ref_observation_claim(first)
     c.admit_ref_observation_claim(first)
     c.admit_ref_observation_claim(second)
-    with pytest.raises(CoreFailure, match="cannot be rebound"):
+    with pytest.raises(RepositoryFailure, match="cannot be rebound"):
         c.admit_ref_observation_claim(replace(first, root_object_oid=root_b))
     same_coordinate = replace(
         first,
         provenance=replace(first.provenance, decoder="different"),
         root_object_oid=root_b,
     )
-    with pytest.raises(CoreFailure, match="inconsistent"):
+    with pytest.raises(RepositoryFailure, match="inconsistent"):
         c.admit_ref_observation_claim(same_coordinate)
     assert c.ref_observation(one.ref_observation_key, Budget()).conflict
     assert len(c.ref_observation(one.ref_observation_key, Budget()).claims) == 3
@@ -100,11 +105,11 @@ def test_observation_identity_claim_replay_conflicts_and_absence(core):
     assert len(c.ref_observation(one.ref_observation_key, Budget()).claims) == 4
     for limits in ({"max_claims": 1}, {"max_bytes": 1}):
         budget = Budget()
-        with pytest.raises(CoreFailure) as exceeded:
+        with pytest.raises(RepositoryFailure) as exceeded:
             c.ref_observation(one.ref_observation_key, budget, **limits)
         assert exceeded.value.code == "QUERY_BUDGET"
         assert budget.counts["metadata_units"] > 0
-    other = Core(path)
+    other = RepositoryStore(path)
     try:
         assert (
             other.ref_observation(
@@ -116,8 +121,8 @@ def test_observation_identity_claim_replay_conflicts_and_absence(core):
         other.close()
 
 
-def test_unknown_to_known_is_not_conflict_and_coverage_time_preserved(core):
-    c, _, repository = core
+def test_unknown_to_known_is_not_conflict_and_coverage_time_preserved(repository_store):
+    c, _, repository = repository_store
     obs = subject(repository)
     c.admit_ref_observation(obs)
     a = RefObservationClaim(obs.ref_observation_key, provenance("a"), "present")
@@ -130,7 +135,7 @@ def test_unknown_to_known_is_not_conflict_and_coverage_time_preserved(core):
     c.admit_ref_observation_claim(a)
     c.admit_ref_observation_claim(b)
     assert not c.ref_observation(obs.ref_observation_key, Budget()).conflict
-    scope = CoreCoverageScope(
+    scope = RepositoryCoverageScope(
         "ref_observation", (*obs.ref_observation_key.key, "notes")
     )
     c.admit_coverage_scope(scope)
@@ -139,17 +144,19 @@ def test_unknown_to_known_is_not_conflict_and_coverage_time_preserved(core):
     assert c.coverage(scope).state == "partial"
     complete = CoverageClaim(scope, 30, "complete")
     assert c.admit_coverage(complete) == "insert"
-    with pytest.raises(CoreFailure, match="typed evidence"):
+    with pytest.raises(RepositoryFailure, match="typed evidence"):
         c.admit_coverage_proof(complete, (), provenance("fake-terminal"))
     assert c.coverage(scope).state == "unknown"
 
 
-def test_ref_projection_charges_repeated_reads_to_real_request(core, tmp_path):
+def test_ref_projection_charges_repeated_reads_to_real_request(
+    repository_store, tmp_path
+):
     from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
     from repo_catalog.adapters.sqlite.p1_schema import initialize
     from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
 
-    c, _, repository = core
+    c, _, repository = repository_store
     obs = subject(repository)
     c.admit_ref_observation(obs)
     for name in ("first", "second"):
@@ -250,7 +257,7 @@ def test_ref_projection_charges_repeated_reads_to_real_request(core, tmp_path):
         repeated = ledger.usage(request)
         assert repeated["metadata_units"] > first["metadata_units"] > 0
         assert repeated["input_bytes"] > first["input_bytes"] > 0
-        with pytest.raises(CoreFailure) as exceeded:
+        with pytest.raises(RepositoryFailure) as exceeded:
             c.ref_observation(obs.ref_observation_key, budget, max_claims=1)
         assert exceeded.value.code == "QUERY_BUDGET"
         assert ledger.usage(request)["metadata_units"] > repeated["metadata_units"]
@@ -258,8 +265,8 @@ def test_ref_projection_charges_repeated_reads_to_real_request(core, tmp_path):
         db.close()
 
 
-def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
-    c, _, repository = core
+def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(repository_store):
+    c, _, repository = repository_store
     proof, note = old_mapping(repository)
     first = subject(repository)
     second = subject(
@@ -303,7 +310,7 @@ def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
     assert len(c.sql("SELECT * FROM notes_mapping_evidence")) == 2
     c.admit_ref_note(ev1, note, str(uuid4()), Budget())
     assert c.read_ref_note(claims[0], content, Budget()) == note.body
-    with pytest.raises(CoreFailure, match="claim-specific"):
+    with pytest.raises(RepositoryFailure, match="claim-specific"):
         c.read_ref_note(claims[1], content, Budget())
     root_b = OID("sha1", "b" * 40)
     other = RefObservationClaim(
@@ -313,9 +320,9 @@ def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
         root_object_oid=root_b,
     )
     c.admit_ref_observation_claim(other)
-    with pytest.raises(CoreFailure, match="claimed root"):
+    with pytest.raises(RepositoryFailure, match="claimed root"):
         replace(ev1, ref_claim=other)
-    with pytest.raises(CoreFailure, match="cannot be rebound"):
+    with pytest.raises(RepositoryFailure, match="cannot be rebound"):
         c.admit_notes_mapping_evidence(
             replace(
                 ev1,
@@ -330,15 +337,15 @@ def test_shared_mapping_claims_and_receiver_proofs_are_claim_specific(core):
         validate_stored_admission_guards,
     )
 
-    db = connect(c._directory / "core.sqlite3", "core")
+    db = connect(c._directory / "repository.sqlite3", "repository")
     try:
-        validate_stored_admission_guards(db, "core")
+        validate_stored_admission_guards(db, "repository")
     finally:
         db.close()
 
 
-def test_groups_atomic_replay_and_no_partial_group_union(core):
-    c, _, repository = core
+def test_groups_atomic_replay_and_no_partial_group_union(repository_store):
+    c, _, repository = repository_store
     proof, _ = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -361,19 +368,19 @@ def test_groups_atomic_replay_and_no_partial_group_union(core):
     )
     c.admit_notes_mapping_group(group)
     c.admit_notes_mapping_group(group)
-    with pytest.raises(CoreFailure, match="inconsistent"):
+    with pytest.raises(RepositoryFailure, match="inconsistent"):
         c.admit_notes_mapping_group(replace(group, status="complete"))
     assert len(c.sql("SELECT * FROM notes_mapping_groups")) == 1
     assert c.sql("SELECT status FROM notes_mapping_groups")[0][0] == "partial"
 
 
-def test_supported_sql_and_schema_forbid_rewrite(core):
-    c, path, repository = core
+def test_supported_sql_and_schema_forbid_rewrite(repository_store):
+    c, path, repository = repository_store
     obs = subject(repository)
     c.admit_ref_observation(obs)
     with pytest.raises(sqlite3.DatabaseError):
         c.sql("DELETE FROM ref_observations")
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         with pytest.raises(sqlite3.IntegrityError, match="immutable"):
             db.execute(
@@ -383,8 +390,8 @@ def test_supported_sql_and_schema_forbid_rewrite(core):
         db.close()
 
 
-def test_unproven_bodies_and_unrelated_claims_cannot_gain_authority(core):
-    c, _, repository = core
+def test_unproven_bodies_and_unrelated_claims_cannot_gain_authority(repository_store):
+    c, _, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -408,11 +415,11 @@ def test_unproven_bodies_and_unrelated_claims_cannot_gain_authority(core):
         proof.note,
         proof.path,
     )
-    with pytest.raises(CoreFailure, match="exact claimed root"):
+    with pytest.raises(RepositoryFailure, match="exact claimed root"):
         NotesMappingEvidence(
             unknown_claim, content, "single-path", received("e"), proof.structures
         )
-    with pytest.raises(CoreFailure, match="supported receiver decoder"):
+    with pytest.raises(RepositoryFailure, match="supported receiver decoder"):
         NotesMappingEvidence(
             root_claim, content, "single-path", provenance("sender"), proof.structures
         )
@@ -420,14 +427,14 @@ def test_unproven_bodies_and_unrelated_claims_cannot_gain_authority(core):
     bad = NotesMappingEvidence(
         root_claim, content, "single-path", received("broken"), (broken,)
     )
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         c.admit_ref_note(bad, note, str(uuid4()), Budget())
     assert not c.sql("SELECT * FROM notes_mapping_evidence")
     assert not c.sql("SELECT * FROM ref_retained_notes")
 
 
-def test_note_transaction_rolls_back_all_new_units_on_failure(core):
-    c, _, repository = core
+def test_note_transaction_rolls_back_all_new_units_on_failure(repository_store):
+    c, _, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -464,11 +471,11 @@ def test_note_transaction_rolls_back_all_new_units_on_failure(core):
     altered = replace(
         claim, ref_form="direct", direct_target_object_oid=proof.capture.root
     )
-    with pytest.raises(CoreFailure, match="cannot be rebound"):
+    with pytest.raises(RepositoryFailure, match="cannot be rebound"):
         c.read_ref_note(altered, content, Budget())
 
 
-def test_valid_recovery_guards_and_rootless_absence_export(core):
+def test_valid_recovery_guards_and_rootless_absence_export(repository_store):
     from repo_catalog.adapters.sqlite.recovery_validation import (
         validate_stored_admission_guards,
     )
@@ -476,7 +483,7 @@ def test_valid_recovery_guards_and_rootless_absence_export(core):
     from repo_catalog.domain.exchange import ExchangeSelectionScope
     from repo_catalog.domain.ref_exchange import claim_from_wire, observation_from_wire
 
-    c, path, repository = core
+    c, path, repository = repository_store
     obs = subject(repository)
     c.admit_ref_observation(obs)
     absence = RefAbsenceEvidence(
@@ -489,9 +496,9 @@ def test_valid_recovery_guards_and_rootless_absence_export(core):
         absence_evidence=absence,
     )
     c.admit_ref_observation_claim(claim)
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
-        validate_stored_admission_guards(db, "core")
+        validate_stored_admission_guards(db, "repository")
     finally:
         db.close()
     package = ExchangeService(path.parent).export_package(
@@ -502,17 +509,19 @@ def test_valid_recovery_guards_and_rootless_absence_export(core):
             ref_observation_keys=(obs.ref_observation_key,),
         )
     )
-    assert [observation_from_wire(row) for row in package.core["ref_observations"]] == [
-        obs
-    ]
-    assert [claim_from_wire(row) for row in package.core["ref_observation_claims"]] == [
-        claim
-    ]
-    assert not package.core["git_objects"]
+    assert [
+        observation_from_wire(row)
+        for row in package.repository_store["ref_observations"]
+    ] == [obs]
+    assert [
+        claim_from_wire(row)
+        for row in package.repository_store["ref_observation_claims"]
+    ] == [claim]
+    assert not package.repository_store["git_objects"]
 
 
-def test_projection_preserves_reports_groups_and_verified_scope(core):
-    c, _, repository = core
+def test_projection_preserves_reports_groups_and_verified_scope(repository_store):
+    c, _, repository = repository_store
     proof, _ = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -568,7 +577,7 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
     assert result.reported_conflict
     for limits in ({"max_units": 1}, {"max_bytes": 1}):
         budget = Budget()
-        with pytest.raises(CoreFailure) as exceeded:
+        with pytest.raises(RepositoryFailure) as exceeded:
             c.notes_mapping_projection(
                 claim, proof.target, "git-notes", "1", "tree", budget, **limits
             )
@@ -588,10 +597,10 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
     class NoProofBudget(Budget):
         def require(self, unit, amount=1):
             if unit == "input_bytes":
-                raise CoreFailure("BUDGET", unit, "bounded read")
+                raise RepositoryFailure("BUDGET", unit, "bounded read")
             super().require(unit, amount)
 
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.notes_mapping_projection(
             claim, proof.target, "git-notes", "1", "tree", NoProofBudget()
         )
@@ -601,10 +610,10 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
     class NoProofSteps(Budget):
         def require(self, unit, amount=1):
             if unit == "proof_steps":
-                raise CoreFailure("BUDGET", unit, "bounded proof traversal")
+                raise RepositoryFailure("BUDGET", unit, "bounded proof traversal")
             super().require(unit, amount)
 
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.notes_mapping_projection(
             claim, proof.target, "git-notes", "1", "tree", NoProofSteps()
         )
@@ -612,8 +621,8 @@ def test_projection_preserves_reports_groups_and_verified_scope(core):
     assert c.ref_observation(obs.ref_observation_key, Budget()).ref_observation == obs
 
 
-def test_structural_evidence_corruption_stops_catalog(core):
-    c, path, repository = core
+def test_structural_evidence_corruption_stops_catalog(repository_store):
+    c, path, repository = repository_store
     proof, _ = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -641,7 +650,7 @@ def test_structural_evidence_corruption_stops_catalog(core):
     )
 
     # Simulate storage corruption, restoring the original schema before read.
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_notes_mapping_evidence_update'"
@@ -653,12 +662,12 @@ def test_structural_evidence_corruption_stops_catalog(core):
         db.execute("PRAGMA ignore_check_constraints=OFF")
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.notes_mapping_projection(
             claim, proof.target, "git-notes", "1", "tree", Budget()
         )
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         c.ref_observation(obs.ref_observation_key, Budget())
     assert stopped.value.code == "RECOVERY_STOP"
 
@@ -673,18 +682,20 @@ def test_audit_records_full_expression_index_sql():
     audit = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(audit)
     schema = audit.introspect()
-    indexes = schema["core"]["tables"]["ref_observation_claims"]["unique"]
+    indexes = schema["repository"]["tables"]["ref_observation_claims"]["unique"]
     expressions = [item for item in indexes if "expression_sql" in item]
     assert len(expressions) == 1
     assert "json_extract(provenance" in expressions[0]["expression_sql"]
     assert "<expression:2>" in expressions[0]["columns"]
 
 
-def test_backup_restores_rootless_observation_without_stopping_healthy_core(core):
+def test_backup_restores_rootless_observation_without_stopping_healthy_repository(
+    repository_store,
+):
     from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
     from repo_catalog.domain.recovery import BackupScope
 
-    c, path, repository = core
+    c, path, repository = repository_store
     obs = subject(repository)
     c.admit_ref_observation(obs)
     destination = path.parent.parent / (path.parent.name + "-backup")
@@ -698,7 +709,7 @@ def test_backup_restores_rootless_observation_without_stopping_healthy_core(core
     )
     restored = path.parent.parent / (path.parent.name + "-restored")
     assert adapter.restore_backup(destination, restored, repository).revalidated_clean
-    copy = Core(restored / "core.sqlite3")
+    copy = RepositoryStore(restored / "repository.sqlite3")
     try:
         assert (
             copy.ref_observation(obs.ref_observation_key, Budget()).ref_observation
@@ -710,13 +721,13 @@ def test_backup_restores_rootless_observation_without_stopping_healthy_core(core
     assert c.ref_observation(obs.ref_observation_key, Budget()).ref_observation == obs
 
 
-def test_typed_salvage_stages_only_a_checked_claim_bound_note_body(core):
+def test_typed_salvage_stages_only_a_checked_claim_bound_note_body(repository_store):
     import io
     import json
 
     from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 
-    c, path, repository = core
+    c, path, repository = repository_store
     proof, note = old_mapping(repository, b"private-note-body")
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -746,7 +757,7 @@ def test_typed_salvage_stages_only_a_checked_claim_bound_note_body(core):
     )
     output = io.StringIO()
     _, _, errors, _, _, _, _ = SQLiteRecoveryAdapter()._salvage_store_stream(
-        path, "core", output, 1000, 10_000_000, 1_000_000, 0, 0
+        path, "repository", output, 1000, 10_000_000, 1_000_000, 0, 0
     )
     assert not errors
     rows = [json.loads(line) for line in output.getvalue().splitlines()]
@@ -773,8 +784,10 @@ def test_typed_salvage_stages_only_a_checked_claim_bound_note_body(core):
     assert "private-note-body" not in output.getvalue()
 
 
-def test_structural_proof_cannot_claim_unchecked_decoder_or_full_inventory(core):
-    c, path, repository = core
+def test_structural_proof_cannot_claim_unchecked_decoder_or_full_inventory(
+    repository_store,
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -797,14 +810,14 @@ def test_structural_proof_cannot_claim_unchecked_decoder_or_full_inventory(core)
     evidence = NotesMappingEvidence(
         claim, mapping, "single-path", received("e"), proof.structures
     )
-    with pytest.raises(CoreFailure, match="single-path"):
+    with pytest.raises(RepositoryFailure, match="single-path"):
         replace(evidence, verification_scope="all-notes-mappings")
-    with pytest.raises(CoreFailure, match="decoder"):
+    with pytest.raises(RepositoryFailure, match="decoder"):
         replace(evidence, provenance=replace(evidence.provenance, decoder="not-run"))
-    with pytest.raises(CoreFailure, match="decoder"):
+    with pytest.raises(RepositoryFailure, match="decoder"):
         replace(evidence, mapping=replace(mapping, interpretation_version="2"))
     c.admit_notes_mapping_evidence(evidence, Budget())
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         row = list(db.execute("SELECT * FROM notes_mapping_evidence").fetchone())
         row[-3] = "all-notes-mappings"
@@ -822,8 +835,8 @@ def test_structural_proof_cannot_claim_unchecked_decoder_or_full_inventory(core)
     assert c.read_ref_note(claim, mapping, Budget()) == note.body
 
 
-def test_replay_does_not_repair_missing_nominal_root(core):
-    c, path, repository = core
+def test_replay_does_not_repair_missing_nominal_root(repository_store):
+    c, path, repository = repository_store
     obs = subject(repository)
     c.admit_ref_observation(obs)
     root = OID("sha1", "a" * 40)
@@ -831,7 +844,7 @@ def test_replay_does_not_repair_missing_nominal_root(core):
         obs.ref_observation_key, provenance("ref"), "present", root_object_oid=root
     )
     c.admit_ref_observation_claim(claim)
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_git_objects_delete'"
@@ -845,7 +858,7 @@ def test_replay_does_not_repair_missing_nominal_root(core):
         db.execute("PRAGMA foreign_keys=ON")
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_ref_observation_claim(claim)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     with sqlite3.connect(path) as raw:
@@ -855,14 +868,14 @@ def test_replay_does_not_repair_missing_nominal_root(core):
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_orphan_claim_stops_observation_read(core):
-    c, path, repository = core
+def test_orphan_claim_stops_observation_read(repository_store):
+    c, path, repository = repository_store
     obs = subject(repository)
     c.admit_ref_observation(obs)
     c.admit_ref_observation_claim(
         RefObservationClaim(obs.ref_observation_key, provenance("orphan"), "present")
     )
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_observations_delete'"
@@ -874,14 +887,14 @@ def test_orphan_claim_stops_observation_read(core):
         db.execute("PRAGMA foreign_keys=ON")
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.ref_observation(obs.ref_observation_key, Budget())
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_missing_role_evidence_stops_body_read(core):
-    c, path, repository = core
+def test_missing_role_evidence_stops_body_read(repository_store):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -909,7 +922,7 @@ def test_missing_role_evidence_stops_body_read(core):
         str(uuid4()),
         Budget(),
     )
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_notes_mapping_evidence_delete'"
@@ -921,7 +934,7 @@ def test_missing_role_evidence_stops_body_read(core):
         db.execute("PRAGMA foreign_keys=ON")
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.read_ref_note(claim, mapping, Budget())
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
@@ -938,8 +951,10 @@ def test_missing_role_evidence_stops_body_read(core):
         ("malformed-proof", True),
     ],
 )
-def test_replaying_corrupted_stored_copy_stops_catalog(core, corruption, same_copy):
-    c, path, repository = core
+def test_replaying_corrupted_stored_copy_stops_catalog(
+    repository_store, corruption, same_copy
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository, b"original note body")
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -964,7 +979,7 @@ def test_replaying_corrupted_stored_copy_stops_catalog(core, corruption, same_co
     )
     copy = str(uuid4())
     c.admit_ref_note(evidence, note, copy, Budget())
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         if corruption == "malformed-proof":
             triggers = [
@@ -1016,17 +1031,19 @@ def test_replaying_corrupted_stored_copy_stops_catalog(core, corruption, same_co
             db.execute("PRAGMA ignore_check_constraints=OFF")
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_ref_note(evidence, note, copy if same_copy else str(uuid4()), Budget())
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         c.ref_observation(obs.ref_observation_key, Budget())
     assert stopped.value.code == "RECOVERY_STOP"
 
 
-def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
-    c, path, repository = core
+def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(
+    repository_store,
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1056,7 +1073,7 @@ def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
     assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
     assert replay.counts["input_bytes"] >= len(note.body) * 2
     assert replay.counts["proof_steps"] > 0
-    with pytest.raises(CoreFailure) as limited:
+    with pytest.raises(RepositoryFailure) as limited:
         c.admit_ref_note(evidence, note, copy, Budget(), max_proof_bytes=1)
     assert limited.value.code == "BUDGET"
     assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
@@ -1073,13 +1090,15 @@ def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
     class IncomingOnly(Budget):
         def require(self, unit, amount=1):
             if unit == "input_bytes" and comparison["measured"]:
-                raise CoreFailure("BUDGET", unit, "no existing-copy comparison budget")
+                raise RepositoryFailure(
+                    "BUDGET", unit, "no existing-copy comparison budget"
+                )
             super().require(unit, amount)
 
     incoming_only = IncomingOnly()
     c._note_comparison_cost = track_comparison
     try:
-        with pytest.raises(CoreFailure) as limited_comparison:
+        with pytest.raises(RepositoryFailure) as limited_comparison:
             c.admit_ref_note(evidence, note, str(uuid4()), incoming_only)
     finally:
         c._note_comparison_cost = original_cost
@@ -1089,7 +1108,7 @@ def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
     other_evidence = replace(evidence, provenance=received("second"))
-    with pytest.raises(CoreFailure) as incompatible:
+    with pytest.raises(RepositoryFailure) as incompatible:
         c.admit_ref_note(other_evidence, note, copy, Budget())
     assert incompatible.value.code == "INCOMPATIBLE_REPLAY"
     assert len(c.sql("SELECT 1 FROM notes_mapping_evidence")) == 1
@@ -1106,8 +1125,10 @@ def test_ref_note_valid_replay_and_unrelated_integrity_error_roll_back(core):
     assert c.read_ref_note(claim, mapping, Budget()) == note.body
 
 
-def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(core):
-    c, path, repository = core
+def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(
+    repository_store,
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository, b"original note")
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1133,7 +1154,7 @@ def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(core):
     copies = sorted(str(uuid4()) for _ in range(3))
     for copy in copies:
         c.admit_ref_note(evidence, note, copy, Budget())
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_retained_notes_update'"
@@ -1149,19 +1170,19 @@ def test_conflicting_other_copy_diagnosis_respects_budget_and_rolls_back(core):
     finally:
         db.close()
     replacement = str(uuid4())
-    with pytest.raises(CoreFailure) as limited:
+    with pytest.raises(RepositoryFailure) as limited:
         c.admit_ref_note(evidence, note, replacement, Budget(), max_existing_copies=1)
     assert limited.value.code == "BUDGET"
     assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 3
     assert not (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as detected:
+    with pytest.raises(RepositoryFailure) as detected:
         c.admit_ref_note(evidence, note, replacement, Budget(), max_existing_copies=3)
     assert detected.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_ref_note_read_fetches_only_one_copy_and_charges_actual_work(core):
-    c, _, repository = core
+def test_ref_note_read_fetches_only_one_copy_and_charges_actual_work(repository_store):
+    c, _, repository = repository_store
     proof, note = old_mapping(repository, b"x" * (256 * 1024))
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1209,8 +1230,10 @@ def test_ref_note_read_fetches_only_one_copy_and_charges_actual_work(core):
         c._db.row_factory = original_factory
 
 
-def test_ref_note_read_limits_reserve_before_body_and_do_not_stop_catalog(core):
-    c, path, repository = core
+def test_ref_note_read_limits_reserve_before_body_and_do_not_stop_catalog(
+    repository_store,
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository, b"bounded body")
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1246,19 +1269,19 @@ def test_ref_note_read_limits_reserve_before_body_and_do_not_stop_catalog(core):
     class NoInput(Budget):
         def require(self, unit, amount=1):
             if unit == "input_bytes":
-                raise CoreFailure("BUDGET", unit, "no body reservation")
+                raise RepositoryFailure("BUDGET", unit, "no body reservation")
             super().require(unit, amount)
 
     class NoVerification(Budget):
         def require(self, unit, amount=1):
             if unit == "verification_bytes":
-                raise CoreFailure("BUDGET", unit, "no verification reservation")
+                raise RepositoryFailure("BUDGET", unit, "no verification reservation")
             super().require(unit, amount)
 
     class NoProofSteps(Budget):
         def require(self, unit, amount=1):
             if unit == "proof_steps":
-                raise CoreFailure("BUDGET", unit, "no structural verification")
+                raise RepositoryFailure("BUDGET", unit, "no structural verification")
             super().require(unit, amount)
 
     class SmallLimit:
@@ -1273,19 +1296,19 @@ def test_ref_note_read_limits_reserve_before_body_and_do_not_stop_catalog(core):
             (small, {}),
             (Budget(), {"max_proof_bytes": 1}),
         ):
-            with pytest.raises(CoreFailure) as exceeded:
+            with pytest.raises(RepositoryFailure) as exceeded:
                 c.read_ref_note(claim, mapping, budget, **options)
             assert exceeded.value.code == "BUDGET"
             assert not fetched
         denied = NoVerification()
-        with pytest.raises(CoreFailure) as exceeded:
+        with pytest.raises(RepositoryFailure) as exceeded:
             c.read_ref_note(claim, mapping, denied)
         assert exceeded.value.code == "BUDGET"
         assert denied.counts["input_bytes"] >= len(note.body)
         assert len(fetched) == 1
         fetched.clear()
         denied = NoProofSteps()
-        with pytest.raises(CoreFailure) as exceeded:
+        with pytest.raises(RepositoryFailure) as exceeded:
             c.read_ref_note(claim, mapping, denied)
         assert exceeded.value.code == "BUDGET"
         assert denied.counts["input_bytes"] >= len(note.body)
@@ -1296,8 +1319,10 @@ def test_ref_note_read_limits_reserve_before_body_and_do_not_stop_catalog(core):
     assert c.read_ref_note(claim, mapping, Budget()) == note.body
 
 
-def test_note_read_charges_repeated_dependencies_and_exact_finite_budget(core):
-    c, path, repository = core
+def test_note_read_charges_repeated_dependencies_and_exact_finite_budget(
+    repository_store,
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository, b"note under a finite budget")
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1333,22 +1358,26 @@ def test_note_read_charges_repeated_dependencies_and_exact_finite_budget(core):
 
         def require(self, unit, amount=1):
             if unit == "input_bytes" and self.counts.get(unit, 0) + amount > self.cap:
-                raise CoreFailure("BUDGET", unit, "finite cumulative input budget")
+                raise RepositoryFailure(
+                    "BUDGET", unit, "finite cumulative input budget"
+                )
             super().require(unit, amount)
 
     exact = Capped(needed)
     assert c.read_ref_note(claim, mapping, exact) == note.body
     assert exact.counts["input_bytes"] == needed
     short = Capped(needed - 1)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.read_ref_note(claim, mapping, short)
     assert error.value.code == "BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("value", ["ordinary", '"\\\n\x00', "é😀", "\ud800"])
-def test_bounded_json_provenance_size_matches_canonical_encoding(core, value):
-    c, _, _ = core
+def test_bounded_json_provenance_size_matches_canonical_encoding(
+    repository_store, value
+):
+    c, _, _ = repository_store
     attribution = received(value)
     work = Budget()
     c._meter_provenance_encoding(work, attribution, 1_000_000)
@@ -1358,8 +1387,8 @@ def test_bounded_json_provenance_size_matches_canonical_encoding(core, value):
 
 
 @pytest.mark.parametrize("method", ["lookup", "enumeration"])
-def test_bounded_absence_size_matches_canonical_encoding(core, method):
-    c, _, _ = core
+def test_bounded_absence_size_matches_canonical_encoding(repository_store, method):
+    c, _, _ = repository_store
     evidence = RefAbsenceEvidence(
         'source"é',
         "scope😀",
@@ -1383,16 +1412,16 @@ def test_bounded_absence_size_matches_canonical_encoding(core, method):
     )
 
     def refuse(_):
-        raise CoreFailure("BUDGET", "absence", "small budget")
+        raise RepositoryFailure("BUDGET", "absence", "small budget")
 
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         RefAbsenceEvidence.decode(evidence.encoded, before_compare=refuse)
     assert error.value.code == "BUDGET"
 
 
 @pytest.mark.parametrize("count", [1, 2, 3])
-def test_bounded_proof_size_matches_canonical_bundle(core, count):
-    c, _, repository = core
+def test_bounded_proof_size_matches_canonical_bundle(repository_store, count):
+    c, _, repository = repository_store
     proof, _ = old_mapping(repository, b"\x00\xff")
     obs = subject(repository)
     claim = RefObservationClaim(
@@ -1418,8 +1447,10 @@ def test_bounded_proof_size_matches_canonical_bundle(core, count):
     assert work.counts["input_bytes"] == len(evidence.bundle)
 
 
-def test_proof_meter_rejects_long_invalid_type_before_character_walk(core, monkeypatch):
-    c, _, repository = core
+def test_proof_meter_rejects_long_invalid_type_before_character_walk(
+    repository_store, monkeypatch
+):
+    c, _, repository = repository_store
     proof, _ = old_mapping(repository)
     claim = RefObservationClaim(
         subject(repository).ref_observation_key,
@@ -1447,13 +1478,13 @@ def test_proof_meter_rejects_long_invalid_type_before_character_walk(core, monke
         return original(value)
 
     monkeypatch.setattr(c, "_json_string_bytes", checked)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c._meter_proof_bundle(Budget(), evidence, 512)
     assert error.value.code == "NOTES_ROLE"
 
 
-def test_budget_exhaustion_inside_stored_decoder_is_not_corruption(core):
-    c, path, repository = core
+def test_budget_exhaustion_inside_stored_decoder_is_not_corruption(repository_store):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1498,10 +1529,12 @@ def test_budget_exhaustion_inside_stored_decoder_is_not_corruption(core):
                 unit == "input_bytes"
                 and self.counts.get(unit, 0) + amount > before_role[0]
             ):
-                raise CoreFailure("BUDGET", unit, "exhausted during stored role decode")
+                raise RepositoryFailure(
+                    "BUDGET", unit, "exhausted during stored role decode"
+                )
             super().require(unit, amount)
 
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.read_ref_note(claim, mapping, Capped())
     assert error.value.code == "BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
@@ -1509,8 +1542,10 @@ def test_budget_exhaustion_inside_stored_decoder_is_not_corruption(core):
 
 
 @pytest.mark.parametrize("field", ["direct", "symbolic", "resolved", "peeled"])
-def test_exact_copy_replay_rejects_changed_immutable_claim_fields(core, field):
-    c, path, repository = core
+def test_exact_copy_replay_rejects_changed_immutable_claim_fields(
+    repository_store, field
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1549,7 +1584,7 @@ def test_exact_copy_replay_rejects_changed_immutable_claim_fields(core, field):
         "peeled": {"peeled_target_object_oid": OID("sha1", "b" * 40)},
     }[field]
     altered = replace(evidence, ref_claim=replace(claim, **change))
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_ref_note(altered, note, copy, Budget())
     assert error.value.code == "INCOMPATIBLE_REPLAY"
     assert len(c.sql("SELECT 1 FROM ref_retained_notes")) == 1
@@ -1559,8 +1594,10 @@ def test_exact_copy_replay_rejects_changed_immutable_claim_fields(core, field):
 @pytest.mark.parametrize(
     "large_field", ["role", "subject", "subject-ref", "claim", "symbolic", "mapping"]
 )
-def test_note_read_reserves_all_fetched_metadata_before_loading(core, large_field):
-    c, path, repository = core
+def test_note_read_reserves_all_fetched_metadata_before_loading(
+    repository_store, large_field
+):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     if large_field == "subject":
@@ -1600,7 +1637,9 @@ def test_note_read_reserves_all_fetched_metadata_before_loading(core, large_fiel
     class Limited(Budget):
         def require(self, unit, amount=1):
             if unit == "input_bytes" and self.counts.get(unit, 0) + amount > 1_024:
-                raise CoreFailure("BUDGET", unit, "small cumulative metadata budget")
+                raise RepositoryFailure(
+                    "BUDGET", unit, "small cumulative metadata budget"
+                )
             super().require(unit, amount)
 
     large_fetched = []
@@ -1615,7 +1654,7 @@ def test_note_read_reserves_all_fetched_metadata_before_loading(core, large_fiel
     c._db.row_factory = track_large
     try:
         budget = Limited()
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             c.read_ref_note(claim, mapping, budget)
         assert error.value.code == "BUDGET"
         assert not large_fetched
@@ -1623,15 +1662,15 @@ def test_note_read_reserves_all_fetched_metadata_before_loading(core, large_fiel
     finally:
         c._db.row_factory = original_factory
     assert not (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as per_row_limit:
+    with pytest.raises(RepositoryFailure) as per_row_limit:
         c.read_ref_note(claim, mapping, Budget(), max_metadata_bytes=1_024)
     assert per_row_limit.value.code == "BUDGET"
     assert c.read_ref_note(claim, mapping, Budget()) == note.body
 
 
 @pytest.mark.parametrize("operation", ["observation", "projection", "evidence", "note"])
-def test_related_ref_operations_bound_subject_dependencies(core, operation):
-    c, path, repository = core
+def test_related_ref_operations_bound_subject_dependencies(repository_store, operation):
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = replace(subject(repository), source_attribution="s" * 65_536)
     c.admit_ref_observation(obs)
@@ -1658,7 +1697,7 @@ def test_related_ref_operations_bound_subject_dependencies(core, operation):
     class Limited(Budget):
         def require(self, unit, amount=1):
             if unit == "input_bytes" and self.counts.get(unit, 0) + amount > 1_024:
-                raise CoreFailure("BUDGET", unit, "small cumulative input budget")
+                raise RepositoryFailure("BUDGET", unit, "small cumulative input budget")
             super().require(unit, amount)
 
     seen = []
@@ -1675,7 +1714,7 @@ def test_related_ref_operations_bound_subject_dependencies(core, operation):
     c._db.row_factory = track_large
     try:
         work = Limited()
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             if operation == "observation":
                 c.ref_observation(obs.ref_observation_key, work)
             elif operation == "projection":
@@ -1701,9 +1740,9 @@ def test_related_ref_operations_bound_subject_dependencies(core, operation):
     ["claim", "escaped_claim", "mapping", "role", "escaped_role", "symbolic"],
 )
 def test_related_ref_operations_bound_large_incoming_metadata(
-    core, operation, large_field
+    repository_store, operation, large_field
 ):
-    c, path, repository = core
+    c, path, repository = repository_store
     proof, note = old_mapping(repository)
     obs = subject(repository)
     c.admit_ref_observation(obs)
@@ -1752,11 +1791,13 @@ def test_related_ref_operations_bound_large_incoming_metadata(
     class Limited(Budget):
         def require(self, unit, amount=1):
             if unit == "input_bytes" and self.counts.get(unit, 0) + amount > 10_000:
-                raise CoreFailure("BUDGET", unit, "small cumulative metadata budget")
+                raise RepositoryFailure(
+                    "BUDGET", unit, "small cumulative metadata budget"
+                )
             super().require(unit, amount)
 
     work = Limited()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         if operation == "evidence":
             c.admit_notes_mapping_evidence(evidence, work)
         elif operation == "note":

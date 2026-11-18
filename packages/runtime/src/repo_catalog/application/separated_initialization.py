@@ -10,9 +10,9 @@ from uuid import uuid4
 from repo_catalog.adapters.sqlite import p1_schema
 
 ROLES = {
-    "core": ("core",),
+    "repository": ("repository",),
     "context": ("context",),
-    "paired": ("core", "context"),
+    "paired": ("repository", "context"),
     "operational": ("operational",),
     "search": ("search",),
 }
@@ -48,8 +48,9 @@ def inspect_role(path, role):
 def initialize(directory, scope, *, repository=None, instance=None):
     directory = Path(directory)
     roles = ROLES[scope]
+    p1_schema.reject_legacy_layout(directory)
     identities = []
-    for role in dict.fromkeys((*roles, "core", "context")):
+    for role in dict.fromkeys((*roles, "repository", "context")):
         path = directory / (role + ".sqlite3")
         if path.exists():
             identities.append(inspect_role(path, role))

@@ -7,7 +7,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
 from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.operational_coordination import NotesWorkBudget
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.paired_admission import PairCoordinator
@@ -15,7 +15,7 @@ from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import (
     ExchangePackage,
     ExchangeSelectionScope,
-    empty_core_section,
+    empty_repository_section,
 )
 from repo_catalog.domain.p1_coordination import (
     CoordinationError,
@@ -27,9 +27,9 @@ from repo_catalog.domain.p1_coordination import (
 def fixture(directory, *, context=False):
     directory.mkdir()
     repository, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "operational", *(("context",) if context else ())):
+    for role in ("repository", "operational", *(("context",) if context else ())):
         initialize(directory / (role + ".sqlite3"), role, repository, instance)
-    section = empty_core_section()
+    section = empty_repository_section()
     section["git_objects"] = [{"object_format": "sha1", "object_oid": "1" * 40}]
     package = ExchangePackage(
         str(uuid4()),
@@ -39,7 +39,7 @@ def fixture(directory, *, context=False):
         selection_scope=ExchangeSelectionScope(
             all_selected=True, include_context=False
         ),
-        core=section,
+        repository_store=section,
     )
     return repository, package
 
@@ -48,7 +48,9 @@ def fixture(directory, *, context=False):
 def test_owned_cleanup_stop_cannot_return_complete(tmp_path, monkeypatch, boundary):
     directory = tmp_path / "catalog"
     repository, package = fixture(directory)
-    owner = GitCore if boundary == "identity" else OperationalAcquisitionLedger
+    owner = (
+        GitRepositoryStore if boundary == "identity" else OperationalAcquisitionLedger
+    )
     original = owner.close
     calls = []
 
@@ -93,7 +95,7 @@ def test_pair_owned_connection_cleanup_stop_cannot_return_complete(tmp_path):
     coordinator._open = lambda role: CloseStop(original(role), role)
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
         coordinator.admit(lambda tx: None, lambda tx: None)
-    assert closes == ["context", "core"]
+    assert closes == ["context", "repository"]
 
 
 @pytest.mark.parametrize("counterfeit", ["subclass", "ledger"])
@@ -132,12 +134,14 @@ def test_counterfeit_accounting_refused_before_input_work(tmp_path, counterfeit)
                 permitted_repository_uuidv4s=(repository,),
             )
         assert not any(ledger.work_ledger.usage(request).values())
-    with closing(GitCore(directory / "core.sqlite3")) as core:
-        assert not core.sql("SELECT * FROM git_objects")
+    with closing(
+        GitRepositoryStore(directory / "repository.sqlite3")
+    ) as repository_store:
+        assert not repository_store.sql("SELECT * FROM git_objects")
     assert not (directory / "p1-recovery-stop.json").exists()
 
 
-def test_lost_final_checkpoint_refuses_without_rolling_back_core(tmp_path):
+def test_lost_final_checkpoint_refuses_without_rolling_back_repository(tmp_path):
     directory = tmp_path / "catalog"
     repository, package = fixture(directory)
     request = RequestIdentity(str(uuid4()), str(uuid4()))
@@ -163,6 +167,8 @@ def test_lost_final_checkpoint_refuses_without_rolling_back_core(tmp_path):
                 cut=cut,
             )
         assert deleted == [1]
-    with closing(GitCore(directory / "core.sqlite3")) as core:
-        assert len(core.sql("SELECT * FROM git_objects")) == 1
+    with closing(
+        GitRepositoryStore(directory / "repository.sqlite3")
+    ) as repository_store:
+        assert len(repository_store.sql("SELECT * FROM git_objects")) == 1
     assert not (directory / "p1-recovery-stop.json").exists()

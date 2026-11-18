@@ -17,8 +17,12 @@ from repo_catalog.application.notes import NotesAcquisition
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
-from repo_catalog.domain.p1_core import CoreCoverageScope, CoreFailure, Provenance
 from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
+    Provenance,
+    RepositoryCoverageScope,
+    RepositoryFailure,
+)
 from repo_catalog.domain.ports.notes import request_scope
 from repo_catalog.domain.recovery import BackupScope
 from repo_catalog.domain.ref_coverage import REF_NOTES_INVENTORY
@@ -38,7 +42,7 @@ acquisition = fixtures.acquisition
 def test_inventory_report_and_receiver_proof_remain_claim_specific(
     acquisition, monkeypatch, empty
 ):
-    app, path, fmt, repository, origin, core_path, _ = acquisition
+    app, path, fmt, repository, origin, repository_path, _ = acquisition
     capture, target, _ = fixtures.fixture_note(acquisition, fanout=1, commit=not empty)
     if empty:
         root = fixtures.write(path, fmt, "tree", b"")
@@ -48,7 +52,7 @@ def test_inventory_report_and_receiver_proof_remain_claim_specific(
     reported = app.inventory_ref(first_claim).group
     assert reported.status == ("known_empty" if empty else "complete")
 
-    query = ProductionQueryService(core_path.parent, mode="core_only")
+    query = ProductionQueryService(repository_path.parent, mode="repository_only")
     initial = query.list_ref_notes_inventories(first_claim, app.work)
     assert initial.coverage.state == "unknown"
     assert [item.group for item in initial.groups] == [reported]
@@ -69,12 +73,12 @@ def test_inventory_report_and_receiver_proof_remain_claim_specific(
     )
     assert app.verify_ref_inventory(reported) == checked
     if not empty:
-        assert not app.core.sql("SELECT 1 FROM ref_retained_notes")
+        assert not app.repository_store.sql("SELECT 1 FROM ref_retained_notes")
         assert target.object_oid in repr(reported.members)
 
 
 def test_later_partial_does_not_fall_back_to_verified_complete(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -87,9 +91,9 @@ def test_later_partial_does_not_fall_back_to_verified_complete(acquisition):
         verified.coverage_claim.observed_at_us + 1,
         "partial",
     )
-    app.core.admit_coverage(later)
+    app.repository_store.admit_coverage(later)
     projection = ProductionQueryService(
-        core_path.parent, mode="core_only"
+        repository_path.parent, mode="repository_only"
     ).list_ref_notes_inventories(claim, app.work)
     assert projection.coverage.state == "partial"
     assert projection.groups[0].group == group
@@ -99,7 +103,7 @@ def test_later_partial_does_not_fall_back_to_verified_complete(acquisition):
 
 
 def test_competing_claims_keep_separate_groups_and_no_winner(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition, body=b"first")
     first = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -112,9 +116,9 @@ def test_competing_claims_keep_separate_groups_and_no_winner(acquisition):
         provenance=replace(first.provenance, coordinate="independent-result"),
         root_object_oid=second_capture.root,
     )
-    app.core.admit_ref_observation_claim(second)
+    app.repository_store.admit_ref_observation_claim(second)
     group2 = app.inventory_ref(second).group
-    query = ProductionQueryService(core_path.parent, mode="core_only")
+    query = ProductionQueryService(repository_path.parent, mode="repository_only")
     before = query.list_ref_notes_inventories(first, app.work)
     assert before.coverage.state == "conflict"
     assert before.groups[0].current_verified
@@ -136,7 +140,7 @@ def test_competing_claims_keep_separate_groups_and_no_winner(acquisition):
 
 
 def test_shared_root_does_not_share_claim_verification(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     first = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -145,7 +149,7 @@ def test_shared_root_does_not_share_claim_verification(acquisition):
         first,
         provenance=replace(first.provenance, coordinate="same-root-result"),
     )
-    app.core.admit_ref_observation_claim(second)
+    app.repository_store.admit_ref_observation_claim(second)
     group1 = app.inventory_ref(first).group
     group2 = app.inventory_ref(second).group
     assert (
@@ -153,7 +157,7 @@ def test_shared_root_does_not_share_claim_verification(acquisition):
         and first.root_object_oid == second.root_object_oid
     )
     assert app.verify_ref_inventory(group1).verified
-    query = ProductionQueryService(core_path.parent, mode="core_only")
+    query = ProductionQueryService(repository_path.parent, mode="repository_only")
     assert query.list_ref_notes_inventories(first, app.work).groups[0].current_verified
     assert (
         not query.list_ref_notes_inventories(second, app.work)
@@ -165,7 +169,7 @@ def test_shared_root_does_not_share_claim_verification(acquisition):
 
 
 def test_absent_ref_has_no_invented_inventory(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     result = discover(
         app, repository, origin, str(uuid4()), ("refs/notes/no-such-ref",)
     )
@@ -176,53 +180,62 @@ def test_absent_ref_has_no_invented_inventory(acquisition):
         if link.claim.presence_state == "absent"
     )
     view = ProductionQueryService(
-        core_path.parent, mode="auto"
+        repository_path.parent, mode="auto"
     ).list_ref_notes_inventories(absence, app.work)
     assert absence.root_object_oid is None and not view.groups
     assert view.coverage.state == "unknown"
 
 
-def test_paired_and_core_only_queries_preserve_scope(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+def test_paired_and_repository_only_queries_preserve_scope(acquisition):
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     group = app.inventory_ref(claim).group
     assert app.verify_ref_inventory(group).verified
-    _, instance = app.core.catalog_identity()
-    initialize(core_path.parent / "context.sqlite3", "context", repository, instance)
-    paired = ProductionQueryService(core_path.parent, mode="auto")
-    core_only = ProductionQueryService(core_path.parent, mode="core_only")
+    _, instance = app.repository_store.catalog_identity()
+    initialize(
+        repository_path.parent / "context.sqlite3", "context", repository, instance
+    )
+    paired = ProductionQueryService(repository_path.parent, mode="auto")
+    repository_only = ProductionQueryService(
+        repository_path.parent, mode="repository_only"
+    )
     assert paired.detect_mode() == "paired"
-    assert core_only.detect_mode() == "core_only"
+    assert repository_only.detect_mode() == "repository_only"
     assert paired.list_ref_notes_inventories(
         claim, app.work
-    ) == core_only.list_ref_notes_inventories(claim, app.work)
+    ) == repository_only.list_ref_notes_inventories(claim, app.work)
 
 
 def test_proof_writer_callback_cannot_reenter_or_fake_corruption(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     group = app.inventory_ref(claim).group
     verified = app.verify_ref_inventory(group)
-    proof = app.core.ref_coverage_proofs(verified.coverage_claim, app.work)[0]
+    proof = app.repository_store.ref_coverage_proofs(verified.coverage_claim, app.work)[
+        0
+    ]
     failure = sqlite3.DatabaseError("caller budget callback")
     failure.sqlite_errorcode = sqlite3.SQLITE_CORRUPT
     attempts = []
 
     class Reentrant(UnlimitedWorkBudget):
         def require(self, unit, amount=1):
-            if app.core._db.in_transaction and app.core._work_callback_depth:
+            if (
+                app.repository_store._db.in_transaction
+                and app.repository_store._work_callback_depth
+            ):
                 for action in (
-                    lambda: app.core.sql(
+                    lambda: app.repository_store.sql(
                         "SELECT structures_json FROM ref_coverage_proofs"
                     ),
-                    lambda: app.core.admit_repository(repository),
-                    lambda: app.core._db.execute(
+                    lambda: app.repository_store.admit_repository(repository),
+                    lambda: app.repository_store._db.execute(
                         "SELECT structures_json FROM ref_coverage_proofs"
                     ).fetchall(),
                 ):
@@ -233,37 +246,41 @@ def test_proof_writer_callback_cannot_reenter_or_fake_corruption(acquisition):
             super().require(unit, amount)
 
     with pytest.raises(sqlite3.DatabaseError) as caught:
-        app.core.admit_ref_coverage_proof(proof, Reentrant())
+        app.repository_store.admit_ref_coverage_proof(proof, Reentrant())
     assert caught.value is failure and len(attempts) == 3
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
-    app.core.ensure_available()
-    app.core.admit_ref_coverage_proof(proof, app.work)
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
+    app.repository_store.ensure_available()
+    app.repository_store.admit_ref_coverage_proof(proof, app.work)
 
     class Probe(UnlimitedWorkBudget):
         blocked = 0
 
         def require(self, unit, amount=1):
             with pytest.raises(sqlite3.DatabaseError):
-                app.core.sql("SELECT structures_json FROM ref_coverage_proofs")
+                app.repository_store.sql(
+                    "SELECT structures_json FROM ref_coverage_proofs"
+                )
             self.blocked += 1
             super().require(unit, amount)
 
     probe = Probe()
     assert (
-        app.core.ref_notes_inventory_projection(claim, probe).groups[0].current_verified
+        app.repository_store.ref_notes_inventory_projection(claim, probe)
+        .groups[0]
+        .current_verified
     )
     assert probe.blocked > 0
 
 
 def test_group_limits_refuse_without_stopping_healthy_catalog(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     _, target, note = fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     first = app.inventory_ref(claim).group
     extra_target = replace(target, object_oid="b" * len(target.object_oid))
-    app.core.admit_object(extra_target)
+    app.repository_store.admit_object(extra_target)
     second = replace(
         first,
         members=(
@@ -272,19 +289,26 @@ def test_group_limits_refuse_without_stopping_healthy_catalog(acquisition):
         ),
         provenance=Provenance("other", "other-observation", "whole", "test", "1"),
     )
-    app.core.admit_notes_mapping_group(second, app.work)
-    with pytest.raises(CoreFailure) as too_many:
-        app.core.ref_notes_inventory_projection(claim, app.work, max_groups=1)
+    app.repository_store.admit_notes_mapping_group(second, app.work)
+    with pytest.raises(RepositoryFailure) as too_many:
+        app.repository_store.ref_notes_inventory_projection(
+            claim, app.work, max_groups=1
+        )
     assert too_many.value.code == "QUERY_BUDGET"
-    with pytest.raises(CoreFailure) as too_many_members:
-        app.core.ref_notes_inventory_projection(claim, app.work, max_members=1)
+    with pytest.raises(RepositoryFailure) as too_many_members:
+        app.repository_store.ref_notes_inventory_projection(
+            claim, app.work, max_members=1
+        )
     assert too_many_members.value.code == "QUERY_BUDGET"
-    assert len(app.core.ref_notes_inventory_projection(claim, app.work).groups) == 2
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert (
+        len(app.repository_store.ref_notes_inventory_projection(claim, app.work).groups)
+        == 2
+    )
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_partial_group_never_becomes_receiver_verified(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -295,18 +319,18 @@ def test_partial_group_never_becomes_receiver_verified(acquisition):
         status="partial",
         provenance=Provenance("external", "partial", "inventory", "test", "1"),
     )
-    app.core.admit_notes_mapping_group(partial, app.work)
+    app.repository_store.admit_notes_mapping_group(partial, app.work)
     result = app.verify_ref_inventory(partial)
     assert not result.verified and result.failure_code == "NOTES_INVENTORY"
-    view = app.core.ref_notes_inventory_projection(claim, app.work)
+    view = app.repository_store.ref_notes_inventory_projection(claim, app.work)
     assert view.coverage.state == "unknown"
     assert all(not item.current_verified for item in view.groups)
-    assert not app.core.sql("SELECT 1 FROM ref_coverage_proofs")
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not app.repository_store.sql("SELECT 1 FROM ref_coverage_proofs")
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_group_comparison_accounts_for_non_ascii_bytes(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -316,14 +340,14 @@ def test_group_comparison_accounts_for_non_ascii_bytes(acquisition):
         group, provenance=replace(group.provenance, source="日本" * 4000)
     )
     budget = UnlimitedWorkBudget(work_limits={"input_bytes": 40_000})
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         account_notes_group_comparison(long_origin, long_origin, budget)
     assert error.value.code == "BUDGET"
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_provenance_comparison_accounts_for_non_ascii_bytes(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -331,14 +355,14 @@ def test_provenance_comparison_accounts_for_non_ascii_bytes(acquisition):
     group = app.inventory_ref(claim).group
     provenance = replace(group.provenance, source="日本" * 4000)
     budget = UnlimitedWorkBudget(work_limits={"input_bytes": 40_000})
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         account_provenance_comparison(provenance, provenance, budget)
     assert error.value.code == "BUDGET"
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_long_provenance_is_not_scanned_before_budget_reservation(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -355,16 +379,16 @@ def test_long_provenance_is_not_scanned_before_budget_reservation(acquisition):
     source = CountedText("x" * 65_536)
     incoming = replace(claim, provenance=replace(claim.provenance, source=source))
     work = UnlimitedWorkBudget(work_limits={"input_bytes": len(source) + 4096})
-    with pytest.raises(CoreFailure) as error:
-        app.core.ref_notes_inventory_projection(incoming, work)
+    with pytest.raises(RepositoryFailure) as error:
+        app.repository_store.ref_notes_inventory_projection(incoming, work)
     assert error.value.code in ("BUDGET", "QUERY_BUDGET")
     assert source.visits == 0
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("kind", ["mapping-path", "absence"])
 def test_variable_json_fields_reserve_character_walk_before_scanning(acquisition, kind):
-    app, _, _, _, _, core_path, _ = acquisition
+    app, _, _, _, _, repository_path, _ = acquisition
 
     class CountedText(str):
         visits = 0
@@ -376,23 +400,23 @@ def test_variable_json_fields_reserve_character_walk_before_scanning(acquisition
 
     value = CountedText("x" * 65_536)
     work = UnlimitedWorkBudget(work_limits={"input_bytes": 1024})
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         if kind == "mapping-path":
-            app.core._meter_mapping_path_encoding(work, value, 100_000)
+            app.repository_store._meter_mapping_path_encoding(work, value, 100_000)
         else:
             evidence = RefAbsenceEvidence(
                 "source", "scope", b"refs/notes/a", "lookup", value
             )
-            app.core._meter_absence_encoding(work, evidence, 100_000)
+            app.repository_store._meter_absence_encoding(work, evidence, 100_000)
     assert error.value.code in ("BUDGET", "QUERY_BUDGET")
     assert value.visits == 0
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_lost_verification_pin_causes_new_check_without_rebinding(
     acquisition, monkeypatch
 ):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -410,15 +434,15 @@ def test_lost_verification_pin_causes_new_check_without_rebinding(
     monkeypatch.setattr(app.progress, "save_once_bounded", fail_after_proof)
     with pytest.raises(OSError, match="lost acknowledgement"):
         app.verify_ref_inventory(group)
-    assert len(app.core.sql("SELECT 1 FROM ref_coverage_proofs")) == 1
+    assert len(app.repository_store.sql("SELECT 1 FROM ref_coverage_proofs")) == 1
     retried = app.verify_ref_inventory(group)
     assert retried.verified
-    assert len(app.core.sql("SELECT 1 FROM ref_coverage_proofs")) == 2
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert len(app.repository_store.sql("SELECT 1 FROM ref_coverage_proofs")) == 2
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_progress_cannot_rebind_another_requests_verification(acquisition, monkeypatch):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -427,7 +451,7 @@ def test_progress_cannot_rebind_another_requests_verification(acquisition, monke
     first = app.verify_ref_inventory(group)
     ledger = app.work.ledger
     request = RequestIdentity(origin, str(uuid4()))
-    _, instance = app.core.catalog_identity()
+    _, instance = app.repository_store.catalog_identity()
     ledger.new_request(
         request,
         request_scope(repository, instance, "local-test", app.source.scope),
@@ -438,7 +462,11 @@ def test_progress_cannot_rebind_another_requests_verification(acquisition, monke
     second_work = NotesWorkBudget(ledger, request, attempt, NotesLimits())
     progress = NotesProgress(second_work)
     second = NotesAcquisition(
-        app.core, app.source, second_work, progress, source_attribution="local-test"
+        app.repository_store,
+        app.source,
+        second_work,
+        progress,
+        source_attribution="local-test",
     )
     original = progress.load_bounded
 
@@ -451,10 +479,10 @@ def test_progress_cannot_rebind_another_requests_verification(acquisition, monke
         return original(scope, maximum)
 
     monkeypatch.setattr(progress, "load_bounded", rebound)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         second.verify_ref_inventory(group)
     assert error.value.code == "CONTINUATION_UNAVAILABLE"
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
     monkeypatch.setattr(progress, "load_bounded", original)
     later = second.verify_ref_inventory(group)
     assert later.verified
@@ -464,20 +492,23 @@ def test_progress_cannot_rebind_another_requests_verification(acquisition, monke
         != first.verification_provenance.coordinate
     )
     assert (
-        app.core.ref_coverage_proofs(first.coverage_claim, app.work)[0].group == group
+        app.repository_store.ref_coverage_proofs(first.coverage_claim, app.work)[
+            0
+        ].group
+        == group
     )
 
 
 def test_proof_writer_budget_failure_rolls_back_without_false_completion(
     acquisition, monkeypatch
 ):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     group = app.inventory_ref(claim).group
-    original = app.core.admit_ref_coverage_proof
+    original = app.repository_store.admit_ref_coverage_proof
 
     class LimitedAtWrite:
         def __init__(self, inner):
@@ -487,31 +518,31 @@ def test_proof_writer_budget_failure_rolls_back_without_false_completion(
             return getattr(self.inner, name)
 
         def require(self, unit, amount=1):
-            if app.core._db.in_transaction:
-                raise CoreFailure("BUDGET", unit, "synthetic proof writer limit")
+            if app.repository_store._db.in_transaction:
+                raise RepositoryFailure("BUDGET", unit, "synthetic proof writer limit")
             self.inner.require(unit, amount)
 
         def charge(self, unit, amount):
             self.inner.charge(unit, amount)
 
     monkeypatch.setattr(
-        app.core,
+        app.repository_store,
         "admit_ref_coverage_proof",
         lambda proof, work: original(proof, LimitedAtWrite(work)),
     )
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         app.verify_ref_inventory(group)
     assert error.value.code == "BUDGET"
-    view = app.core.ref_notes_inventory_projection(claim, app.work)
+    view = app.repository_store.ref_notes_inventory_projection(claim, app.work)
     assert view.coverage.state == "unknown" and not view.groups[0].current_verified
-    assert not app.core.sql("SELECT 1 FROM ref_coverage_proofs")
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
-    monkeypatch.setattr(app.core, "admit_ref_coverage_proof", original)
+    assert not app.repository_store.sql("SELECT 1 FROM ref_coverage_proofs")
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
+    monkeypatch.setattr(app.repository_store, "admit_ref_coverage_proof", original)
     assert app.verify_ref_inventory(group).verified
 
 
 def test_receiver_inventory_proof_survives_exchange_and_backup(acquisition, tmp_path):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition, fanout=1, commit=True)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -526,20 +557,20 @@ def test_receiver_inventory_proof_survives_exchange_and_backup(acquisition, tmp_
         ref_observation_keys=(claim.ref_observation_key,),
     )
     package = ExchangeService(
-        core_path.parent, operational=core_path.parent
+        repository_path.parent, operational=repository_path.parent
     ).export_package(selection=selection)
-    assert len(package.core["ref_coverage_proofs"]) == 1
-    assert not package.core["ref_retained_notes"]
+    assert len(package.repository_store["ref_coverage_proofs"]) == 1
+    assert not package.repository_store["ref_retained_notes"]
     outside = tmp_path.parent / (tmp_path.name + "-inventory-exchange")
     outside.mkdir()
     receiver = outside / "receiver"
     init_catalog_stores(
-        receiver, repository_uuidv4=repository, stores=("core", "operational")
+        receiver, repository_uuidv4=repository, stores=("repository", "operational")
     )
     ExchangeService(receiver, operational=receiver).import_package(
         package, new_request=True, permitted_repository_uuidv4s=(repository,)
     )
-    query = ProductionQueryService(receiver, mode="core_only")
+    query = ProductionQueryService(receiver, mode="repository_only")
     view = query.list_ref_notes_inventories(claim, app.work)
     assert view.coverage.state == "complete"
     assert view.groups[0].group == group and view.groups[0].current_verified
@@ -560,54 +591,54 @@ def test_receiver_inventory_proof_survives_exchange_and_backup(acquisition, tmp_
 def test_forged_group_and_source_failure_never_prove_completeness(
     acquisition, monkeypatch
 ):
-    app, _, fmt, repository, origin, core_path, _ = acquisition
+    app, _, fmt, repository, origin, repository_path, _ = acquisition
     _, target, _ = fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     original = app.inventory_ref(claim).group
     fake_note = replace(target, object_oid="b" * len(target.object_oid))
-    app.core.admit_object(fake_note)
+    app.repository_store.admit_object(fake_note)
     forged = replace(
         original,
         members=((target.object_oid, fake_note.object_oid, target.object_oid),),
         provenance=Provenance("external", "different", "report", "test", "1"),
     )
-    app.core.admit_notes_mapping_group(forged, app.work)
+    app.repository_store.admit_notes_mapping_group(forged, app.work)
     mismatch = app.verify_ref_inventory(forged)
     assert not mismatch.verified and mismatch.failure_code == "NOTES_INVENTORY_MISMATCH"
     monkeypatch.setattr(
         app.source,
         "metadata",
         lambda oid, _work: (_ for _ in ()).throw(
-            CoreFailure("OBJECT_UNAVAILABLE", oid, "missing")
+            RepositoryFailure("OBJECT_UNAVAILABLE", oid, "missing")
         ),
     )
     failed = app.verify_ref_inventory(original)
     assert not failed.verified and failed.failure_code == "OBJECT_UNAVAILABLE"
     view = ProductionQueryService(
-        core_path.parent, mode="core_only"
+        repository_path.parent, mode="repository_only"
     ).list_ref_notes_inventories(claim, app.work)
     assert view.coverage.state == "unknown"
     assert all(not item.current_verified for item in view.groups)
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
     unadmitted = replace(original, status="partial")
-    with pytest.raises(CoreFailure) as missing:
+    with pytest.raises(RepositoryFailure) as missing:
         app.verify_ref_inventory(unadmitted)
     assert missing.value.code == "MISSING_DEPENDENCY"
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_inventory_limit_and_callback_error_do_not_stop_catalog(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     group = app.inventory_ref(claim).group
-    query = ProductionQueryService(core_path.parent, mode="core_only")
-    with pytest.raises(CoreFailure) as limited:
+    query = ProductionQueryService(repository_path.parent, mode="repository_only")
+    with pytest.raises(RepositoryFailure) as limited:
         query.list_ref_notes_inventories(
             claim, UnlimitedWorkBudget(work_limits={"input_bytes": 32})
         )
@@ -621,30 +652,32 @@ def test_inventory_limit_and_callback_error_do_not_stop_catalog(acquisition):
     with pytest.raises(json.JSONDecodeError) as error:
         query.list_ref_notes_inventories(claim, Failing())
     assert error.value is callback_error
-    scope = CoreCoverageScope(
+    scope = RepositoryCoverageScope(
         "ref_observation", (*claim.ref_observation_key.key, REF_NOTES_INVENTORY)
     )
     with pytest.raises(json.JSONDecodeError) as direct:
-        app.core.coverage(scope, Failing())
+        app.repository_store.coverage(scope, Failing())
     assert direct.value is callback_error
     with pytest.raises(json.JSONDecodeError) as query_error:
-        query.get_core_coverage(scope, work=Failing())
+        query.get_repository_coverage(scope, work=Failing())
     assert query_error.value is callback_error
     assert (
-        app.core.ref_notes_inventory_projection(claim, app.work).groups[0].group
+        app.repository_store.ref_notes_inventory_projection(claim, app.work)
+        .groups[0]
+        .group
         == group
     )
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_damaged_inventory_metadata_stops_catalog(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     app.inventory_ref(claim)
-    with connect(core_path, "core") as db:
+    with connect(repository_path, "repository") as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_notes_mapping_groups_update'"
         ).fetchone()[0]
@@ -654,19 +687,19 @@ def test_damaged_inventory_metadata_stops_catalog(acquisition):
         db.execute("PRAGMA ignore_check_constraints=OFF")
         db.execute(trigger)
         db.commit()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         ProductionQueryService(
-            core_path.parent, mode="core_only"
+            repository_path.parent, mode="repository_only"
         ).list_ref_notes_inventories(claim, app.work)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (core_path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
-        app.core.ensure_available()
+    assert (repository_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(RepositoryFailure) as stopped:
+        app.repository_store.ensure_available()
     assert stopped.value.code == "RECOVERY_STOP"
 
 
 def test_noncanonical_unicode_group_is_bounded_before_reencoding(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
@@ -676,7 +709,7 @@ def test_noncanonical_unicode_group_is_bounded_before_reencoding(acquisition):
     bad = json.dumps(
         [[target, note, "😀" * 50_000]], ensure_ascii=False, separators=(",", ":")
     )
-    with connect(core_path, "core") as db:
+    with connect(repository_path, "repository") as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_notes_mapping_groups_update'"
         ).fetchone()[0]
@@ -687,25 +720,29 @@ def test_noncanonical_unicode_group_is_bounded_before_reencoding(acquisition):
         db.execute(trigger)
         db.commit()
     small = UnlimitedWorkBudget(work_limits={"input_bytes": 1_000_000})
-    with pytest.raises(CoreFailure) as limited:
-        app.core.ref_notes_inventory_projection(claim, small, max_bytes=1_000_000)
+    with pytest.raises(RepositoryFailure) as limited:
+        app.repository_store.ref_notes_inventory_projection(
+            claim, small, max_bytes=1_000_000
+        )
     assert limited.value.code in ("BUDGET", "QUERY_BUDGET")
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as corrupt:
-        app.core.ref_notes_inventory_projection(claim, UnlimitedWorkBudget())
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(RepositoryFailure) as corrupt:
+        app.repository_store.ref_notes_inventory_projection(
+            claim, UnlimitedWorkBudget()
+        )
     assert corrupt.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    assert (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_inventory_query_detects_damaged_stored_receiver_proof(acquisition):
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixtures.fixture_note(acquisition)
     claim = (
         discover(app, repository, origin, str(uuid4())).enumerations[0].links[0].claim
     )
     group = app.inventory_ref(claim).group
     assert app.verify_ref_inventory(group).verified
-    with connect(core_path, "core") as db:
+    with connect(repository_path, "repository") as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_coverage_proofs_update'"
         ).fetchone()[0]
@@ -715,9 +752,9 @@ def test_inventory_query_detects_damaged_stored_receiver_proof(acquisition):
         db.execute("PRAGMA ignore_check_constraints=OFF")
         db.execute(trigger)
         db.commit()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         ProductionQueryService(
-            core_path.parent, mode="core_only"
+            repository_path.parent, mode="repository_only"
         ).list_ref_notes_inventories(claim, app.work)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    assert (repository_path.parent / "p1-recovery-stop.json").exists()

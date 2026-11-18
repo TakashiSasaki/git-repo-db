@@ -213,15 +213,15 @@ def role_check_dependencies(context, scope):
     """Select actual native ref occurrences named by selected PR check reports.
 
     These original keys are dependencies, not sender authority or proof of a
-    target. Core still verifies their full observations/claims and event units.
+    target. Repository still verifies their full observations/claims and event units.
     """
-    if context is None or not scope.include_context or not scope.include_core:
+    if context is None or not scope.include_context or not scope.include_repository:
         return scope
     if scope.ref_observation_keys is None and scope.object_oids is None:
         return scope  # The original request already selects all native refs.
     from dataclasses import replace
 
-    from repo_catalog.domain.p1_core import CoreFailure, _performed
+    from repo_catalog.domain.p1_repository import RepositoryFailure, _performed
     from repo_catalog.domain.pr_assessment import decode_git_role_checks
     from repo_catalog.domain.ref_observation import RefObservationKey
 
@@ -281,7 +281,7 @@ def role_check_dependencies(context, scope):
             RefObservationKey(*check["ref_observation_key"]) for check in checks
         )
         if len(keys) > scope.max_units:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "QUERY_BUDGET", "ref-exchange", "finite PR check dependencies"
             )
     return replace(
@@ -289,14 +289,14 @@ def role_check_dependencies(context, scope):
     )
 
 
-def filter_sections(core, context, scope, *, permitted=None):
+def filter_sections(repository_store, context, scope, *, permitted=None):
     """Recompute selection from typed facts; a wire report grants no authority."""
     from repo_catalog.domain.git_native import parse_metadata
 
     scope = role_check_dependencies(context, scope)
     omissions = []
     for name, data, enabled in (
-        ("core", core, scope.include_core),
+        ("repository", repository_store, scope.include_repository),
         ("context", context, scope.include_context),
     ):
         if data is not None and not enabled:
@@ -309,17 +309,17 @@ def filter_sections(core, context, scope, *, permitted=None):
             )
             for values in data.values():
                 values.clear()
-    if core is not None and not scope.include_retained_bytes:
+    if repository_store is not None and not scope.include_retained_bytes:
         for name in ("retained_metadata", "ref_retained_notes"):
-            if core[name]:
+            if repository_store[name]:
                 omissions.append(
                     {
                         "section": name,
                         "reason": "retained_bytes_not_selected",
-                        "unit_count": len(core[name]),
+                        "unit_count": len(repository_store[name]),
                     }
                 )
-            core[name] = []
+            repository_store[name] = []
     repos = None if scope.repository_uuidv4s is None else set(scope.repository_uuidv4s)
     if permitted is not None:
         repos = set(permitted) if repos is None else repos.intersection(permitted)
@@ -337,7 +337,7 @@ def filter_sections(core, context, scope, *, permitted=None):
         return identity_targets is None or row["relation_uuidv4"] in identity_targets
 
     def retain(data, key, predicate, reason):
-        from repo_catalog.domain.p1_core import _performed
+        from repo_catalog.domain.p1_repository import _performed
 
         retained = []
         for index, row in enumerate(data[key]):
@@ -350,12 +350,12 @@ def filter_sections(core, context, scope, *, permitted=None):
                 )
         data[key] = retained
 
-    if core is not None:
+    if repository_store is not None:
         for section in (
             "repository_identity_assertions",
             "repository_identity_cancellations",
         ):
-            if section not in core:
+            if section not in repository_store:
                 continue
 
             def selected_identity(row):
@@ -370,12 +370,15 @@ def filter_sections(core, context, scope, *, permitted=None):
                 )
 
             retain(
-                core,
+                repository_store,
                 section,
                 selected_identity,
                 "identity_target_or_endpoint_not_selected_or_permitted",
             )
-        available = {(r["object_format"], r["object_oid"]) for r in core["git_objects"]}
+        available = {
+            (r["object_format"], r["object_oid"])
+            for r in repository_store["git_objects"]
+        }
         chosen = (
             available.copy()
             if scope.object_oids is None
@@ -384,11 +387,11 @@ def filter_sections(core, context, scope, *, permitted=None):
         # Ref keys are an independent selection route. Event dependencies are
         # whole original occurrences; an object-only request never discovers a
         # rootless observation through an unrelated event member.
-        from repo_catalog.domain.p1_core import _performed
+        from repo_catalog.domain.p1_repository import _performed
 
         refs = {
             (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"]): r
-            for r in core["ref_observations"]
+            for r in repository_store["ref_observations"]
             if allowed(r["repository_uuidv4"])
         }
         if scope.ref_observation_keys is None and scope.object_oids is None:
@@ -399,7 +402,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             }
             if scope.object_oids is not None:
                 roots = {o.key for o in scope.object_oids}
-                for row in core["ref_observation_claims"]:
+                for row in repository_store["ref_observation_claims"]:
                     _performed("metadata_units", 1)
                     key = (
                         row["observation_origin_uuidv4"],
@@ -423,12 +426,12 @@ def filter_sections(core, context, scope, *, permitted=None):
             }
         events = {
             (r["observation_origin_uuidv4"], r["enumeration_uuidv7"]): r
-            for r in core["ref_enumeration_observations"]
+            for r in repository_store["ref_enumeration_observations"]
             if allowed(r["repository_uuidv4"])
         }
         event_links = {}
         links_by_ref = {}
-        for row in core["ref_enumeration_links"]:
+        for row in repository_store["ref_enumeration_links"]:
             _performed("metadata_units", 1)
             event_key = (row["enumeration_origin_uuidv4"], row["enumeration_uuidv7"])
             ref_key = (row["observation_origin_uuidv4"], row["ref_observation_uuidv7"])
@@ -471,7 +474,7 @@ def filter_sections(core, context, scope, *, permitted=None):
                 if row["link_count"] == 0 and not event_links.get(key)
             )
         retain(
-            core,
+            repository_store,
             "ref_observations",
             lambda r: (
                 (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"])
@@ -480,7 +483,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             "ref_observation_not_selected",
         )
         retain(
-            core,
+            repository_store,
             "ref_observation_claims",
             lambda r: (
                 (r["observation_origin_uuidv4"], r["ref_observation_uuidv7"])
@@ -494,9 +497,9 @@ def filter_sections(core, context, scope, *, permitted=None):
                 r["ref_observation_uuidv7"],
                 r["provenance_json"],
             )
-            for r in core["ref_observation_claims"]
+            for r in repository_store["ref_observation_claims"]
         }
-        for row in core["ref_observation_claims"]:
+        for row in repository_store["ref_observation_claims"]:
             for field in (
                 "direct_target_object_oid",
                 "resolved_target_object_oid",
@@ -518,7 +521,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             "notes_mapping_evidence",
             "ref_retained_notes",
         ):
-            for row in core[key]:
+            for row in repository_store[key]:
                 _performed("metadata_units", 1)
                 if ref_claim_selected(row):
                     for object_oid in (
@@ -528,7 +531,7 @@ def filter_sections(core, context, scope, *, permitted=None):
                     ):
                         if (row["object_format"], object_oid) in available:
                             chosen.add((row["object_format"], object_oid))
-        for row in core["notes_mapping_groups"]:
+        for row in repository_store["notes_mapping_groups"]:
             _performed("metadata_units", 1)
             if ref_claim_selected(row):
                 for target, note, _ in json.loads(row["membership_json"]):
@@ -541,7 +544,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             "ref_retained_notes",
         ):
             retain(
-                core,
+                repository_store,
                 key,
                 lambda r: (
                     ref_claim_selected(r)
@@ -557,7 +560,7 @@ def filter_sections(core, context, scope, *, permitted=None):
                 "claim_or_mapping_dependency_not_selected",
             )
         retain(
-            core,
+            repository_store,
             "notes_mapping_groups",
             lambda r: (
                 ref_claim_selected(r)
@@ -585,7 +588,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             )
         }
         retain(
-            core,
+            repository_store,
             "ref_enumeration_observations",
             lambda r: (
                 (r["observation_origin_uuidv4"], r["enumeration_uuidv7"])
@@ -594,7 +597,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             "whole_enumeration_not_selected",
         )
         retain(
-            core,
+            repository_store,
             "ref_enumeration_links",
             lambda r: (
                 (r["enumeration_origin_uuidv4"], r["enumeration_uuidv7"])
@@ -604,7 +607,7 @@ def filter_sections(core, context, scope, *, permitted=None):
         )
         frontier = chosen.copy()
         edges = {}
-        for row in core["relation_groups"]:
+        for row in repository_store["relation_groups"]:
             edges.setdefault((row["object_format"], row["object_oid"]), set()).update(
                 (m[1], m[2]) for m in json.loads(row["membership_json"])
             )
@@ -626,10 +629,10 @@ def filter_sections(core, context, scope, *, permitted=None):
         def oid_selected(r):
             return (r["object_format"], r["object_oid"]) in chosen
 
-        retain(core, "git_objects", oid_selected, "object_not_selected")
-        retain(core, "scalar_claims", oid_selected, "object_not_selected")
+        retain(repository_store, "git_objects", oid_selected, "object_not_selected")
+        retain(repository_store, "scalar_claims", oid_selected, "object_not_selected")
         retain(
-            core,
+            repository_store,
             "relation_groups",
             lambda r: (
                 oid_selected(r)
@@ -653,7 +656,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             )
 
         retain(
-            core,
+            repository_store,
             "retained_metadata",
             metadata_selected,
             "whole_metadata_dependency_not_selected",
@@ -664,14 +667,14 @@ def filter_sections(core, context, scope, *, permitted=None):
             "git_observations",
         ):
             retain(
-                core,
+                repository_store,
                 key,
                 lambda r: allowed(r["repository_uuidv4"]),
                 "repository_not_selected_or_permitted",
             )
         denied_claims = set()
 
-        def core_scope_selected(r):
+        def repository_scope_selected(r):
             coords = json.loads(r["owner_coordinates_json"])
             if r["owner_kind"] == "repository":
                 return allowed(coords[0])
@@ -680,7 +683,7 @@ def filter_sections(core, context, scope, *, permitted=None):
             return tuple(coords[:2]) in chosen
 
         def proof_selected(r):
-            ok = core_scope_selected(r) and all(
+            ok = repository_scope_selected(r) and all(
                 tuple(m) in chosen for m in json.loads(r["members_json"])
             )
             if not ok:
@@ -695,13 +698,13 @@ def filter_sections(core, context, scope, *, permitted=None):
             return ok
 
         retain(
-            core,
+            repository_store,
             "coverage_proofs",
             proof_selected,
             "whole_coverage_proof_dependency_not_selected",
         )
         retain(
-            core,
+            repository_store,
             "coverage_proofs",
             lambda r: (
                 (
@@ -715,10 +718,10 @@ def filter_sections(core, context, scope, *, permitted=None):
             "whole_coverage_proof_set_not_selected",
         )
         retain(
-            core,
+            repository_store,
             "coverage_claims",
             lambda r: (
-                core_scope_selected(r)
+                repository_scope_selected(r)
                 and (
                     r["owner_kind"],
                     r["owner_coordinates_json"],
@@ -730,11 +733,16 @@ def filter_sections(core, context, scope, *, permitted=None):
             "whole_coverage_unit_not_selected",
         )
         retain(
-            core, "coverage_scopes", core_scope_selected, "coverage_owner_not_selected"
+            repository_store,
+            "coverage_scopes",
+            repository_scope_selected,
+            "coverage_owner_not_selected",
         )
-        from repo_catalog.domain.p1_core import encode
+        from repo_catalog.domain.p1_repository import encode
 
-        original_groups = {encode(row) for row in core["notes_mapping_groups"]}
+        original_groups = {
+            encode(row) for row in repository_store["notes_mapping_groups"]
+        }
         terminals = {
             (
                 r["owner_kind"],
@@ -742,10 +750,10 @@ def filter_sections(core, context, scope, *, permitted=None):
                 r["observed_at_us"],
                 r["coverage_state"],
             )
-            for r in core["coverage_claims"]
+            for r in repository_store["coverage_claims"]
         }
         retain(
-            core,
+            repository_store,
             "ref_coverage_proofs",
             lambda r: (
                 (
@@ -841,7 +849,7 @@ def filter_sections(core, context, scope, *, permitted=None):
         for key in (
             "resources",
             "field_candidates",
-            "core_references",
+            "repository_references",
             "resource_relations",
             "collections",
             "resource_repository_relations",
@@ -1139,13 +1147,13 @@ def validate_context(data):
         ResourceKey,
         validate_provider_repository_scope,
     )
-    from repo_catalog.domain.p1_core import OID, uuid4_value
+    from repo_catalog.domain.p1_repository import OID, uuid4_value
     from repo_catalog.domain.production_context import (
         CollectionObservation,
-        CoreReference,
+        RepositoryReference,
         ResourceRelation,
         SourceInventory,
-        validate_reported_core_reference,
+        validate_reported_repository_reference,
     )
 
     for row in data["providers"]:
@@ -1187,7 +1195,7 @@ def validate_context(data):
             row["provenance_json"],
             row["observed_at_us"],
         )
-        validate_reported_core_reference(candidate)
+        validate_reported_repository_reference(candidate)
     for row in data["resource_repository_relations"]:
         relation(row)
     for row in data["repository_mapping_dispositions"]:
@@ -1240,8 +1248,8 @@ def validate_context(data):
             "provider_repositories_json", "[]"
         ):
             raise ExchangeError("NONCANONICAL_INVENTORY", "source_inventories")
-    for row in data["core_references"]:
-        CoreReference(
+    for row in data["repository_references"]:
+        RepositoryReference(
             resource(row),
             row["role"],
             OID(row["object_format"], row["object_oid"]),
@@ -1378,7 +1386,7 @@ def validate_context_bindings(data, source_services):
             raise ExchangeError("SOURCE_SERVICE", "source_inventories")
 
 
-class CorePreflight:
+class RepositoryPreflight:
     """Constructor-only sink for the same typed wire decoder used at admission.
 
     No SQLite connection, retained payload staging or fictitious domain facts.
@@ -1393,7 +1401,7 @@ class CorePreflight:
             raise AttributeError(name)
 
         def check(value, *args, **kwargs):
-            from repo_catalog.domain.p1_core import CoreFailure, uuid4_value
+            from repo_catalog.domain.p1_repository import RepositoryFailure, uuid4_value
 
             if name == "admit_repository":
                 uuid4_value(value)
@@ -1411,7 +1419,7 @@ class CorePreflight:
                 )
                 and value.provenance.qualification != "reported"
             ):
-                raise CoreFailure("UNTRUSTED_VERIFICATION", name)
+                raise RepositoryFailure("UNTRUSTED_VERIFICATION", name)
             if hasattr(value, "key"):
                 _ = value.key
             if hasattr(value, "validate"):
@@ -1420,16 +1428,16 @@ class CorePreflight:
         return check
 
 
-def bound_sections(core, context, scope, *, work=None):
+def bound_sections(repository_store, context, scope, *, work=None):
     """Budget complete wire units before emission; facts are never truncated.
 
     Coverage claim/proof sets, original inventory terminals, and Transfer reports
     share units. Registrations and nominal objects remain independent units.
     """
     groups = {}
-    from repo_catalog.domain.p1_core import _performed
+    from repo_catalog.domain.p1_repository import _performed
 
-    for store, data in (("core", core), ("context", context)):
+    for store, data in (("repository", repository_store), ("context", context)):
         if data is None:
             continue
         for section, rows in data.items():
@@ -1484,14 +1492,14 @@ def bound_sections(core, context, scope, *, work=None):
                         row["clock_json"],
                         row["provenance_json"],
                     )
-                if store == "core" and section in ():
+                if store == "repository" and section in ():
                     unit = (
                         store,
                         "capture",
                         row["capture_origin_uuidv4"],
                         row["capture_uuidv4"],
                     )
-                if store == "core" and section in (
+                if store == "repository" and section in (
                     "ref_observations",
                     "ref_observation_claims",
                 ):
@@ -1501,7 +1509,7 @@ def bound_sections(core, context, scope, *, work=None):
                         row["observation_origin_uuidv4"],
                         row["ref_observation_uuidv7"],
                     )
-                if store == "core" and section in (
+                if store == "repository" and section in (
                     "ref_enumeration_observations",
                     "ref_enumeration_links",
                 ):
@@ -1543,11 +1551,11 @@ def bound_sections(core, context, scope, *, work=None):
         return key
 
     for key, values in groups.items():
-        if key[0:2] == ("core", "ref-enumeration"):
+        if key[0:2] == ("repository", "ref-enumeration"):
             for _, section, _, row in values:
                 if section == "ref_enumeration_links":
                     target = (
-                        "core",
+                        "repository",
                         "ref-observation",
                         row["observation_origin_uuidv4"],
                         row["ref_observation_uuidv7"],
@@ -1557,8 +1565,8 @@ def bound_sections(core, context, scope, *, work=None):
         if len(key) < 3 or key[1] != "coverage":
             continue
         targets = set()
-        if key[0] == "core" and key[2] == "ref_observation":
-            targets.add(("core", "ref-observation", *json.loads(key[3])[:2]))
+        if key[0] == "repository" and key[2] == "ref_observation":
+            targets.add(("repository", "ref-observation", *json.loads(key[3])[:2]))
         if key[0] == "context":
             for _, section, _, row in values:
                 if section == "coverage_proofs":
@@ -1642,7 +1650,7 @@ def bound_sections(core, context, scope, *, work=None):
         units += len(values)
         byte_count += size
         kept.update((store, section, index) for store, section, index, _ in values)
-    for store, data in (("core", core), ("context", context)):
+    for store, data in (("repository", repository_store), ("context", context)):
         if data is not None:
             for section, rows in data.items():
                 data[section] = [

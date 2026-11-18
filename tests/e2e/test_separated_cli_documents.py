@@ -5,7 +5,7 @@ import json
 import pytest
 
 from repo_catalog.cli.separated_io import decode, invocation, read_document
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 
 
 def test_composite_dto_map_keys_roundtrip_without_stringification():
@@ -34,7 +34,7 @@ def test_composite_dto_map_keys_roundtrip_without_stringification():
         {"args": {}},
         {"kwargs": []},
         {"method": "__getattribute__"},
-        {"$type": "GitCore", "fields": {}},
+        {"$type": "GitRepository", "fields": {}},
     ],
 )
 def test_malformed_invocation_and_non_dto_constructor_are_rejected(tmp_path, value):
@@ -101,7 +101,9 @@ def test_admission_budget_serializes_only_public_limits_and_measured_usage():
         decode({"$type": "AdmissionBudget", "fields": {"_usage": [0, 0, 0]}})
 
 
-def test_omitted_optional_context_annotations_do_not_block_core_selection(monkeypatch):
+def test_omitted_optional_context_annotations_do_not_block_repository_selection(
+    monkeypatch,
+):
     import repo_catalog.cli.separated_io as codec
 
     registry = dict(codec._dto_registry())

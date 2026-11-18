@@ -88,7 +88,7 @@ def test_missing_local_authorization_fails_closed():
     assert exc_info.value.code == "PERMISSION_DENIED"
 
     with pytest.raises(AdmissionRefused) as exc_info:
-        coordinator.reconcile_core_dependencies()
+        coordinator.reconcile_repository_dependencies()
     assert exc_info.value.code == "PERMISSION_DENIED"
 
 
@@ -406,7 +406,7 @@ def test_paired_provider_authorized_batch_succeeds_and_persists(tmp_path: Path):
     )
     coord = PairedAcquisitionCoordinator(dir_p, authorization=auth, admission=adm)
     res = coord.admit_paired(provider_batch=batch)
-    assert res.admission.core_committed is True
+    assert res.admission.repository_committed is True
     assert res.admission.context_committed is True
     with closing(sqlite3.connect(dir_p / "context.sqlite3")) as db:
         prov_rows = db.execute(
@@ -541,10 +541,10 @@ def test_paired_provider_revocation_before_commit_fails_closed(tmp_path: Path):
         assert db.execute("SELECT count(*) FROM providers").fetchone()[0] == 0
 
 
-def test_paired_provider_context_callback_failure_preserves_core_and_fails_context(
+def test_paired_provider_context_callback_failure_preserves_repository_and_fails_context(
     tmp_path: Path,
 ):
-    """Context callback failure after Core commit leaves Core committed and Context rolled back."""
+    """Context callback failure after Repository commit leaves Repository committed and Context rolled back."""
     dir_p = tmp_path / "paired"
     repo_id, inst_id = init_catalog_stores(dir_p)
     auth, adm, _ = create_local_admission_service(
@@ -558,26 +558,26 @@ def test_paired_provider_context_callback_failure_preserves_core_and_fails_conte
     def failing_context_fn(ctx):
         raise RuntimeError("Context callback intentional error")
 
-    def core_fn(core):
-        core.admit_repository(repo_id)
+    def repository_fn(repository_store):
+        repository_store.admit_repository(repo_id)
         return None
 
     with pytest.raises(AdmissionFailure) as exc_info:
-        coord.admit_paired(core_fn=core_fn, context_fn=failing_context_fn)
+        coord.admit_paired(repository_fn=repository_fn, context_fn=failing_context_fn)
 
-    # Core committed first, Context failed
-    assert exc_info.value.outcome.core_committed is True
+    # Repository committed first, Context failed
+    assert exc_info.value.outcome.repository_committed is True
     assert exc_info.value.outcome.context_committed is False
-    with closing(sqlite3.connect(dir_p / "core.sqlite3")) as db:
-        core_repos = [
+    with closing(sqlite3.connect(dir_p / "repository.sqlite3")) as db:
+        repository_repos = [
             r[0]
             for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
         ]
-        assert repo_id in core_repos
+        assert repo_id in repository_repos
 
 
 def test_exchange_import_permitted_locally_selected_resource_succeeds(tmp_path: Path):
-    """Permitted, locally selected Resource import succeeds in Core+Context receiver."""
+    """Permitted, locally selected Resource import succeeds in Repository+Context receiver."""
     dir_a = tmp_path / "sender"
     repo_id_a, inst_id_a = init_catalog_stores(dir_a)
     rk1 = ResourceKey(inst_id_a, "issue", encode_identity(["1"]))
@@ -625,7 +625,7 @@ def test_exchange_import_permitted_locally_selected_resource_succeeds(tmp_path: 
             "SELECT resource_kind, provider_resource_id FROM resources"
         ).fetchall()
         assert rows == [("issue", encode_identity(["1"]))]
-    with closing(sqlite3.connect(dir_b / "core.sqlite3")) as db:
+    with closing(sqlite3.connect(dir_b / "repository.sqlite3")) as db:
         repos = [
             r[0]
             for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
@@ -681,13 +681,13 @@ def test_exchange_import_permitted_repo_without_finite_resource_grant_fails_clos
     with closing(sqlite3.connect(dir_b / "context.sqlite3")) as db:
         assert db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
         assert db.execute("SELECT count(*) FROM repository_context").fetchone()[0] == 0
-    with closing(sqlite3.connect(dir_b / "core.sqlite3")) as db:
-        core_repos = [
+    with closing(sqlite3.connect(dir_b / "repository.sqlite3")) as db:
+        repository_repos = [
             r[0]
             for r in db.execute("SELECT repository_uuidv4 FROM repositories").fetchall()
         ]
-        assert repo_id_a not in core_repos
-        assert core_repos == [repo_id_b]
+        assert repo_id_a not in repository_repos
+        assert repository_repos == [repo_id_b]
 
 
 def test_exchange_import_context_only_receiver_with_grants_succeeds(tmp_path: Path):
@@ -724,7 +724,7 @@ def test_exchange_import_context_only_receiver_with_grants_succeeds(tmp_path: Pa
     dir_b = tmp_path / "receiver"
     repo_id_b, inst_id_b = init_catalog_stores(dir_b, stores=("context", "operational"))
     svc_b = ExchangeService(dir_b)
-    assert not svc_b._has_core()
+    assert not svc_b._has_repository()
 
     report = svc_b.import_package(
         pkg,
@@ -1313,10 +1313,10 @@ def test_child_first_registration():
 def test_exchange_import_missing_provider_registration_fails_closed_zero_writes(
     tmp_path,
 ):
-    """P1 regression: Core+Context package with provider registration and resource.
+    """P1 regression: Repository+Context package with provider registration and resource.
 
     Grants cover resource and repository but omit provider_registrations.
-    Must fail closed immediately with PERMISSION_DENIED before Core commit (0 Core & Context writes).
+    Must fail closed immediately with PERMISSION_DENIED before Repository commit (0 Repository & Context writes).
     """
     sender_path = tmp_path / "sender"
     receiver_path = tmp_path / "receiver"
@@ -1375,12 +1375,12 @@ def test_exchange_import_missing_provider_registration_fails_closed_zero_writes(
         )
     assert exc_info.value.code == "PERMISSION_DENIED"
 
-    # CRITICAL: Verify ZERO writes of sender's repo/provider/resource to both Core and Context
-    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
-        core_count = core_db.execute(
+    # CRITICAL: Verify ZERO writes of sender's repo/provider/resource to both Repository and Context
+    with sqlite3.connect(receiver_path / "repository.sqlite3") as repository_db:
+        repository_count = repository_db.execute(
             "SELECT count(*) FROM repositories WHERE repository_uuidv4=?", (repo_uuid,)
         ).fetchone()[0]
-        assert core_count == 0
+        assert repository_count == 0
 
     with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
         prov_count = ctx_db.execute("SELECT count(*) FROM providers").fetchone()[0]
@@ -1450,11 +1450,11 @@ def test_exchange_import_missing_repository_grant_fails_closed_zero_writes(tmp_p
         )
     assert exc_info.value.code == "PERMISSION_DENIED"
 
-    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
-        core_count = core_db.execute(
+    with sqlite3.connect(receiver_path / "repository.sqlite3") as repository_db:
+        repository_count = repository_db.execute(
             "SELECT count(*) FROM repositories WHERE repository_uuidv4=?", (repo_uuid,)
         ).fetchone()[0]
-        assert core_count == 0
+        assert repository_count == 0
 
     with sqlite3.connect(receiver_path / "context.sqlite3") as ctx_db:
         assert ctx_db.execute("SELECT count(*) FROM resources").fetchone()[0] == 0
@@ -1725,9 +1725,9 @@ def test_independent_source_and_disposition_authorization_e2e(tmp_path):
     assert report.admitted_context_resources == 2
 
     # Inspect persistent SQLite rows across all dimensions
-    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+    with sqlite3.connect(receiver_path / "repository.sqlite3") as repository_db:
         assert (
-            core_db.execute(
+            repository_db.execute(
                 "SELECT count(*) FROM repositories WHERE repository_uuidv4=?",
                 (repo_uuid,),
             ).fetchone()[0]
@@ -1844,9 +1844,9 @@ def test_sender_data_cannot_create_receiver_authority_or_inject_grants(tmp_path)
     assert exc_info.value.code == "PERMISSION_DENIED"
 
     # Entire import rolled back / rejected with 0 writes
-    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+    with sqlite3.connect(receiver_path / "repository.sqlite3") as repository_db:
         assert (
-            core_db.execute(
+            repository_db.execute(
                 "SELECT count(*) FROM repositories WHERE repository_uuidv4=?",
                 (repo_uuid,),
             ).fetchone()[0]
@@ -1884,7 +1884,7 @@ def test_dependency_extraction_malformed_input_fails_preflight_safely(tmp_path):
 
     Demonstrates that preflight schema and structural validation catches invalid
     wire inputs before any paired transaction, package binding, or storage write,
-    ensuring Core and Context remain untainted (0 writes).
+    ensuring Repository and Context remain untainted (0 writes).
     """
     sender_path = tmp_path / "sender"
     receiver_path = tmp_path / "receiver"
@@ -1943,7 +1943,7 @@ def test_dependency_extraction_malformed_input_fails_preflight_safely(tmp_path):
         sender_catalog_instance_uuidv4=pkg.sender_catalog_instance_uuidv4,
         exported_at_us=pkg.exported_at_us,
         selection_scope=pkg.selection_scope.to_dict(),
-        core=pkg.core,
+        repository_store=pkg.repository_store,
         context=corrupted_context,
     )
 
@@ -1962,10 +1962,10 @@ def test_dependency_extraction_malformed_input_fails_preflight_safely(tmp_path):
             new_request=True,
         )
 
-    # Exactly 0 writes to receiver Core and Context
-    with sqlite3.connect(receiver_path / "core.sqlite3") as core_db:
+    # Exactly 0 writes to receiver Repository and Context
+    with sqlite3.connect(receiver_path / "repository.sqlite3") as repository_db:
         assert (
-            core_db.execute(
+            repository_db.execute(
                 "SELECT count(*) FROM repositories WHERE repository_uuidv4=?",
                 (repo_uuid,),
             ).fetchone()[0]

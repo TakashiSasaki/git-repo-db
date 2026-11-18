@@ -1,4 +1,4 @@
-"""Shared typed codecs charge Core work and optional Exchange independently."""
+"""Shared typed codecs charge Repository work and optional Exchange independently."""
 
 from uuid import uuid4
 
@@ -11,10 +11,10 @@ from repo_catalog.domain.exchange import (
     ExchangeSelectionScope,
     _ref_input_work,
     decode_package,
-    empty_core_section,
+    empty_repository_section,
     encode_package,
 )
-from repo_catalog.domain.p1_core import Provenance, account_verification
+from repo_catalog.domain.p1_repository import Provenance, account_verification
 from repo_catalog.domain.query_work import UnlimitedWorkBudget
 from repo_catalog.domain.ref_exchange import (
     _hex,
@@ -29,7 +29,7 @@ from repo_catalog.domain.ref_observation import (
 )
 
 
-def test_shared_codec_charges_repeated_core_work_without_exchange_meter():
+def test_shared_codec_charges_repeated_repository_work_without_exchange_meter():
     work = UnlimitedWorkBudget()
     value = Provenance("reported", "original", "ref", "decoder", "1", "reported")
     with account_verification(work):
@@ -40,7 +40,7 @@ def test_shared_codec_charges_repeated_core_work_without_exchange_meter():
     assert work.usage["input_bytes"] == 2 * first
 
 
-def test_exchange_envelope_counts_repeated_shared_decode_and_core_work():
+def test_exchange_envelope_counts_repeated_shared_decode_and_repository_work():
     repository = str(uuid4())
     observation = RefObservation(
         RefObservationKey(str(uuid4()), new_uuid7()),
@@ -50,7 +50,7 @@ def test_exchange_envelope_counts_repeated_shared_decode_and_core_work():
         "visible-refs",
         1,
     )
-    section = empty_core_section()
+    section = empty_repository_section()
     section["ref_observations"].append(observation_to_wire(observation))
     package = ExchangePackage(
         package_id=str(uuid4()),
@@ -60,7 +60,7 @@ def test_exchange_envelope_counts_repeated_shared_decode_and_core_work():
         selection_scope=ExchangeSelectionScope(
             all_selected=True, include_context=False
         ),
-        core=section,
+        repository_store=section,
     )
     measurement = {
         "metadata_units": 0,
@@ -92,7 +92,7 @@ def test_failed_shared_decode_keeps_work_and_resets_observer():
                     _hex("zz")
             assert measurement["ref_decode_input_bytes"] == 2
             assert work.usage["input_bytes"] == 2
-            # The failed optional scope does not retain its meter for Core use.
+            # The failed optional scope does not retain its meter for Repository use.
             assert _hex("00") == b"\0"
             assert measurement["ref_decode_input_bytes"] == 2
             assert work.usage["input_bytes"] == 6

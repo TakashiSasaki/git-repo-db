@@ -147,4 +147,4 @@ def test_shared_parent_source_namespaces_and_same_attempt_retries_never_reset_ht
     listed = run(capsys, "operations", "list", "--catalog", case.directory)
     assert len(listed["requests"]) == 1
     assert listed["requests"][0]["request_uuidv4"] == parent.request_uuidv4
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()

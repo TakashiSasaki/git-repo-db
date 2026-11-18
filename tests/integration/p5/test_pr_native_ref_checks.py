@@ -161,7 +161,7 @@ def test_actual_ref_from_another_explicit_repository_cannot_qualify_reported_rol
     from contextlib import closing
     from dataclasses import replace
 
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.application.provider_acquisition import ProviderAcquisition
     from tests.support.context_admission import fixture_context, fixture_service
 
@@ -169,15 +169,20 @@ def test_actual_ref_from_another_explicit_repository_cannot_qualify_reported_rol
     fixture.code()
     check = read_ref(fixture)
     other_repository = str(uuid4())
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        core.admit_repository(other_repository)
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_repository(other_repository)
     fixture.grants = replace(
         fixture.grants, repositories=fixture.grants.repositories | {other_repository}
     )
     fixture.auth, _ = fixture_service(fixture.grants)
     fixture.admission = fixture_context(fixture.auth)
     fixture.api = ProviderAcquisition(
-        tmp_path, core=tmp_path, authorization=fixture.auth, admission=fixture.admission
+        tmp_path,
+        repository_store=tmp_path,
+        authorization=fixture.auth,
+        admission=fixture.admission,
     )
     scope = git_role_check_scope(
         {"repository_uuidv4": other_repository},

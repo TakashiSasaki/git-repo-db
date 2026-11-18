@@ -13,7 +13,7 @@ from repo_catalog.adapters.sqlite.acquisition import (
     UnlimitedWorkBudget,
 )
 from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.notes import NotesProgress
 from repo_catalog.adapters.sqlite.operational_coordination import NotesWorkBudget
 from repo_catalog.adapters.sqlite.p1_schema import initialize
@@ -36,7 +36,7 @@ def native_case(tmp_path):
     catalog = tmp_path / "catalog"
     catalog.mkdir()
     repository, instance = str(uuid4()), str(uuid4())
-    initialize(catalog / "core.sqlite3", "core", repository, instance)
+    initialize(catalog / "repository.sqlite3", "repository", repository, instance)
     request = GitNativeAcquisitionRequest(
         repository,
         str(uuid4()),
@@ -105,13 +105,15 @@ def test_invalid_native_accounting_refuses_before_git_and_admission(
         assert failure.value.code == (
             "STORE_IDENTITY" if fault == "foreign" else "CONTINUATION_UNAVAILABLE"
         )
-    with closing(GitCore(catalog / "core.sqlite3")) as core:
-        assert core.sql("SELECT count(*) FROM git_objects")[0][0] == 0
+    with closing(
+        GitRepositoryStore(catalog / "repository.sqlite3")
+    ) as repository_store:
+        assert repository_store.sql("SELECT count(*) FROM git_objects")[0][0] == 0
     assert not (catalog / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("metadata", [False, True])
-def test_owned_core_cleanup_stop_prevents_normal_completion(
+def test_owned_repository_cleanup_stop_prevents_normal_completion(
     native_case, monkeypatch, metadata
 ):
     catalog, source, request, instance = native_case
@@ -121,13 +123,13 @@ def test_owned_core_cleanup_stop_prevents_normal_completion(
         request.repository_uuidv4,
         instance,
     )
-    original = GitCore.close
+    original = GitRepositoryStore.close
 
-    def stopped(core):
-        original(core)
+    def stopped(repository_store):
+        original(repository_store)
         persist_catalog_stop(catalog, "synthetic acquisition cleanup stop")
 
-    monkeypatch.setattr(GitCore, "close", stopped)
+    monkeypatch.setattr(GitRepositoryStore, "close", stopped)
     service = GitAcquisition(catalog, operational=catalog)
     with pytest.raises(CoordinationError) as failure:
         if metadata:

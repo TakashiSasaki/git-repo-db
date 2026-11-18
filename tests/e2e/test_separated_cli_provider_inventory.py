@@ -89,7 +89,7 @@ def source(capsys, case):
     assert len(views) == 1
     assert views[0]["configuration"] == {"name": "explicit-source", "owner": "owner"}
     assert views[0]["repositories"] == []
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "access.sqlite3").exists()
     return views[0]
 

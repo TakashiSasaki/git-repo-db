@@ -200,9 +200,9 @@
       ]
     },
     {
-      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[False-sha1]",
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[False-sha1]",
       "replacement_nodes": [
-        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha1]"
+        "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[sha1]"
       ],
       "retained_assertions": [
         "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha1. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."
@@ -212,9 +212,9 @@
       ]
     },
     {
-      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[False-sha256]",
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[False-sha256]",
       "replacement_nodes": [
-        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha256]"
+        "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[sha256]"
       ],
       "retained_assertions": [
         "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha256. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."
@@ -224,9 +224,9 @@
       ]
     },
     {
-      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[True-sha1]",
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[True-sha1]",
       "replacement_nodes": [
-        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha1]"
+        "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[sha1]"
       ],
       "retained_assertions": [
         "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha1. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."
@@ -236,9 +236,9 @@
       ]
     },
     {
-      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[True-sha256]",
+      "old_node": "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[True-sha256]",
       "replacement_nodes": [
-        "tests/integration/test_catalog3_git_runtime.py::test_core_reparse_retains_git_content_and_acquisition_without_http_inputs[sha256]"
+        "tests/integration/test_catalog3_git_runtime.py::test_repository_reparse_retains_git_content_and_acquisition_without_http_inputs[sha256]"
       ],
       "retained_assertions": [
         "Offline reanalysis retains the exact acquisition ID, stored bytes/payload mappings/source membership and decoded raw content for sha256. It creates no HTTP input or API payload and leaves current ref capture unchanged; FK/integrity checks pass."

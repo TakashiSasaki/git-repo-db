@@ -100,7 +100,7 @@ def fixture(path, *, empty=False):
         )
     )
     package = ExchangeService(path).export_package(
-        selection=ExchangeSelectionScope(all_selected=True, include_core=False),
+        selection=ExchangeSelectionScope(all_selected=True, include_repository=False),
         exported_at_us=200,
     )
     return seed, service, source, members, claim, package
@@ -113,7 +113,7 @@ def test_provider_inventory_roundtrip_proves_typed_members_without_git_uuid_infe
     source_path, target = tmp_path / "source", tmp_path / "target"
     seed, service, source, members, claim, package = fixture(source_path, empty=empty)
     expected = canonical(sorted([list(member.coordinates()) for member in members]))
-    assert package.core is None
+    assert package.repository_store is None
     assert package.context["source_inventories"][0]["members_json"] == "[]"
     assert (
         package.context["source_inventories"][0]["provider_repositories_json"]
@@ -152,7 +152,7 @@ def test_provider_inventory_roundtrip_proves_typed_members_without_git_uuid_infe
             context.db.execute("SELECT count(*) FROM source_repositories").fetchone()[0]
             == 0
         )
-    assert not (target / "core.sqlite3").exists()
+    assert not (target / "repository.sqlite3").exists()
 
 
 def test_selective_export_withholds_entire_inventory_and_proof_without_trimming_members(
@@ -161,7 +161,7 @@ def test_selective_export_withholds_entire_inventory_and_proof_without_trimming_
     _, _, source, members, _, package = fixture(tmp_path / "source")
     partial = ExchangeService(tmp_path / "source").export_package(
         selection=ExchangeSelectionScope(
-            include_core=False,
+            include_repository=False,
             all_selected=False,
             repository_uuidv4s=(),
             object_oids=(),

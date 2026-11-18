@@ -296,7 +296,7 @@ def test_T10_V08_missing_version_is_not_inferred():
 
 @pytest.mark.parametrize(
     "field",
-    ["include_core", "include_context", "include_retained_bytes", "all_selected"],
+    ["include_repository", "include_context", "include_retained_bytes", "all_selected"],
 )
 @pytest.mark.parametrize("value", [0, 1, "true", None])
 def test_T10_selection_flags_are_not_boolean_coercions(field, value):

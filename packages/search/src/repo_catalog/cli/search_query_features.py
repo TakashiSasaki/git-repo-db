@@ -71,7 +71,7 @@ def query_service(directory, *, mode):
     directory = Path(directory)
     if mode == "paired" or (
         mode == "auto"
-        and (directory / "core.sqlite3").is_file()
+        and (directory / "repository.sqlite3").is_file()
         and (directory / "context.sqlite3").is_file()
     ):
         raise QueryError(
@@ -79,10 +79,10 @@ def query_service(directory, *, mode):
         )
     context = mode == "context_only" or (
         mode == "auto"
-        and not (directory / "core.sqlite3").is_file()
+        and not (directory / "repository.sqlite3").is_file()
         and (directory / "context.sqlite3").is_file()
     )
-    if context or not _available("repo_catalog.application.core_query"):
+    if context or not _available("repo_catalog.application.repository_query"):
         if not _available("repo_catalog.application.context_query"):
             raise QueryError(
                 "MISSING_CAPABILITY", "query", "Context Query is not installed"
@@ -90,9 +90,9 @@ def query_service(directory, *, mode):
         from repo_catalog.application.context_search import ContextSearchService
 
         return ContextSearchService(directory, mode=mode)
-    from repo_catalog.application.core_search import CoreSearchService
+    from repo_catalog.application.repository_search import RepositorySearchService
 
-    return CoreSearchService(directory, mode=mode)
+    return RepositorySearchService(directory, mode=mode)
 
 
 def query_payload(service, args, page_from_args):

@@ -6,7 +6,7 @@ targets=(
   scripts/preflight_access.py
   scripts/compare_access_regressions.py
   scripts/audit_access_acceptance.py
-  packages/core/src/repo_catalog/adapters/sqlite/git_core.py
+  packages/repository/src/repo_catalog/adapters/sqlite/git_repository.py
   packages/access/src/repo_catalog/domain/access_backup.py
   packages/access/src/repo_catalog/domain/ports/access_backup.py
   packages/access/src/repo_catalog/adapters/sqlite/access_backup.py

@@ -142,7 +142,7 @@ class AdmissionSelection:
     max_units: int = 10_000
     max_bytes: int = 16 * 1024 * 1024
     max_work: int = 10_000_000
-    include_core: bool = True
+    include_repository: bool = True
     include_context: bool = True
     include_retained_bytes: bool = True
 
@@ -150,7 +150,7 @@ class AdmissionSelection:
         for name in (
             "all_selected",
             "include_dependencies",
-            "include_core",
+            "include_repository",
             "include_context",
             "include_retained_bytes",
         ):
@@ -209,7 +209,7 @@ class AdmissionSelection:
             getattr(deps, name) for name in _DIMENSIONS if name != "object_oids"
         ):
             raise AdmissionRefused("OMITTED_BY_SELECTION")
-        if not self.include_core and deps.object_oids:
+        if not self.include_repository and deps.object_oids:
             raise AdmissionRefused("OMITTED_BY_SELECTION")
         for selected, required in (
             (self.resource_keys, deps.resources),
@@ -717,13 +717,13 @@ def dependencies(unit):
         }:
             raise AdmissionRefused("INVALID_DEPENDENCY")
         if isinstance(item, FieldCandidate) and item.field_name.startswith(
-            "reported_core_reference:"
+            "reported_repository_reference:"
         ):
             from repo_catalog.domain.production_context import (
-                validate_reported_core_reference,
+                validate_reported_repository_reference,
             )
 
-            validate_reported_core_reference(item)
+            validate_reported_repository_reference(item)
             values["object_oids"].add(OID(*_provenance_value(item.value_json)))
         if isinstance(item, CoverageScope):
             coords = item.coordinates

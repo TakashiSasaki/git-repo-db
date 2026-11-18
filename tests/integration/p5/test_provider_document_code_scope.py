@@ -13,7 +13,7 @@ from tests.integration.p5.test_pr_assessment import Fixture
 def test_exact_provider_document_selectors_are_independent_of_git_bytes_but_not_current_listing_gaps(
     tmp_path,
 ):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     fixture.code()
     original = make_provenance(
         "actual-provider-document-fixture", {"read": "review-comments"}
@@ -97,5 +97,5 @@ def test_exact_provider_document_selectors_are_independent_of_git_bytes_but_not_
         )
         assert result.state == "partial"
         assert any(gap["kind"] == "code_selector" for gap in result.coverage["missing"])
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()
     assert not (tmp_path / "p1-recovery-stop.json").exists()

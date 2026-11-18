@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_core import OID, Provenance, ScalarClaim
+from repo_catalog.domain.p1_repository import OID, Provenance, ScalarClaim
 from repo_catalog.domain.production_query import SearchQuery
 from tests.integration.p6.conftest import populate_rich_catalog
 
@@ -138,7 +138,7 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
     assert missing_resp.hits == baseline_hits
     assert not (catalog_dir / "p1-recovery-stop.json").exists()
 
-    # Scenario 3: Stale snapshot_token_json after a new Core write -> authority_scan
+    # Scenario 3: Stale snapshot_token_json after a new Repository write -> authority_scan
     service.rebuild_search()
     assert (
         service.search(SearchQuery(query_text="p6")).backend
@@ -148,8 +148,8 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
     width = 40 if fmt == "sha1" else 64
     new_oid = OID(fmt, "7" * width)
 
-    def _admit_new_obj(core_tx):
-        with GitCore.for_transaction(core_tx) as c:
+    def _admit_new_obj(repository_tx):
+        with GitRepositoryStore.for_transaction(repository_tx) as c:
             c.admit_object(new_oid)
 
     PairCoordinator(catalog_dir).admit(_admit_new_obj, lambda ctx_tx: None)
@@ -164,18 +164,18 @@ def test_search_projection_and_five_fallback_scenarios_never_stop_catalog(
 def test_ordinary_file_blobs_are_never_indexed_in_search(tmp_path: Path) -> None:
     catalog_dir = tmp_path / "no_ordinary_blobs"
     populate_rich_catalog(
-        catalog_dir, fmt="sha1", include_core=True, include_context=False
+        catalog_dir, fmt="sha1", include_repository=True, include_context=False
     )
     service = ProductionQueryService(catalog_dir)
 
     # Admit a nominal blob object with reported scalar claims containing a secret needle
     blob_oid = OID("sha1", "8" * 40)
     prov = Provenance("remote", "obs-blob", "c-1", "git", "1", "reported")
-    core = GitCore(catalog_dir / "core.sqlite3")
+    repository_store = GitRepositoryStore(catalog_dir / "repository.sqlite3")
     try:
-        core.admit_object(blob_oid)
-        core.admit_claim(ScalarClaim(blob_oid, "type", "blob", prov))
-        core.admit_claim(
+        repository_store.admit_object(blob_oid)
+        repository_store.admit_claim(ScalarClaim(blob_oid, "type", "blob", prov))
+        repository_store.admit_claim(
             ScalarClaim(
                 blob_oid,
                 "decoded_name",
@@ -184,7 +184,7 @@ def test_ordinary_file_blobs_are_never_indexed_in_search(tmp_path: Path) -> None
             )
         )
     finally:
-        core.close()
+        repository_store.close()
 
     service.rebuild_search()
     resp_proj = service.search(

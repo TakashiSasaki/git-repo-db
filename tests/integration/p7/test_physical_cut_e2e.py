@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
 from repo_catalog.application.exchange import ExchangeService
@@ -20,7 +20,7 @@ from repo_catalog.domain.exchange import (
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.production_query import SearchQuery
 from repo_catalog.domain.recovery import BackupScope, RecoveryError
 from repo_catalog.domain.ref_observation import new_uuid7
@@ -32,7 +32,7 @@ from tests.integration.p6.test_ref_search_transition import two_claims
 acquisition = fixtures.acquisition
 
 
-@pytest.mark.parametrize("paired", [False, True], ids=["core", "paired"])
+@pytest.mark.parametrize("paired", [False, True], ids=["repository", "paired"])
 def test_ref_only_transport_backup_and_corrupt_source_recovery(
     acquisition, tmp_path, paired, capsys
 ):
@@ -64,13 +64,13 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
     assert main(["ref-observations", "--catalog", str(path.parent)]) == 0
     assert len(json.loads(capsys.readouterr().out)["items"][0]["claims"]) == 2
 
-    # Transport is explicitly Core-only; paired backup/recovery is checked below.
+    # Transport is explicitly Repository-only; paired backup/recovery is checked below.
     from repo_catalog.domain.exchange import ExchangeSelectionScope
 
     package = ExchangeService(path.parent).export_package(
         selection=ExchangeSelectionScope(all_selected=True, include_context=False)
     )
-    assert package.format == FORMAT == "git-repo-db/adr0036-exchange-v8"
+    assert package.format == FORMAT == "git-repo-db/adr0036-exchange-v9"
     wire = json.loads(encode_package(package))
     wire["format"] = "git-repo-db/adr0036-exchange-v6"
     with pytest.raises(ExchangeError):
@@ -82,15 +82,15 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
         "notes_inventories",
         "note_roles",
         "retained_notes",
-    }.intersection(package.core)
+    }.intersection(package.repository_store)
     wire["format"] = FORMAT
-    wire["core"]["captures"] = []
+    wire["repository"]["captures"] = []
     with pytest.raises(ExchangeError):
         decode_package(json.dumps(wire))
     receiver = tmp_path / "receiver"
     receiver.mkdir()
     instance = str(uuid4())
-    for role in ("core", "operational"):
+    for role in ("repository", "operational"):
         initialize(receiver / (role + ".sqlite3"), role, repository, instance)
     ExchangeService(receiver, operational=receiver).import_package(
         package, new_request=True, permitted_repository_uuidv4s=(repository,)
@@ -119,7 +119,7 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
     scope = BackupScope.PAIRED if paired else BackupScope.GIT_ONLY
     assert adapter.create_consistent_backup(path.parent, backup, scope).verified_clean
     manifest = json.loads((backup / "manifest.json").read_text())
-    assert manifest["manifest_version"] == 3
+    assert manifest["manifest_version"] == 4
     # A genuinely new post-backup subject must arrive through typed salvage.
     late = replace(
         value.observation,
@@ -135,7 +135,7 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
         ),
         paired=paired,
     )
-    with closing(connect(path, "core")) as db:
+    with closing(connect(path, "repository")) as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_retained_notes_update'"
         ).fetchone()[0]
@@ -144,20 +144,24 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
         db.execute("UPDATE ref_retained_notes SET body=zeroblob(size)")
         db.execute(trigger)
         db.commit()
-    with pytest.raises(CoreFailure) as damage:
+    with pytest.raises(RepositoryFailure) as damage:
         service.search(query)
     assert damage.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
     with pytest.raises(RecoveryError):
         adapter.create_consistent_backup(path.parent, outside / "forbidden", scope)
     preserved = {
-        p.name: p.read_bytes() for p in path.parent.glob("core.sqlite3*") if p.is_file()
+        p.name: p.read_bytes()
+        for p in path.parent.glob("repository.sqlite3*")
+        if p.is_file()
     }
     salvage = outside / "untrusted.jsonl"
     extracted = adapter.extract_salvage(path.parent, salvage, scope=scope)
     assert extracted.partial and extracted.candidate_count > 0
     assert {
-        p.name: p.read_bytes() for p in path.parent.glob("core.sqlite3*") if p.is_file()
+        p.name: p.read_bytes()
+        for p in path.parent.glob("repository.sqlite3*")
+        if p.is_file()
     } == preserved
     restored = outside / "fresh"
     assert adapter.restore_backup(backup, restored, repository).revalidated_clean
@@ -171,8 +175,10 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
         ).ref_observation
         == late
     )
-    assert recovered.detect_mode() == ("paired" if paired else "core_only")
-    with closing(GitCore(restored / "core.sqlite3")) as core:
+    assert recovered.detect_mode() == ("paired" if paired else "repository_only")
+    with closing(
+        GitRepositoryStore(restored / "repository.sqlite3")
+    ) as repository_store:
         assert not {
             "captures",
             "notes_claims",
@@ -181,7 +187,9 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
             "retained_notes",
         }.intersection(
             row[0]
-            for row in core.sql("SELECT name FROM sqlite_schema WHERE type='table'")
+            for row in repository_store.sql(
+                "SELECT name FROM sqlite_schema WHERE type='table'"
+            )
         )
     activated = adapter.activate(restored, outside / "active")
     assert activated.clean_operational is (True if paired else None)

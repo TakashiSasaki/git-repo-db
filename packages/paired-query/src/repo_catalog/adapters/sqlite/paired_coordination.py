@@ -1,4 +1,4 @@
-"""Canonical Core/Context validation and pinned reads; no ledger or Search code."""
+"""Canonical Repository/Context validation and pinned reads; no ledger or Search code."""
 
 from __future__ import annotations
 
@@ -16,24 +16,28 @@ from repo_catalog.adapters.sqlite.catalog_runtime import (
     apply_snapshot_read_limits,
     catalog_gate,
 )
-from repo_catalog.adapters.sqlite.core_coordination import CoreCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import connect
+from repo_catalog.adapters.sqlite.repository_coordination import RepositoryCoordinator
 from repo_catalog.domain.p1_coordination import CoordinationError, SnapshotToken
 
 
-def validate_dependencies(core: sqlite3.Connection, context: sqlite3.Connection):
+def validate_dependencies(
+    repository_store: sqlite3.Connection, context: sqlite3.Connection
+):
     for object_format, object_oid in context.execute(
-        "SELECT DISTINCT object_format,object_oid FROM core_references"
+        "SELECT DISTINCT object_format,object_oid FROM repository_references"
     ):
-        if not core.execute(
+        if not repository_store.execute(
             "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
             (object_format, object_oid),
         ).fetchone():
-            raise CoordinationError("MISSING_CORE_REFERENCE", "context", object_oid)
+            raise CoordinationError(
+                "MISSING_REPOSITORY_REFERENCE", "context", object_oid
+            )
 
 
 def validate_pair(
-    core: sqlite3.Connection,
+    repository_store: sqlite3.Connection,
     context: sqlite3.Connection,
     *,
     metadata_only: bool = False,
@@ -48,7 +52,10 @@ def validate_pair(
     """
     try:
         return _validate_pair(
-            core, context, metadata_only=metadata_only, phase_costs_ns=phase_costs_ns
+            repository_store,
+            context,
+            metadata_only=metadata_only,
+            phase_costs_ns=phase_costs_ns,
         )
     except sqlite3.DatabaseError as error:
         code = getattr(error, "sqlite_errorcode", 0) & 255
@@ -69,43 +76,43 @@ def validate_pair(
             raise
         failure = CoordinationError(
             "CORRUPTION",
-            "core+context",
+            "repository+context",
             "authoritative validation failed: " + str(error),
         )
-        _notify_validation_corruption(core, context, failure)
+        _notify_validation_corruption(repository_store, context, failure)
         raise failure from error
     except Exception as error:
-        _notify_validation_corruption(core, context, error)
+        _notify_validation_corruption(repository_store, context, error)
         raise
 
 
-def _notify_validation_corruption(core, context, error):
+def _notify_validation_corruption(repository_store, context, error):
     if getattr(error, "code", None) in {
         "CORRUPTION",
         "FOREIGN_KEY",
-        "MISSING_CORE_REFERENCE",
+        "MISSING_REPOSITORY_REFERENCE",
         "AUTHORITATIVE_CORRUPTION",
     }:
         # A caller may catch validation failure inside an already pinned pair.
         # Notify its owning capability now, before outer context unwinding.
         # Raw connections rely on their coordinator's initial validation catch.
-        for db in (core, context):
+        for db in (repository_store, context):
             if isinstance(db, ReadSnapshot):
                 db._on_error(error)
 
 
 def _validate_pair(
-    core: sqlite3.Connection,
+    repository_store: sqlite3.Connection,
     context: sqlite3.Connection,
     *,
     metadata_only: bool = False,
     phase_costs_ns: dict[str, int] | None = None,
 ) -> SnapshotToken:
     started = perf_counter_ns()
-    identity = _identity(core, "core")
+    identity = _identity(repository_store, "repository")
     if identity != _identity(context, "context"):
-        raise CoordinationError("PAIR_IDENTITY", "core+context")
-    for db, role in ((core, "core"), (context, "context")):
+        raise CoordinationError("PAIR_IDENTITY", "repository+context")
+    for db, role in ((repository_store, "repository"), (context, "context")):
         if not metadata_only and [
             tuple(row) for row in db.execute("PRAGMA integrity_check")
         ] != [("ok",)]:
@@ -113,16 +120,16 @@ def _validate_pair(
         if db.execute("PRAGMA foreign_key_check").fetchall():
             raise CoordinationError("FOREIGN_KEY", role)
     # SQLite does not re-evaluate insertion triggers for an existing snapshot.
-    from repo_catalog.adapters.sqlite.p1_core import validate_embedded_references
+    from repo_catalog.adapters.sqlite.p1_repository import validate_embedded_references
 
-    validate_embedded_references(core)
-    validate_dependencies(core, context)
+    validate_embedded_references(repository_store)
+    validate_dependencies(repository_store, context)
     validated = perf_counter_ns()
     if phase_costs_ns is not None:
         phase_costs_ns["authority_validation"] = validated - started
     token = SnapshotToken(
         *identity,
-        _digest(core, metadata_only=metadata_only),
+        _digest(repository_store, metadata_only=metadata_only),
         _digest(context, metadata_only=metadata_only),
     )
     if phase_costs_ns is not None:
@@ -132,16 +139,16 @@ def _validate_pair(
 
 @dataclass
 class PairedSnapshot:
-    core: ReadSnapshot
+    repository_store: ReadSnapshot
     context: ReadSnapshot
     token: SnapshotToken
 
 
-class PairSnapshotCoordinator(CoreCoordinator):
+class PairSnapshotCoordinator(RepositoryCoordinator):
     """Read-only pair integration; richer writers reuse this snapshot owner."""
 
     def _open(self, role: str):
-        if role == "core":
+        if role == "repository":
             return super()._open(role)
         if role != "context":
             raise CoordinationError("AUTHORITY_UNAVAILABLE", role)
@@ -184,7 +191,7 @@ class PairSnapshotCoordinator(CoreCoordinator):
             if getattr(error, "code", None) in (
                 "CORRUPTION",
                 "FOREIGN_KEY",
-                "MISSING_CORE_REFERENCE",
+                "MISSING_REPOSITORY_REFERENCE",
             ) or _sqlite_corruption(error):
                 self._record_corruption(error)
             raise
@@ -194,17 +201,19 @@ class PairSnapshotCoordinator(CoreCoordinator):
         with ExitStack() as stack:
             with catalog_gate(self.directory, exclusive=False):
                 self._check_running()
-                core = stack.enter_context(closing(self._open("core")))
+                repository_store = stack.enter_context(
+                    closing(self._open("repository"))
+                )
                 context = stack.enter_context(closing(self._open("context")))
                 try:
-                    for db in (core, context):
+                    for db in (repository_store, context):
                         db.execute("PRAGMA query_only=ON")
                         db.execute("BEGIN")
                         db.execute("SELECT * FROM store_identity").fetchall()
                         apply_snapshot_read_limits(db, self.read_limits)
                         self._guard_read(db)
                     token = validate_pair(
-                        core,
+                        repository_store,
                         context,
                         metadata_only=self.metadata_only,
                         phase_costs_ns=self.last_read_costs_ns,
@@ -215,7 +224,7 @@ class PairSnapshotCoordinator(CoreCoordinator):
             try:
                 reads = (
                     ReadSnapshot(
-                        core,
+                        repository_store,
                         self._check_running,
                         self._record_corruption,
                         directory=self.directory,
@@ -231,7 +240,7 @@ class PairSnapshotCoordinator(CoreCoordinator):
             finally:
                 for read in reads:
                     read._active = False
-                core.set_authorizer(None)
+                repository_store.set_authorizer(None)
                 context.set_authorizer(None)
-                core.rollback()
+                repository_store.rollback()
                 context.rollback()

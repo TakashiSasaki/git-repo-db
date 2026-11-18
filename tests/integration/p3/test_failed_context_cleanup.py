@@ -29,7 +29,7 @@ from repo_catalog.domain.resource_identification import ResourceIdentification
 @pytest.fixture
 def catalog(tmp_path):
     repository, instance, service = (str(uuid4()) for _ in range(3))
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         initialize(tmp_path / (role + ".sqlite3"), role, repository, instance)
     keys = tuple(
         ResourceKey.from_native(service, "issue", str(value))
@@ -55,7 +55,7 @@ def catalog(tmp_path):
     outcome = pair.admit(
         lambda _: None, healthy, authorization=authorization, admission=admission
     )
-    assert outcome.core_committed and outcome.context_committed
+    assert outcome.repository_committed and outcome.context_committed
     assert len(facts(tmp_path, keys[0])[1]) == 2
     return tmp_path, keys, authorization, admission, policy
 
@@ -209,7 +209,7 @@ def test_actual_pair_caught_context_failure_discards_sql_and_all_owned_leases(
         assert failure.value is original
     else:
         assert failure.value.cause is original
-        assert failure.value.outcome.core_committed
+        assert failure.value.outcome.repository_committed
         assert not failure.value.outcome.context_committed
     assert repr(attempted) == original_input and policy.active == 0
     assert_discarded(held["raw"], directory, healthy, before, failed, sibling)
@@ -326,7 +326,7 @@ def test_successful_context_rollback_still_allows_an_independent_sibling_unit(ca
     outcome = PairCoordinator(directory, authorization=authorization).admit(
         lambda _: None, callback, authorization=authorization, admission=admission
     )
-    assert outcome.core_committed and outcome.context_committed
+    assert outcome.repository_committed and outcome.context_committed
     assert facts(directory, failed) == (0, ())
     assert len(facts(directory, sibling)[1]) == 2
     assert facts(directory, healthy) == before and policy.active == 0

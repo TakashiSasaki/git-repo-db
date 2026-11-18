@@ -65,7 +65,7 @@ def main(output):
         "repo_catalog/adapters/sqlite/access_ddl/connections.sql",
     }
     for name in (
-        "adapters.sqlite.git_core",
+        "adapters.sqlite.git_repository",
         "adapters.sqlite.production_context",
         "adapters.sqlite.catalog_runtime",
         "adapters.sqlite.p1_schema",
@@ -76,7 +76,7 @@ def main(output):
         "application.exchange",
         "application.recovery",
         "cli.main",
-        "domain.p1_core",
+        "domain.p1_repository",
         "domain.p1_context",
         "domain.acquisition",
     ):
@@ -309,7 +309,7 @@ def main(output):
     assert not (root / "p1-recovery-stop.json").exists()
     with AccessConnections(path) as store:
         assert store.scope(scope).scope_uuidv4 == scope
-    assert not list(root.rglob("core.sqlite3"))
+    assert not list(root.rglob("repository.sqlite3"))
     assert not list(root.rglob("context.sqlite3"))
     assert not list(root.rglob("operational.sqlite3"))
     assert not list(root.rglob("search.sqlite3"))

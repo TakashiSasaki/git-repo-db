@@ -19,11 +19,11 @@ def test_normal_cli_sigint_after_sql_read_returns_no_page_and_closes_snapshot(
     before = run(capsys, "query", "repository", "--catalog", catalog)
     original, connections = GitHistoryQuery._history, []
 
-    def interrupt(self, core, token, *args, **kwargs):
-        result = original(self, core, token, *args, **kwargs)
+    def interrupt(self, repository_store, token, *args, **kwargs):
+        result = original(self, repository_store, token, *args, **kwargs)
         assert result["items"]
-        connections.append(core._db)
-        assert core._db.in_transaction
+        connections.append(repository_store._db)
+        assert repository_store._db.in_transaction
         signal.raise_signal(signal.SIGINT)
         pytest.fail("SIGINT did not interrupt the active SQL snapshot")
 

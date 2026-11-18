@@ -8,12 +8,12 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-from repo_catalog.adapters.sqlite.core_recovery import stop_catalog
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite.repository_recovery import stop_catalog
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.recovery import BackupScope
 from tests.integration.p7.conftest import (
     admit_context_text,
@@ -24,14 +24,14 @@ from tests.integration.p7.conftest import (
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-@pytest.mark.parametrize("paired", [False, True], ids=["core", "paired"])
+@pytest.mark.parametrize("paired", [False, True], ids=["repository", "paired"])
 def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
     tmp_path, fmt, paired
 ):
     source = tmp_path / "source"
     source.mkdir()
     repository, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "context") if paired else ("core",):
+    for role in ("repository", "context") if paired else ("repository",):
         initialize(source / (role + ".sqlite3"), role, repository, instance)
     adapter = SQLiteRecoveryAdapter()
     backup = tmp_path / "baseline"
@@ -45,17 +45,17 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
     tag = make_tag(fmt, commit.object_oid.object_oid)
     originals = {obj.object_oid: (obj, str(uuid4())) for obj in (tree, commit, tag)}
     bad_copy = str(uuid4())
-    with closing(GitCore(source / "core.sqlite3")) as core:
-        core.admit_object(nominal)
+    with closing(GitRepositoryStore(source / "repository.sqlite3")) as repository_store:
+        repository_store.admit_object(nominal)
         for obj, copy in originals.values():
-            core.admit_metadata(obj, copy, UnlimitedWorkBudget())
-        core.admit_metadata(tree, bad_copy, UnlimitedWorkBudget())
+            repository_store.admit_metadata(obj, copy, UnlimitedWorkBudget())
+        repository_store.admit_metadata(tree, bad_copy, UnlimitedWorkBudget())
     text = "post-backup Context document"
     if paired:
         with closing(connect(source / "context.sqlite3", "context")) as context:
             admit_context_text(context, text)
     # Synthetic damage after real admission; keep the WAL live during extraction.
-    with closing(connect(source / "core.sqlite3", "core")) as db:
+    with closing(connect(source / "repository.sqlite3", "repository")) as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_metadata_update'"
         ).fetchone()[0]
@@ -71,7 +71,7 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
         preserved = {
             p.name: p.read_bytes() for p in source.glob("*.sqlite3*") if p.is_file()
         }
-        assert "core.sqlite3-wal" in preserved
+        assert "repository.sqlite3-wal" in preserved
         salvage = tmp_path / "metadata.jsonl"
         extracted = adapter.extract_salvage(
             source,
@@ -124,12 +124,14 @@ def test_post_backup_metadata_copy_recovery_preserves_types_and_source(
         assert read.available and read.verified
         assert service.get_git_object(obj.object_oid).native_type == obj.native_type
         assert read.body_bytes == obj.body
-    with closing(GitCore(fresh / "core.sqlite3")) as core:
+    with closing(GitRepositoryStore(fresh / "repository.sqlite3")) as repository_store:
         assert {
             row[0]
-            for row in core.sql("SELECT physical_copy_uuidv4 FROM retained_metadata")
+            for row in repository_store.sql(
+                "SELECT physical_copy_uuidv4 FROM retained_metadata"
+            )
         } == {copy for _, copy in originals.values()}
-        assert core.sql(
+        assert repository_store.sql(
             "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
             nominal.key,
         )

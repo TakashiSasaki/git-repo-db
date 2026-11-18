@@ -10,7 +10,7 @@ from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedge
 from repo_catalog.application.git_acquisition import GitAcquisition
 from repo_catalog.domain.git_acquisition import GitNativeAcquisitionRequest
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.p1_core import CoreFailure, encode
+from repo_catalog.domain.p1_repository import RepositoryFailure, encode
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 
 
@@ -19,7 +19,7 @@ def test_trusted_native_walk_retains_full_metadata_closure_once_without_blob_rea
     tmp_path, monkeypatch, fmt
 ):
     catalog, path = tmp_path / "catalog", tmp_path / "native"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     objects = build_sample_git_repo(path, fmt)
     source, source_id = GitNativeSource(path), str(uuid4())
     parent = RequestIdentity(str(uuid4()), str(uuid4()))
@@ -80,7 +80,7 @@ def test_trusted_native_walk_retains_full_metadata_closure_once_without_blob_rea
         assert objects["commit1"].object_oid not in encode(intent)
         assert objects["tree"].object_oid not in encode(intent)
         before = len(reads)
-        with pytest.raises(CoreFailure) as changed:
+        with pytest.raises(RepositoryFailure) as changed:
             app.acquire_from_native_with_budget(
                 source,
                 request,

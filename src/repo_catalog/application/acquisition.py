@@ -8,10 +8,10 @@ from importlib import import_module
 
 _EXPORTS = {
     "_charge": "repo_catalog.application.git_acquisition",
-    "_PreparedCore": "repo_catalog.application.git_acquisition",
+    "_PreparedRepository": "repo_catalog.application.git_acquisition",
     "_finish_ref_inventories": "repo_catalog.application.git_acquisition",
     "_defer_ref_work": "repo_catalog.application.git_acquisition",
-    "_open_core": "repo_catalog.application.git_acquisition",
+    "_open_repository": "repo_catalog.application.git_acquisition",
     "_open_operational": "repo_catalog.application.git_acquisition",
     "GitAcquisition": "repo_catalog.application.git_acquisition",
     "ProviderAcquisition": "repo_catalog.application.provider_acquisition",

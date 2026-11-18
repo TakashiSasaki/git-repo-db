@@ -4,11 +4,11 @@ from contextlib import closing
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.application.search_maintenance import SearchMaintenance
-from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.p1_repository import OID, RepositoryFailure
 from repo_catalog.domain.query_work import UnlimitedWorkBudget
 from repo_catalog.domain.search_query import SearchQuery
 from tests.integration.p6.conftest import populate_rich_catalog
@@ -48,8 +48,10 @@ def test_actual_rebuild_history_estimates_and_per_kind_freshness(tmp_path):
     assert {
         kind: item["document_count"] for kind, item in fresh["kinds"].items()
     } == first["counts"]
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        core.admit_object(OID("sha1", "7" * 40))
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_object(OID("sha1", "7" * 40))
     assert not any(item["fresh"] for item in maintenance.status()["kinds"].values())
     notes = maintenance.rebuild(("notes",))
     assert notes["duration_ns"] == 300 and notes["estimate"]["runs"] == 1
@@ -126,10 +128,10 @@ def test_status_and_rebuild_keep_caller_finite_budget_refusal(tmp_path):
     def limited():
         return UnlimitedWorkBudget(work_limits={"metadata_units": 0})
 
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         maintenance.status(work=limited())
     assert error.value.code == "BUDGET"
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         maintenance.rebuild(work=limited())
     assert error.value.code == "BUDGET"
     assert not (tmp_path / "p1-recovery-stop.json").exists()
@@ -149,8 +151,10 @@ def test_search_keeps_pinned_generation_during_authority_write_and_then_falls_ba
         nonlocal changed
         if not changed:
             changed = True
-            with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-                core.admit_object(OID("sha1", "6" * 40))
+            with closing(
+                GitRepositoryStore(tmp_path / "repository.sqlite3")
+            ) as repository_store:
+                repository_store.admit_object(OID("sha1", "6" * 40))
         return original(*args, **kwargs)
 
     with monkeypatch.context() as concurrent:

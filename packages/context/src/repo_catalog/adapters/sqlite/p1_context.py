@@ -1038,7 +1038,7 @@ class ContextStore(AdmissionTransactions):
             )
 
         # No embedded MappingSupport: ADR 0030 preserves exact original MappingClaimKey
-        # support. Core-target relations without explicit MappingSupport do not borrow
+        # support. Repository-target relations without explicit MappingSupport do not borrow
         # unlinked represents_repository claims across other Provider repositories in the service.
         return ResolvedRepositoryRelation(
             relation=relation,
@@ -1636,7 +1636,7 @@ class ContextStore(AdmissionTransactions):
             return "unknown"
         return "valid"
 
-    def link_core(
+    def link_repository(
         self,
         resource: ResourceKey,
         role: str,
@@ -1646,12 +1646,12 @@ class ContextStore(AdmissionTransactions):
         validate: Callable[[str, str], bool],
     ) -> None:
         if not validate(object_format, object_oid):
-            raise ValueError("Required portable Core identity is absent")
+            raise ValueError("Required portable Repository identity is absent")
         self.db.execute(
-            "INSERT INTO core_references VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
+            "INSERT INTO repository_references VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING",
             context_write_values(
-                ROW_TYPES["core_references"],
-                ROW_TYPES["core_references"].WRITE_COLUMNS,
+                ROW_TYPES["repository_references"],
+                ROW_TYPES["repository_references"].WRITE_COLUMNS,
                 (
                     *resource.coordinates(),
                     role,

@@ -79,7 +79,7 @@ def test_two_native_sources_execute_same_parent_and_frozen_resume_skips_successe
     tmp_path, monkeypatch, fmt
 ):
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     paths = [tmp_path / "first.git", tmp_path / "second.git"]
     sources = [
         native_source(path, repository, build_sample_git_repo(path, fmt))
@@ -212,7 +212,7 @@ def test_cumulative_cap_halts_unstarted_sources_and_never_creates_child_requests
     tmp_path,
 ):
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     path = tmp_path / "native.git"
     objects = build_sample_git_repo(path)
     value = document(
@@ -235,7 +235,7 @@ def test_remote_and_local_dispatch_execute_real_transport_in_one_parent(tmp_path
     from tests.integration.p5.test_separated_remote_git import git_http
 
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     path = tmp_path / "repository.git"
     objects = build_sample_git_repo(path)
     local = native_source(path, repository, objects)
@@ -373,7 +373,7 @@ def test_invalid_frozen_batch_is_refused_before_request_or_progress_write(
     tmp_path, problem
 ):
     catalog = tmp_path / "catalog"
-    init_catalog_stores(catalog, stores=("core", "operational"))
+    init_catalog_stores(catalog, stores=("repository", "operational"))
     source = str(uuid4())
     value = document(
         [

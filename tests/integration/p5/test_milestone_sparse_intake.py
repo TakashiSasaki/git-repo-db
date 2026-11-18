@@ -165,4 +165,4 @@ def test_different_null_and_unidentified_milestones_never_borrow_another_subject
     assert list(explicit_null.resolved_texts.values()) == [""]
     empty = api.collect(payload(6, {"id": 50, "title": ""}))
     assert empty.fields[milestone_field_name(50, "title")][0].value_json == '""'
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()

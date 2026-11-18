@@ -15,20 +15,20 @@ from repo_catalog.domain.git_acquisition import (
     NotesAcquisitionSpec,
     RefNotesInput,
 )
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
-    CoreFailure,
     GitObservation,
     NativeObject,
     Provenance,
     RelationGroup,
     RepositoryClaim,
+    RepositoryCoverageScope,
+    RepositoryFailure,
     ScalarClaim,
     encode,
     uuid4_value,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ref_observation import (
     NotesMapping,
     NotesMappingClaim,
@@ -42,7 +42,7 @@ from repo_catalog.domain.ref_observation import (
 
 def _typed(value, expected):
     if type(value) is not expected:
-        raise CoreFailure("REQUEST", "native", "typed semantic value required")
+        raise RepositoryFailure("REQUEST", "native", "typed semantic value required")
     value.__post_init__()
     return value
 
@@ -56,7 +56,9 @@ def _text_tuple(values):
         type(value) is not str or not value or len(value) > 4096 or "\x00" in value
         for value in values
     ):
-        raise CoreFailure("REQUEST", "native", "bounded nonempty ref text required")
+        raise RepositoryFailure(
+            "REQUEST", "native", "bounded nonempty ref text required"
+        )
 
 
 def without_ref_inputs(request):
@@ -69,7 +71,7 @@ def without_ref_inputs(request):
             type(request.notes.ref_inputs) is not tuple
             or len(request.notes.ref_inputs) > 100_000
         ):
-            raise CoreFailure("REQUEST", "ref-notes", "bounded tuple required")
+            raise RepositoryFailure("REQUEST", "ref-notes", "bounded tuple required")
         return replace(request, notes=replace(request.notes, ref_inputs=()))
     return request
 
@@ -111,23 +113,31 @@ def ref_input_processing(values, work=None):
         item, depth = pending.pop()
         nodes += 1
         if nodes > 100_000 or depth > 16:
-            raise CoreFailure("BUDGET", "ref-input", "finite input shape required")
+            raise RepositoryFailure(
+                "BUDGET", "ref-input", "finite input shape required"
+            )
         kind = type(item)
         if kind in (str, bytes):
             chars += len(item)
             if chars > 1_000_000:
-                raise CoreFailure("BUDGET", "ref-input", "finite input text required")
+                raise RepositoryFailure(
+                    "BUDGET", "ref-input", "finite input text required"
+                )
             texts.append(item)
         elif kind is tuple:
             if len(item) > 100_000 - nodes - len(pending):
-                raise CoreFailure("BUDGET", "ref-input", "finite input shape required")
+                raise RepositoryFailure(
+                    "BUDGET", "ref-input", "finite input shape required"
+                )
             schedule(len(item))
             pending.extend((child, depth + 1) for child in item)
         elif kind in allowed:
             schedule(len(fields(kind)))
             pending.extend((getattr(item, f.name), depth + 1) for f in fields(kind))
         elif item is not None and kind not in (int, bool):
-            raise CoreFailure("REQUEST", "ref-input", "typed scalar or report required")
+            raise RepositoryFailure(
+                "REQUEST", "ref-input", "typed scalar or report required"
+            )
     # ASCII JSON can expand Unicode, encoded nested semantic keys and escapes.
     # This bound covers validation, comparisons and encoded input/output buffers.
     upper = 128 * chars + 256 * nodes
@@ -142,7 +152,7 @@ def ref_input_processing(values, work=None):
         yield output
         actual += output[0]
         if actual > upper:
-            raise CoreFailure("BUDGET", "ref-input", "processing bound exceeded")
+            raise RepositoryFailure("BUDGET", "ref-input", "processing bound exceeded")
     except BaseException:
         if work is not None:
             abandon = getattr(work, "abandon", None)
@@ -169,7 +179,9 @@ def _ref_notes_input_intent(value, repository):
     subject = value.observation
     _typed(subject.ref_observation_key, RefObservationKey)
     if subject.repository_uuidv4 != repository:
-        raise CoreFailure("REPOSITORY_SCOPE", repository, "foreign ref observation")
+        raise RepositoryFailure(
+            "REPOSITORY_SCOPE", repository, "foreign ref observation"
+        )
     claims = []
     for claim in value.claims:
         claim.__post_init__()
@@ -244,14 +256,14 @@ def native_request_intent(request: GitNativeAcquisitionRequest, work=None) -> di
 def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     """Validate repository ownership and preserve every request-defining input."""
     if type(request) is not GitNativeAcquisitionRequest:
-        raise CoreFailure("REQUEST", "native", "typed native request required")
+        raise RepositoryFailure("REQUEST", "native", "typed native request required")
     request.__post_init__()
     if (
         type(request.source_attribution) is not str
         or not request.source_attribution
         or len(request.source_attribution) > 65_536
     ):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "native", "bounded actual source attribution required"
         )
     for value in (
@@ -260,7 +272,7 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         request.traverse_structural_targets,
     ):
         if type(value) is not bool:
-            raise CoreFailure("REQUEST", "native", "typed boolean required")
+            raise RepositoryFailure("REQUEST", "native", "typed boolean required")
     for values in (
         request.select_object_oids,
         request.nominal_missing_object_oids,
@@ -271,17 +283,19 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         request.extra_relation_groups,
     ):
         if type(values) is not tuple or len(values) > 100_000:
-            raise CoreFailure("REQUEST", "native", "bounded tuple input required")
+            raise RepositoryFailure("REQUEST", "native", "bounded tuple input required")
     if request.retain_object_oids is not None and (
         type(request.retain_object_oids) is not frozenset
         or len(request.retain_object_oids) > 100_000
     ):
-        raise CoreFailure("REQUEST", "native", "typed retention set required")
+        raise RepositoryFailure("REQUEST", "native", "typed retention set required")
     if (
         type(request.physical_copy_uuidv4s) is not dict
         or len(request.physical_copy_uuidv4s) > 100_000
     ):
-        raise CoreFailure("REQUEST", "native", "bounded copy coordinates required")
+        raise RepositoryFailure(
+            "REQUEST", "native", "bounded copy coordinates required"
+        )
     for object_oid in (
         *request.select_object_oids,
         *request.nominal_missing_object_oids,
@@ -299,13 +313,15 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
         or len(value) > 4096
         for value in request.nominated_ref_names
     ):
-        raise CoreFailure("REQUEST", "native", "bounded exact ref bytes required")
+        raise RepositoryFailure("REQUEST", "native", "bounded exact ref bytes required")
     repo = request.repository_uuidv4
     for claim in request.repository_claims:
         _typed(claim, RepositoryClaim)
         _typed(claim.provenance, Provenance)
         if claim.repository_uuidv4 != repo:
-            raise CoreFailure("REPOSITORY_SCOPE", repo, "foreign repository claim")
+            raise RepositoryFailure(
+                "REPOSITORY_SCOPE", repo, "foreign repository claim"
+            )
     for claim in request.extra_scalar_claims:
         _typed(claim, ScalarClaim)
         _oid(claim.subject)
@@ -320,14 +336,16 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     notes_value = None
     if notes is not None:
         if type(notes) is not NotesAcquisitionSpec:
-            raise CoreFailure("REQUEST", "notes", "typed Notes specification required")
+            raise RepositoryFailure(
+                "REQUEST", "notes", "typed Notes specification required"
+            )
         for value in (
             notes.discover_notes,
             notes.acquire_inventories,
             notes.retain_note_bodies,
         ):
             if type(value) is not bool:
-                raise CoreFailure("REQUEST", "notes", "typed boolean required")
+                raise RepositoryFailure("REQUEST", "notes", "typed boolean required")
         if notes.discovery_observation_uuidv4 is not None:
             uuid4_value(notes.discovery_observation_uuidv4)
         for values in (
@@ -336,7 +354,9 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
             notes.ref_inputs,
         ):
             if type(values) is not tuple or len(values) > 100_000:
-                raise CoreFailure("REQUEST", "notes", "bounded tuple input required")
+                raise RepositoryFailure(
+                    "REQUEST", "notes", "bounded tuple input required"
+                )
         _text_tuple(notes.nominated_refs)
         for object_oid in notes.target_object_oids:
             _oid(object_oid)
@@ -387,7 +407,7 @@ def _native_request_intent(request: GitNativeAcquisitionRequest) -> dict:
     # Fail before persisting an unbounded caller-authored intent. This contains no
     # ordinary file bodies; JSON size is not permission to accept secret settings.
     if len(encode(result)) > 1_000_000:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "BUDGET", "request-intent", "finite request metadata required"
         )
     return result
@@ -438,20 +458,26 @@ def _metadata_input_intent(unit: GitMetadataInput) -> dict:
         unit.coverage_proofs,
     ):
         if type(values) is not tuple or len(values) > 100_000:
-            raise CoreFailure("REQUEST", "metadata", "bounded tuple input required")
+            raise RepositoryFailure(
+                "REQUEST", "metadata", "bounded tuple input required"
+            )
     for observation in unit.observations:
         _typed(observation, GitObservation)
         _typed(observation.provenance, Provenance)
         if observation.repository_uuidv4 != unit.repository_uuidv4:
-            raise CoreFailure("REPOSITORY_SCOPE", "metadata", "foreign observation")
+            raise RepositoryFailure(
+                "REPOSITORY_SCOPE", "metadata", "foreign observation"
+            )
 
     def scope_value(scope):
-        _typed(scope, CoreCoverageScope)
+        _typed(scope, RepositoryCoverageScope)
         if (
             scope.owner_kind == "repository"
             and scope.coordinates[0] != unit.repository_uuidv4
         ):
-            raise CoreFailure("REPOSITORY_SCOPE", "metadata", "foreign Coverage owner")
+            raise RepositoryFailure(
+                "REPOSITORY_SCOPE", "metadata", "foreign Coverage owner"
+            )
         return [scope.owner_kind, list(scope.coordinates)]
 
     def coverage_value(claim):
@@ -466,9 +492,11 @@ def _metadata_input_intent(unit: GitMetadataInput) -> dict:
     native_values = []
     for native in unit.native_objects:
         if type(native) is not NativeObject or type(native.body) is not bytes:
-            raise CoreFailure("REQUEST", "metadata", "typed native value required")
+            raise RepositoryFailure(
+                "REQUEST", "metadata", "typed native value required"
+            )
         _oid(native.object_oid)
-        # Exact bytes are verified and charged by Core after request reservation;
+        # Exact bytes are verified and charged by Repository after request reservation;
         # Operational stores only their declared immutable coordinates.
         native_values.append(
             [
@@ -481,10 +509,14 @@ def _metadata_input_intent(unit: GitMetadataInput) -> dict:
     proofs = []
     for proof in unit.coverage_proofs:
         if type(proof) is not tuple or len(proof) != 3:
-            raise CoreFailure("REQUEST", "metadata", "typed Coverage proof required")
+            raise RepositoryFailure(
+                "REQUEST", "metadata", "typed Coverage proof required"
+            )
         claim, members, provenance = proof
         if type(members) is not tuple or len(members) > 100_000:
-            raise CoreFailure("REQUEST", "metadata", "bounded proof members required")
+            raise RepositoryFailure(
+                "REQUEST", "metadata", "bounded proof members required"
+            )
         for object_oid in members:
             _oid(object_oid)
         _typed(provenance, Provenance)
@@ -505,7 +537,7 @@ def _metadata_input_intent(unit: GitMetadataInput) -> dict:
         "coverage_proofs": proofs,
     }
     if len(encode(result)) > 1_000_000:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "BUDGET", "metadata-intent", "finite request metadata required"
         )
     return result

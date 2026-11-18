@@ -17,7 +17,7 @@ from repo_catalog.adapters.sqlite.acquisition import (
     OperationalAcquisitionLedger,
     UnlimitedWorkBudget,
 )
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.acquisition import (
@@ -36,7 +36,7 @@ from repo_catalog.domain.exchange import (
     ExchangePackage,
     ExchangeSelectionScope,
     decode_package,
-    empty_core_section,
+    empty_repository_section,
     encode_package,
 )
 from repo_catalog.domain.p1_coordination import (
@@ -45,7 +45,7 @@ from repo_catalog.domain.p1_coordination import (
     PairAdmission,
     RequestIdentity,
 )
-from repo_catalog.domain.p1_core import CoreCoverageScope, CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryCoverageScope, RepositoryFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 from tests.support.context_admission import (
     AuthorizedExchangeService as ExchangeService,
@@ -62,7 +62,7 @@ def package(repo=None):
         str(uuid4()),
         repo or str(uuid4()),
         selection_scope=ExchangeSelectionScope(all_selected=True),
-        core=empty_core_section(),
+        repository_store=empty_repository_section(),
     )
 
 
@@ -128,7 +128,7 @@ def test_json_depth_duplicate_and_float_controls():
     with pytest.raises(ExchangeError, match="duplicate key"):
         decode_package('{"format": 1, "format": 2}')
     data = package().to_dict()
-    data["core"]["repository_claims"] = [
+    data["repository"]["repository_claims"] = [
         {
             "repository_uuidv4": str(uuid4()),
             "field": "name",
@@ -137,9 +137,12 @@ def test_json_depth_duplicate_and_float_controls():
         }
     ]
     assert (
-        decode_package(resign(data)).core["repository_claims"][0]["value_json"] == "1.5"
+        decode_package(resign(data)).repository_store["repository_claims"][0][
+            "value_json"
+        ]
+        == "1.5"
     )
-    data["core"]["repository_claims"][0]["value_json"] = "[" * 33 + "0" + "]" * 33
+    data["repository"]["repository_claims"][0]["value_json"] = "[" * 33 + "0" + "]" * 33
     with pytest.raises(ExchangeError, match="INPUT_LIMIT"):
         decode_package(resign(data))
 
@@ -205,7 +208,7 @@ def test_provider_registration_is_explicit(tmp_path):
 @pytest.mark.parametrize("loss", ["all", "budget"])
 def test_operational_loss_never_reissues_same_request_even_new_flag(tmp_path, loss):
     cat = tmp_path / "cat"
-    repo, inst = init_catalog_stores(cat, stores=("core", "operational"))
+    repo, inst = init_catalog_stores(cat, stores=("repository", "operational"))
     req = RequestIdentity(str(uuid4()), str(uuid4()))
     path = cat / "operational.sqlite3"
     with OperationalAcquisitionLedger(path) as ledger:
@@ -227,11 +230,11 @@ def test_operational_loss_never_reissues_same_request_even_new_flag(tmp_path, lo
         fresh, _, budget, _ = ledger.create_budget(scope=["test"], new_request=True)
         assert fresh != req
         assert budget.ledger.usage(fresh)["input_bytes"] == 0
-    core = GitCore(cat / "core.sqlite3")
+    repository_store = GitRepositoryStore(cat / "repository.sqlite3")
     try:
-        assert core.catalog_identity() == (repo, inst)
+        assert repository_store.catalog_identity() == (repo, inst)
     finally:
-        core.close()
+        repository_store.close()
 
 
 def test_retry_preserves_notes_capture_and_all_copy_ids(tmp_path, git_format):
@@ -259,16 +262,20 @@ def test_retry_preserves_notes_capture_and_all_copy_ids(tmp_path, git_format):
         first.ref_note_acquisitions[0].physical_copy_uuidv4
         == second.ref_note_acquisitions[0].physical_copy_uuidv4
     )
-    core = GitCore(cat / "core.sqlite3")
+    repository_store = GitRepositoryStore(cat / "repository.sqlite3")
     try:
-        assert core.sql("SELECT count(*) FROM retained_metadata")[0][0] == 1
-        assert core.sql("SELECT count(*) FROM ref_retained_notes")[0][0] == 2
+        assert repository_store.sql("SELECT count(*) FROM retained_metadata")[0][0] == 1
         assert (
-            core.coverage(CoreCoverageScope("repository", (repo, "git_metadata"))).state
+            repository_store.sql("SELECT count(*) FROM ref_retained_notes")[0][0] == 2
+        )
+        assert (
+            repository_store.coverage(
+                RepositoryCoverageScope("repository", (repo, "git_metadata"))
+            ).state
             == "partial"
         )
     finally:
-        core.close()
+        repository_store.close()
     with OperationalAcquisitionLedger(cat) as ledger:
         usage = ledger.work_ledger.usage(
             RequestIdentity(req.capture_origin_uuidv4, req.capture_uuidv4)
@@ -276,7 +283,7 @@ def test_retry_preserves_notes_capture_and_all_copy_ids(tmp_path, git_format):
         assert usage["input_bytes"] > 0 and usage["verification_bytes"] > 0
 
 
-def test_paired_git_processes_run_before_core_transaction(tmp_path, monkeypatch):
+def test_paired_git_processes_run_before_repository_transaction(tmp_path, monkeypatch):
     src = tmp_path / "git"
     oids = build_sample_git_repo(src)
     cat = tmp_path / "cat"
@@ -288,7 +295,7 @@ def test_paired_git_processes_run_before_core_transaction(tmp_path, monkeypatch)
     def bounded_read(oid, work):
         from repo_catalog.adapters.sqlite.p1_schema import connect
 
-        db = connect(cat / "core.sqlite3", "core")
+        db = connect(cat / "repository.sqlite3", "repository")
         try:
             db.execute("BEGIN IMMEDIATE")
             db.rollback()
@@ -318,9 +325,9 @@ def test_git_input_read_is_prepaid(tmp_path, monkeypatch):
         "os",
         SimpleNamespace(read=lambda *args: pytest.fail("unreserved input read")),
     )
-    with pytest.raises(CoreFailure, match="budget"):
+    with pytest.raises(RepositoryFailure, match="budget"):
         source.metadata(oids["commit2"], work)
-    with pytest.raises(CoreFailure, match="budget"):
+    with pytest.raises(RepositoryFailure, match="budget"):
         source.refs(work)
 
 

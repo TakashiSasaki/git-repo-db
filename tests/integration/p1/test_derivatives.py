@@ -26,8 +26,8 @@ from tests.integration.p1.test_coordination import (
     build,
     child_code,
     context_unit,
-    core_unit,
     fixture_authority,
+    repository_unit,
 )
 
 
@@ -75,7 +75,7 @@ def test_request_cumulative_across_real_attempts_and_safe_settlement(tmp_path):
         assert db.execute("SELECT sum(actual) FROM work_accounting").fetchone()[0] == 12
 
 
-def test_unsettled_work_and_core_rollback_never_refund_actual_work(tmp_path):
+def test_unsettled_work_and_repository_rollback_never_refund_actual_work(tmp_path):
     directory = tmp_path / "live"
     build(directory)
     identity = request()
@@ -83,16 +83,18 @@ def test_unsettled_work_and_core_rollback_never_refund_actual_work(tmp_path):
         contextlib.closing(
             connect(directory / "operational.sqlite3", "operational")
         ) as db,
-        contextlib.closing(connect(directory / "core.sqlite3", "core")) as core,
+        contextlib.closing(
+            connect(directory / "repository.sqlite3", "repository")
+        ) as repository_store,
     ):
         ledger = WorkLedger(db)
         ledger.new_request(identity, "{}", limits(10))
         attempt = str(uuid4())
         ledger.attempt(identity, attempt)
-        core.execute("BEGIN IMMEDIATE")
-        core_unit(core)
+        repository_store.execute("BEGIN IMMEDIATE")
+        repository_unit(repository_store)
         ledger.reserve(identity, attempt, "proof_steps", "traversal:0", 9)
-        core.rollback()  # Work already performed or uncertain remains reserved.
+        repository_store.rollback()  # Work already performed or uncertain remains reserved.
     with contextlib.closing(
         connect(directory / "operational.sqlite3", "operational")
     ) as db:
@@ -111,7 +113,7 @@ def test_operational_loss_disables_old_continuation_without_invalidating_authori
 ):
     directory = tmp_path / "live"
     build(directory)
-    admit_fixture(PairCoordinator(directory), core_unit, context_unit)
+    admit_fixture(PairCoordinator(directory), repository_unit, context_unit)
     old = request()
     with contextlib.closing(
         connect(directory / "operational.sqlite3", "operational")
@@ -213,7 +215,7 @@ def test_search_snapshot_fence_loss_corruption_and_reconstruction(tmp_path):
     directory = tmp_path / "live"
     build(directory)
     coordinator = PairCoordinator(directory)
-    admit_fixture(coordinator, core_unit, context_unit)
+    admit_fixture(coordinator, repository_unit, context_unit)
     with contextlib.closing(
         connect(directory / "context.sqlite3", "context")
     ) as authority:
@@ -254,8 +256,10 @@ def test_search_snapshot_fence_loss_corruption_and_reconstruction(tmp_path):
         )
         search.rebuild_context(pair)
 
-        def new_fact(core):
-            core.execute("INSERT INTO git_objects VALUES('sha1',?)", ("b" * 40,))
+        def new_fact(repository_store):
+            repository_store.execute(
+                "INSERT INTO git_objects VALUES('sha1',?)", ("b" * 40,)
+            )
 
         coordinator.admit(new_fact, lambda db: None)
         assert search.candidates("context_text", pair.token, "needle") == set(rows)
@@ -310,7 +314,7 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
     directory = tmp_path / "live"
     build(directory)
     coordinator = PairCoordinator(directory)
-    admit_fixture(coordinator, core_unit, context_unit)
+    admit_fixture(coordinator, repository_unit, context_unit)
     actual = ResourceKey.from_native(PROVIDER, "issue", "7")
     reported = ResourceKey.from_native(PROVIDER, "issue", "reported")
     null = ResourceKey.from_native(PROVIDER, "issue", "null")
@@ -377,7 +381,7 @@ def test_context_search_resolves_actual_text_fk_in_projection_and_fallback(tmp_p
             newer_digest = store.text("replacement new-token")
             store.admit_field(candidate(actual, "text_body_sha256", newer_digest, 2))
 
-        admit_fixture(coordinator, lambda core: None, update)
+        admit_fixture(coordinator, lambda repository_store: None, update)
         # Both projection and direct fallback retain the actual pinned body.
         assert search.read("context_text", old.token, "needle", fallback) == (
             "projection",

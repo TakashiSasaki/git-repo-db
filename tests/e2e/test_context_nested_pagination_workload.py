@@ -291,6 +291,6 @@ def test_actual_many_page_graphql_workload_preserves_every_nested_member_and_who
         for number in range(THREADS)
         for index in range(COMMENTS)
     }
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "transport-archive").exists()
     assert not (case.directory / "p1-recovery-stop.json").exists()

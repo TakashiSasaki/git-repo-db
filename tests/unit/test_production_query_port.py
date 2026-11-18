@@ -34,9 +34,11 @@ def test_production_query_port_import_and_ref_contract():
     inspect.signature(port.search).bind(None, object(), work=None)
 
 
-def test_core_query_port_excludes_optional_query_capabilities():
-    """The independently installed Core port has complete, resolvable contracts."""
-    port = importlib.import_module("repo_catalog.domain.ports.core_query").CoreQueryPort
+def test_repository_query_port_excludes_optional_query_capabilities():
+    """The independently installed Repository port has complete, resolvable contracts."""
+    port = importlib.import_module(
+        "repo_catalog.domain.ports.repository_query"
+    ).RepositoryQueryPort
     for name, method in vars(port).items():
         if not name.startswith("_") and inspect.isfunction(method):
             assert get_type_hints(method), name

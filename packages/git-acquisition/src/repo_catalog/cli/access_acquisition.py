@@ -22,7 +22,7 @@ from repo_catalog.domain.p1_coordination import (
     NotesLimits,
     RequestIdentity,
 )
-from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.p1_repository import OID, RepositoryFailure
 
 
 def parser():
@@ -177,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except (
         AccessRegistryError,
-        CoreFailure,
+        RepositoryFailure,
         CoordinationError,
         AcquisitionError,
     ) as error:

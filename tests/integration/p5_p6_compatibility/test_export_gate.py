@@ -24,7 +24,7 @@ def test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt(
     tmp_path, monkeypatch
 ):
     repository, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "context", "operational"):
+    for role in ("repository", "context", "operational"):
         initialize(tmp_path / f"{role}.sqlite3", role, repository, instance)
     lock_path = tmp_path / "p1-writer.lock"
 
@@ -40,18 +40,18 @@ def test_export_shared_gate_blocks_actual_nonblocking_writer_lock_attempt(
 
     assert probe() == "acquired"  # Negative control: no export gate is held yet.
     service = ExchangeService(tmp_path)
-    original = service._export_core
+    original = service._export_repository
     observed = []
 
-    def after_core_before_context(*args, **kwargs):
+    def after_repository_before_context(*args, **kwargs):
         section = original(*args, **kwargs)
         observed.append(probe())  # Actual LOCK_EX|LOCK_NB call completes here.
         return section
 
-    monkeypatch.setattr(service, "_export_core", after_core_before_context)
+    monkeypatch.setattr(service, "_export_repository", after_repository_before_context)
     package = service.export_package(
         selection=ExchangeSelectionScope(all_selected=True), exported_at_us=1
     )
     assert observed == ["blocked"]
-    assert package.core is not None and package.context is not None
+    assert package.repository_store is not None and package.context is not None
     assert probe() == "acquired"  # Export release restores writer eligibility.

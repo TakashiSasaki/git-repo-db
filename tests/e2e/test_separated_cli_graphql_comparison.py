@@ -4,7 +4,7 @@ from contextlib import closing
 
 import httpx
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from tests.e2e.test_separated_cli_github_git_roles import setup
 from tests.e2e.test_separated_cli_pr_assessment import query
 from tests.e2e.test_separated_cli_provider_regressions import (
@@ -93,8 +93,10 @@ def test_normal_cli_partial_graphql_merge_target_is_retained_without_coobserved_
     assert result["status"] == "partial"
     # Native closure must include the genuinely returned merge target, even
     # though its root supplied no head/base with which to qualify comparison.
-    with closing(GitCore(case.directory / "core.sqlite3")) as core:
-        assert core.read_metadata(merge) is not None
+    with closing(
+        GitRepositoryStore(case.directory / "repository.sqlite3")
+    ) as repository_store:
+        assert repository_store.read_metadata(merge) is not None
     code = query(capsys, case, "pr-code")
     assert code["state"] != "complete"
     assert not code["coverage"]["complete_for_requested_scope"]

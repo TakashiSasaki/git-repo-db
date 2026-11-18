@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.production_query import ProductionQueryService
@@ -20,7 +20,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.production_query import PageRequest, QueryError, SearchQuery
 from tests.integration.p6.conftest import (
     REPOSITORY,
@@ -138,16 +138,16 @@ def test_open_snapshot_isolation_and_stale_cursor_fencing_after_write(
     initial_token = first_page.snapshot_token
     initial_count = first_page.total_count
 
-    # Keep a pinned snapshot open while a concurrent writer admits new Core + Context facts
+    # Keep a pinned snapshot open while a concurrent writer admits new Repository + Context facts
     with service.open_snapshot(required_store="paired") as pinned:
         assert pinned.token.encode() == initial_token
         new_oid = OID("sha1", "e" * 40)
         new_res = ResourceKey.from_native(SERVICE, "issue", "999")
         prov = canonical({"source": "github.rest", "evidence": "event-999"})
 
-        def write_core(db):
-            with GitCore.for_transaction(db) as core:
-                core.admit_object(new_oid)
+        def write_repository(db):
+            with GitRepositoryStore.for_transaction(db) as repository_store:
+                repository_store.admit_object(new_oid)
 
         def write_ctx(db):
             with Context.for_transaction(db, catalog_dir) as ctx:
@@ -172,12 +172,14 @@ def test_open_snapshot_isolation_and_stale_cursor_fencing_after_write(
             )
         )
         PairCoordinator(catalog_dir, authorization=authorization).admit(
-            write_core, write_ctx, admission=fixture_context(authorization)
+            write_repository, write_ctx, admission=fixture_context(authorization)
         )
 
         # Pinned snapshot continues to see only the pre-write state
-        assert pinned.core is not None and pinned.context is not None
-        pinned_objs = pinned.core.sql("SELECT count(*) FROM git_objects")[0][0]
+        assert pinned.repository_store is not None and pinned.context is not None
+        pinned_objs = pinned.repository_store.sql("SELECT count(*) FROM git_objects")[
+            0
+        ][0]
         assert pinned_objs == initial_count
         assert new_res not in pinned.context.resources()
 

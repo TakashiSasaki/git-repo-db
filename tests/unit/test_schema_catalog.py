@@ -30,10 +30,12 @@ def test_actual_formats_domains_and_distribution_ownership(catalog):
         catalog["distributions"]["repo-catalog-worktrees"]["dependency_requirements"]
         == []
     )
-    core = catalog["stores"]["p1.core"]
-    assert core["composition_distribution"] == "repo-catalog-runtime"
-    assert {source["distribution"] for source in core["definition_sources"]} == {
-        "repo-catalog-core",
+    repository_store = catalog["stores"]["p1.repository"]
+    assert repository_store["composition_distribution"] == "repo-catalog-runtime"
+    assert {
+        source["distribution"] for source in repository_store["definition_sources"]
+    } == {
+        "repo-catalog-repository",
         "repo-catalog-runtime",
         "repo-catalog-contracts",
     }
@@ -84,9 +86,9 @@ def test_local_keys_raw_path_types_and_nonphysical_references(catalog):
 def test_udfs_and_extraction_settings_are_observed_not_semantically_proved(catalog):
     for store in catalog["stores"].values():
         assert store["extraction_connection"]["pragmas"]["foreign_keys"] == 1
-    core = catalog["stores"]["p1.core"]["extraction_connection"]
-    assert core["pragmas"]["recursive_triggers"] == 1
-    assert "p1_uuid4" in {f["name"] for f in core["registered_functions"]}
+    repository_store = catalog["stores"]["p1.repository"]["extraction_connection"]
+    assert repository_store["pragmas"]["recursive_triggers"] == 1
+    assert "p1_uuid4" in {f["name"] for f in repository_store["registered_functions"]}
     fs = catalog["stores"]["filesystem"]["extraction_connection"]
     assert fs["pragmas"]["trusted_schema"] == 0
     assert not any(f["name"].startswith("p1_") for f in fs["registered_functions"])
@@ -111,7 +113,7 @@ def test_udfs_and_extraction_settings_are_observed_not_semantically_proved(catal
         ),
         (
             lambda c: c["stores"]["filesystem"].update(
-                composition_distribution="repo-catalog-core"
+                composition_distribution="repo-catalog-repository"
             ),
             "ownership/domain",
         ),

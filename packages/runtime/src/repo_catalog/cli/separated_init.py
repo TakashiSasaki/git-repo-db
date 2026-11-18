@@ -13,7 +13,7 @@ def main(argv=None):
         "--scope",
         required=True,
         choices=(
-            "core",
+            "repository",
             "context",
             "paired",
             "access",
@@ -29,6 +29,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.scope in ("access", "filesystem", "worktrees"):
+            from repo_catalog.adapters.sqlite.p1_schema import reject_legacy_layout
+
+            reject_legacy_layout(args.catalog)
             if args.repository or args.instance:
                 parser.error("--repository/--instance apply only to catalog roles")
             if args.scope == "access":

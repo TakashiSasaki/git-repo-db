@@ -62,13 +62,15 @@ def test_retired_http_reparse_never_reads_network_or_changes_existing_authoritie
 def test_normal_cli_cancellation_before_repository_assertion_never_activates_an_edge(
     tmp_path, capsys
 ):
-    from repo_catalog.adapters.sqlite.git_core import GitCore
-    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
+    from repo_catalog.domain.p1_repository import Provenance
 
     catalog, identity, *_ = seed_metadata(tmp_path, capsys)
     other, relation_id = str(uuid4()), str(uuid4())
-    with closing(GitCore(catalog / "core.sqlite3")) as core:
-        core.admit_repository(other)
+    with closing(
+        GitRepositoryStore(catalog / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_repository(other)
     record = {
         "relation_uuidv4": relation_id,
         "entity_kind": "repository",
@@ -105,7 +107,7 @@ def test_normal_cli_cancellation_before_repository_assertion_never_activates_an_
             "--catalog",
             catalog,
             "--scope",
-            "core",
+            "repository",
             "--input",
             path,
             *options,
@@ -119,12 +121,16 @@ def test_normal_cli_cancellation_before_repository_assertion_never_activates_an_
         )
         assert refused["code"] in {"INVALID_INPUT", "INVALID_ARGUMENT"}
     assert admit("cancellation", cancellation) == "accepted"
-    status = run(capsys, "identity", "status", "--catalog", catalog, "--scope", "core")
+    status = run(
+        capsys, "identity", "status", "--catalog", catalog, "--scope", "repository"
+    )
     assert not status["identity_relations"]
     assert len(status["identity_relation_cancellations"]) == 1
     assert not status["active_identity_relations"]
     assert admit("relation", record) == "accepted"
-    status = run(capsys, "identity", "status", "--catalog", catalog, "--scope", "core")
+    status = run(
+        capsys, "identity", "status", "--catalog", catalog, "--scope", "repository"
+    )
     assert len(status["identity_relations"]) == 1
     assert len(status["identity_relation_cancellations"]) == 1
     assert not status["active_identity_relations"]

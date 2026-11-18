@@ -33,7 +33,7 @@ def evidence(directory):
         for p in directory.iterdir()
         if p.is_file()
         and (
-            p.name.startswith(("core.sqlite3", "context.sqlite3"))
+            p.name.startswith(("repository.sqlite3", "context.sqlite3"))
             or p.name == "p1-recovery-stop.json"
         )
     }
@@ -45,19 +45,19 @@ def main(output):
     os.chdir(root)
     from repo_catalog.adapters.sqlite import p1_schema as schema
     from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
-    from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.p1_context import ContextStore
-    from repo_catalog.application.core_query import CoreQueryService
-    from repo_catalog.application.core_recovery import CoreRecoveryService
+    from repo_catalog.adapters.sqlite.repository_recovery import RecoveryWorkBudget
     from repo_catalog.application.recovery import RecoveryService
+    from repo_catalog.application.repository_query import RepositoryQueryService
+    from repo_catalog.application.repository_recovery import RepositoryRecoveryService
     from repo_catalog.domain.context_admission import (
         AdmissionSelection,
         DependencySet,
         create_local_admission_service,
     )
     from repo_catalog.domain.p1_coordination import CoordinationError
-    from repo_catalog.domain.p1_core import NativeObject, native_object_oid
+    from repo_catalog.domain.p1_repository import NativeObject, native_object_oid
     from repo_catalog.domain.recovery import (
         BackupScope,
         RecoveryBudget,
@@ -82,7 +82,7 @@ def main(output):
     }
     assert set(distributions) == {
         "repo-catalog-paired-recovery",
-        "repo-catalog-core",
+        "repo-catalog-repository",
         "repo-catalog-context",
         "repo-catalog-operational",
         "repo-catalog-search",
@@ -126,7 +126,7 @@ def main(output):
     def catalog(name):
         directory = root / name
         directory.mkdir()
-        for role in ("core", "context"):
+        for role in ("repository", "context"):
             schema.initialize(
                 directory / (role + ".sqlite3"), role, repository, instance
             )
@@ -152,15 +152,15 @@ def main(output):
             f"tree {tree.object_oid.object_oid}\nauthor Fixture <fixture@example.invalid> 1700000000 +0000\ncommitter Fixture <fixture@example.invalid> 1700000000 +0000\n\npaired fixture\n"
         ).encode(),
     )
-    with closing(GitCore(source / "core.sqlite3")) as core:
-        core.admit_repository(repository)
-        core.admit_metadata(tree, str(uuid4()), RecoveryWorkBudget())
-        core.admit_metadata(commit, str(uuid4()), RecoveryWorkBudget())
+    with closing(GitRepositoryStore(source / "repository.sqlite3")) as repository_store:
+        repository_store.admit_repository(repository)
+        repository_store.admit_metadata(tree, str(uuid4()), RecoveryWorkBudget())
+        repository_store.admit_metadata(commit, str(uuid4()), RecoveryWorkBudget())
     text(source, "baseline Context text")
     backup = root / "backup"
     receipt = service.create_consistent_backup(source, backup, scope)
     assert receipt.verified_clean and set(receipt.manifest.stores) == {
-        "core",
+        "repository",
         "context",
     }
     assert receipt.manifest.retained_byte_summary.commit_count == 1
@@ -205,26 +205,26 @@ def main(output):
         ),
         (notes_tree,),
     )
-    with closing(GitCore(source / "core.sqlite3")) as core:
-        core.admit_ref_observation(
+    with closing(GitRepositoryStore(source / "repository.sqlite3")) as repository_store:
+        repository_store.admit_ref_observation(
             RefObservation(key, repository, b"refs/notes/\xff", "synthetic", "visible")
         )
-        core.admit_ref_observation_claim(claim)
-        core.admit_ref_note(proof, note, str(uuid4()), RecoveryWorkBudget())
+        repository_store.admit_ref_observation_claim(claim)
+        repository_store.admit_ref_note(proof, note, str(uuid4()), RecoveryWorkBudget())
 
     # Real committed WALs survive abrupt producer exit, without SQLite shutdown
     # cleanup. Product salvage must inspect preserved copies and retain originals.
     worker = r"""
 import os,sys
 from pathlib import Path
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepository
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.shared_values import OID
 from repo_catalog.domain.context_admission import AdmissionSelection,DependencySet,create_local_admission_service
 directory=Path(sys.argv[1])
-if sys.argv[2]=='core':
- core=GitCore(directory/'core.sqlite3');core.admit_object(OID('sha1','9'*40))
+if sys.argv[2]=='repository':
+ repository=GitRepository(directory/'repository.sqlite3');repository.admit_object(OID('sha1','9'*40))
 else:
  db=connect(directory/'context.sqlite3','context')
  auth,admission,_=create_local_admission_service('salvage_merge',grants=DependencySet(),selection=AdmissionSelection(all_selected=True))
@@ -232,7 +232,7 @@ else:
  with store.admission_transaction(admission=admission):store.text('WAL-only Context text')
 os._exit(0)
 """
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         subprocess.run(
             [sys.executable, "-I", "-c", worker, str(source), role],
             check=True,
@@ -261,7 +261,7 @@ os._exit(0)
         restored_receipt = service.restore_backup(backup, target, repository)
         assert restored_receipt.revalidated_clean and set(
             restored_receipt.revalidated_stores
-        ) == {"core", "context"}
+        ) == {"repository", "context"}
         assert (
             not (target / "operational.sqlite3").exists()
             and not (target / "search.sqlite3").exists()
@@ -269,7 +269,7 @@ os._exit(0)
         return target
 
     refuses(
-        lambda: CoreRecoveryService().restore_backup(
+        lambda: RepositoryRecoveryService().restore_backup(
             backup, root / "wrong-scope", repository
         ),
         RecoveryCapabilityError,
@@ -280,20 +280,22 @@ os._exit(0)
     assert merged.admitted_units > 0
     replay = service.merge_salvage(fresh, salvage, request_id="typed-merge")
     assert replay.replayed_units > 0
-    body = CoreQueryService(fresh, mode="core_only").read_ref_note_bytes(
+    body = RepositoryQueryService(fresh, mode="repository_only").read_ref_note_bytes(
         claim, mapping, RecoveryWorkBudget()
     )
     assert body.available and body.verified and body.body_bytes == note.body
     other = replace(
         claim, provenance=replace(claim.provenance, coordinate="unverified-other-claim")
     )
-    with closing(GitCore(fresh / "core.sqlite3")) as core:
-        core.admit_ref_observation_claim(other)
-        recovered_identity = core.catalog_identity()
+    with closing(GitRepositoryStore(fresh / "repository.sqlite3")) as repository_store:
+        repository_store.admit_ref_observation_claim(other)
+        recovered_identity = repository_store.catalog_identity()
         assert recovered_identity == (repository, instance)
-        assert core.sql("SELECT 1 FROM git_objects WHERE object_oid=?", ("9" * 40,))
+        assert repository_store.sql(
+            "SELECT 1 FROM git_objects WHERE object_oid=?", ("9" * 40,)
+        )
     assert (
-        not CoreQueryService(fresh, mode="core_only")
+        not RepositoryQueryService(fresh, mode="repository_only")
         .read_ref_note_bytes(other, mapping, RecoveryWorkBudget())
         .available
     )
@@ -341,16 +343,16 @@ os._exit(0)
     for suffix in (".json", ".reserved.json"):
         target = restored("loss-" + ("report" if suffix == ".json" else "reservation"))
         lost = target / ("p1-recovery-request-final" + suffix)
-        original = GitCore.close
+        original = GitRepositoryStore.close
         removed = []
 
-        def lost_on_close(core):
-            original(core)
+        def lost_on_close(repository_store):
+            original(repository_store)
             if lost.exists():
                 lost.unlink()
                 removed.append(True)
 
-        with patch.object(GitCore, "close", lost_on_close):
+        with patch.object(GitRepositoryStore, "close", lost_on_close):
             refuses(
                 lambda: service.merge_salvage(target, salvage, request_id="final"),
                 RecoveryError,
@@ -386,13 +388,13 @@ os._exit(0)
     )
 
     stopped_target = restored("late-stop")
-    original_close = GitCore.close
+    original_close = GitRepositoryStore.close
 
-    def stopped_close(core):
-        original_close(core)
+    def stopped_close(repository_store):
+        original_close(repository_store)
         persist_catalog_stop(stopped_target, "synthetic installed owned cleanup stop")
 
-    with patch.object(GitCore, "close", stopped_close):
+    with patch.object(GitRepositoryStore, "close", stopped_close):
         refuses(
             lambda: service.merge_salvage(stopped_target, salvage), CoordinationError
         )

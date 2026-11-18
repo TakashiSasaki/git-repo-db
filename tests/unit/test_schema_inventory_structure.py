@@ -20,7 +20,7 @@ def ir():
 def test_1_introspection_success(ir):
     assert validate_inventory(ir) == []
     assert set(ir["stores"]) == {
-        "p1.core",
+        "p1.repository",
         "p1.context",
         "access",
         "p1.operational",
@@ -36,7 +36,7 @@ def test_2_table_inventories_match(ir):
     # Includes four identity-evidence tables in their owning domain, with no
     # former mixed Catalog3 schema hidden alongside the separated factories.
     assert {k: v["table_count"] for k, v in ir["stores"].items()} == {
-        "p1.core": 25,
+        "p1.repository": 25,
         "p1.context": 21,
         "access": 10,
         "p1.operational": 8,
@@ -61,7 +61,7 @@ def test_3_product_tables_distinguished(ir):
 
 def test_4_no_physical_fk_omitted_or_duplicated(ir):
     assert {k: v["foreign_key_count"] for k, v in ir["stores"].items()} == {
-        "p1.core": 34,
+        "p1.repository": 34,
         "p1.context": 31,
         "access": 12,
         "p1.operational": 6,
@@ -76,7 +76,9 @@ def test_4_no_physical_fk_omitted_or_duplicated(ir):
 
 
 def test_5_composite_foreign_keys_grouped(ir):
-    fks = ir["stores"]["p1.core"]["tables"]["core_coverage_proofs"]["foreign_keys"]
+    fks = ir["stores"]["p1.repository"]["tables"]["repository_coverage_proofs"][
+        "foreign_keys"
+    ]
     claim = next(fk for fk in fks if fk["target_table"] == "coverage_claims")
     assert claim["is_composite"]
     assert (

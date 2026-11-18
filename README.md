@@ -9,7 +9,7 @@ Git の構造・参照・履歴・Notes、GitHub の PR・Issue・レビュー�
 
 | 責任 | 所有する内容 |
 | --- | --- |
-| Core | Git の恒久的な同一性、観測・主張、構造、許可された検証済み表現 |
+| Repository | Git の恒久的な同一性、観測・主張、構造、許可された検証済み表現 |
 | Context | Provider のリソース・テキスト・取得元・項目別の根拠と競合 |
 | Access | 接続先・Scope・接続設定・ローカルな承認 |
 | Operational | 再開可能な取得要求、累積予算、実行・キャッシュの状態 |
@@ -30,11 +30,11 @@ scripts/local-run.sh python scripts/persistence_model.py --format markdown
 ```bash
 ./scripts/setup-local-python.sh
 scripts/local-run.sh repo-catalog --help
-scripts/local-run.sh repo-catalog init --scope core --catalog /path/to/new-catalog
+scripts/local-run.sh repo-catalog init --scope repository --catalog /path/to/new-catalog
 scripts/local-run.sh repo-catalog doctor --catalog /path/to/new-catalog
 ```
 
-`--catalog` は新しい保存先を指定します。`--scope` は `core`、`context`、`paired`、`access`、`operational`、`search`、`filesystem`、`worktrees` から選びます。`paired` は同じカタログの Core と Context を初期化します。取得の再開・予算管理には Operational を明示的に追加します。
+`--catalog` は新しい保存先を指定します。`--scope` は `repository`、`context`、`paired`、`access`、`operational`、`search`、`filesystem`、`worktrees` から選びます。`paired` は同じカタログの Repository と Context を初期化します。取得の再開・予算管理には Operational を明示的に追加します。
 
 ```bash
 scripts/local-run.sh repo-catalog init --scope operational --catalog /path/to/new-catalog
@@ -86,7 +86,7 @@ scripts/local-run.sh repo-catalog-local export \
 
 Exchange は選んだ型付きリソースと依存・元の根拠を交換します。受信した主張は送信者の認証や受信側の検証成功を意味しません。原本の補助的な HTTP 記録はドメインデータから独立し、その削除や記録障害でカタログの照会・交換・復旧を無効にしません。
 
-保存済みの権威あるデータに破損を検出した場合は通常利用を停止します。疑わしい元データを変更せず、明示的な診断・サルベージ、新しい保存先へのバックアップ復元、型と根拠を再検証したマージ、検証後の有効化を行います。Core の事実を更新・削除して修復する操作や、旧形式の隔離件数による継続はありません。
+保存済みの権威あるデータに破損を検出した場合は通常利用を停止します。疑わしい元データを変更せず、明示的な診断・サルベージ、新しい保存先へのバックアップ復元、型と根拠を再検証したマージ、検証後の有効化を行います。Repository の事実を更新・削除して修復する操作や、旧形式の隔離件数による継続はありません。
 
 [現行ランタイム案内](docs/current-runtime-reference.md)、[ADR 一覧](docs/adr/README.md)、[生成スキーマ監査](docs/implementation/separated-persistence-boundary.md)を現在の入口にしてください。Schema 20/21 の文書や保存済み検証結果は、それぞれの revision の履歴です。開発中のプロトタイプであり、通常の開発 CI の成功はリリース受入や全環境の検証を意味しません。
 

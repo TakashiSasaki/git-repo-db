@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from repo_catalog.adapters.sqlite import core_recovery as module
+from repo_catalog.adapters.sqlite import repository_recovery as module
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import (
     ActivationError,
@@ -68,7 +68,7 @@ def test_oversized_manifest_is_rejected_before_json(
 
 
 @pytest.mark.parametrize(
-    "sidecar", ["core.sqlite3-wal", "core.sqlite3-shm", "extra-dir"]
+    "sidecar", ["repository.sqlite3-wal", "repository.sqlite3-shm", "extra-dir"]
 )
 def test_normal_backup_sidecars_and_extras_rejected(
     backup, tmp_path, repo_uuid, sidecar
@@ -88,7 +88,7 @@ def test_copied_bytes_not_prior_hash_control_restore(
     original = module._copy_verified_fd
 
     def mutate(fd, target, size, digest):
-        with (backup / "stores/core.sqlite3").open("r+b") as stream:
+        with (backup / "stores/repository.sqlite3").open("r+b") as stream:
             stream.seek(100)
             stream.write(b"changed")
         return original(fd, target, size, digest)
@@ -110,7 +110,7 @@ def test_pinned_source_survives_parent_symlink_swap(
             (backup / "stores").rename(moved)
             hostile = tmp_path / "hostile"
             hostile.mkdir()
-            (hostile / "core.sqlite3").write_bytes(b"untrusted substitution")
+            (hostile / "repository.sqlite3").write_bytes(b"untrusted substitution")
             (backup / "stores").symlink_to(hostile)
         return original(fd, target, size, digest)
 
@@ -206,7 +206,7 @@ def test_hard_kill_during_copy_preserves_evidence(backup, tmp_path, repo_uuid):
     script = """
 import os, signal, sys
 from pathlib import Path
-from repo_catalog.adapters.sqlite import core_recovery as recovery
+from repo_catalog.adapters.sqlite import repository_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 def die(*args):
     os.kill(os.getpid(), signal.SIGKILL)
@@ -260,7 +260,7 @@ def test_restore_destination_parent_swap_cannot_redirect_files(
     with pytest.raises(OSError):
         RecoveryService().restore_backup(backup, parent / "dest", repo_uuid)
     assert not list(unrelated.iterdir())
-    assert (moved / "dest/core.sqlite3").is_file()  # coherent but unacknowledged
+    assert (moved / "dest/repository.sqlite3").is_file()  # coherent but unacknowledged
 
 
 def test_post_rename_sync_failure_is_uncertain_publication(tmp_path, monkeypatch):
@@ -278,7 +278,7 @@ def test_post_rename_sync_failure_is_uncertain_publication(tmp_path, monkeypatch
 
 
 def _activation_paused(catalog, locator, entered, release):
-    original = module.CoreRecoveryAdapter._validate_and_summarize_core
+    original = module.RepositoryRecoveryAdapter._validate_and_summarize_repository
 
     def validate(self, path):
         entered.set()
@@ -286,7 +286,7 @@ def _activation_paused(catalog, locator, entered, release):
             raise RuntimeError("test did not release validation")
         return original(self, path)
 
-    module.CoreRecoveryAdapter._validate_and_summarize_core = validate
+    module.RepositoryRecoveryAdapter._validate_and_summarize_repository = validate
     RecoveryService().activate_catalog(Path(catalog), Path(locator))
 
 
@@ -376,7 +376,7 @@ def test_activation_catalog_path_swap_is_not_acknowledged(
             return
         catalog.rename(moved)
         catalog.mkdir()
-        (catalog / "core.sqlite3").write_bytes(b"NOT A DATABASE")
+        (catalog / "repository.sqlite3").write_bytes(b"NOT A DATABASE")
 
     def sync(path):
         original_sync(path)
@@ -397,7 +397,7 @@ def test_activation_catalog_path_swap_is_not_acknowledged(
     with pytest.raises(ActivationError, match="directory identity changed"):
         RecoveryService().activate_catalog(catalog, locator)
     assert moved.exists()
-    assert (catalog / "core.sqlite3").read_bytes() == b"NOT A DATABASE"
+    assert (catalog / "repository.sqlite3").read_bytes() == b"NOT A DATABASE"
     assert not (catalog / "operational.sqlite3").exists()
     if previous:
         assert locator.resolve() == old
@@ -422,7 +422,7 @@ def test_activation_locator_parent_swap_is_not_acknowledged(
     moved = tmp_path / "original-locators"
     evil = tmp_path / "evil"
     evil.mkdir()
-    (evil / "core.sqlite3").write_bytes(b"UNVALIDATED EVIL")
+    (evil / "repository.sqlite3").write_bytes(b"UNVALIDATED EVIL")
     identity = parent.stat()
     original_fsync = module.os.fsync
 
@@ -447,7 +447,7 @@ def test_activation_locator_parent_swap_is_not_acknowledged(
     # Rollback touches only the pinned original directory, never the untrusted
     # replacement namespace supplied by the racing process.
     assert locator.resolve() == evil
-    assert (locator / "core.sqlite3").read_bytes() == b"UNVALIDATED EVIL"
+    assert (locator / "repository.sqlite3").read_bytes() == b"UNVALIDATED EVIL"
     if previous:
         assert (moved / "active").resolve() == old
     else:

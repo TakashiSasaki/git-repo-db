@@ -32,7 +32,9 @@ def access_workflow_steps():
 
 @pytest.mark.parametrize("mode", ["development", "release"])
 def test_access_runtime_and_packaging_follow_common_validation_mode(history, mode):
-    plan = followup(history, "src/repo_catalog/adapters/sqlite/git_core.py", mode=mode)
+    plan = followup(
+        history, "src/repo_catalog/adapters/sqlite/git_repository.py", mode=mode
+    )
     steps = access_workflow_steps()
     cohorts = {
         "tests": (
@@ -749,9 +751,9 @@ def test_unknown_changed_input_does_not_trigger_full_hosted_testing_during_devel
         ("README.md", "prose"),
         ("pyproject.toml", "shared"),
         ("src/repo_catalog/new.json", "shared"),
-        ("packages/core/src/repo_catalog/domain/core_query.py", "shared"),
+        ("packages/repository/src/repo_catalog/domain/repository_query.py", "shared"),
         ("packages/contracts/src/repo_catalog/domain/shared_values.py", "shared"),
-        ("packages/core/pyproject.toml", "shared"),
+        ("packages/repository/pyproject.toml", "shared"),
         ("packages/context/src/repo_catalog/application/context_query.py", "shared"),
         (
             "packages/runtime/src/repo_catalog/adapters/sqlite/catalog_runtime.py",

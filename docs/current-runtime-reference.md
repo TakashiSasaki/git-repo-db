@@ -6,11 +6,17 @@ former normal Catalog3 / Schema 21 startup. The old DB layout, selector aliases
 and command syntax have no compatibility or conversion path. Existing user DBs
 are not rewritten or removed by this cutover.
 
+The Repository role defined by [ADR 0044](adr/0044-repository-store-rename.md)
+uses repository.sqlite3. Start it in a new empty directory if an earlier
+catalog has core.sqlite3. The P1 SQLite family requires user_version 5.
+Use backup manifest v4 and Exchange v9 for new backup and interchange data.
+Keep legacy catalogs and exports in their original locations.
+
 ## Responsibilities, files and classes
 
 | Role | Authority | Initialization |
 | --- | --- | --- |
-| Core | Permanent Git identity, attributed metadata and ref observations, intrinsic structure, permitted checked representations and Notes evidence | `init --scope core` |
+| Repository | Permanent Git identity, attributed metadata and ref observations, intrinsic structure, permitted checked representations and Notes evidence | `init --scope repository` |
 | Context | Provider resources, modeled text, original field evidence, Source inventories and relations | `init --scope context` |
 | Access | Scope/locator registrations, connection settings and local approvals | `init --scope access` |
 | Operational | Reconstructible requests, cumulative work, resumable progress and managed caches | `init --scope operational` |
@@ -18,7 +24,7 @@ are not rewritten or removed by this cutover.
 | Filesystem | Metadata/digests and complete or partial filesystem scan history | `init --scope filesystem` |
 | Worktrees | Repository/worktree observations and qualified optional links | `init --scope worktrees` |
 
-`init --scope paired` chooses Core and Context together. Each command takes an
+`init --scope paired` chooses Repository and Context together. Each command takes an
 explicit `--catalog PATH`; compatible existing selected roles may be reused.
 Missing optional roles are not a reason to initialize every store. The role
 registry counts schema definitions, not files opened at every startup. Independent
@@ -79,10 +85,10 @@ may remain unresolved when their registration was not selected for transfer;
 actual Source-owned operations still require their dependencies and known
 service conflicts are refused.
 
-Core-only metadata reads and Git-only recovery do not require Context,
+Repository-only metadata reads and Git-only recovery do not require Context,
 Operational or Search initialization. Acquisition/resume operations that use
 Operational work accounting require that capability explicitly. `doctor` inspects
-existing Core/Context/Operational/Search catalog roles; separate Access and local
+existing Repository/Context/Operational/Search catalog roles; separate Access and local
 catalog administration retain their own verification surfaces. Optional FTS or
 Operational telemetry availability does not establish domain completeness or
 invalidate sound authoritative facts.
@@ -120,7 +126,7 @@ the current PR changes. Historical completeness does not certify the current PR.
 Provider document `--path` and full `--commit` selectors with an explicit document
 `--kind`, such as `review_comments`. `--object-format` selects SHA-1 or SHA-256 for
 the commit. In `--mode context_only --no-require-git`, these selectors use actual
-captured Provider fields and need no Core or native file bodies. Required text,
+captured Provider fields and need no Repository or native file bodies. Required text,
 actual parent/thread lineage and whole requested-scope coverage still apply;
 the selected documents do not establish Git-byte verification.
 
@@ -136,7 +142,7 @@ Source dependencies. A broad resource selection includes that resource's history
 an exact collection key excludes unrelated sibling collections. Finite export
 limits withhold an entire unproven unit instead of truncating its membership.
 
-Context import requires `--authority`; Core import also retains explicit
+Context import requires `--authority`; Repository import also retains explicit
 `--permit-repository` scope. The root filter and receiver's local admission
 selection have separate purposes. Declare finite grants for the required
 `resources`, `repositories`, `sources`, `provider_registrations` and any
@@ -154,7 +160,7 @@ those immutable originals; ordinary proof admission still checks current evidenc
 
 ## Data, work and completeness
 
-Core is application-level INSERT-only. It retains verified commit/tree/tag
+Repository is application-level INSERT-only. It retains verified commit/tree/tag
 representations and receiver-evidenced Notes bodies; ordinary file-body archival
 is excluded. Filesystem scans retain metadata/digests, not file contents.
 Context owns modeled Provider text and per-field evidence. Missing and explicit
@@ -201,7 +207,7 @@ actual deadlines and cumulative accounting.
 An `acquire github` request with `operation: "sync"` may include `git_source` to
 acquire the actual captured head/base, optional merge and observed review-target
 metadata while checking fresh Git refs. This requires an already initialized
-Core plus the explicit Context/admission and Operational capabilities. Without
+Repository plus the explicit Context/admission and Operational capabilities. Without
 `git_source`, the HTTP operation can retain Provider facts; that alone does not
 prove their required Git metadata is available.
 
@@ -260,7 +266,7 @@ Explicit salvage emits untrusted typed candidates; current local authority,
 canonical values, complete dependencies and original provenance are revalidated
 before fresh-destination admission. No sender flag, recovered local approval or
 byte-presence claim supplies authority. Git-only backup is labeled; full
-Context-containing backup is paired Core+Context. Access is separately scoped.
+Context-containing backup is paired Repository+Context. Access is separately scoped.
 Normal backup/restore never completes with known damaged retained bytes.
 
 Managed cache GC acts only on exactly registered, unchanged roots/inventories

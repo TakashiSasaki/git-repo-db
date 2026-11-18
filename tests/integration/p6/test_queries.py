@@ -12,7 +12,7 @@ import pytest
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.p1_context import CoverageScope
-from repo_catalog.domain.p1_core import CoreCoverageScope, CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryCoverageScope, RepositoryFailure
 from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.production_query import QueryError
 from tests.integration.p6.conftest import (
@@ -25,22 +25,22 @@ from tests.integration.p6.conftest import (
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-def test_core_only_queries_objects_claims_relations_notes_and_coverage(
+def test_repository_only_queries_objects_claims_relations_notes_and_coverage(
     tmp_path: Path, fmt: str
 ) -> None:
-    catalog_dir = tmp_path / f"core_only_{fmt}"
+    catalog_dir = tmp_path / f"repository_only_{fmt}"
     fixtures = populate_rich_catalog(
-        catalog_dir, fmt=fmt, include_core=True, include_context=False
+        catalog_dir, fmt=fmt, include_repository=True, include_context=False
     )
     assert not (catalog_dir / "context.sqlite3").exists()
 
     service = ProductionQueryService(catalog_dir)
-    assert service.detect_mode() == "core_only"
+    assert service.detect_mode() == "repository_only"
     token = service.snapshot_token()
-    assert token.mode == "core_only"
+    assert token.mode == "repository_only"
     assert token.repository_uuidv4 == REPOSITORY
     assert token.catalog_instance_uuidv4 == INSTANCE
-    assert token.core_sha256 is not None
+    assert token.repository_sha256 is not None
     assert token.context_sha256 is None
 
     # Repository view
@@ -154,14 +154,14 @@ def test_core_only_queries_objects_claims_relations_notes_and_coverage(
     )
     assert any(group.status == "partial" for group in view.groups)
 
-    # Core Coverage
-    cov_scope = CoreCoverageScope("repository", (REPOSITORY, "refs"))
-    cov = service.get_core_coverage(cov_scope)
+    # Repository Coverage
+    cov_scope = RepositoryCoverageScope("repository", (REPOSITORY, "refs"))
+    cov = service.get_repository_coverage(cov_scope)
     assert cov.state == "complete"
     assert cov.known_empty is False
     assert cov.latest_observed_at_us == 1700000300000000
 
-    # Context queries on core_only catalog fail closed with STORE_UNAVAILABLE
+    # Context queries on repository_only catalog fail closed with STORE_UNAVAILABLE
     with pytest.raises(QueryError) as err:
         service.list_context_resources()
     assert err.value.code == "STORE_UNAVAILABLE"
@@ -172,16 +172,16 @@ def test_context_only_queries_resources_fields_relations_inventories_and_coverag
 ) -> None:
     catalog_dir = tmp_path / "context_only"
     fixtures = populate_rich_catalog(
-        catalog_dir, fmt="sha1", include_core=False, include_context=True
+        catalog_dir, fmt="sha1", include_repository=False, include_context=True
     )
-    assert not (catalog_dir / "core.sqlite3").exists()
+    assert not (catalog_dir / "repository.sqlite3").exists()
 
     service = ProductionQueryService(catalog_dir)
     assert service.detect_mode() == "context_only"
     token = service.snapshot_token()
     assert token.mode == "context_only"
     assert token.context_sha256 is not None
-    assert token.core_sha256 is None
+    assert token.repository_sha256 is None
 
     # Providers and Sources
     providers = service.list_providers()
@@ -196,7 +196,7 @@ def test_context_only_queries_resources_fields_relations_inventories_and_coverag
     assert len(sources[0].inventories) == 1
     assert sources[0].inventories[0].state == "complete"
 
-    # Pull Request 42: competing candidates, explicit null vs unobserved, text body, and unresolved Core refs
+    # Pull Request 42: competing candidates, explicit null vs unobserved, text body, and unresolved Repository refs
     pr_view = service.get_context_resource(fixtures["pr_key"], include_text=True)
     assert pr_view.repository_uuidv4 == REPOSITORY
     assert pr_view.identifier_namespace is None
@@ -221,10 +221,10 @@ def test_context_only_queries_resources_fields_relations_inventories_and_coverag
         for txt in pr_view.resolved_texts.values()
     )
 
-    # In context_only mode, Core dependencies are reported with available=False, required=False
-    assert len(pr_view.core_dependencies) == 2
-    assert all(not dep.available for dep in pr_view.core_dependencies)
-    assert all(not dep.required for dep in pr_view.core_dependencies)
+    # In context_only mode, Repository dependencies are reported with available=False, required=False
+    assert len(pr_view.repository_dependencies) == 2
+    assert all(not dep.available for dep in pr_view.repository_dependencies)
+    assert all(not dep.required for dep in pr_view.repository_dependencies)
 
     # Child resources and relations
     children = service.list_context_resources(identifier_namespace=fixtures["pr_key"])
@@ -253,35 +253,35 @@ def test_context_only_queries_resources_fields_relations_inventories_and_coverag
     assert issue_empty_cov.state == "complete"
     assert issue_empty_cov.known_empty is True
 
-    # Core queries on context_only catalog fail closed with STORE_UNAVAILABLE
+    # Repository queries on context_only catalog fail closed with STORE_UNAVAILABLE
     with pytest.raises(QueryError) as err:
         service.list_git_objects()
     assert err.value.code == "STORE_UNAVAILABLE"
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-def test_paired_cross_store_resolution_present_vs_absent_core_oids(
+def test_paired_cross_store_resolution_present_vs_absent_repository_oids(
     tmp_path: Path, fmt: str
 ) -> None:
     catalog_dir = tmp_path / f"paired_{fmt}"
     fixtures = populate_rich_catalog(
-        catalog_dir, fmt=fmt, include_core=True, include_context=True
+        catalog_dir, fmt=fmt, include_repository=True, include_context=True
     )
 
     service = ProductionQueryService(catalog_dir)
     assert service.detect_mode() == "paired"
     paired_pr = service.get_paired_resource(
-        fixtures["pr_key"], include_text=True, include_core_bytes=True
+        fixtures["pr_key"], include_text=True, include_repository_bytes=True
     )
     assert paired_pr.snapshot_token == service.snapshot_token().encode()
 
-    by_role = {res.reference.role: res for res in paired_pr.core_resolutions}
+    by_role = {res.reference.role: res for res in paired_pr.repository_resolutions}
     assert set(by_role.keys()) == {"head", "base"}
 
-    # 'head' points to commit_obj.object_oid which IS in Core and linked via link_core
+    # 'head' points to commit_obj.object_oid which IS in Repository and linked via link_repository
     head_res = by_role["head"]
-    assert head_res.available_in_core is True
-    assert head_res.core_required is True
+    assert head_res.available_in_repository is True
+    assert head_res.repository_required is True
     assert head_res.object_view is not None
     assert head_res.object_view.object_oid == fixtures["commit_obj"].object_oid
     assert head_res.object_view.native_type == "commit"
@@ -293,10 +293,10 @@ def test_paired_cross_store_resolution_present_vs_absent_core_oids(
         == fixtures["note_blob"].object_oid
     )
 
-    # 'base' points to absent_oid which is NOT in Core (reported only)
+    # 'base' points to absent_oid which is NOT in Repository (reported only)
     base_res = by_role["base"]
-    assert base_res.available_in_core is False
-    assert base_res.core_required is False
+    assert base_res.available_in_repository is False
+    assert base_res.repository_required is False
     assert base_res.object_view is None
     assert base_res.ref_notes_targets == ()
 
@@ -304,10 +304,10 @@ def test_paired_cross_store_resolution_present_vs_absent_core_oids(
 def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
     tmp_path: Path,
 ) -> None:
-    # 1. Tamper with retained_metadata in core.sqlite3 (core_only mode verifies selected bytes)
+    # 1. Tamper with retained_metadata in repository.sqlite3 (repository_only mode verifies selected bytes)
     cat_meta = tmp_path / "corrupt_metadata"
     fix_meta = populate_rich_catalog(
-        cat_meta, fmt="sha1", include_core=True, include_context=False
+        cat_meta, fmt="sha1", include_repository=True, include_context=False
     )
     commit_object_oid = fix_meta["commit_obj"].object_oid
     service_meta = ProductionQueryService(cat_meta)
@@ -315,7 +315,7 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
     valid_res = service_meta.read_metadata_bytes(commit_object_oid)
     assert valid_res.available is True and valid_res.verified is True
 
-    with closing(connect(cat_meta / "core.sqlite3", "core")) as db:
+    with closing(connect(cat_meta / "repository.sqlite3", "repository")) as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_retained_metadata_update'"
         ).fetchone()[0]
@@ -329,20 +329,20 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
         db.execute(trigger)
         db.commit()
 
-    with pytest.raises(CoreFailure) as exc_info:
+    with pytest.raises(RepositoryFailure) as exc_info:
         service_meta.read_metadata_bytes(commit_object_oid)
     assert exc_info.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (cat_meta / "p1-recovery-stop.json").exists()
 
     # Subsequent reads are fenced
-    with pytest.raises(CoreFailure) as fenced_err:
+    with pytest.raises(RepositoryFailure) as fenced_err:
         service_meta.snapshot_token()
     assert fenced_err.value.code == "RECOVERY_STOP"
 
-    # 2. Tamper with retained_notes in core.sqlite3 (core_only mode verifies selected bytes)
+    # 2. Tamper with retained_notes in repository.sqlite3 (repository_only mode verifies selected bytes)
     cat_note = tmp_path / "corrupt_note"
     fix_note = populate_rich_catalog(
-        cat_note, fmt="sha1", include_core=True, include_context=False
+        cat_note, fmt="sha1", include_repository=True, include_context=False
     )
     service_note = ProductionQueryService(cat_note)
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
@@ -355,7 +355,7 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
     valid_note = service_note.read_ref_note_bytes(claim, content, UnlimitedWorkBudget())
     assert valid_note.available is True and valid_note.verified is True
 
-    with closing(connect(cat_note / "core.sqlite3", "core")) as db:
+    with closing(connect(cat_note / "repository.sqlite3", "repository")) as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_retained_notes_update'"
         ).fetchone()[0]
@@ -366,14 +366,16 @@ def test_verification_aware_byte_reads_detect_corruption_and_fence_catalog(
         db.execute(trigger)
         db.commit()
 
-    with pytest.raises(CoreFailure) as note_exc:
+    with pytest.raises(RepositoryFailure) as note_exc:
         service_note.read_ref_note_bytes(claim, content, UnlimitedWorkBudget())
     assert note_exc.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (cat_note / "p1-recovery-stop.json").exists()
 
     # 3. Tamper with text_bodies in context.sqlite3 (context_only mode verifies selected bytes)
     cat_ctx = tmp_path / "corrupt_context_text"
-    populate_rich_catalog(cat_ctx, fmt="sha1", include_core=False, include_context=True)
+    populate_rich_catalog(
+        cat_ctx, fmt="sha1", include_repository=False, include_context=True
+    )
     service_ctx = ProductionQueryService(cat_ctx)
 
     with closing(connect(cat_ctx / "context.sqlite3", "context")) as db:

@@ -16,7 +16,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
-from repo_catalog.domain.p1_core import native_object_oid
+from repo_catalog.domain.p1_repository import native_object_oid
 from repo_catalog.domain.recovery import BackupScope, RecoveryBudget, RecoveryError
 from tests.integration.p7.conftest import merge_preflight_input_bytes
 
@@ -25,9 +25,9 @@ INSTANCE = "22222222-2222-4222-8222-222222222222"
 
 
 def _worker(directory, salvage, budget, stage, output=None, start=None):
-    from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.recovery_budget import DurableRecoveryRequest
+    from repo_catalog.adapters.sqlite.repository_recovery import RecoveryWorkBudget
 
     def die():
         os.kill(os.getpid(), signal.SIGKILL)
@@ -62,14 +62,14 @@ def _worker(directory, salvage, budget, stage, output=None, start=None):
 
         RecoveryWorkBudget.charge = charge
     elif stage == "admitted":
-        original = GitCore.admit_metadata
+        original = GitRepositoryStore.admit_metadata
 
         def admit(self, *args, **kwargs):
             result = original(self, *args, **kwargs)
             die()
             return result
 
-        GitCore.admit_metadata = admit
+        GitRepositoryStore.admit_metadata = admit
     if start:
         start.wait(10)
     receipt = SQLiteRecoveryAdapter().merge_salvage(
@@ -84,7 +84,7 @@ def catalog(tmp_path):
     destination = tmp_path / "fresh"
     source = tmp_path / "source"
     source.mkdir()
-    initialize(source / "core.sqlite3", "core", REPO, INSTANCE)
+    initialize(source / "repository.sqlite3", "repository", REPO, INSTANCE)
     adapter = SQLiteRecoveryAdapter()
     backup = tmp_path / "baseline"
     adapter.create_consistent_backup(source, backup, BackupScope.GIT_ONLY)
@@ -123,7 +123,7 @@ def _state(catalog):
 
 
 def _count(catalog):
-    with sqlite3.connect(catalog / "core.sqlite3") as connection:
+    with sqlite3.connect(catalog / "repository.sqlite3") as connection:
         return connection.execute("SELECT count(*) FROM retained_metadata").fetchone()[
             0
         ]
@@ -133,7 +133,7 @@ def _count(catalog):
 def test_sigkill_keeps_reserved_expenditure_and_restart(catalog, tmp_path, stage):
     path, body = _candidate(tmp_path)
     # One full candidate decodes the bytes and independently reprocesses them
-    # at the production Core boundary; both expenditures must be available.
+    # at the production Repository boundary; both expenditures must be available.
     allowance = merge_preflight_input_bytes(catalog) + 2 * len(body)
     budget = RecoveryBudget(max_work_units={"input_bytes": allowance})
     process = multiprocessing.get_context("spawn").Process(
@@ -169,7 +169,7 @@ def test_two_processes_cannot_spend_same_allowance(catalog, tmp_path):
     path1, body = _candidate(tmp_path, "one")
     path2, _ = _candidate(tmp_path, "two")
     # One full candidate decodes the bytes and independently reprocesses them
-    # at the production Core boundary; both expenditures must be available.
+    # at the production Repository boundary; both expenditures must be available.
     allowance = merge_preflight_input_bytes(catalog) + 2 * len(body)
     budget = RecoveryBudget(max_work_units={"input_bytes": allowance})
     context = multiprocessing.get_context("spawn")
@@ -290,7 +290,7 @@ def _settlement_worker(directory, crash_during_settlement):
     import io
 
     import repo_catalog.adapters.sqlite.recovery_budget as module
-    from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
+    from repo_catalog.adapters.sqlite.repository_recovery import RecoveryWorkBudget
     from repo_catalog.domain.p1_coordination import NotesLimits
 
     budget = RecoveryBudget(max_work_units={"input_bytes": 10})
@@ -324,8 +324,8 @@ def _settlement_worker(directory, crash_during_settlement):
 
 @pytest.mark.parametrize("during", [False, True])
 def test_live_settlement_order_is_conservative_after_sigkill(catalog, during):
-    from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
     from repo_catalog.adapters.sqlite.recovery_budget import recovery_request
+    from repo_catalog.adapters.sqlite.repository_recovery import RecoveryWorkBudget
     from repo_catalog.domain.p1_coordination import CoordinationError, NotesLimits
 
     process = multiprocessing.get_context("spawn").Process(

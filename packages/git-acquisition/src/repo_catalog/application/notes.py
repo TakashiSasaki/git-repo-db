@@ -1,9 +1,9 @@
 """Opt-in production Notes acquisition. Public Schema 21 runtime is unchanged.
 
 A discovery UUID pair denotes one original observation. Its first result and
-Original scan results are durably pinned in Operational before Core admission;
+Original scan results are durably pinned in Operational before Repository admission;
 retry replays those exact metadata values. A new scan needs a new observation.
-No body bytes enter progress storage. Core facts remain usable if it is lost.
+No body bytes enter progress storage. Repository facts remain usable if it is lost.
 """
 
 from __future__ import annotations
@@ -19,16 +19,16 @@ from repo_catalog.application.ref_observations import (
     pin_scan,
 )
 from repo_catalog.domain.notes import mapping_evidence, ref_mapping_inventory
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
-    CoreFailure,
     GitObservation,
     Provenance,
+    RepositoryCoverageScope,
+    RepositoryFailure,
     encode,
     uuid4_value,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.notes import NotesProgress, NotesSource
 from repo_catalog.domain.ref_coverage import (
     REF_NOTES_INVENTORY,
@@ -122,7 +122,7 @@ class _VerificationWork:
 class NotesAcquisition:
     def __init__(
         self,
-        core,
+        repository_store,
         source: NotesSource,
         work,
         progress: NotesProgress,
@@ -130,11 +130,16 @@ class NotesAcquisition:
         source_attribution: str,
         repository_uuidv4: str | None = None,
     ):
-        self.core, self.source, self.work, self.progress = core, source, work, progress
+        self.repository_store, self.source, self.work, self.progress = (
+            repository_store,
+            source,
+            work,
+            progress,
+        )
         self.source_attribution = source_attribution
         for value in (source.discovery_bytes, source.discovery_refs):
             if type(value) is not int or not 0 < value < 2**63:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "BUDGET",
                     "notes-source",
                     "positive finite discovery bounds required",
@@ -146,10 +151,10 @@ class NotesAcquisition:
 
     def _ready(self):
         # Metadata read crosses the supported catalog stop gate before input I/O.
-        self.core.ensure_available()
+        self.repository_store.ensure_available()
         self.work.require("metadata_units", 1)
         self.work.charge("metadata_units", 1)
-        catalog_seed, instance = self.core.catalog_identity()
+        catalog_seed, instance = self.repository_store.catalog_identity()
         repository = self.repository_uuidv4 or catalog_seed
         self.progress.bind(
             repository,
@@ -193,13 +198,13 @@ class NotesAcquisition:
             repository_uuidv4 != actual_repository
             or source_attribution != self.source_attribution
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NOTES_SCOPE", "discovery", "request source/repository mismatch"
             )
         for value in (repository_uuidv4, origin_uuidv4, observation_uuidv4):
             uuid4_value(value)
         if type(observed_at_us) is not int or not 0 < observed_at_us < 2**63:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "TIME", "notes-discovery", "positive int64 epoch microseconds required"
             )
         scope = encode(["p4-discovery", origin_uuidv4, observation_uuidv4])
@@ -221,7 +226,7 @@ class NotesAcquisition:
                     or inventory.terminal
                     and len(scans) != 2
                 ):
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "NOTES_SCOPE", scope, "original scan boundaries required"
                     )
                 count = len(inventory.refs) + sum(len(scan.refs) for scan in scans)
@@ -236,7 +241,9 @@ class NotesAcquisition:
                     2 * len(name) + 256 for scan in scans for name, _ in scan.refs
                 )
                 if estimate > max_pinned:
-                    raise CoreFailure("BUDGET", scope, "finite pinned discovery limit")
+                    raise RepositoryFailure(
+                        "BUDGET", scope, "finite pinned discovery limit"
+                    )
                 self.work.require("input_bytes", estimate)
                 try:
                     candidate = {
@@ -262,7 +269,7 @@ class NotesAcquisition:
                     }
                     serialized = encode(candidate)
                     if len(serialized) > estimate:
-                        raise CoreFailure(
+                        raise RepositoryFailure(
                             "BUDGET", scope, "discovery encoding exceeded reservation"
                         )
                 except BaseException:
@@ -277,11 +284,11 @@ class NotesAcquisition:
                     scope, candidate, max_pinned, encoded=serialized
                 )
         if saved["binding"] != binding:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "INCOMPATIBLE_REPLAY", scope, "discovery identity cannot be rebound"
             )
         if saved["terminal"] and len(saved.get("scans", ())) != 2:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "CONTINUATION_UNAVAILABLE",
                 scope,
                 "original scan boundaries were not pinned",
@@ -322,7 +329,7 @@ class NotesAcquisition:
         )
         self.work.require("metadata_units", 1 + len(refs))
         self.work.charge("metadata_units", 1 + len(refs))
-        self.core.admit_observation(observation)
+        self.repository_store.admit_observation(observation)
         enumerations = []
         names = tuple(
             sorted(set(n.encode("utf-8", "surrogateescape") for n in nominated))
@@ -346,7 +353,7 @@ class NotesAcquisition:
 
             enumerations.append(
                 pin_scan(
-                    self.core,
+                    self.repository_store,
                     self.progress,
                     self.work,
                     slot=slot,
@@ -397,7 +404,7 @@ class NotesAcquisition:
                 try:
                     enumerations.append(
                         pin_scan(
-                            self.core,
+                            self.repository_store,
                             self.progress,
                             self.work,
                             slot=slot,
@@ -416,7 +423,7 @@ class NotesAcquisition:
                             scan=named_lookup,
                         )
                     )
-                except CoreFailure as error:
+                except RepositoryFailure as error:
                     failure_code, detail = error.code, str(error)
                     break
         return Discovery(observation, failure_code, detail, tuple(enumerations))
@@ -425,13 +432,17 @@ class NotesAcquisition:
         """Pin and report one whole root-scoped inventory for this exact Claim."""
         repository = self._ready()
         if not isinstance(claim, RefObservationClaim) or claim.root_object_oid is None:
-            raise CoreFailure("NOTES_ROLE", claim, "exact present-root claim required")
-        projection = self.core.ref_observation(claim.ref_observation_key, self.work)
+            raise RepositoryFailure(
+                "NOTES_ROLE", claim, "exact present-root claim required"
+            )
+        projection = self.repository_store.ref_observation(
+            claim.ref_observation_key, self.work
+        )
         if (
             projection.ref_observation.repository_uuidv4 != repository
             or claim not in projection.claims
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NOTES_SCOPE",
                 claim.ref_observation_key,
                 "exact repository and claim required",
@@ -456,7 +467,9 @@ class NotesAcquisition:
                     2 * sum(len(part) for part in member) + 64 for member in members
                 )
                 if estimate > max_bytes:
-                    raise CoreFailure("BUDGET", slot, "finite inventory metadata limit")
+                    raise RepositoryFailure(
+                        "BUDGET", slot, "finite inventory metadata limit"
+                    )
                 self.work.require("input_bytes", estimate)
                 try:
                     candidate = {
@@ -468,7 +481,7 @@ class NotesAcquisition:
                     }
                     serialized = encode(candidate)
                     if len(serialized) > estimate:
-                        raise CoreFailure(
+                        raise RepositoryFailure(
                             "BUDGET", slot, "inventory encoding exceeded reservation"
                         )
                 except BaseException:
@@ -504,14 +517,14 @@ class NotesAcquisition:
                 for member in members
             )
         ):
-            raise CoreFailure("NOTES_INVENTORY", slot, "invalid pinned inventory")
+            raise RepositoryFailure("NOTES_INVENTORY", slot, "invalid pinned inventory")
         upper = (
             2
             + len(members) * 16
             + sum(6 * sum(len(part) for part in member) for member in members)
         )
         if upper > max_bytes:
-            raise CoreFailure("BUDGET", slot, "finite inventory encoding limit")
+            raise RepositoryFailure("BUDGET", slot, "finite inventory encoding limit")
         self.work.require("input_bytes", upper)
         try:
             encoded_members = encode(members)
@@ -535,7 +548,7 @@ class NotesAcquisition:
             tuple(tuple(member) for member in members),
             provenance,
         )
-        self.core.admit_notes_mapping_group(group, self.work)
+        self.repository_store.admit_notes_mapping_group(group, self.work)
         return RefNotesInventory(group, saved["failure_code"], saved["detail"])
 
     def verify_ref_inventory(
@@ -546,20 +559,22 @@ class NotesAcquisition:
         Progress pins only the admitted proof coordinate, never structural bytes.
         A lost pin permits a fresh verification with a fresh coordinate.
         """
-        self.core.ensure_available()
-        if getattr(self.core, "_external", False):
-            raise CoreFailure(
+        self.repository_store.ensure_available()
+        if getattr(self.repository_store, "_external", False):
+            raise RepositoryFailure(
                 "REF_INVENTORY_DEFERRED",
                 "notes-inventory",
-                "receiver verification requires an independently committed Core",
+                "receiver verification requires an independently committed Repository",
             )
         repository = self._ready()
         if not isinstance(group, NotesMappingGroup):
-            raise CoreFailure("NOTES_INVENTORY", group, "typed group required")
+            raise RepositoryFailure("NOTES_INVENTORY", group, "typed group required")
         claim = group.ref_claim
-        projected = self.core.ref_notes_inventory_projection(claim, self.work)
+        projected = self.repository_store.ref_notes_inventory_projection(
+            claim, self.work
+        )
         if projected.ref_observation.repository_uuidv4 != repository:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NOTES_SCOPE", claim.identity, "exact repository and Claim required"
             )
         if (
@@ -568,7 +583,7 @@ class NotesAcquisition:
             group.interpretation_scope,
             group.group_scope,
         ) != ("git-notes", "1", "native-notes-tree", "all-notes-mappings"):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NOTES_INVENTORY", claim.identity, "supported whole inventory required"
             )
         group_found = False
@@ -578,7 +593,7 @@ class NotesAcquisition:
                 group_found = True
                 break
         if not group_found:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "MISSING_DEPENDENCY", claim.identity, "original Group required"
             )
         if group.status not in ("complete", "known_empty"):
@@ -598,7 +613,7 @@ class NotesAcquisition:
                 type(value) is not str or len(value) != 36 for value in request_identity
             )
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "CONTINUATION_UNAVAILABLE",
                 "notes-inventory",
                 "request identity unavailable",
@@ -619,7 +634,7 @@ class NotesAcquisition:
             *group.provenance.key,
         )
         slot = encode_metered(self.work, ["p4-ref-inventory-check", *identity])
-        scope = CoreCoverageScope(
+        scope = RepositoryCoverageScope(
             "ref_observation", (*claim.ref_observation_key.key, REF_NOTES_INVENTORY)
         )
 
@@ -645,11 +660,11 @@ class NotesAcquisition:
                     verification_id = uuid7_value(saved["verification_uuidv7"])
                     coverage = CoverageClaim(scope, saved["observed_at_us"], "complete")
                 except (ValueError, KeyError, TypeError) as error:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "CONTINUATION_UNAVAILABLE", slot, "invalid pinned verification"
                     ) from error
                 provenance = local_provenance(verification_id)
-                proofs = self.core.ref_coverage_proofs(coverage, self.work)
+                proofs = self.repository_store.ref_coverage_proofs(coverage, self.work)
                 matches = []
                 for proof in proofs:
                     account_notes_group_comparison(proof.group, group, self.work)
@@ -661,7 +676,7 @@ class NotesAcquisition:
                     if proof.verification_provenance == provenance:
                         matches.append(proof)
                 if len(matches) != 1:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "CONTINUATION_UNAVAILABLE",
                         slot,
                         "pinned receiver proof unavailable",
@@ -699,8 +714,8 @@ class NotesAcquisition:
             proof = RefNotesInventoryCoverageProof(
                 coverage, group, provenance, structures
             )
-            self.core.admit_coverage_scope(scope)
-            if self.core.admit_coverage(coverage) == "stale":
+            self.repository_store.admit_coverage_scope(scope)
+            if self.repository_store.admit_coverage(coverage) == "stale":
                 return RefNotesInventoryVerification(
                     group,
                     coverage,
@@ -709,7 +724,7 @@ class NotesAcquisition:
                     "STALE_COVERAGE",
                     "newer Coverage already exists",
                 )
-            self.core.admit_ref_coverage_proof(proof, self.work)
+            self.repository_store.admit_ref_coverage_proof(proof, self.work)
             candidate = {
                 "verification_uuidv7": verification_id,
                 "observed_at_us": coverage.observed_at_us,
@@ -721,7 +736,7 @@ class NotesAcquisition:
                 encoded=encode_metered(self.work, candidate, 4096),
             )
             if pinned != candidate:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "INCOMPATIBLE_REPLAY", slot, "verification pin changed"
                 )
             return RefNotesInventoryVerification(group, coverage, provenance, True)
@@ -737,13 +752,17 @@ class NotesAcquisition:
         """Build receiver evidence and retain only under this exact result Claim."""
         repository = self._ready()
         if not isinstance(claim, RefObservationClaim) or claim.root_object_oid is None:
-            raise CoreFailure("NOTES_ROLE", claim, "exact present-root claim required")
-        subject = self.core.ref_observation(claim.ref_observation_key, self.work)
+            raise RepositoryFailure(
+                "NOTES_ROLE", claim, "exact present-root claim required"
+            )
+        subject = self.repository_store.ref_observation(
+            claim.ref_observation_key, self.work
+        )
         if (
             subject.ref_observation.repository_uuidv4 != repository
             or claim not in subject.claims
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NOTES_SCOPE",
                 claim.ref_observation_key,
                 "exact repository and claim required",
@@ -789,8 +808,8 @@ class NotesAcquisition:
                 evidence = replace(
                     evidence, provenance=receiver(saved["verification_uuidv7"])
                 )
-            self.core.admit_notes_mapping_evidence(evidence, self.work)
-        except CoreFailure as error:
+            self.repository_store.admit_notes_mapping_evidence(evidence, self.work)
+        except RepositoryFailure as error:
             if error.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
                 raise
             return RefNoteAcquisition(
@@ -816,11 +835,13 @@ class NotesAcquisition:
                     )
                 physical_copy_uuidv4 = saved["physical_copy_uuidv4"]
                 uuid4_value(physical_copy_uuidv4)
-            self.core.admit_ref_note(evidence, native, physical_copy_uuidv4, self.work)
+            self.repository_store.admit_ref_note(
+                evidence, native, physical_copy_uuidv4, self.work
+            )
             return RefNoteAcquisition(
                 claim, target, note, physical_copy_uuidv4, True, True
             )
-        except CoreFailure as error:
+        except RepositoryFailure as error:
             if error.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
                 raise
             return RefNoteAcquisition(

@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.git_acquisition import GitAcquisition
 from repo_catalog.domain.exchange import (
@@ -15,11 +15,11 @@ from repo_catalog.domain.exchange import (
     ExchangeSelectionScope,
     decode_package,
     empty_context_section,
-    empty_core_section,
+    empty_repository_section,
     encode_package,
 )
 from repo_catalog.domain.git_acquisition import GitNativeAcquisitionRequest
-from repo_catalog.domain.p1_core import Provenance, encode
+from repo_catalog.domain.p1_repository import Provenance, encode
 from repo_catalog.domain.scalar_wire import SCALAR_ENCODING, scalar_value_json
 from tests.integration.p5.conftest import git, init_catalog_stores, write_git_object
 
@@ -31,7 +31,7 @@ def test_actual_non_utf8_commit_tag_scalars_and_bodies_survive_onward_exchange(
     source, middle, target = (
         tmp_path / name for name in ("source", "middle", "target")
     )
-    repository, _ = init_catalog_stores(source, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(source, stores=("repository", "operational"))
     native = tmp_path / "native.git"
     native.mkdir()
     git(native, "init", "--bare", "--object-format=" + fmt)
@@ -60,7 +60,7 @@ def test_actual_non_utf8_commit_tag_scalars_and_bodies_survive_onward_exchange(
         new_request=True,
     )
     expected = {}
-    with closing(GitCore(source / "core.sqlite3")) as core:
+    with closing(GitRepositoryStore(source / "repository.sqlite3")) as repository_store:
         for oid, field in (
             (commit, "author"),
             (commit, "message"),
@@ -68,7 +68,7 @@ def test_actual_non_utf8_commit_tag_scalars_and_bodies_survive_onward_exchange(
             (tag, "tagger"),
             (tag, "message"),
         ):
-            expected[(oid, field)] = core.scalar(oid, field).canonical
+            expected[(oid, field)] = repository_store.scalar(oid, field).canonical
             assert any(0xDC80 <= ord(c) <= 0xDCFF for c in expected[(oid, field)][1])
     service = ExchangeService(source)
     partial = service.export_package(
@@ -78,15 +78,17 @@ def test_actual_non_utf8_commit_tag_scalars_and_bodies_survive_onward_exchange(
     )
     assert any(
         row.get("value_encoding") == SCALAR_ENCODING
-        for row in partial.core["scalar_claims"]
+        for row in partial.repository_store["scalar_claims"]
     )
-    assert partial.core["retained_metadata"] == []
+    assert partial.repository_store["retained_metadata"] == []
     wire = encode_package(partial)
     assert wire.encode("utf-8")
     assert decode_package(wire).digest_sha256 == partial.digest_sha256
     for directory in (middle, target):
         init_catalog_stores(
-            directory, repository_uuidv4=repository, stores=("core", "operational")
+            directory,
+            repository_uuidv4=repository,
+            stores=("repository", "operational"),
         )
     ExchangeService(middle).import_package(
         decode_package(wire),
@@ -101,11 +103,11 @@ def test_actual_non_utf8_commit_tag_scalars_and_bodies_survive_onward_exchange(
         new_request=True,
         permitted_repository_uuidv4s=(repository,),
     )
-    with closing(GitCore(target / "core.sqlite3")) as core:
+    with closing(GitRepositoryStore(target / "repository.sqlite3")) as repository_store:
         for (oid, field), original in expected.items():
             assert any(
                 candidate["value"] == original
-                for candidate in core.scalar(oid, field).alternatives
+                for candidate in repository_store.scalar(oid, field).alternatives
             )
     complete = service.export_package(
         selection=ExchangeSelectionScope(all_selected=True, include_context=False)
@@ -127,12 +129,12 @@ def test_actual_non_utf8_commit_tag_scalars_and_bodies_survive_onward_exchange(
     assert destination.import_package(
         onward, permitted_repository_uuidv4s=(repository,)
     ).idempotent_replay
-    with closing(GitCore(target / "core.sqlite3")) as core:
-        assert core.read_metadata(commit) == commit_body
-        assert core.read_metadata(tag) == tag_body
+    with closing(GitRepositoryStore(target / "repository.sqlite3")) as repository_store:
+        assert repository_store.read_metadata(commit) == commit_body
+        assert repository_store.read_metadata(tag) == tag_body
         for (oid, field), original in expected.items():
-            assert core.scalar(oid, field).canonical == original
-            assert core.scalar(oid, field).canonical[1].encode(
+            assert repository_store.scalar(oid, field).canonical == original
+            assert repository_store.scalar(oid, field).canonical[1].encode(
                 "utf-8", "surrogateescape"
             ) == original[1].encode("utf-8", "surrogateescape")
 
@@ -149,8 +151,8 @@ def test_actual_non_utf8_commit_tag_scalars_and_bodies_survive_onward_exchange(
     ],
 )
 def test_malformed_or_unnecessary_ascii_scalar_variant_is_refused(encoding, value):
-    core = empty_core_section()
-    core["scalar_claims"] = [
+    repository_store = empty_repository_section()
+    repository_store["scalar_claims"] = [
         {
             "object_format": "sha1",
             "object_oid": "1" * 40,
@@ -172,7 +174,7 @@ def test_malformed_or_unnecessary_ascii_scalar_variant_is_refused(encoding, valu
             selection_scope=ExchangeSelectionScope(
                 all_selected=True, include_context=False
             ),
-            core=core,
+            repository_store=repository_store,
         )
     assert refusal.value.code == "INVALID_SCALAR_ENCODING"
 

@@ -206,5 +206,5 @@ def test_same_service_source_b_900_then_a_100_keeps_actual_independent_scopes_an
     )
     assert aggregate.state == "unknown" and aggregate.claims == ()
     assert aggregate.latest_observed_at_us is None
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "p1-recovery-stop.json").exists()

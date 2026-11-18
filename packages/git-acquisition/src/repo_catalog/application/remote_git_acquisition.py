@@ -14,7 +14,7 @@ from repo_catalog.adapters.git.remote import (
     validate_remote_transport,
 )
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
-from repo_catalog.application.git_acquisition import GitAcquisition, _open_core
+from repo_catalog.application.git_acquisition import GitAcquisition, _open_repository
 from repo_catalog.domain.git_acquisition import GitNativeAcquisitionRequest
 from repo_catalog.domain.native_acquisition import (
     native_request_intent,
@@ -22,7 +22,7 @@ from repo_catalog.domain.native_acquisition import (
     without_ref_inputs,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
-from repo_catalog.domain.p1_core import CoreFailure, encode
+from repo_catalog.domain.p1_repository import RepositoryFailure, encode
 from repo_catalog.domain.ports.notes import request_scope
 
 _DOCUMENT_FIELDS = {
@@ -75,12 +75,12 @@ def validate_remote_git_settings(settings):
     """Pure bounded injected transport preflight, before any HTTP or work state."""
     allowed = {"locator", "object_format", "token_env_var", *_TRANSPORT_OPTIONS}
     if type(settings) is not dict or set(settings) - allowed:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "remote-git", "known injected transport settings required"
         )
     name = settings.get("token_env_var")
     if name is not None and (type(name) is not str or not name or len(name) > 256):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REMOTE_CREDENTIAL", "git", "credential environment reference required"
         )
     location, _ = validate_remote_transport(
@@ -89,14 +89,14 @@ def validate_remote_git_settings(settings):
         **{key: settings[key] for key in _TRANSPORT_OPTIONS if key in settings},
     )
     if location.scheme == "ssh" and name is not None:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REMOTE_CREDENTIAL", "git", "HTTP credential reference cannot authorize SSH"
         )
     return dict(settings)
 
 
 def acquire_remote_git(catalog, document, *, credentials=None, cancelled=lambda: False):
-    """Acquire an explicit HTTPS/SSH source into canonical Git Core.
+    """Acquire an explicit HTTPS/SSH source into canonical Git Repository.
 
     Input is a dictionary with ``request`` (GitNativeAcquisitionRequest),
     ``locator`` (credential-free https:// or ssh:// URL), ``object_format``;
@@ -105,19 +105,23 @@ def acquire_remote_git(catalog, document, *, credentials=None, cancelled=lambda:
     Provider API work. This directly injected transport is separate from Access.
     """
     if type(document) is not dict or set(document) - _DOCUMENT_FIELDS:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "remote-git", "explicit bounded request fields required"
         )
     request = document.get("request")
     if type(request) is not GitNativeAcquisitionRequest:
-        raise CoreFailure("REQUEST", "remote-git", "typed native request required")
+        raise RepositoryFailure(
+            "REQUEST", "remote-git", "typed native request required"
+        )
     # Original ref reports need the durable work permit even during copying and
     # intent validation. Preflight only the non-ref portion before opening it.
     native_request_intent(without_ref_inputs(request))
     location = _location(document.get("locator"))
     object_format = document.get("object_format")
     if object_format not in {"sha1", "sha256"}:
-        raise CoreFailure("NATIVE_FORMAT", "remote-git", "explicit format required")
+        raise RepositoryFailure(
+            "NATIVE_FORMAT", "remote-git", "explicit format required"
+        )
     original_request = document.get("request_identity")
     req = (
         original_request
@@ -129,12 +133,12 @@ def acquire_remote_git(catalog, document, *, credentials=None, cancelled=lambda:
         )
     )
     if type(document.get("new_request", False)) is not bool:
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "remote-git", "explicit new-request boolean required"
         )
     name = document.get("token_env_var")
     if name is not None and (type(name) is not str or not name or len(name) > 256):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REMOTE_CREDENTIAL", "git", "credential environment reference required"
         )
     if credentials is None and name is not None:
@@ -144,13 +148,13 @@ def acquire_remote_git(catalog, document, *, credentials=None, cancelled=lambda:
         raise CoordinationError(
             "CONTINUATION_UNAVAILABLE", "request", "Operational store required"
         )
-    with _open_core(catalog) as core:
-        seed, instance = core.catalog_identity()
+    with _open_repository(catalog) as repository_store:
+        seed, instance = repository_store.catalog_identity()
 
         def guard():
-            core.ensure_available()
+            repository_store.ensure_available()
             if cancelled():
-                raise CoreFailure("CANCELLED", "remote-git", "request cancelled")
+                raise RepositoryFailure("CANCELLED", "remote-git", "request cancelled")
 
         guard()
         source_scope = encode(
@@ -223,7 +227,7 @@ def acquire_remote_git(catalog, document, *, credentials=None, cancelled=lambda:
                 ]
             )
             if progress.save_once(coordinate, frozen) != frozen:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "INCOMPATIBLE_REPLAY", "remote-git", "original request changed"
                 )
             options = {
@@ -249,7 +253,7 @@ def acquire_remote_git(catalog, document, *, credentials=None, cancelled=lambda:
                 credentials=credentials,
                 **options,
             ) as source:
-                report = GitAcquisition(core).acquire_from_native(
+                report = GitAcquisition(repository_store).acquire_from_native(
                     source, request, work=work, progress=progress, request_identity=req
                 )
                 guard()
@@ -280,7 +284,7 @@ def acquire_remote_git_with_budget(
     different parent request. Original capture provenance remains caller supplied.
     """
     if source_handler is not None and not callable(source_handler):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "remote-git", "trusted application source handler required"
         )
     if (
@@ -290,7 +294,7 @@ def acquire_remote_git_with_budget(
         or "new_request" in document
         and document["new_request"] is not False
     ):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST",
             "remote-git",
             "Source transport inputs without child accounting required",
@@ -300,7 +304,7 @@ def acquire_remote_git_with_budget(
         type(request) is not GitNativeAcquisitionRequest
         or type(request_identity) is not RequestIdentity
     ):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "remote-git", "typed native request and parent identity required"
         )
     supplied = document.get("request_identity", request_identity)
@@ -311,7 +315,7 @@ def acquire_remote_git_with_budget(
             else RequestIdentity(*supplied)
         )
     except (ValueError, TypeError):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REQUEST", "remote-git", "exact parent request identity required"
         ) from None
     if supplied != request_identity:
@@ -322,20 +326,22 @@ def acquire_remote_git_with_budget(
     _location(document.get("locator"))
     object_format = document.get("object_format")
     if object_format not in {"sha1", "sha256"}:
-        raise CoreFailure("NATIVE_FORMAT", "remote-git", "explicit format required")
+        raise RepositoryFailure(
+            "NATIVE_FORMAT", "remote-git", "explicit format required"
+        )
     name = document.get("token_env_var")
     if name is not None and (type(name) is not str or not name or len(name) > 256):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "REMOTE_CREDENTIAL", "git", "credential environment reference required"
         )
     if credentials is None and name is not None:
         credentials = _EnvironmentCredential(name)
     catalog = Path(catalog)
-    with _open_core(catalog) as core:
+    with _open_repository(catalog) as repository_store:
         # This performs real ledger identity, inode/checkpoint, catalog path,
         # request/attempt and Source UUID validation before opening any socket.
         GitAcquisition._validate_native_accounting(
-            core,
+            repository_store,
             work,
             progress,
             None,
@@ -344,12 +350,12 @@ def acquire_remote_git_with_budget(
         )
 
         def guard():
-            core.ensure_available()
+            repository_store.ensure_available()
             ledger.work_ledger.validate_continuation(
                 request_identity, work.attempt_uuidv4
             )
             if cancelled():
-                raise CoreFailure("CANCELLED", "remote-git", "request cancelled")
+                raise RepositoryFailure("CANCELLED", "remote-git", "request cancelled")
 
         guard()
         with ref_input_processing(
@@ -376,7 +382,7 @@ def acquire_remote_git_with_budget(
             progress.save_once(transport_coordinate, transport_intent)
             != transport_intent
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "INCOMPATIBLE_REPLAY", "remote-git", "original Source transport changed"
             )
         coordinate = encode(
@@ -384,7 +390,7 @@ def acquire_remote_git_with_budget(
             + (["operation", list(unit_scope)] if unit_scope else [])
         )
         if progress.save_once(coordinate, frozen) != frozen:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "INCOMPATIBLE_REPLAY", "remote-git", "original Source intent changed"
             )
         options = {key: document[key] for key in _TRANSPORT_OPTIONS if key in document}
@@ -403,7 +409,7 @@ def acquire_remote_git_with_budget(
                 report = source_handler(source)
             else:
                 report = GitAcquisition(
-                    core, operational=ledger
+                    repository_store, operational=ledger
                 ).acquire_from_native_with_budget(
                     source,
                     request,

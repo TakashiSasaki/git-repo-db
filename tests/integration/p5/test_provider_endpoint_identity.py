@@ -224,7 +224,7 @@ def test_endpoint_override_and_credential_reference_are_per_request_never_contex
         if host == "alpha.example"
     )
     package = ExchangeService(tmp_path).export_package(
-        selection=ExchangeSelectionScope(all_selected=True, include_core=False)
+        selection=ExchangeSelectionScope(all_selected=True, include_repository=False)
     )
     encoded = encode_package(package)
     stored = (tmp_path / "context.sqlite3").read_bytes()

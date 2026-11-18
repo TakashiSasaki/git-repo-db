@@ -61,7 +61,7 @@ with Context.transaction(Path('.'), authorization=authorization) as context:
 with Context.snapshot(Path('.')) as context:
     digest = __import__('json').loads(context.candidates(key, 'text_body_sha256')[0].value_json)
     assert context.read_text(digest) == 'exact\\x00é😀'
-assert not Path('core.sqlite3').exists()
+assert not Path('repository.sqlite3').exists()
 print('production Context installed smoke passed')
 """
     assert "smoke passed" in run([python, "-c", script], outside, env)

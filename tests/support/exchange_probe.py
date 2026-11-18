@@ -34,27 +34,27 @@ def main(output):
     fixture = json.loads((root / "fixture.json").read_text())
     receive, repository = fixture["receive"], fixture["repository"]
     from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.p1_schema import initialize
-    from repo_catalog.application.core_query import CoreQueryService
     from repo_catalog.application.exchange import ExchangeService
+    from repo_catalog.application.repository_query import RepositoryQueryService
     from repo_catalog.domain.exchange import (
         ExchangePackage,
         ExchangeSelectionScope,
         _canonical_dictionary,
         decode_package,
         empty_context_section,
-        empty_core_section,
+        empty_repository_section,
         encode_package,
     )
     from repo_catalog.domain.p1_coordination import RequestIdentity
-    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.p1_repository import Provenance
     from repo_catalog.domain.query_work import UnlimitedWorkBudget
     from repo_catalog.domain.ref_exchange import claim_from_wire, mapping_from_wire
 
     expected = {
         "repo-catalog-exchange",
-        "repo-catalog-core",
+        "repo-catalog-repository",
         "repo-catalog-runtime",
         "repo-catalog-contracts",
     }
@@ -97,7 +97,7 @@ def main(output):
             value = unquote(uri.path)
         name = Path(value).name
         assert name in {
-            "core.sqlite3",
+            "repository.sqlite3",
             *(("operational.sqlite3",) if receive else ()),
         }, name
         opened.append(name)
@@ -109,19 +109,24 @@ def main(output):
     package = ExchangeService(source).export_package(
         selection=scope, exported_at_us=1700000500000000
     )
-    assert package.context is None and package.core["git_objects"]
-    assert package.core["ref_observations"] and package.core["notes_mapping_groups"]
-    assert package.core["ref_retained_notes"]
+    assert package.context is None and package.repository_store["git_objects"]
+    assert (
+        package.repository_store["ref_observations"]
+        and package.repository_store["notes_mapping_groups"]
+    )
+    assert package.repository_store["ref_retained_notes"]
     wire = encode_package(package)
     assert decode_package(wire).digest_sha256 == package.digest_sha256
     assert not (source / "operational.sqlite3").exists()
     checks.append("canonical_metadata_original_refs_notes_export_without_O")
 
-    note_row = package.core["ref_retained_notes"][0]
+    note_row = package.repository_store["ref_retained_notes"][0]
     mapping = mapping_from_wire(note_row)
     claim = next(
         c
-        for c in map(claim_from_wire, package.core["ref_observation_claims"])
+        for c in map(
+            claim_from_wire, package.repository_store["ref_observation_claims"]
+        )
         if c.identity
         == (
             note_row["observation_origin_uuidv4"],
@@ -129,14 +134,14 @@ def main(output):
             note_row["ref_claim_provenance_json"],
         )
     )
-    reader = CoreQueryService(source)
+    reader = RepositoryQueryService(source)
     body = reader.read_ref_note_bytes(claim, mapping, UnlimitedWorkBudget())
     assert body.available and body.verified and body.body_bytes
     other = replace(
         claim, provenance=replace(claim.provenance, coordinate="other-synthetic-report")
     )
-    with closing(GitCore(source / "core.sqlite3")) as core:
-        core.admit_ref_observation_claim(other)
+    with closing(GitRepositoryStore(source / "repository.sqlite3")) as repository_store:
+        repository_store.admit_ref_observation_claim(other)
     unavailable = reader.read_ref_note_bytes(other, mapping, UnlimitedWorkBudget())
     assert not unavailable.available and not unavailable.verified
     checks.append("exact_claim_notes_body_no_cross_claim_borrowing")
@@ -164,7 +169,7 @@ def main(output):
         directory = root / name
         directory.mkdir()
         instance = str(uuid4())
-        initialize(directory / "core.sqlite3", "core", repository, instance)
+        initialize(directory / "repository.sqlite3", "repository", repository, instance)
         if operational:
             initialize(
                 directory / "operational.sqlite3", "operational", repository, instance
@@ -203,13 +208,13 @@ def main(output):
             new_request=True,
         )
         assert (
-            result.core_imported
-            and result.core_checkpoint
+            result.repository_imported
+            and result.repository_checkpoint
             and not result.context_imported
         )
         replay = accept(package)
         assert replay.idempotent_replay
-        verified = CoreQueryService(destination).read_ref_note_bytes(
+        verified = RepositoryQueryService(destination).read_ref_note_bytes(
             claim, mapping, UnlimitedWorkBudget()
         )
         assert (
@@ -232,7 +237,7 @@ def main(output):
 
         partial, _ = target("partial", operational=True)
         unknown = str(uuid4())
-        section = empty_core_section()
+        section = empty_repository_section()
         section["git_objects"] = [{"object_format": "sha1", "object_oid": "b" * 40}]
         section["repository_claims"] = [
             {
@@ -245,7 +250,12 @@ def main(output):
             }
         ]
         independent = ExchangePackage(
-            str(uuid4()), None, str(uuid4()), repository, scope, core=section
+            str(uuid4()),
+            None,
+            str(uuid4()),
+            repository,
+            scope,
+            repository_store=section,
         )
         outcome = ExchangeService(partial).import_package(
             independent,
@@ -257,9 +267,11 @@ def main(output):
             and row["reason"] == "missing_required_dependency"
             for row in outcome.omissions
         )
-        with closing(GitCore(partial / "core.sqlite3")) as core:
-            assert len(core.sql("SELECT * FROM git_objects")) == 1
-            assert not core.sql("SELECT * FROM repository_claims")
+        with closing(
+            GitRepositoryStore(partial / "repository.sqlite3")
+        ) as repository_store:
+            assert len(repository_store.sql("SELECT * FROM git_objects")) == 1
+            assert not repository_store.sql("SELECT * FROM repository_claims")
         checks.append("missing_dependency_withholds_unit_preserves_independent_fact")
 
         changed = replace(package, exported_at_us=1700000500000001, digest_sha256=None)
@@ -305,8 +317,8 @@ def main(output):
             {"BUDGET"},
         )
         bad = package.to_dict()
-        bad["core"] = copy.deepcopy(bad["core"])
-        bad["core"]["git_objects"][0]["object_oid"] = "invalid"
+        bad["repository"] = copy.deepcopy(bad["repository"])
+        bad["repository"]["git_objects"][0]["object_oid"] = "invalid"
         bad["digest_sha256"] = hashlib.sha256(_canonical_dictionary(bad)).hexdigest()
         refuses(
             lambda: accept(

@@ -276,12 +276,12 @@ class ProductionSearchAdapter:
             return None
 
     @staticmethod
-    def extract_git_metadata_documents(core):
-        from repo_catalog.adapters.sqlite.search_core import (
+    def extract_git_metadata_documents(repository_store):
+        from repo_catalog.adapters.sqlite.search_repository import (
             extract_git_metadata_documents,
         )
 
-        return extract_git_metadata_documents(core)
+        return extract_git_metadata_documents(repository_store)
 
     @staticmethod
     def extract_context_documents(context, *, evidence=None):

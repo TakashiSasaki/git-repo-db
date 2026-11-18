@@ -63,7 +63,7 @@ def test_normal_cli_pr_list_cannot_infer_repository_roster_from_standalone_paren
     )
     assert not selected["coverage"]["complete_for_requested_scope"]
     assert selected["items"] == []
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "operational.sqlite3").exists()
 
 
@@ -234,5 +234,5 @@ def test_normal_cli_pr_list_preflights_hidden_parent_gaps_and_positive_selection
     )
     assert unknown["state"] == "partial" and unknown["total_count"] == 0
     assert not unknown["coverage"]["complete_for_requested_scope"]
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "p1-recovery-stop.json").exists()

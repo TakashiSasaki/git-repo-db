@@ -96,7 +96,7 @@ def test_http_pagination_admits_pages_and_complete_exact_scope(tmp_path):
     assert report.http_attempts == len(calls) == 3
     assert report.batches[-1].collection_proofs[0][0].state == "complete"
     assert len(report.batches[-1].collection_proofs[0][1].members) == 2
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()
     with closing(connect(tmp_path / "context.sqlite3", "context")) as context:
         assert len(context.execute("SELECT * FROM text_bodies").fetchall()) == 1
 

@@ -44,7 +44,7 @@
     "docs/schema-hardening/current-schema.json",
     "docs/schema-hardening/index-probe.json",
     "docs/schema-hardening/invariant-contract.json",
-    "docs/schema-hardening/proposal-core.sql",
+    "docs/schema-hardening/proposal-repository.sql",
     "docs/schema-hardening/source-access.json",
     "docs/schema-hardening/target-inventory.json",
     "docs/schema-hardening/target-schema.sql"

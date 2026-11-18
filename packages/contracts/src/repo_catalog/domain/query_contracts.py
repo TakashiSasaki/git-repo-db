@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from repo_catalog.domain.p1_coverage import CoverageClaim, CoverageOwner
 
 T = TypeVar("T")
-CatalogReadMode = Literal["core_only", "context_only", "paired"]
+CatalogReadMode = Literal["repository_only", "context_only", "paired"]
 
 
 class QueryError(ValueError):
@@ -50,19 +50,19 @@ class SnapshotFenceToken:
 
     In `paired` mode, `.encode()` produces the exact same canonical JSON as
     `SnapshotToken.encode()` (`{"catalog_instance_uuidv4":...,"context_sha256":...,
-    "core_sha256":...,"repository_uuidv4":...}`) so `PairSnapshot.token` and
+    "repository_sha256":...,"repository_uuidv4":...}`) so `PairSnapshot.token` and
     `search.sqlite3` tokens interoperate seamlessly.
-    In `core_only` or `context_only` mode, the absent store's digest is `None`.
+    In `repository_only` or `context_only` mode, the absent store's digest is `None`.
     """
 
     mode: CatalogReadMode
     repository_uuidv4: str
     catalog_instance_uuidv4: str
-    core_sha256: str | None = None
+    repository_sha256: str | None = None
     context_sha256: str | None = None
 
     def __post_init__(self) -> None:
-        if self.mode not in ("core_only", "context_only", "paired"):
+        if self.mode not in ("repository_only", "context_only", "paired"):
             raise QueryError("INVALID_MODE", "snapshot", str(self.mode))
         try:
             uuid4_value(self.repository_uuidv4)
@@ -72,23 +72,29 @@ class SnapshotFenceToken:
                 "INVALID_TOKEN", "snapshot", "canonical UUIDv4 required"
             ) from error
         if self.mode == "paired":
-            if not _valid_sha256(self.core_sha256) or not _valid_sha256(
+            if not _valid_sha256(self.repository_sha256) or not _valid_sha256(
                 self.context_sha256
             ):
                 raise QueryError(
                     "INVALID_TOKEN",
                     "snapshot",
-                    "paired token requires core and context sha256",
+                    "paired token requires repository and context sha256",
                 )
-        elif self.mode == "core_only":
-            if not _valid_sha256(self.core_sha256) or self.context_sha256 is not None:
+        elif self.mode == "repository_only":
+            if (
+                not _valid_sha256(self.repository_sha256)
+                or self.context_sha256 is not None
+            ):
                 raise QueryError(
                     "INVALID_TOKEN",
                     "snapshot",
-                    "core_only token requires core_sha256 only",
+                    "repository_only token requires repository_sha256 only",
                 )
         elif self.mode == "context_only":
-            if not _valid_sha256(self.context_sha256) or self.core_sha256 is not None:
+            if (
+                not _valid_sha256(self.context_sha256)
+                or self.repository_sha256 is not None
+            ):
                 raise QueryError(
                     "INVALID_TOKEN",
                     "snapshot",
@@ -101,14 +107,14 @@ class SnapshotFenceToken:
             mode="paired",
             repository_uuidv4=token.repository_uuidv4,
             catalog_instance_uuidv4=token.catalog_instance_uuidv4,
-            core_sha256=token.core_sha256,
+            repository_sha256=token.repository_sha256,
             context_sha256=token.context_sha256,
         )
 
     def to_pair_token(self) -> SnapshotToken:
         if (
             self.mode != "paired"
-            or self.core_sha256 is None
+            or self.repository_sha256 is None
             or self.context_sha256 is None
         ):
             raise QueryError(
@@ -117,7 +123,7 @@ class SnapshotFenceToken:
         return SnapshotToken(
             repository_uuidv4=self.repository_uuidv4,
             catalog_instance_uuidv4=self.catalog_instance_uuidv4,
-            core_sha256=self.core_sha256,
+            repository_sha256=self.repository_sha256,
             context_sha256=self.context_sha256,
         )
 
@@ -127,7 +133,7 @@ class SnapshotFenceToken:
                 {
                     "catalog_instance_uuidv4": self.catalog_instance_uuidv4,
                     "context_sha256": self.context_sha256,
-                    "core_sha256": self.core_sha256,
+                    "repository_sha256": self.repository_sha256,
                     "repository_uuidv4": self.repository_uuidv4,
                 }
             )
@@ -135,7 +141,7 @@ class SnapshotFenceToken:
             {
                 "catalog_instance_uuidv4": self.catalog_instance_uuidv4,
                 "context_sha256": self.context_sha256,
-                "core_sha256": self.core_sha256,
+                "repository_sha256": self.repository_sha256,
                 "mode": self.mode,
                 "repository_uuidv4": self.repository_uuidv4,
             }
@@ -160,14 +166,14 @@ class SnapshotFenceToken:
             {
                 "catalog_instance_uuidv4",
                 "context_sha256",
-                "core_sha256",
+                "repository_sha256",
                 "repository_uuidv4",
             }
             if "mode" not in data
             else {
                 "catalog_instance_uuidv4",
                 "context_sha256",
-                "core_sha256",
+                "repository_sha256",
                 "mode",
                 "repository_uuidv4",
             }
@@ -180,7 +186,7 @@ class SnapshotFenceToken:
             mode=mode,
             repository_uuidv4=data["repository_uuidv4"],
             catalog_instance_uuidv4=data["catalog_instance_uuidv4"],
-            core_sha256=data["core_sha256"],
+            repository_sha256=data["repository_sha256"],
             context_sha256=data["context_sha256"],
         )
         if token.encode() != raw:
@@ -387,7 +393,7 @@ class ByteReadResult:
 
 @dataclass(frozen=True)
 class CoverageView:
-    """Authoritative Coverage projection view for Core or Context scopes."""
+    """Authoritative Coverage projection view for Repository or Context scopes."""
 
     scope: CoverageOwner
     state: str

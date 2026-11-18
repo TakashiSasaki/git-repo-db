@@ -351,7 +351,7 @@ def compare_failure_details(b_info: dict, c_info: dict) -> tuple[str, bool, str 
             f"Admission refusal mismatch: baseline code={b_code} vs current code={c_code}",
         )
     if b_adm and not c_adm:
-        target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+        target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_repository_effects"
         current_node = c_info.get("node_id") or b_info.get("node_id")
         b_exc = b_info.get("exception_type")
         b_code = b_info.get("refusal_code")

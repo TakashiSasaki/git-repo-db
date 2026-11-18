@@ -19,8 +19,11 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import OID
-from repo_catalog.domain.production_context import CoreReference, ResourceObservation
+from repo_catalog.domain.p1_repository import OID
+from repo_catalog.domain.production_context import (
+    RepositoryReference,
+    ResourceObservation,
+)
 from tests.support.context_admission import fixture_context, fixture_service
 
 SERVICE = "aad25448-03eb-4f83-a75e-cb7055fd33be"
@@ -70,7 +73,7 @@ def test_t08_oid_denial_precedes_lookup_and_replay(
     callbacks = []
     candidate = FieldCandidate(
         KEY,
-        "reported_core_reference:head",
+        "reported_repository_reference:head",
         canonical(OBJECT.key),
         FieldClock("oid", 3),
         PROVENANCE,
@@ -91,7 +94,7 @@ def test_t08_oid_denial_precedes_lookup_and_replay(
 
     def submit(capability):
         if route == "required":
-            capability.link_core(
+            capability.link_repository(
                 KEY,
                 "head",
                 *OBJECT.key,
@@ -99,8 +102,8 @@ def test_t08_oid_denial_precedes_lookup_and_replay(
                 lambda *args: callbacks.append(args) or True,
             )
         elif route == "reported":
-            capability.report_core_reference(
-                CoreReference(KEY, "head", OBJECT, PROVENANCE),
+            capability.report_repository_reference(
+                RepositoryReference(KEY, "head", OBJECT, PROVENANCE),
                 clock=candidate.clock,
                 observed_at_us=candidate.observed_at_us,
             )
@@ -116,7 +119,7 @@ def test_t08_oid_denial_precedes_lookup_and_replay(
     callbacks.clear()
     before = tuple(
         product_db.execute(f"SELECT * FROM {table}").fetchall()
-        for table in ("resources", "core_references", "field_candidates")
+        for table in ("resources", "repository_references", "field_candidates")
     )
     with pytest.raises(AdmissionRefused) as error:
         with transaction() as capability:
@@ -127,6 +130,6 @@ def test_t08_oid_denial_precedes_lookup_and_replay(
     assert policy.active == 0
     after = tuple(
         product_db.execute(f"SELECT * FROM {table}").fetchall()
-        for table in ("resources", "core_references", "field_candidates")
+        for table in ("resources", "repository_references", "field_candidates")
     )
     assert after == before

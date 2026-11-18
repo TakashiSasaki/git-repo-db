@@ -103,7 +103,7 @@ def test_sparse_actual_pr_body_keeps_title_document_original(directory, body):
 
 
 def test_dismissed_review_remains_queryable_by_actual_state_and_author(tmp_path):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     origin = make_provenance("actual review parser", {"read": str(uuid4())})
     fixture.admit(
         reviews=(

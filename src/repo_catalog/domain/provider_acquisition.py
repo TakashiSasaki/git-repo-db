@@ -15,10 +15,10 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     canonical,
 )
-from repo_catalog.domain.p1_core import uuid4_value
+from repo_catalog.domain.p1_repository import uuid4_value
 from repo_catalog.domain.production_context import (
     CollectionObservation,
-    CoreReference,
+    RepositoryReference,
     ResourceObservation,
     ResourceRelation,
     SourceInventory,
@@ -187,7 +187,7 @@ class ProviderTimelineIntake:
 
 @dataclass(frozen=True)
 class ProviderRepositoryIntake:
-    """Provider identity/metadata observation without any implied Core binding."""
+    """Provider identity/metadata observation without any implied Repository binding."""
 
     payload: dict[str, object]
     observed_at_us: int | None
@@ -272,7 +272,9 @@ class ProviderIntakeBatch:
         tuple[ContextCoverageClaim, CollectionObservation, str], ...
     ] = ()
     coverage_claims: tuple[ContextCoverageClaim, ...] = ()
-    core_references: tuple[tuple[CoreReference, FieldClock, int | None], ...] = ()
+    repository_references: tuple[
+        tuple[RepositoryReference, FieldClock, int | None], ...
+    ] = ()
 
     def __post_init__(self) -> None:
         uuid4_value(self.service_instance_uuidv4)
@@ -297,8 +299,8 @@ class ProviderAcquisitionReport:
     service_instance_uuidv4: str
     admitted_resources: tuple[ResourceKey, ...]
     skipped_pull_request_issues: int
-    linked_core_references: tuple[CoreReference, ...]
-    pending_core_references: tuple[CoreReference, ...]
+    linked_repository_references: tuple[RepositoryReference, ...]
+    pending_repository_references: tuple[RepositoryReference, ...]
     admitted_texts: tuple[str, ...]
     admitted_collections: int
     admitted_inventories: int
@@ -306,10 +308,10 @@ class ProviderAcquisitionReport:
 
 @dataclass(frozen=True)
 class DependencyReconciliationReport:
-    """Result of promoting unresolved Context CoreReferences once Git OIDs exist in Core."""
+    """Result of promoting unresolved Context RepositoryReferences once Git OIDs exist in Repository."""
 
-    promoted_references: tuple[CoreReference, ...]
-    remaining_unresolved: tuple[CoreReference, ...]
+    promoted_references: tuple[RepositoryReference, ...]
+    remaining_unresolved: tuple[RepositoryReference, ...]
 
 
 def make_provenance(source: str, evidence: object) -> str:

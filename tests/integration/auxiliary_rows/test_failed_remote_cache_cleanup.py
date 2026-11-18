@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 
 from repo_catalog.adapters.git import remote
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.remote_git_acquisition import acquire_remote_git
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 from tests.integration.p5.test_separated_remote_git import git_http, request
 
@@ -18,7 +18,7 @@ def test_actual_failed_http_fetch_removes_temporary_cache_without_original_captu
 ):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     directories = []
     temporary_directory = remote.tempfile.TemporaryDirectory
 
@@ -29,7 +29,7 @@ def test_actual_failed_http_fetch_removes_temporary_cache_without_original_captu
 
     monkeypatch.setattr(remote.tempfile, "TemporaryDirectory", tracked)
     with git_http(tmp_path) as (base, _):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             acquire_remote_git(
                 catalog,
                 {
@@ -44,11 +44,13 @@ def test_actual_failed_http_fetch_removes_temporary_cache_without_original_captu
     assert directories and all(not path.exists() for path in directories)
     assert not (catalog / "cache").exists()
     assert not (catalog / "p1-recovery-stop.json").exists()
-    with closing(GitCore(catalog / "core.sqlite3")) as core:
+    with closing(
+        GitRepositoryStore(catalog / "repository.sqlite3")
+    ) as repository_store:
         for table in (
             "retained_metadata",
             "repository_claims",
             "git_observations",
             "ref_observations",
         ):
-            assert core.sql(f"SELECT count(*) FROM {table}")[0][0] == 0
+            assert repository_store.sql(f"SELECT count(*) FROM {table}")[0][0] == 0

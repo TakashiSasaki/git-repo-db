@@ -369,7 +369,7 @@ class SourceInventory:
 
 
 @dataclass(frozen=True)
-class CoreReference:
+class RepositoryReference:
     resource: ResourceKey
     role: str
     object_oid: OID
@@ -377,27 +377,27 @@ class CoreReference:
 
     def __post_init__(self):
         if not self.role:
-            raise ContextError("MISSING_ROLE", "core_reference")
+            raise ContextError("MISSING_ROLE", "repository_reference")
         json_value(self.provenance_json, provenance=True)
 
 
-def validate_reported_core_reference(candidate: FieldCandidate) -> None:
+def validate_reported_repository_reference(candidate: FieldCandidate) -> None:
     """Check the reported OID subtype before admission or Exchange binding."""
-    if candidate.field_name.startswith("reported_core_reference:"):
+    if candidate.field_name.startswith("reported_repository_reference:"):
         value = json.loads(candidate.value_json)
         if (
-            not candidate.field_name.removeprefix("reported_core_reference:")
+            not candidate.field_name.removeprefix("reported_repository_reference:")
             or not isinstance(value, list)
             or len(value) != 2
             or any(not isinstance(item, str) for item in value)
         ):
-            raise ContextError("REFERENCE_VALUE", "core_reference")
+            raise ContextError("REFERENCE_VALUE", "repository_reference")
         OID(*value)
 
 
 @dataclass(frozen=True)
-class CoreDependency:
-    reference: CoreReference
+class RepositoryDependency:
+    reference: RepositoryReference
     available: bool
     required: bool = False
     candidate: FieldCandidate | None = None

@@ -277,7 +277,7 @@ def test_frozen_multi_source_plan_survives_resume_and_keeps_only_credential_refe
         {"http.extraHeader": "Authorization: Bearer synthetic-secret"},
         {"http.https://synthetic.invalid/.extraHeader": "Cookie: synthetic-secret"},
         {"headers": {"X-Api-Key": "synthetic-secret"}},
-        {"core.sshCommand": "ssh -i synthetic-private-key"},
+        {"repository.sshCommand": "ssh -i synthetic-private-key"},
         {"private_key": "synthetic-private-key"},
         {"nested": {"client_secret": "synthetic-secret"}},
     ],

@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.github.production_intake import github_repository_id
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
@@ -86,7 +86,7 @@ def rows(path, table):
 
 def receiver(path):
     seed, instance = init_catalog_stores(
-        path, stores=("core", "context", "operational")
+        path, stores=("repository", "context", "operational")
     )
     return seed, instance
 
@@ -105,9 +105,9 @@ def receive(path, package, repositories):
 def producer(path):
     r1, _ = receiver(path)
     r2, service = str(uuid4()), str(uuid4())
-    core = GitCore(path / "core.sqlite3")
-    core.admit_repository(r2)
-    core.close()
+    repository_store = GitRepositoryStore(path / "repository.sqlite3")
+    repository_store.admit_repository(r2)
+    repository_store.close()
     claims = (
         claim(service, "1", r1, "A"),
         claim(service, "2", r2, "B"),
@@ -161,7 +161,7 @@ def producer(path):
             ),
         )
     )
-    # The latest Provider owner is unresolved; older Core evidence is retained.
+    # The latest Provider owner is unresolved; older Repository evidence is retained.
     acq.admit_batch(
         ProviderIntakeBatch(
             service,
@@ -191,14 +191,16 @@ def test_current_roles_namespaces_clocks_and_conflicts_across_seeds(tmp_path):
     ) + (ResourceKey.from_native(service, "pull_request", "9"),)
     package = ExchangeService(a).export_package(selection=scope((r1, r2), keys))
     receive(b, package, (r1, r2))
-    core = GitCore(b / "core.sqlite3")
-    assert core.catalog_identity() == (seed, instance)
-    assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {
+    repository_store = GitRepositoryStore(b / "repository.sqlite3")
+    assert repository_store.catalog_identity() == (seed, instance)
+    assert {
+        r[0] for r in repository_store.sql("SELECT repository_uuidv4 FROM repositories")
+    } == {
         seed,
         r1,
         r2,
     }
-    core.close()
+    repository_store.close()
     with Context.snapshot(a) as sender, Context.snapshot(b) as ctx:
         for key in keys:
             assert ctx.provider_repository_roles(
@@ -349,11 +351,12 @@ def test_genuine_transfer_event_report_is_preserved_whole(tmp_path, endpoints, s
             assert not ctx.db.execute(
                 "SELECT 1 FROM repository_context WHERE repository_uuidv4=?", (r2,)
             ).fetchone()
-        core = GitCore(c / "core.sqlite3")
+        repository_store = GitRepositoryStore(c / "repository.sqlite3")
         assert {
-            r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
+            r[0]
+            for r in repository_store.sql("SELECT repository_uuidv4 FROM repositories")
         } == {seed, r1}
-        core.close()
+        repository_store.close()
 
 
 def test_i2_source_coverage_and_native_capture_notes_survive_i3(tmp_path):
@@ -390,25 +393,34 @@ def test_i2_source_coverage_and_native_capture_notes_survive_i3(tmp_path):
     package = ExchangeService(a).export_package(
         selection=ExchangeSelectionScope(all_selected=True)
     )
-    assert package.core["retained_notes"] and package.core["captures"]
+    assert (
+        package.repository_store["retained_notes"]
+        and package.repository_store["captures"]
+    )
     report = receive(b, package, (r1,))
-    assert report.linked_core_references >= 2
+    assert report.linked_repository_references >= 2
     for table in (
         "source_inventory_evidence",
         "source_coverage_proofs",
         "coverage_claims",
-        "core_references",
+        "repository_references",
         "resource_relations",
     ):
         assert rows(a, table) == rows(b, table)
-    ca, cb = GitCore(a / "core.sqlite3"), GitCore(b / "core.sqlite3")
+    ca, cb = (
+        GitRepositoryStore(a / "repository.sqlite3"),
+        GitRepositoryStore(b / "repository.sqlite3"),
+    )
     try:
         assert cb.catalog_identity() == (seed, instance)
         assert cb.read_metadata(oids["commit2"]) == ca.read_metadata(oids["commit2"])
     finally:
         ca.close()
         cb.close()
-    da, db = connect(a / "core.sqlite3", "core"), connect(b / "core.sqlite3", "core")
+    da, db = (
+        connect(a / "repository.sqlite3", "repository"),
+        connect(b / "repository.sqlite3", "repository"),
+    )
     try:
         for table in (
             "captures",
@@ -428,7 +440,7 @@ def test_i2_source_coverage_and_native_capture_notes_survive_i3(tmp_path):
         selection=ExchangeSelectionScope(all_selected=True)
     )
     for section in ("note_roles", "retained_notes"):
-        assert onward.core[section] == package.core[section]
+        assert onward.repository_store[section] == package.repository_store[section]
     assert not (a / "access.sqlite3").exists() and not (b / "access.sqlite3").exists()
     assert "credential" not in encode_package(
         package
@@ -521,7 +533,7 @@ def test_domain_exchange_neither_transports_nor_changes_real_access_grants(tmp_p
 
 @pytest.mark.parametrize("mutation", ["bad_role", "wrong_observation", "wrong_members"])
 @pytest.mark.parametrize("hidden", [False, True])
-def test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit(
+def test_invalid_i2_provider_scope_rejected_before_binding_and_repository_commit(
     tmp_path, mutation, hidden
 ):
     """Independent-review counterexamples: generic relation construction is insufficient."""
@@ -554,9 +566,9 @@ def test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit(
     row["scope_json"] = canonical(original_scope)
     # Public v4 encoder recomputes a valid checksum; this exercises typed preflight.
     package = replace(package, digest_sha256=None)
-    core = GitCore(b / "core.sqlite3")
-    before = core.sql("SELECT repository_uuidv4 FROM repositories")
-    core.close()
+    repository_store = GitRepositoryStore(b / "repository.sqlite3")
+    before = repository_store.sql("SELECT repository_uuidv4 FROM repositories")
+    repository_store.close()
     with pytest.raises(ValueError, match=message):
         ExchangeService(b).import_package(
             package,
@@ -572,9 +584,9 @@ def test_invalid_i2_provider_scope_rejected_before_binding_and_core_commit(
             if hidden
             else None,
         )
-    core = GitCore(b / "core.sqlite3")
-    assert core.sql("SELECT repository_uuidv4 FROM repositories") == before
-    core.close()
+    repository_store = GitRepositoryStore(b / "repository.sqlite3")
+    assert repository_store.sql("SELECT repository_uuidv4 FROM repositories") == before
+    repository_store.close()
     assert not rows(b, "resources")
     db = connect(b / "operational.sqlite3", "operational")
     try:
@@ -615,9 +627,9 @@ def test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight(
         package.context["field_candidates"].append(
             {
                 **package.context["resources"][0],
-                "field_name": "reported_core_reference:"
+                "field_name": "reported_repository_reference:"
                 if mutation == "reference_empty_role"
-                else "reported_core_reference:head",
+                else "reported_repository_reference:head",
                 "value_json": "[]"
                 if mutation == "reference_empty"
                 else canonical(
@@ -667,11 +679,11 @@ def test_writer_semantic_subtypes_cannot_commit_or_coerce_before_preflight(
             if hidden
             else None,
         )
-    core = GitCore(b / "core.sqlite3")
-    assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {
-        seed
-    }
-    core.close()
+    repository_store = GitRepositoryStore(b / "repository.sqlite3")
+    assert {
+        r[0] for r in repository_store.sql("SELECT repository_uuidv4 FROM repositories")
+    } == {seed}
+    repository_store.close()
     assert not rows(b, "providers") and not rows(b, "resources")
     db = connect(b / "operational.sqlite3", "operational")
     try:
@@ -812,12 +824,14 @@ def test_source_coverage_permission_cut_keeps_independent_i2_facts(tmp_path):
         assert not ctx.db.execute(
             "SELECT 1 FROM repository_context WHERE repository_uuidv4=?", (r2,)
         ).fetchone()
-    core = GitCore(b / "core.sqlite3")
-    assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {
+    repository_store = GitRepositoryStore(b / "repository.sqlite3")
+    assert {
+        r[0] for r in repository_store.sql("SELECT repository_uuidv4 FROM repositories")
+    } == {
         seed,
         r1,
     }
-    core.close()
+    repository_store.close()
     assert not (b / "p1-recovery-stop.json").exists()
 
 

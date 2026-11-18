@@ -1,4 +1,4 @@
-"""Explicit Core-first and Context-second acquisition composition."""
+"""Explicit Repository-first and Context-second acquisition composition."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from pathlib import Path
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.git.notes import GitNotesSource
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_coordination import (
     AdmissionTransaction,
     PairCoordinator,
@@ -19,8 +19,8 @@ from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.git_acquisition import (
     GitAcquisition,
     _finish_ref_inventories,
-    _open_core,
-    _PreparedCore,
+    _open_repository,
+    _PreparedRepository,
 )
 from repo_catalog.application.provider_acquisition import ProviderAcquisition
 from repo_catalog.domain.acquisition import (
@@ -35,25 +35,25 @@ from repo_catalog.domain.acquisition import (
 from repo_catalog.domain.p1_context import ResourceKey
 from repo_catalog.domain.p1_coordination import RequestIdentity
 from repo_catalog.domain.ports.notes import NotesSource, request_scope
-from repo_catalog.domain.production_context import CoreReference
+from repo_catalog.domain.production_context import RepositoryReference
 
 
 def _reconcile_context_dependencies_in_tx(
     ctx: Context,
-    validate_core: Callable[[str, str], bool],
+    validate_repository: Callable[[str, str], bool],
 ) -> DependencyReconciliationReport:
-    promoted: list[CoreReference] = []
-    unresolved: list[CoreReference] = []
+    promoted: list[RepositoryReference] = []
+    unresolved: list[RepositoryReference] = []
 
     rows = ctx.db.execute(
         "SELECT DISTINCT service_instance_uuidv4, resource_kind, provider_resource_id "
-        "FROM field_candidates WHERE field_name GLOB 'reported_core_reference:*' "
+        "FROM field_candidates WHERE field_name GLOB 'reported_repository_reference:*' "
         "ORDER BY service_instance_uuidv4, resource_kind, provider_resource_id"
     ).fetchall()
 
     for svc, r_kind, p_id in rows:
         res_key = ResourceKey(svc, r_kind, p_id)
-        deps = ctx.core_dependencies(res_key, validate=validate_core)
+        deps = ctx.repository_dependencies(res_key, validate=validate_repository)
         already_required = {
             (
                 d.reference.role,
@@ -76,13 +76,13 @@ def _reconcile_context_dependencies_in_tx(
             )
             if dep.available:
                 if key_tuple not in already_required:
-                    ctx.link_core(
+                    ctx.link_repository(
                         ref.resource,
                         ref.role,
                         ref.object_oid.object_format,
                         ref.object_oid.object_oid,
                         ref.provenance_json,
-                        validate_core,
+                        validate_repository,
                     )
                     already_required.add(key_tuple)
                     if ref not in promoted:
@@ -98,7 +98,7 @@ def _reconcile_context_dependencies_in_tx(
 
 
 class PairedAcquisitionCoordinator:
-    """Coordinated Core-first, Context-second admission and dependency reconciliation."""
+    """Coordinated Repository-first, Context-second admission and dependency reconciliation."""
 
     def __init__(
         self,
@@ -114,13 +114,13 @@ class PairedAcquisitionCoordinator:
         self.authorization = authorization
         self.admission = admission
 
-    def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
-        core_path = self.directory / "core.sqlite3"
+    def _repository_validator_on_disk(self) -> Callable[[str, str], bool]:
+        repository_path = self.directory / "repository.sqlite3"
 
         def _validate(fmt: str, object_oid: str) -> bool:
-            if not core_path.is_file():
+            if not repository_path.is_file():
                 return False
-            with closing(connect(core_path, "core")) as db:
+            with closing(connect(repository_path, "repository")) as db:
                 row = db.execute(
                     "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (fmt, object_oid),
@@ -137,14 +137,15 @@ class PairedAcquisitionCoordinator:
         git_input: GitMetadataInput | None = None,
         notes_source: NotesSource | None = None,
         provider_batch: ProviderIntakeBatch | None = None,
-        core_fn: Callable[[GitCore], GitAcquisitionReport | None] | None = None,
+        repository_fn: Callable[[GitRepositoryStore], GitAcquisitionReport | None]
+        | None = None,
         context_fn: Callable[[Context], ProviderAcquisitionReport | None] | None = None,
         cut: Callable[[str], None] = lambda point: None,
         reconcile_dependencies: bool = True,
         new_request: bool = False,
         request_identity: RequestIdentity | None = None,
     ) -> PairedAcquisitionResult:
-        """Execute Core-first, Context-second paired admission via PairCoordinator.admit."""
+        """Execute Repository-first, Context-second paired admission via PairCoordinator.admit."""
         if (self.directory / "p1-recovery-stop.json").exists():
             from repo_catalog.domain.p1_coordination import CoordinationError
 
@@ -153,9 +154,9 @@ class PairedAcquisitionCoordinator:
         git_report_holder: list[GitAcquisitionReport | None] = [None]
         provider_report_holder: list[ProviderAcquisitionReport | None] = [None]
 
-        def _core_unit(core_tx: AdmissionTransaction) -> None:
-            with GitCore.for_transaction(core_tx) as core_cap:  # type: ignore[arg-type]
-                git_acq = GitAcquisition(core_cap, operational=self.operational)
+        def _repository_unit(repository_tx: AdmissionTransaction) -> None:
+            with GitRepositoryStore.for_transaction(repository_tx) as repository_cap:  # type: ignore[arg-type]
+                git_acq = GitAcquisition(repository_cap, operational=self.operational)
                 if git_source is not None and git_request is not None:
                     git_report_holder[0] = git_acq.acquire_from_native(
                         git_source,
@@ -170,8 +171,8 @@ class PairedAcquisitionCoordinator:
                         new_request=new_request,
                         request_identity=request_identity,
                     )
-                elif core_fn is not None:
-                    git_report_holder[0] = core_fn(core_cap)
+                elif repository_fn is not None:
+                    git_report_holder[0] = repository_fn(repository_cap)
 
         def _context_unit(context_tx: AdmissionTransaction) -> None:
             with Context.for_transaction(
@@ -183,7 +184,7 @@ class PairedAcquisitionCoordinator:
                 if provider_batch is not None:
                     prov_acq = ProviderAcquisition(
                         ctx_cap,
-                        core=self.directory / "core.sqlite3",
+                        repository_store=self.directory / "repository.sqlite3",
                         operational=self.operational,
                         authorization=self.authorization,
                         admission=self.admission,
@@ -200,16 +201,16 @@ class PairedAcquisitionCoordinator:
                     and self.admission is not None
                 ):
                     _reconcile_context_dependencies_in_tx(
-                        ctx_cap, self._core_validator_on_disk()
+                        ctx_cap, self._repository_validator_on_disk()
                     )
 
-        # Fetch/parse bounded external Git input before the short Core transaction.
+        # Fetch/parse bounded external Git input before the short Repository transaction.
         # Operational permits remain live until the prepared typed admissions finish.
         with ExitStack() as preparation:
             prepared = None
             if git_source is not None or git_input is not None:
-                actual = preparation.enter_context(_open_core(self.directory))
-                prepared = _PreparedCore(actual)
+                actual = preparation.enter_context(_open_repository(self.directory))
+                prepared = _PreparedRepository(actual)
                 unit = git_request if git_source is not None else git_input
                 if unit is None:
                     raise ValueError("Git source requires a request")
@@ -264,11 +265,13 @@ class PairedAcquisitionCoordinator:
                         progress=progress,
                     )
 
-            def _prepared_core_unit(core_tx):
+            def _prepared_repository_unit(repository_tx):
                 if prepared is None:
-                    return _core_unit(core_tx)
-                with GitCore.for_transaction(core_tx) as core_cap:
-                    prepared.apply(core_cap)
+                    return _repository_unit(repository_tx)
+                with GitRepositoryStore.for_transaction(
+                    repository_tx
+                ) as repository_cap:
+                    prepared.apply(repository_cap)
 
             auth = self.authorization
             adm = self.admission
@@ -295,7 +298,7 @@ class PairedAcquisitionCoordinator:
                 else PairCoordinator(self.directory, authorization=auth)
             )
             admission = coord.admit(
-                _prepared_core_unit,
+                _prepared_repository_unit,
                 _context_unit,
                 cut=cut,
                 authorization=auth,
@@ -320,7 +323,7 @@ class PairedAcquisitionCoordinator:
                     try:
                         BaseException.add_note(
                             error,
-                            "Core and Context committed before independent Notes inventory "
+                            "Repository and Context committed before independent Notes inventory "
                             "verification; retry with the same request identity.",
                         )
                     except BaseException:
@@ -334,11 +337,11 @@ class PairedAcquisitionCoordinator:
                 provider_report=provider_report_holder[0],
             )
 
-    def reconcile_core_dependencies(self) -> DependencyReconciliationReport:
-        """Promote unresolved `reported_core_reference:*` candidates once their OIDs exist in Core."""
+    def reconcile_repository_dependencies(self) -> DependencyReconciliationReport:
+        """Promote unresolved `reported_repository_reference:*` candidates once their OIDs exist in Repository."""
         report_holder: list[DependencyReconciliationReport] = []
 
-        def _core_noop(_core_tx: AdmissionTransaction) -> None:
+        def _repository_noop(_repository_tx: AdmissionTransaction) -> None:
             return None
 
         def _context_reconcile(context_tx: AdmissionTransaction) -> None:
@@ -349,7 +352,7 @@ class PairedAcquisitionCoordinator:
                 admission=self.admission,
             ) as ctx_cap:
                 report = _reconcile_context_dependencies_in_tx(
-                    ctx_cap, self._core_validator_on_disk()
+                    ctx_cap, self._repository_validator_on_disk()
                 )
                 report_holder.append(report)
 
@@ -367,5 +370,7 @@ class PairedAcquisitionCoordinator:
             if self.coordinator._authorization is not None
             else PairCoordinator(self.directory, authorization=auth)
         )
-        coord.admit(_core_noop, _context_reconcile, authorization=auth, admission=adm)
+        coord.admit(
+            _repository_noop, _context_reconcile, authorization=auth, admission=adm
+        )
         return report_holder[0]

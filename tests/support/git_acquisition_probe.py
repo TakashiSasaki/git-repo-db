@@ -41,10 +41,10 @@ def main(output):
         OperationalAcquisitionLedger,
     )
     from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
-    from repo_catalog.application.core_query import CoreQueryService
     from repo_catalog.application.git_acquisition import GitAcquisition
+    from repo_catalog.application.repository_query import RepositoryQueryService
     from repo_catalog.domain.git_acquisition import (
         GitNativeAcquisitionRequest,
         NotesAcquisitionSpec,
@@ -56,7 +56,7 @@ def main(output):
     )
     from repo_catalog.domain.query_work import UnlimitedWorkBudget
     from repo_catalog.domain.ref_observation import NotesMapping
-    from repo_catalog.domain.shared_values import OID, CoreFailure
+    from repo_catalog.domain.shared_values import OID, RepositoryFailure
 
     installed = Path(sysconfig.get_path("purelib")).resolve()
     distributions = {
@@ -65,7 +65,7 @@ def main(output):
         if d.metadata["Name"].startswith("repo-catalog")
     }
     expected = {
-        "repo-catalog-core",
+        "repo-catalog-repository",
         "repo-catalog-git-acquisition",
         "repo-catalog-operational",
         "repo-catalog-runtime",
@@ -111,7 +111,7 @@ def main(output):
         directory = root / name
         directory.mkdir()
         repository, instance = str(uuid4()), str(uuid4())
-        initialize(directory / "core.sqlite3", "core", repository, instance)
+        initialize(directory / "repository.sqlite3", "repository", repository, instance)
         if operational:
             initialize(
                 directory / "operational.sqlite3", "operational", repository, instance
@@ -241,16 +241,21 @@ def main(output):
             and report.ref_note_acquisitions
         )
         assert objects["commit2"] in report.retained_objects
-        reader = CoreQueryService(target)
+        reader = RepositoryQueryService(target)
         body = reader.read_metadata_bytes(objects["commit2"])
         assert (
             body.available
             and body.verified
             and body.body_bytes.hex() == data["commit_hex"]
         )
-        with closing(GitCore(target / "core.sqlite3")) as core:
-            assert core.sql("SELECT count(*) FROM ref_retained_notes")[0][0] > 0
-            assert not core.sql(
+        with closing(
+            GitRepositoryStore(target / "repository.sqlite3")
+        ) as repository_store:
+            assert (
+                repository_store.sql("SELECT count(*) FROM ref_retained_notes")[0][0]
+                > 0
+            )
+            assert not repository_store.sql(
                 "SELECT 1 FROM retained_metadata WHERE object_format=? AND object_oid=?",
                 objects["blob"].key,
             )
@@ -283,7 +288,7 @@ def main(output):
         with patch(
             "subprocess.Popen", side_effect=AssertionError("changed retry reached Git")
         ):
-            refuses(lambda: acquire(changed), (CoreFailure, CoordinationError))
+            refuses(lambda: acquire(changed), (RepositoryFailure, CoordinationError))
         assert not (target / "p1-recovery-stop.json").exists()
         checks.append("original_ref_identity_frozen_intent_and_cumulative_retry")
 
@@ -327,8 +332,10 @@ def main(output):
                     coordinate="other-unverified-synthetic-report",
                 ),
             )
-            with closing(GitCore(target / "core.sqlite3")) as core:
-                core.admit_ref_observation_claim(other)
+            with closing(
+                GitRepositoryStore(target / "repository.sqlite3")
+            ) as repository_store:
+                repository_store.admit_ref_observation_claim(other)
             unavailable = reader.read_ref_note_bytes(other, mapping, work)
             assert not unavailable.available and not unavailable.verified
         checks.append("exact_claim_notes_eligibility_and_unverified_report")
@@ -372,7 +379,7 @@ def main(output):
                 "subprocess.Popen",
                 side_effect=AssertionError("frozen route retargeted"),
             ):
-                refuses(lambda: acquire(), CoreFailure)
+                refuses(lambda: acquire(), RepositoryFailure)
             assert not (target / "p1-recovery-stop.json").exists()
             checks.append("current_authorization_revocation_ABA_and_frozen_access_plan")
 
@@ -516,7 +523,7 @@ def main(output):
                     lambda: GitAcquisition(bounded).acquire_from_native(
                         source, bounded_request, work=work, progress=progress
                     ),
-                    CoreFailure,
+                    RepositoryFailure,
                     {"BUDGET"},
                 )
             with patch(
@@ -608,15 +615,15 @@ def main(output):
         }
         checks.append("explicit_local_mode_ignores_opaque_context_search")
 
-        # Challenge completion after owned Core cleanup in the actual package.
+        # Challenge completion after owned Repository cleanup in the actual package.
         fenced, fenced_repo, _ = catalog("cleanup-stop")
-        original_close = GitCore.close
+        original_close = GitRepositoryStore.close
 
-        def stopped(core):
-            original_close(core)
+        def stopped(repository_store):
+            original_close(repository_store)
             persist_catalog_stop(fenced, "synthetic installed cleanup stop")
 
-        with patch.object(GitCore, "close", stopped):
+        with patch.object(GitRepositoryStore, "close", stopped):
             refuses(
                 lambda: GitAcquisition(fenced, operational=fenced).acquire_from_native(
                     source, unit(fenced_repo), new_request=True

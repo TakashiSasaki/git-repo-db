@@ -8,7 +8,11 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.domain.p1_context import CoverageClaim, CoverageScope, FieldClock
-from repo_catalog.domain.p1_core import GitObservation, RepositoryClaim, ScalarClaim
+from repo_catalog.domain.p1_repository import (
+    GitObservation,
+    RepositoryClaim,
+    ScalarClaim,
+)
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ResourceRelation,
@@ -24,9 +28,9 @@ from repo_catalog.domain.time import (
     validate_required_observation_us,
 )
 from tests.integration.p1.test_context import KEY, PROVENANCE, candidate, context
-from tests.integration.p1.test_core import core, oid, provenance
+from tests.integration.p1.test_repository import oid, provenance, repository_store
 
-__all__ = ["context", "core"]
+__all__ = ["context", "repository_store"]
 
 INVALID_OBSERVATIONS = [
     MIN_EPOCH_US - 1,
@@ -94,8 +98,8 @@ def test_unknown_clock_never_orders_or_overwrites_candidates(context):
 
 
 @pytest.mark.parametrize("stamp", [MIN_EPOCH_US, -1, 0, 1, MAX_EPOCH_US])
-def test_git_native_signed_values_remain_exact(core, stamp):
-    store, _, _ = core
+def test_git_native_signed_values_remain_exact(repository_store, stamp):
+    store, _, _ = repository_store
     assert validate_epoch_us(stamp) == stamp
     for field in ("author_time_us", "committer_time_us"):
         claim = ScalarClaim(oid(), field, stamp, provenance(coordinate=field))
@@ -104,8 +108,10 @@ def test_git_native_signed_values_remain_exact(core, stamp):
 
 
 @pytest.mark.parametrize("stamp", [None, 1, MAX_EPOCH_US])
-def test_core_storage_does_not_make_observation_git_native(core, stamp):
-    store, _, repository = core
+def test_repository_storage_does_not_make_observation_git_native(
+    repository_store, stamp
+):
+    store, _, repository = repository_store
     original = provenance()
     claim = RepositoryClaim(repository, "observation_us", stamp, original)
     store.admit_repository_claim(claim)

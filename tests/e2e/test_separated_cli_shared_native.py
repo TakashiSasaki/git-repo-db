@@ -13,7 +13,7 @@ from repo_catalog.domain.git_acquisition import (
     NotesAcquisitionSpec,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from tests.e2e.test_separated_cli import run
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 
@@ -23,7 +23,7 @@ def test_shared_native_sources_keep_one_parent_budget_and_source_scoped_notes_ca
     tmp_path, capsys, monkeypatch, fmt
 ):
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     paths = [tmp_path / "source-a", tmp_path / "source-b"]
     oids = [build_sample_git_repo(path, fmt) for path in paths]
     sources = [GitNativeSource(path) for path in paths]
@@ -104,14 +104,14 @@ def test_shared_native_sources_keep_one_parent_budget_and_source_scoped_notes_ca
             ledger.work_ledger.usage(parent)["metadata_units"] > after["metadata_units"]
         )
         boundary = len(actual_metadata_reads)
-        with pytest.raises(CoreFailure) as changed:
+        with pytest.raises(RepositoryFailure) as changed:
             execute(
                 0, replace(requests[0], observed_at_us=requests[0].observed_at_us + 1)
             )
         assert changed.value.code == "INCOMPATIBLE_REPLAY"
         assert len(actual_metadata_reads) == boundary
         other = tmp_path / "unrelated-parent"
-        init_catalog_stores(other, stores=("core", "operational"))
+        init_catalog_stores(other, stores=("repository", "operational"))
         with OperationalAcquisitionLedger(other) as foreign:
             with pytest.raises(CoordinationError):
                 execute(0, owner=foreign)
@@ -127,7 +127,7 @@ def test_one_native_source_supports_distinct_frozen_pr_units_without_child_budge
     tmp_path, capsys
 ):
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     objects = build_sample_git_repo(tmp_path / "native", "sha1")
     source = GitNativeSource(tmp_path / "native")
     source_id, parent = str(uuid4()), RequestIdentity(str(uuid4()), str(uuid4()))
@@ -178,7 +178,7 @@ def test_one_native_source_supports_distinct_frozen_pr_units_without_child_budge
             execute(0).ref_enumerations[0].event.identity
             == first.ref_enumerations[0].event.identity
         )
-        with pytest.raises(CoreFailure) as changed:
+        with pytest.raises(RepositoryFailure) as changed:
             execute(0, request=replace(requests[0], observed_at_us=123))
         assert changed.value.code == "INCOMPATIBLE_REPLAY"
         with pytest.raises(CoordinationError):

@@ -1,4 +1,4 @@
-"""Authoritative Core Query CLI with installed Context/Search composition.
+"""Authoritative Repository Query CLI with installed Context/Search composition.
 
 The ordinary CLI delegates its query commands here. Outputs canonical JSON and
 structured error diagnostics without opening the retired normal backend.
@@ -19,7 +19,7 @@ from repo_catalog.domain.query_contracts import (
     QueryError,
     canonical_json,
 )
-from repo_catalog.domain.shared_values import OID, CoreFailure
+from repo_catalog.domain.shared_values import OID, RepositoryFailure
 
 
 def _features():
@@ -38,8 +38,11 @@ def _features():
     return None
 
 
-def _core_available():
-    return importlib.util.find_spec("repo_catalog.application.core_query") is not None
+def _repository_available():
+    return (
+        importlib.util.find_spec("repo_catalog.application.repository_query")
+        is not None
+    )
 
 
 def _selected_query_service(args, features):
@@ -49,14 +52,14 @@ def _selected_query_service(args, features):
         )
         or args.mode == "context_only"
         or args.command in ("context-resource", "context-resources")
-        or not _core_available()
+        or not _repository_available()
     ):
         return features.query_service(args.catalog, mode=args.mode)
-    if not _core_available():
+    if not _repository_available():
         raise QueryError("MISSING_CAPABILITY", "query", "No Query reader is installed")
-    from repo_catalog.application.core_query import CoreQueryService
+    from repo_catalog.application.repository_query import RepositoryQueryService
 
-    return CoreQueryService(args.catalog, mode=args.mode)
+    return RepositoryQueryService(args.catalog, mode=args.mode)
 
 
 def _query_service(args, features):
@@ -79,7 +82,7 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--mode",
-        choices=("auto", "core_only", "context_only", "paired"),
+        choices=("auto", "repository_only", "context_only", "paired"),
         default="auto",
         help="Catalog topology mode (default: auto)",
     )
@@ -98,7 +101,7 @@ def _add_page_args(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="repo_catalog.cli.production_query",
-        description="Opt-in authoritative Core Query CLI",
+        description="Opt-in authoritative Repository Query CLI",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -106,7 +109,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_status = sub.add_parser("status", help="Inspect catalog mode and snapshot token")
     _add_common_args(p_status)
 
-    if _core_available():
+    if _repository_available():
         # git-object
         p_gobj = sub.add_parser("git-object", help="Query a single Git object by OID")
         _add_common_args(p_gobj)
@@ -166,13 +169,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             payload = {
                 "catalog_instance_uuidv4": token.catalog_instance_uuidv4,
                 "context_sha256": token.context_sha256,
-                "core_sha256": token.core_sha256,
+                "repository_sha256": token.repository_sha256,
                 "mode": mode,
                 "repository_uuidv4": token.repository_uuidv4,
                 "snapshot_token": token.encode(),
             }
         elif cmd == "ref-observations":
-            from repo_catalog.domain.core_query import ref_projection_json
+            from repo_catalog.domain.repository_query import ref_projection_json
 
             page = service.list_ref_observations(_page_from_args(args))
             payload = {
@@ -223,7 +226,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         context_module = sys.modules.get("repo_catalog.domain.production_context")
         context_error = getattr(context_module, "ContextError", ())
         if not isinstance(
-            error, (QueryError, CoreFailure, CoordinationError, ValueError)
+            error, (QueryError, RepositoryFailure, CoordinationError, ValueError)
         ) and not (context_error and isinstance(error, context_error)):
             raise
         err_payload = {

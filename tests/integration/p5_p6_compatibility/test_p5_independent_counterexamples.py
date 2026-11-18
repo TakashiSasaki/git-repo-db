@@ -64,7 +64,7 @@ def test_native_external_io_outside_write_transaction(tmp_path, monkeypatch):
     seen = []
 
     def checked(oid, *args, **kwargs):
-        db = sqlite3.connect(cat / "core.sqlite3", timeout=0)
+        db = sqlite3.connect(cat / "repository.sqlite3", timeout=0)
         try:
             db.execute("BEGIN IMMEDIATE")
             db.rollback()
@@ -104,7 +104,7 @@ def test_selected_object_never_repository_complete(tmp_path):
         select_object_oids=(oids["commit1"],),
         include_refs=False,
     )
-    r = GitAcquisition(cat / "core.sqlite3", operational=cat).acquire_from_native(
+    r = GitAcquisition(cat / "repository.sqlite3", operational=cat).acquire_from_native(
         GitNativeSource(tmp_path / "git"), req, new_request=True
     )
     assert all(
@@ -129,12 +129,12 @@ def test_retry_preserves_physical_copy(tmp_path):
         include_refs=False,
         retain_bytes=True,
     )
-    acq = GitAcquisition(cat / "core.sqlite3", operational=cat)
+    acq = GitAcquisition(cat / "repository.sqlite3", operational=cat)
     acq.acquire_from_native(GitNativeSource(tmp_path / "git"), req, new_request=True)
-    with sqlite3.connect(cat / "core.sqlite3") as db:
+    with sqlite3.connect(cat / "repository.sqlite3") as db:
         before = db.execute("SELECT count(*) FROM retained_metadata").fetchone()[0]
     acq.acquire_from_native(GitNativeSource(tmp_path / "git"), req)
-    with sqlite3.connect(cat / "core.sqlite3") as db:
+    with sqlite3.connect(cat / "repository.sqlite3") as db:
         after = db.execute("SELECT count(*) FROM retained_metadata").fetchone()[0]
     assert before == after
 
@@ -163,20 +163,25 @@ def test_missing_request_after_operational_loss_refuses_resume(tmp_path, declare
 
 
 def test_exchange_retains_partial_admission_outcome(tmp_path, monkeypatch):
-    from repo_catalog.domain.exchange import empty_context_section, empty_core_section
+    from repo_catalog.domain.exchange import (
+        empty_context_section,
+        empty_repository_section,
+    )
     from repo_catalog.domain.p1_coordination import AdmissionFailure, PairAdmission
 
     cat = tmp_path / "cat"
     repo, inst = init_catalog_stores(cat)
-    core = empty_core_section()
-    core["git_objects"].append({"object_format": "sha1", "object_oid": "a" * 40})
+    repository_store = empty_repository_section()
+    repository_store["git_objects"].append(
+        {"object_format": "sha1", "object_oid": "a" * 40}
+    )
     p = ExchangePackage(
         str(uuid4()),
         1,
         str(uuid4()),
         repo,
         selection_scope=ExchangeSelectionScope(all_selected=True),
-        core=core,
+        repository_store=repository_store,
         context=empty_context_section(),
     )
     service = ExchangeService(cat)
@@ -195,12 +200,12 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
 
     from repo_catalog.domain.p1_context import ResourceKey
-    from repo_catalog.domain.p1_core import OID
+    from repo_catalog.domain.p1_repository import OID
 
     cat = tmp_path / "cat"
     repo, inst = init_catalog_stores(cat)
     service = ExchangeService(cat)
-    original = service._export_core
+    original = service._export_repository
     oid = OID("sha1", "b" * 40)
     svc = str(uuid4())
     rk = ResourceKey.from_native(svc, "issue", "1")
@@ -213,13 +218,13 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
     def writer():
         attempted.set()
 
-        def core(cap):
+        def repository_store(cap):
             cap.admit_object(oid)
 
         def ctx(cap):
             cap.provider(svc, "github", "{}")
             cap.resource(rk)
-            cap.link_core(
+            cap.link_repository(
                 rk,
                 "head",
                 *oid.key,
@@ -227,7 +232,9 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
                 lambda *_: True,
             )
 
-        PairedAcquisitionCoordinator(cat).admit_paired(core_fn=core, context_fn=ctx)
+        PairedAcquisitionCoordinator(cat).admit_paired(
+            repository_fn=repository_store, context_fn=ctx
+        )
         completed.set()
 
     def racing(*args, **kwargs):
@@ -237,7 +244,7 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
         observed.append(completed.wait(0.2))
         return result
 
-    monkeypatch.setattr(service, "_export_core", racing)
+    monkeypatch.setattr(service, "_export_repository", racing)
     try:
         p = service.export_package(
             selection=ExchangeSelectionScope(all_selected=True), exported_at_us=1
@@ -246,7 +253,10 @@ def test_exchange_export_uses_one_paired_snapshot(tmp_path, monkeypatch):
     finally:
         executor.shutdown(wait=True)
     assert observed == [False], "paired writer escaped shared export fence"
-    assert p.core["git_objects"] == [] and p.context["core_references"] == []
+    assert (
+        p.repository_store["git_objects"] == []
+        and p.context["repository_references"] == []
+    )
     assert completed.is_set()
 
 

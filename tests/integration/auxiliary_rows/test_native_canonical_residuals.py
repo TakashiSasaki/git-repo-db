@@ -9,9 +9,14 @@ import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.p1_schema import connect
-from repo_catalog.domain.p1_core import OID, CoreFailure, RelationGroup, RelationMember
-from tests.integration.p1.test_core import Budget, native, oid, provenance
-from tests.integration.p2.conftest import core as core
+from repo_catalog.domain.p1_repository import (
+    OID,
+    RelationGroup,
+    RelationMember,
+    RepositoryFailure,
+)
+from tests.integration.p1.test_repository import Budget, native, oid, provenance
+from tests.integration.p2.conftest import repository_store as repository_store
 from tests.integration.p2.test_native import commit_body, entry, git, repository, write
 
 __all__ = ["repository"]
@@ -31,9 +36,9 @@ __all__ = ["repository"]
     ],
 )
 def test_hash_matching_malformed_native_shapes_never_publish_partial_authority(
-    core, fmt, attack
+    repository_store, fmt, attack
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     target = oid("a", fmt)
     if attack.startswith("tree-"):
         name = {"tree-dot": b".", "tree-dotdot": b"..", "tree-slash": b"dir/file"}[
@@ -63,7 +68,7 @@ def test_hash_matching_malformed_native_shapes_never_publish_partial_authority(
         )
     incoming = native(kind, body, fmt)
     incoming.validate()  # Its canonical hash, byte size and digest all agree.
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         store.admit_metadata(incoming, str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     for table in (
@@ -81,9 +86,9 @@ def test_hash_matching_malformed_native_shapes_never_publish_partial_authority(
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_checked_tag_target_must_match_raw_initial_identity_not_recorded_copy(
-    core, fmt
+    repository_store, fmt
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     target, unrelated = oid("a", fmt), oid("b", fmt)
     body = b"object " + target.object_oid.encode() + b"\ntype blob\ntag test\n\nmessage"
     incoming = native("tag", body, fmt)
@@ -98,7 +103,7 @@ def test_checked_tag_target_must_match_raw_initial_identity_not_recorded_copy(
         (RelationMember(0, unrelated),),
         replace(provenance(), qualification="receiver_intrinsic"),
     )
-    with closing(connect(path, "core")) as db:
+    with closing(connect(path, "repository")) as db:
         db.execute("BEGIN")
         db.execute("INSERT INTO relation_groups VALUES(?,?,?,?,?,?,?)", forged.key)
         with pytest.raises(sqlite3.IntegrityError, match="checked intrinsic scope"):
@@ -117,15 +122,15 @@ def test_checked_tag_target_must_match_raw_initial_identity_not_recorded_copy(
 
 @pytest.mark.parametrize("kind", ["commit", "tag"])
 def test_actual_git_uppercase_header_oid_preserves_bytes_and_canonical_target(
-    core, repository, kind
+    repository_store, repository, kind
 ):
-    store, _, _ = core
+    store, _, _ = repository_store
     path, fmt = repository
     tree = write(path, fmt, "tree", b"")
     upper = tree.object_oid.object_oid.upper().encode()
     # Only a validated raw header spelling normalizes: public typed identity
     # coordinates retain their original strict canonical input contract.
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         OID(fmt, upper.decode())
     assert error.value.code == "IDENTITY"
     if kind == "commit":

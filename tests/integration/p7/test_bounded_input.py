@@ -9,7 +9,7 @@ import tracemalloc
 
 import pytest
 
-from repo_catalog.adapters.sqlite import core_recovery as recovery
+from repo_catalog.adapters.sqlite import repository_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import RecoveryBudget, SalvageError
 
@@ -19,7 +19,7 @@ from repo_catalog.domain.recovery import RecoveryBudget, SalvageError
 def test_oversized_sqlite_row_never_materializes_in_python(tmp_path, kind, size):
     catalog = tmp_path / "suspect"
     catalog.mkdir()
-    conn = sqlite3.connect(catalog / "core.sqlite3")
+    conn = sqlite3.connect(catalog / "repository.sqlite3")
     conn.execute(f'CREATE TABLE "repository_claims" (value {kind})')
     conn.execute(
         "INSERT INTO repository_claims VALUES (?)",
@@ -53,7 +53,7 @@ def test_oversized_sqlite_row_never_materializes_in_python(tmp_path, kind, size)
 def test_unknown_source_table_is_omitted_without_generic_payload(tmp_path):
     catalog = tmp_path / "suspect"
     catalog.mkdir()
-    with sqlite3.connect(catalog / "core.sqlite3") as conn:
+    with sqlite3.connect(catalog / "repository.sqlite3") as conn:
         conn.execute('CREATE TABLE "odd""table" ("odd""column" TEXT)')
         conn.execute('INSERT INTO "odd""table" VALUES (?)', ("hello",))
     receipt = RecoveryService().extract_salvage(catalog, tmp_path / "out")
@@ -76,8 +76,8 @@ def test_copy_accounts_db_and_sidecars_cumulatively(tmp_path):
     source, dest = tmp_path / "source", tmp_path / "dest"
     source.mkdir()
     dest.mkdir()
-    (source / "core.sqlite3").write_bytes(b"a" * 100)
-    (source / "core.sqlite3-wal").write_bytes(b"b" * 100)
+    (source / "repository.sqlite3").write_bytes(b"a" * 100)
+    (source / "repository.sqlite3-wal").write_bytes(b"b" * 100)
     with pytest.raises(SalvageError, match="copy budget"):
         recovery._copy_forensic_files(source, dest, 150)
     assert sum(p.stat().st_size for p in dest.iterdir()) <= 150
@@ -89,7 +89,7 @@ def test_copy_detects_growth_after_preflight_without_copying_suffix(
     source, dest = tmp_path / "source", tmp_path / "dest"
     source.mkdir()
     dest.mkdir()
-    evidence = source / "core.sqlite3"
+    evidence = source / "repository.sqlite3"
     evidence.write_bytes(b"a" * 100)
     real_fstat = recovery.os.fstat
     grown = False
@@ -106,7 +106,7 @@ def test_copy_detects_growth_after_preflight_without_copying_suffix(
     monkeypatch.setattr(recovery.os, "fstat", grow_after_stat)
     with pytest.raises(SalvageError, match="grew"):
         recovery._copy_forensic_files(source, dest, 100)
-    assert (dest / "core.sqlite3").stat().st_size == 100
+    assert (dest / "repository.sqlite3").stat().st_size == 100
 
 
 def test_json_depth_and_elements_are_rejected_before_decoder(monkeypatch):
@@ -130,10 +130,10 @@ def test_base64_and_proof_hex_are_bounded_before_decoding(monkeypatch):
     from uuid import uuid4
 
     from repo_catalog.domain import ref_exchange as codec
-    from repo_catalog.domain.p1_core import (
+    from repo_catalog.domain.p1_repository import (
         OID,
-        CoreFailure,
         Provenance,
+        RepositoryFailure,
         account_verification,
         encode,
     )
@@ -180,7 +180,7 @@ def test_base64_and_proof_hex_are_bounded_before_decoding(monkeypatch):
     # exactly before the canonical proof decoder attempts bytes.fromhex.
     allowance = 2 * (len(wire["mapping_path_json"]) + len(bundle))
     work = recovery.RecoveryWorkBudget(work_limits={"input_bytes": allowance})
-    with account_verification(work), pytest.raises(CoreFailure) as failure:
+    with account_verification(work), pytest.raises(RepositoryFailure) as failure:
         codec.mapping_evidence_from_wire(wire, claim)
     assert failure.value.code == "BUDGET"
     assert work.usage["input_bytes"] == allowance
@@ -245,12 +245,12 @@ def test_oversized_jsonl_is_incomplete_without_admission(restored_catalog, tmp_p
 
 
 def test_salvage_output_cannot_replace_source_evidence(restored_catalog):
-    before = (restored_catalog / "core.sqlite3").read_bytes()
+    before = (restored_catalog / "repository.sqlite3").read_bytes()
     with pytest.raises(SalvageError, match="outside preserved source"):
         RecoveryService().extract_salvage(
-            restored_catalog, restored_catalog / "core.sqlite3"
+            restored_catalog, restored_catalog / "repository.sqlite3"
         )
-    assert (restored_catalog / "core.sqlite3").read_bytes() == before
+    assert (restored_catalog / "repository.sqlite3").read_bytes() == before
 
 
 @pytest.mark.parametrize("text", ["x" * 2000, "あ" * 512, 17, [], {}, "\ud800"])
@@ -342,7 +342,7 @@ def test_hash_verification_reserves_before_expenditure(monkeypatch):
         pytest.fail("hash was computed after budget was exhausted")
 
     monkeypatch.setattr(recovery.hashlib, "sha256", forbidden_hash)
-    with pytest.raises(recovery.CoreFailure, match="budget"):
+    with pytest.raises(recovery.RepositoryFailure, match="budget"):
         recovery._hash_recovery_bytes(b"too much", work)
 
 
@@ -361,12 +361,12 @@ def test_fifo_input_fails_in_separate_process_without_hanging(
     destination.mkdir()
     source = tmp_path / "fifo-source"
     source.mkdir()
-    os.mkfifo(source / "core.sqlite3")
+    os.mkfifo(source / "repository.sqlite3")
     script = """
 import sys
 from pathlib import Path
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
-from repo_catalog.adapters.sqlite.core_recovery import _copy_forensic_files
+from repo_catalog.adapters.sqlite.repository_recovery import _copy_forensic_files
 from repo_catalog.domain.recovery import RecoveryError
 try:
     if sys.argv[1] == 'merge':
@@ -417,13 +417,13 @@ def test_input_chunk_settles_measured_bytes_including_empty_eof():
 
 def test_native_header_limit_precedes_all_line_materialization():
     from repo_catalog.domain.git_native import headers
-    from repo_catalog.domain.p1_core import account_verification
+    from repo_catalog.domain.p1_repository import account_verification
 
     body = b"extension value\n" * 300_000 + b"\nmessage"
     work = recovery.RecoveryWorkBudget(work_limits={"metadata_units": 1})
     tracemalloc.start()
     try:
-        with pytest.raises(recovery.CoreFailure, match="budget"):
+        with pytest.raises(recovery.RepositoryFailure, match="budget"):
             with account_verification(work):
                 headers(body, "commit")
         _, peak = tracemalloc.get_traced_memory()

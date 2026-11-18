@@ -4,11 +4,13 @@ import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery_validation import validate_stored_checks
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_admission_guards,
+)
+from repo_catalog.adapters.sqlite.repository_recovery_validation import (
+    validate_stored_checks,
 )
 from repo_catalog.domain.collection_members import validate_collection_members
 from repo_catalog.domain.context_admission import DependencySet
@@ -170,7 +172,7 @@ def test_actual_member_resource_kind_service_and_identification_owner_are_requir
     )
 
 
-def test_valid_partial_empty_and_full_proofs_need_no_body_or_core_target(
+def test_valid_partial_empty_and_full_proofs_need_no_body_or_repository_target(
     membership_db, directory
 ):
     db = membership_db
@@ -180,7 +182,7 @@ def test_valid_partial_empty_and_full_proofs_need_no_body_or_core_target(
     terminal(db, "[]", stamp=3)
     assert not db.execute("PRAGMA foreign_key_check").fetchall()
     assert db.execute("SELECT count(*) FROM text_bodies").fetchone()[0] == 0
-    assert db.execute("SELECT count(*) FROM core_references").fetchone()[0] == 0
+    assert db.execute("SELECT count(*) FROM repository_references").fetchone()[0] == 0
     # Unknown collection kinds have no invented child namespace restriction.
     db.execute(
         "INSERT INTO collections VALUES(?,?,?,?,?,?)",

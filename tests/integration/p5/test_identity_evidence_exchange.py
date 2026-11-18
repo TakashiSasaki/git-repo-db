@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.exchange import ExchangeService
@@ -23,12 +23,12 @@ from repo_catalog.domain.exchange import (
     ExchangeSelectionScope,
     decode_package,
     empty_context_section,
-    empty_core_section,
+    empty_repository_section,
     encode_package,
 )
 from repo_catalog.domain.identity_assertions import identity_record
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.p1_core import CoreFailure, Provenance, encode
+from repo_catalog.domain.p1_repository import Provenance, RepositoryFailure, encode
 from tests.integration.p5.conftest import init_catalog_stores
 
 
@@ -96,7 +96,7 @@ def authority(operation, endpoints=(), targets=()):
 
 
 def populate(directory, entity_kind, *, include_assertion=True, variant=False):
-    role = "core" if entity_kind == "repository" else "context"
+    role = "repository" if entity_kind == "repository" else "context"
     seed, _ = init_catalog_stores(directory, stores=(role, "operational"))
     endpoints = (str(uuid4()), str(uuid4()))
     record = assertion(entity_kind, endpoints)
@@ -108,12 +108,14 @@ def populate(directory, entity_kind, *, include_assertion=True, variant=False):
         originals.append(
             ("relation", {**record, "evidence_json": '{"other":"original"}'})
         )
-    if role == "core":
-        with closing(GitCore(directory / "core.sqlite3")) as core:
+    if role == "repository":
+        with closing(
+            GitRepositoryStore(directory / "repository.sqlite3")
+        ) as repository_store:
             for endpoint in endpoints:
-                core.admit_repository(endpoint)
+                repository_store.admit_repository(endpoint)
             for kind, value in originals:
-                core.admit_identity_evidence(
+                repository_store.admit_identity_evidence(
                     kind, identity_record(kind, value), provenance(value)
                 )
     else:
@@ -135,7 +137,7 @@ def export(directory, entity_kind, endpoints, target, **selection):
     return ExchangeService(directory, authorization=auth, admission=adm).export_package(
         selection=ExchangeSelectionScope(
             all_selected=True,
-            include_core=entity_kind == "repository",
+            include_repository=entity_kind == "repository",
             include_context=entity_kind == "service",
             **selection,
         ),
@@ -152,11 +154,11 @@ def test_identity_roundtrip_original_bytes_collisions_and_idempotent_replay(
     package = export(source, entity_kind, endpoints, record["relation_uuidv4"])
     package = decode_package(encode_package(package))
     role, prefix = (
-        ("core", "repository")
+        ("repository", "repository")
         if entity_kind == "repository"
         else ("context", "service")
     )
-    section = package.core if role == "core" else package.context
+    section = package.repository_store if role == "repository" else package.context
     assert len(section[prefix + "_identity_assertions"]) == 2
     assert section[prefix + "_identity_cancellations"] == [
         wire("cancellation", cancelled)
@@ -171,14 +173,14 @@ def test_identity_roundtrip_original_bytes_collisions_and_idempotent_replay(
     first = service.import_package(
         package,
         new_request=True,
-        permitted_repository_uuidv4s=endpoints if role == "core" else (),
+        permitted_repository_uuidv4s=endpoints if role == "repository" else (),
     )
     repeated = service.import_package(
         package,
         new_request=False,
-        permitted_repository_uuidv4s=endpoints if role == "core" else (),
+        permitted_repository_uuidv4s=endpoints if role == "repository" else (),
     )
-    assert first.core_imported if role == "core" else first.context_imported
+    assert first.repository_imported if role == "repository" else first.context_imported
     assert repeated.idempotent_replay
     with closing(connect(target / (role + ".sqlite3"), role)) as db:
         rows = db.execute(
@@ -191,7 +193,7 @@ def test_identity_roundtrip_original_bytes_collisions_and_idempotent_replay(
             row["record_json"] for row in section[prefix + "_identity_assertions"]
         }
     assert not (
-        target / ("context.sqlite3" if role == "core" else "core.sqlite3")
+        target / ("context.sqlite3" if role == "repository" else "repository.sqlite3")
     ).exists()
 
 
@@ -211,11 +213,11 @@ def test_cancellation_before_assertion_is_independent_selected_unit(
         identity_assertion_uuidv4s=(record["relation_uuidv4"],),
     )
     role, prefix = (
-        ("core", "repository")
+        ("repository", "repository")
         if entity_kind == "repository"
         else ("context", "service")
     )
-    section = package.core if role == "core" else package.context
+    section = package.repository_store if role == "repository" else package.context
     assert section[prefix + "_identity_assertions"] == []
     assert section[prefix + "_identity_cancellations"] == [
         wire("cancellation", cancelled)
@@ -229,9 +231,11 @@ def test_cancellation_before_assertion_is_independent_selected_unit(
     result = ExchangeService(target, authorization=auth, admission=adm).import_package(
         package,
         new_request=True,
-        permitted_repository_uuidv4s=endpoints if role == "core" else (),
+        permitted_repository_uuidv4s=endpoints if role == "repository" else (),
     )
-    assert result.core_imported if role == "core" else result.context_imported
+    assert (
+        result.repository_imported if role == "repository" else result.context_imported
+    )
     with closing(connect(target / (role + ".sqlite3"), role)) as db:
         assert (
             db.execute(
@@ -257,8 +261,8 @@ def test_selective_identity_targets_and_repository_endpoint_permission(tmp_path)
         repository_uuidv4s=(endpoints[0],),
         identity_assertion_uuidv4s=(record["relation_uuidv4"],),
     )
-    assert package.core["repository_identity_assertions"] == []
-    assert len(package.core["repository_identity_cancellations"]) == 1
+    assert package.repository_store["repository_identity_assertions"] == []
+    assert len(package.repository_store["repository_identity_cancellations"]) == 1
     assert any(
         o["section"] == "repository_identity_assertions"
         for o in package.selection_report["omissions"]
@@ -270,8 +274,8 @@ def test_selective_identity_targets_and_repository_endpoint_permission(tmp_path)
         record["relation_uuidv4"],
         identity_assertion_uuidv4s=(),
     )
-    assert not omitted.core["repository_identity_assertions"]
-    assert not omitted.core["repository_identity_cancellations"]
+    assert not omitted.repository_store["repository_identity_assertions"]
+    assert not omitted.repository_store["repository_identity_cancellations"]
 
 
 def test_service_identity_export_and_import_need_exact_target_and_endpoint_grants(
@@ -323,7 +327,9 @@ def test_supplied_service_identity_requires_context_capability_even_when_unselec
     source, target = tmp_path / "source", tmp_path / "target"
     seed, endpoints, record, _ = populate(source, "service")
     package = export(source, "service", endpoints, record["relation_uuidv4"])
-    init_catalog_stores(target, repository_uuidv4=seed, stores=("core", "operational"))
+    init_catalog_stores(
+        target, repository_uuidv4=seed, stores=("repository", "operational")
+    )
     with pytest.raises(ExchangeError, match="CONTEXT_UNAVAILABLE"):
         ExchangeService(target).import_package(
             package,
@@ -336,21 +342,23 @@ def test_supplied_service_identity_requires_context_capability_even_when_unselec
 def test_all_supplied_identity_rows_validate_before_selection_and_digest_binding(
     tmp_path,
 ):
-    seed, _ = init_catalog_stores(tmp_path, stores=("core", "operational"))
+    seed, _ = init_catalog_stores(tmp_path, stores=("repository", "operational"))
     endpoints = (str(uuid4()), str(uuid4()))
     record = assertion("repository", endpoints)
-    core = empty_core_section()
-    core["repository_identity_assertions"] = [wire("relation", record)]
+    repository_store = empty_repository_section()
+    repository_store["repository_identity_assertions"] = [wire("relation", record)]
     package = ExchangePackage(
         package_id=str(uuid4()),
         exported_at_us=100,
         sender_catalog_instance_uuidv4=str(uuid4()),
         repository_uuidv4=seed,
         selection_scope=ExchangeSelectionScope(all_selected=True),
-        core=core,
+        repository_store=repository_store,
     )
     raw = package.to_dict()
-    raw["core"]["repository_identity_assertions"][0]["relation_uuidv4"] = str(uuid4())
+    raw["repository"]["repository_identity_assertions"][0]["relation_uuidv4"] = str(
+        uuid4()
+    )
     import hashlib
 
     from repo_catalog.domain.exchange import _canonical_dictionary
@@ -360,7 +368,9 @@ def test_all_supplied_identity_rows_validate_before_selection_and_digest_binding
         ExchangeService(tmp_path).import_package(
             raw,
             new_request=True,
-            selection=ExchangeSelectionScope(all_selected=True, include_core=False),
+            selection=ExchangeSelectionScope(
+                all_selected=True, include_repository=False
+            ),
             permitted_repository_uuidv4s=(),
         )
     assert not (tmp_path / "p1-recovery-stop.json").exists()
@@ -372,22 +382,30 @@ def test_identity_unit_budget_and_conflicting_package_key_are_not_corruption(tmp
     small = export(
         source, "repository", endpoints, record["relation_uuidv4"], max_bytes=1
     )
-    assert not small.core["repository_identity_assertions"]
+    assert not small.repository_store["repository_identity_assertions"]
     assert any(
         o["reason"] in {"byte_limit", "resource_limit"}
         for o in small.selection_report["omissions"]
     )
     package = export(source, "repository", endpoints, record["relation_uuidv4"])
-    init_catalog_stores(target, repository_uuidv4=seed, stores=("core", "operational"))
+    init_catalog_stores(
+        target, repository_uuidv4=seed, stores=("repository", "operational")
+    )
     service = ExchangeService(target)
     service.import_package(
         package, new_request=True, permitted_repository_uuidv4s=endpoints
     )
-    changed_core = {key: list(rows) for key, rows in package.core.items()}
+    changed_repository = {
+        key: list(rows) for key, rows in package.repository_store.items()
+    }
     changed_record = {**record, "evidence_json": '{"conflicting":"package"}'}
-    changed_core["repository_identity_assertions"] = [wire("relation", changed_record)]
-    conflicting = replace(package, core=changed_core, digest_sha256=None)
-    with pytest.raises((ExchangeError, CoreFailure)) as refusal:
+    changed_repository["repository_identity_assertions"] = [
+        wire("relation", changed_record)
+    ]
+    conflicting = replace(
+        package, repository_store=changed_repository, digest_sha256=None
+    )
+    with pytest.raises((ExchangeError, RepositoryFailure)) as refusal:
         service.import_package(
             conflicting,
             request=RequestIdentity(str(uuid4()), str(uuid4())),
@@ -399,9 +417,9 @@ def test_identity_unit_budget_and_conflicting_package_key_are_not_corruption(tmp
 
 
 def test_optional_identity_sections_preserve_pre_extension_v8_canonical_digest():
-    core, context = empty_core_section(), empty_context_section()
+    repository_store, context = empty_repository_section(), empty_context_section()
     for key in ("repository_identity_assertions", "repository_identity_cancellations"):
-        core.pop(key)
+        repository_store.pop(key)
     for key in ("service_identity_assertions", "service_identity_cancellations"):
         context.pop(key)
     package = ExchangePackage(
@@ -410,7 +428,7 @@ def test_optional_identity_sections_preserve_pre_extension_v8_canonical_digest()
         sender_catalog_instance_uuidv4=str(uuid4()),
         repository_uuidv4=str(uuid4()),
         selection_scope=ExchangeSelectionScope(all_selected=True),
-        core=core,
+        repository_store=repository_store,
         context=context,
     )
     assert "identity_assertion_uuidv4s" not in package.selection_scope.to_dict()
@@ -422,22 +440,26 @@ def test_optional_identity_sections_preserve_pre_extension_v8_canonical_digest()
     )
 
 
-def test_core_identity_roundtrip_never_imports_context_implementation(tmp_path):
-    from tests.integration.p5.test_exchange_core_import_independence import guarded
+def test_repository_identity_roundtrip_never_imports_context_implementation(tmp_path):
+    from tests.integration.p5.test_exchange_repository_import_independence import (
+        guarded,
+    )
 
     source, target = tmp_path / "source", tmp_path / "target"
     seed, endpoints, record, _ = populate(source, "repository")
-    init_catalog_stores(target, repository_uuidv4=seed, stores=("core", "operational"))
+    init_catalog_stores(
+        target, repository_uuidv4=seed, stores=("repository", "operational")
+    )
     guarded(
         """
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import ExchangeSelectionScope, encode_package, decode_package
 source, target, left, right = sys.argv[1:]
 package = ExchangeService(source).export_package(selection=ExchangeSelectionScope(all_selected=True,include_context=False))
-assert len(package.core['repository_identity_assertions']) == 1
+assert len(package.repository['repository_identity_assertions']) == 1
 assert package.context is None
 result = ExchangeService(target).import_package(decode_package(encode_package(package)),new_request=True,permitted_repository_uuidv4s=(left,right))
-assert result.core_imported
+assert result.repository_imported
 """,
         source,
         target,

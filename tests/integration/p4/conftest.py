@@ -7,13 +7,13 @@ import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.git.notes import GitNotesSource
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.notes import NotesProgress
 from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.application.notes import NotesAcquisition
 from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.ports.notes import request_scope
 
 
@@ -47,10 +47,13 @@ def acquisition(tmp_path, request):
     path.mkdir()
     git(path, "init", *(["--bare"] if bare else []), "--object-format=" + fmt)
     repository, instance, origin = (str(uuid4()) for _ in range(3))
-    core_path, op_path = tmp_path / "core.sqlite3", tmp_path / "operational.sqlite3"
-    initialize(core_path, "core", repository, instance)
+    repository_path, op_path = (
+        tmp_path / "repository.sqlite3",
+        tmp_path / "operational.sqlite3",
+    )
+    initialize(repository_path, "repository", repository, instance)
     initialize(op_path, "operational", repository, instance)
-    core = GitCore(core_path)
+    repository_store = GitRepositoryStore(repository_path)
     db = connect(op_path, "operational")
     ledger = WorkLedger(db)
     req = RequestIdentity(origin, str(uuid4()))
@@ -64,10 +67,14 @@ def acquisition(tmp_path, request):
     ledger.attempt(req, attempt)
     work = NotesWorkBudget(ledger, req, attempt, NotesLimits())
     app = NotesAcquisition(
-        core, source, work, NotesProgress(work), source_attribution="local-test"
+        repository_store,
+        source,
+        work,
+        NotesProgress(work),
+        source_attribution="local-test",
     )
-    yield app, path, fmt, repository, origin, core_path, op_path
-    core.close()
+    yield app, path, fmt, repository, origin, repository_path, op_path
+    repository_store.close()
     db.close()
 
 

@@ -14,7 +14,7 @@ from repo_catalog.adapters.github.production_intake import (
     parse_git_oid,
 )
 from repo_catalog.domain.models import CatalogError, Waiting
-from repo_catalog.domain.p1_core import uuid4_value
+from repo_catalog.domain.p1_repository import uuid4_value
 
 
 def validate_git_source(value):
@@ -120,8 +120,8 @@ class GitHubGitRoles:
         from repo_catalog.application.git_acquisition import GitAcquisition
         from repo_catalog.domain.git_acquisition import GitNativeAcquisitionRequest
         from repo_catalog.domain.p1_context import CoverageScope
-        from repo_catalog.domain.p1_core import CoreFailure
         from repo_catalog.domain.p1_coverage import CoverageClaim
+        from repo_catalog.domain.p1_repository import RepositoryFailure
         from repo_catalog.domain.pr_assessment import git_role_check_scope
         from repo_catalog.domain.production_context import CollectionObservation
         from repo_catalog.domain.provider_acquisition import (
@@ -381,7 +381,7 @@ class GitHubGitRoles:
             )
             if changed:
                 fetch.partial_failure = fetch.partial_failure or "PR_CODE_RACE"
-        except (CatalogError, CoreFailure) as error:
+        except (CatalogError, RepositoryFailure) as error:
             if isinstance(error, Waiting):
                 raise
             if error.code == "CANCELLED":

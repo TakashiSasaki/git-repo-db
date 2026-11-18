@@ -13,10 +13,10 @@ from repo_catalog.domain.exchange import (
     ExchangePackage,
     ExchangeSelectionScope,
     decode_package,
-    empty_core_section,
+    empty_repository_section,
     encode_package,
 )
-from repo_catalog.domain.p1_core import CoreCoverageScope, CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryCoverageScope, RepositoryFailure
 from repo_catalog.domain.recovery import BackupScope, RestoreValidationError
 
 
@@ -40,10 +40,10 @@ def test_retired_sections_rejected_with_recomputed_digest(section):
         selection_scope=ExchangeSelectionScope(
             all_selected=True, include_context=False
         ),
-        core=empty_core_section(),
+        repository_store=empty_repository_section(),
     )
     wire = json.loads(encode_package(package))
-    wire["core"][section] = []
+    wire["repository"][section] = []
     content = json.dumps(
         {k: v for k, v in wire.items() if k != "digest_sha256"},
         ensure_ascii=False,
@@ -54,12 +54,12 @@ def test_retired_sections_rejected_with_recomputed_digest(section):
     wire["digest_sha256"] = hashlib.sha256(content).hexdigest()
     with pytest.raises(ExchangeError) as failure:
         decode_package(json.dumps(wire))
-    assert failure.value.code == "MALFORMED_CORE_SECTION"
+    assert failure.value.code == "MALFORMED_REPOSITORY_SECTION"
 
 
 def test_capture_coverage_owner_is_no_longer_an_admissible_input():
-    with pytest.raises(CoreFailure) as failure:
-        CoreCoverageScope("capture", (str(uuid4()), str(uuid4()), "inventory"))
+    with pytest.raises(RepositoryFailure) as failure:
+        RepositoryCoverageScope("capture", (str(uuid4()), str(uuid4()), "inventory"))
     assert failure.value.code == "COVERAGE_SCOPE"
 
 
@@ -70,7 +70,7 @@ def test_old_backup_manifest_rejected_after_checksum_recomputation(
     repository, instance = str(uuid4()), str(uuid4())
     source, backup, fresh = (tmp_path / name for name in ("source", "backup", "fresh"))
     source.mkdir()
-    initialize(source / "core.sqlite3", "core", repository, instance)
+    initialize(source / "repository.sqlite3", "repository", repository, instance)
     adapter = SQLiteRecoveryAdapter()
     adapter.create_consistent_backup(source, backup, BackupScope.GIT_ONLY)
     manifest = backup / "manifest.json"
@@ -98,8 +98,8 @@ def _checksummed_wire(wire):
 
 
 def _nominal_package(object_format):
-    core = empty_core_section()
-    core["git_objects"] = [
+    repository_store = empty_repository_section()
+    repository_store["git_objects"] = [
         {
             "object_format": object_format,
             "object_oid": "a" * (40 if object_format == "sha1" else 64),
@@ -113,7 +113,7 @@ def _nominal_package(object_format):
         selection_scope=ExchangeSelectionScope(
             all_selected=True, include_context=False
         ),
-        core=core,
+        repository_store=repository_store,
     )
 
 
@@ -121,8 +121,8 @@ def _nominal_package(object_format):
 def test_nominal_wire_preserves_typed_identity_and_refuses_old_component(object_format):
     package = _nominal_package(object_format)
     wire = json.loads(encode_package(package))
-    assert decode_package(json.dumps(wire)).core == package.core
-    row = wire["core"]["git_objects"][0]
+    assert decode_package(json.dumps(wire)).repository_store == package.repository_store
+    row = wire["repository"]["git_objects"][0]
     row["full_oid"] = row.pop("object_oid")
     with pytest.raises(ExchangeError) as failure:
         decode_package(_checksummed_wire(wire))
@@ -142,7 +142,7 @@ def test_old_exchange_format_refused_even_with_a_current_checksum(old_version):
     "role", ["direct_target", "resolved_target", "peeled_target", "root"]
 )
 def test_ref_wire_refuses_old_role_fields_even_when_target_is_unknown(role):
-    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.p1_repository import Provenance
     from repo_catalog.domain.ref_exchange import claim_from_wire, claim_to_wire
     from repo_catalog.domain.ref_observation import (
         RefObservationClaim,

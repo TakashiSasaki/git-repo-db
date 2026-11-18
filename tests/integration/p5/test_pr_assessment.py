@@ -7,7 +7,7 @@ import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.github.production_intake import make_document_key
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.application.git_acquisition import GitAcquisition
 from repo_catalog.application.pr_assessment import PRQueryService
@@ -20,8 +20,8 @@ from repo_catalog.domain.context_admission import (
 from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.git_acquisition import GitNativeAcquisitionRequest
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey, canonical
-from repo_catalog.domain.p1_core import OID
 from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.pr_assessment import anchored_code_scope
 from repo_catalog.domain.production_context import CollectionObservation
 from repo_catalog.domain.provider_acquisition import (
@@ -41,19 +41,19 @@ from tests.support.context_admission import fixture_context, fixture_service
 
 
 class Fixture:
-    def __init__(self, path, *, core=True, retain=True):
+    def __init__(self, path, *, repository_store=True, retain=True):
         self.path = path
         self.repository, _ = init_catalog_stores(
             path,
-            stores=("core", "context", "operational")
-            if core
+            stores=("repository", "context", "operational")
+            if repository_store
             else ("context", "operational"),
         )
         self.service = str(uuid4())
         self.parent = ResourceKey.from_native(self.service, "pull_request", "100")
         self.objects = build_sample_git_repo(path / "input.git")
         self.head, self.base = self.objects["commit2"], self.objects["commit1"]
-        if core:
+        if repository_store:
             GitAcquisition(path, operational=path).acquire_from_native(
                 GitNativeSource(path / "input.git"),
                 GitNativeAcquisitionRequest(
@@ -106,7 +106,7 @@ class Fixture:
         self.admission = fixture_context(self.auth)
         self.api = ProviderAcquisition(
             path,
-            core=path if core else None,
+            repository_store=path if repository_store else None,
             authorization=self.auth,
             admission=self.admission,
         )
@@ -216,14 +216,18 @@ def test_exact_current_code_pagination_and_verified_metadata_reuse(tmp_path):
     assert second.anchors == first.anchors
     assert second.page.snapshot_token == first.page.snapshot_token
     assert second.page.items != first.page.items
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        retained = core.sql(
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
+        retained = repository_store.sql(
             "SELECT object_oid,digest_sha256 FROM retained_metadata ORDER BY object_oid"
         )
     assert fixture.query().state == "complete"
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
         assert (
-            core.sql(
+            repository_store.sql(
                 "SELECT object_oid,digest_sha256 FROM retained_metadata ORDER BY object_oid"
             )
             == retained
@@ -272,11 +276,11 @@ def test_new_current_pr_detail_requires_own_exact_comparison(tmp_path):
     assert fixture.query().state == "complete"
 
 
-@pytest.mark.parametrize("core,retain", [(False, False), (True, False)])
+@pytest.mark.parametrize("repository_store,retain", [(False, False), (True, False)])
 def test_context_counts_and_nominal_git_oids_do_not_prove_role_metadata(
-    tmp_path, core, retain
+    tmp_path, repository_store, retain
 ):
-    fixture = Fixture(tmp_path, core=core, retain=retain)
+    fixture = Fixture(tmp_path, repository_store=repository_store, retain=retain)
     fixture.code()
     result = fixture.query()
     assert result.state == "partial"
@@ -348,7 +352,7 @@ def test_code_assessment_roundtrip_preserves_equal_clock_alternatives(tmp_path):
 def test_document_scope_ignores_code_and_timeline_gaps_but_checks_bodies_beyond_page(
     tmp_path,
 ):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     provenance = make_provenance("actual-fixture-api", {"read": "reviews"})
     fixture.admit(
         reviews=(
@@ -388,7 +392,7 @@ def test_document_scope_ignores_code_and_timeline_gaps_but_checks_bodies_beyond_
 def test_selected_thread_does_not_borrow_another_root_or_unrelated_sibling_gap(
     tmp_path,
 ):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     first = str(uuid4())
     root = make_provenance("actual-fixture-api", {"traversal_attempt_uuidv4": first})
     fixture.admit(
@@ -446,7 +450,7 @@ def test_selected_thread_does_not_borrow_another_root_or_unrelated_sibling_gap(
 
 
 def test_exact_document_path_filter_requires_code_scope_even_when_no_results(tmp_path):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     provenance = make_provenance("actual-fixture-api", {"read": "reviews"})
     fixture.observation(
         fixture.parent, "reviews", provenance, canonical({}), 300, "complete", ()

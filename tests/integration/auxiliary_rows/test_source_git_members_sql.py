@@ -56,7 +56,7 @@ def test_actual_sql_source_git_members_reject_malformed_originals_without_writes
                 replace(old, repositories=tuple(members))
 
 
-def test_source_git_member_guard_accepts_empty_and_unresolved_uuid_without_core_lookup(
+def test_source_git_member_guard_accepts_empty_and_unresolved_uuid_without_repository_lookup(
     tmp_path,
 ):
     old, _, _, _, _ = prepare(tmp_path)
@@ -64,7 +64,7 @@ def test_source_git_member_guard_accepts_empty_and_unresolved_uuid_without_core_
     assert source_inventory_members_sql(encode([unknown])) == 1
     assert source_inventory_members_sql("[]") == 1
     with closing(connect(tmp_path / "context.sqlite3", "context")) as db:
-        # Existing Context metadata is independent of a Core repository row.
+        # Existing Context metadata is independent of a Repository repository row.
         # The pure validator above does not consult either authority.
         db.execute("INSERT INTO repository_context VALUES(?,?)", (unknown, "{}"))
         for offset, members in enumerate(((), (unknown,)), 1):
@@ -91,4 +91,4 @@ def test_source_git_member_guard_accepts_empty_and_unresolved_uuid_without_core_
             db.execute("SELECT count(*) FROM source_inventory_evidence").fetchone()[0]
             == 2
         )
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()

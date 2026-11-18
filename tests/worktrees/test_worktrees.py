@@ -1,4 +1,4 @@
-"""Standalone tests: no shared runtime, Core, Access, or filesystem imports."""
+"""Standalone tests: no shared runtime, Repository, Access, or filesystem imports."""
 
 from __future__ import annotations
 
@@ -189,7 +189,7 @@ def test_history_independent_references_and_checked_backup(tmp_path):
     with pytest.raises(WorktreeError, match="checksum"):
         WorktreeCatalog.restore(backup, tmp_path / "failed.sqlite3")
     assert not (tmp_path / "failed.sqlite3").exists()
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()
 
 
 def test_readonly_open_and_schema_tampering_refused(tmp_path):

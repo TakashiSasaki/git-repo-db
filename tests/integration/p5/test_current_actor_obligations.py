@@ -187,5 +187,5 @@ def test_sparse_actor_keeps_exact_original_until_genuine_null_or_clockless_alter
     )
     if family == "review":
         assert before.fields["author"][0] in latest.fields["author"]
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()
     assert not (directory / "p1-recovery-stop.json").exists()

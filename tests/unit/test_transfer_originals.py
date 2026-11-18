@@ -26,8 +26,8 @@ from repo_catalog.domain.parent_report import ParentObservation, ParentReportKey
 from repo_catalog.domain.transfer_sql import event_sql, validate_event
 
 S = "11111111-1111-4111-8111-111111111111"
-CORE = "22222222-2222-4222-8222-222222222222"
-CORE_2 = "33333333-3333-4333-8333-333333333333"
+REPOSITORY = "22222222-2222-4222-8222-222222222222"
+REPOSITORY_2 = "33333333-3333-4333-8333-333333333333"
 FROM = "transfer_from_repository"
 TO = "transfer_to_repository"
 P = J({"source": "fixture-provider", "evidence": "P"})
@@ -289,7 +289,7 @@ def test_r09_original_endpoint_pairs_are_sorted_unique_exact_tuples(endpoints):
         (ProviderEndpointDeclaration("not_reported", PROVIDER), ((TO, "null"),)),
         (
             ProviderEndpointDeclaration("not_reported", "explicit_null"),
-            ((TO, J(CORE)),),
+            ((TO, J(REPOSITORY)),),
         ),
     ],
 )
@@ -307,13 +307,13 @@ def test_v07_multiple_original_mapping_alternatives_are_preserved():
             J(target),
             J({"source": "fixture-provider", "evidence": target}),
         )
-        for target in (CORE, CORE_2)
+        for target in (REPOSITORY, REPOSITORY_2)
     )
     supports = tuple(MappingSupport(PROVIDER, (claim,)) for claim in claims)
     provenance = encode_transfer_supported_provenance(
         "fixture-provider", "E", [(TO, support) for support in supports]
     )
-    targets = tuple(sorted((J(CORE), J(CORE_2))))
+    targets = tuple(sorted((J(REPOSITORY), J(REPOSITORY_2))))
     value = report(
         provenance_json=provenance,
         endpoint_declaration=ProviderEndpointDeclaration("not_reported", PROVIDER),
@@ -325,8 +325,8 @@ def test_v07_multiple_original_mapping_alternatives_are_preserved():
     assert len(value.to_relations) == 2
     assert {r.embedded_support for r in value.to_relations} == set(supports)
     validate_event(*row(value))
-    assert value.select_for_repositories([CORE]) is None
-    assert value.select_for_repositories([CORE, CORE_2]) is value
+    assert value.select_for_repositories([REPOSITORY]) is None
+    assert value.select_for_repositories([REPOSITORY, REPOSITORY_2]) is value
 
 
 @pytest.mark.parametrize(
@@ -362,5 +362,5 @@ def test_sql_scope_keeps_nine_keys_and_rejects_unsorted_original_endpoints():
     mutated = (*row(value)[:5], J(scope), value.observed_at_us)
     assert event_sql(*mutated) == 0
     scope = json.loads(report().scope_json)
-    scope["endpoints"] = [[TO, J(CORE)]]
+    scope["endpoints"] = [[TO, J(REPOSITORY)]]
     assert event_sql(*(*row(report())[:5], J(scope), 101)) == 0
