@@ -51,6 +51,12 @@ offline CI work. Apply the [efficient agent execution policy](#efficient-agent-e
 
 ## Architecture orientation
 
+- [ADR 0044](docs/adr/0044-repository-store-rename.md) defines the Repository store
+  rename and fresh-format cutover. Use `Repository` for the target role and
+  `repository.sqlite3` for its target file. Check the actual CLI and schema
+  catalogue when describing implemented behavior. Start the new format in
+  an empty destination and preserve existing catalogues and packages.
+
 - [ADR 0043](docs/adr/0043-separated-persistence-class-mapping.md) fixes the
   design-first target: separated DB roles and one logical persistent class per
   table, with no future normal-format compatibility/conversion requirement.
