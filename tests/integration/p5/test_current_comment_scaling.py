@@ -112,4 +112,4 @@ def test_actual_comment_units_and_replay_sql_work_do_not_scan_older_comment_rost
                 "fetch_occurrences",
                 "parsed_results",
             }
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()

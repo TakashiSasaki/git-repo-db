@@ -10,7 +10,7 @@ from repo_catalog.adapters.github.production_intake import (
     normalize_pr_file,
 )
 from repo_catalog.domain.context_admission import AdmissionSelection, DependencySet
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.provider_acquisition import make_provenance
 from tests.e2e.test_separated_cli import document
 from tests.e2e.test_separated_cli_pr_assessment import query
@@ -126,4 +126,4 @@ def test_cli_capped_commit_prefix_is_partial_without_discarding_independent_file
     assert result["has_more"] == (len(files_payload) > 20)
     assert result["state"] == "partial"
     assert not result["coverage"]["complete_for_requested_scope"]
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()

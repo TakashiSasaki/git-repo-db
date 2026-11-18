@@ -14,9 +14,8 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-from repo_catalog.adapters.sqlite.core_recovery import _sha256_file, is_catalog_stopped
-from repo_catalog.adapters.sqlite.git_core import GitCore
-from repo_catalog.adapters.sqlite.p1_core import Core
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
+from repo_catalog.adapters.sqlite.p1_repository import RepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import (
     connect as p1_connect,
 )
@@ -24,9 +23,13 @@ from repo_catalog.adapters.sqlite.p1_schema import (
     initialize,
     register_functions,
 )
+from repo_catalog.adapters.sqlite.repository_recovery import (
+    _sha256_file,
+    is_catalog_stopped,
+)
 from repo_catalog.application.recovery import RecoveryService
-from repo_catalog.domain.p1_core import (
-    CoreFailure,
+from repo_catalog.domain.p1_repository import (
+    RepositoryFailure,
 )
 from repo_catalog.domain.recovery import (
     ActivationError,
@@ -62,9 +65,9 @@ def test_case_01_real_commit_survives_backup_and_restore(
     restore_receipt = service.restore_backup(backup_path, restore_dest, repo_uuid)
     assert restore_receipt.revalidated_clean
 
-    # Inspect restored core database directly
+    # Inspect restored repository database directly
     conn = sqlite3.connect(
-        f"file:{(restore_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+        f"file:{(restore_dest / 'repository.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
     rows = conn.execute(
@@ -90,8 +93,8 @@ def test_case_02_retained_byte_modified_without_digest_update_detected(
         synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
     )
 
-    core_file = backup_path / "stores" / "core.sqlite3"
-    conn = sqlite3.connect(str(core_file))
+    repository_file = backup_path / "stores" / "repository.sqlite3"
+    conn = sqlite3.connect(str(repository_file))
     register_functions(conn)
     conn.execute("PRAGMA ignore_check_constraints = ON;")
     conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
@@ -105,17 +108,17 @@ def test_case_02_retained_byte_modified_without_digest_update_detected(
         (tampered_body, object_oid),
     )
     conn.execute(
-        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable repository fact'); END;"
     )
     conn.commit()
     conn.close()
 
     # Recalculate store SHA-256 and update manifest so file-level hash checks pass
-    new_core_sha = _sha256_file(core_file)
+    new_repository_sha = _sha256_file(repository_file)
     manifest_file = backup_path / "manifest.json"
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    manifest_data["stores"]["core"]["sha256"] = new_core_sha
-    manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    manifest_data["stores"]["repository"]["sha256"] = new_repository_sha
+    manifest_data["stores"]["repository"]["bytes"] = repository_file.stat().st_size
     overall_h = hashlib.sha256()
     for s in sorted(manifest_data["stores"].keys()):
         overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
@@ -145,8 +148,8 @@ def test_case_03_forged_backup_with_recalculated_manifest_sha_rejected(
         synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
     )
 
-    core_file = backup_path / "stores" / "core.sqlite3"
-    conn = sqlite3.connect(str(core_file))
+    repository_file = backup_path / "stores" / "repository.sqlite3"
+    conn = sqlite3.connect(str(repository_file))
     register_functions(conn)
     conn.execute("PRAGMA ignore_check_constraints = ON;")
     conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
@@ -154,17 +157,17 @@ def test_case_03_forged_backup_with_recalculated_manifest_sha_rejected(
         "UPDATE retained_metadata SET size = size + 100 WHERE native_type='commit'"
     )
     conn.execute(
-        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable repository fact'); END;"
     )
     conn.commit()
     conn.close()
 
     # Recalculate file hash and update manifest
-    new_core_sha = _sha256_file(core_file)
+    new_repository_sha = _sha256_file(repository_file)
     manifest_file = backup_path / "manifest.json"
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    manifest_data["stores"]["core"]["sha256"] = new_core_sha
-    manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    manifest_data["stores"]["repository"]["sha256"] = new_repository_sha
+    manifest_data["stores"]["repository"]["bytes"] = repository_file.stat().st_size
     overall_h = hashlib.sha256()
     for s in sorted(manifest_data["stores"].keys()):
         overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
@@ -197,7 +200,7 @@ def test_case_04_verified_notes_body_survives_recovery(
     service.restore_backup(backup_path, restore_dest, repo_uuid)
 
     conn = sqlite3.connect(
-        f"file:{(restore_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+        f"file:{(restore_dest / 'repository.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
     rows = conn.execute(
@@ -256,7 +259,7 @@ def test_case_07_valid_salvage_causes_observable_new_rows(
 
     # Inspect initial commit count
     conn = sqlite3.connect(
-        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+        f"file:{(fresh_dest / 'repository.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
     init_commits = conn.execute(
@@ -277,7 +280,7 @@ def test_case_07_valid_salvage_causes_observable_new_rows(
         "candidate_type": CandidateType.RETAINED_BODY.value,
         "capture_origin_uuidv4": None,
         "capture_uuidv4": None,
-        "provenance": {"store": "core", "table": "retained_metadata"},
+        "provenance": {"store": "repository", "table": "retained_metadata"},
         "payload": {
             "object_format": "sha1",
             "object_oid": new_commit.object_oid.object_oid,
@@ -296,9 +299,9 @@ def test_case_07_valid_salvage_causes_observable_new_rows(
     assert merge_receipt.admitted_units == 1
     assert merge_receipt.rejected_units == 0
 
-    # Verify observable new row exists in restored core
+    # Verify observable new row exists in restored repository
     conn = sqlite3.connect(
-        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+        f"file:{(fresh_dest / 'repository.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
     post_commits = conn.execute(
@@ -330,7 +333,7 @@ def test_case_08_rejected_candidates_cause_no_mutation(
     service.restore_backup(backup_path, fresh_dest, repo_uuid)
 
     conn = sqlite3.connect(
-        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+        f"file:{(fresh_dest / 'repository.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
     init_rows = conn.execute("SELECT count(*) FROM retained_metadata").fetchone()[0]
@@ -363,7 +366,7 @@ def test_case_08_rejected_candidates_cause_no_mutation(
 
     # Verify zero rows mutated
     conn = sqlite3.connect(
-        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+        f"file:{(fresh_dest / 'repository.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
     post_rows = conn.execute("SELECT count(*) FROM retained_metadata").fetchone()[0]
@@ -375,13 +378,13 @@ def test_case_08_rejected_candidates_cause_no_mutation(
 def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_path):
     """Case 10: Read-only salvage preserves the original SQLite DB/WAL/journal evidence."""
     service = RecoveryService()
-    core_path = synthetic_catalog / "core.sqlite3"
-    wal_path = synthetic_catalog / "core.sqlite3-wal"
-    shm_path = synthetic_catalog / "core.sqlite3-shm"
+    repository_path = synthetic_catalog / "repository.sqlite3"
+    wal_path = synthetic_catalog / "repository.sqlite3-wal"
+    shm_path = synthetic_catalog / "repository.sqlite3-shm"
 
     # Ensure WAL and SHM exist with active uncheckpointed state by disabling autocheckpoint
     # and keeping the connection active during the read-only salvage
-    conn = sqlite3.connect(str(core_path))
+    conn = sqlite3.connect(str(repository_path))
     register_functions(conn)
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
@@ -395,7 +398,7 @@ def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_p
     assert wal_path.exists(), "WAL file must exist after committed transaction"
     assert wal_path.stat().st_size > 0, "WAL file must have non-zero size"
 
-    pre_core_sha = _sha256_file(core_path)
+    pre_repository_sha = _sha256_file(repository_path)
     pre_wal_sha = _sha256_file(wal_path)
     pre_shm_sha = _sha256_file(shm_path) if shm_path.exists() else None
 
@@ -403,7 +406,7 @@ def test_case_10_read_only_salvage_preserves_db_and_wal(synthetic_catalog, tmp_p
     service.extract_salvage(synthetic_catalog, salvage_file)
 
     # Recheck source files: extract_salvage must not touch source files
-    assert _sha256_file(core_path) == pre_core_sha
+    assert _sha256_file(repository_path) == pre_repository_sha
     assert _sha256_file(wal_path) == pre_wal_sha
     if pre_shm_sha is not None:
         assert _sha256_file(shm_path) == pre_shm_sha
@@ -521,7 +524,7 @@ def test_case_12_concurrent_destination_creation_no_overwrite(
     assert conflicts == num_threads - 1, (
         f"Expected {num_threads - 1} no-overwrite restore rejections, got {conflicts}"
     )
-    assert (race_restore_path / "core.sqlite3").exists()
+    assert (race_restore_path / "repository.sqlite3").exists()
 
 
 def test_case_13_symlink_and_path_traversal_rejection(
@@ -535,7 +538,7 @@ def test_case_13_symlink_and_path_traversal_rejection(
     # 1. Path traversal in manifest
     manifest_file = backup_path / "manifest.json"
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    manifest_data["stores"]["core"]["path"] = "../../etc/passwd"
+    manifest_data["stores"]["repository"]["path"] = "../../etc/passwd"
     manifest_file.write_text(
         json.dumps(manifest_data, indent=2) + "\n", encoding="utf-8"
     )
@@ -551,11 +554,11 @@ def test_case_13_symlink_and_path_traversal_rejection(
     # 2. Symlink store file
     valid_backup = tmp_path / "backups" / "symlink_backup"
     service.create_consistent_backup(synthetic_catalog, valid_backup)
-    core_file = valid_backup / "stores" / "core.sqlite3"
+    repository_file = valid_backup / "stores" / "repository.sqlite3"
     outside_target = tmp_path / "outside_target.sqlite3"
-    shutil.copy2(core_file, outside_target)
-    core_file.unlink()
-    core_file.symlink_to(outside_target)
+    shutil.copy2(repository_file, outside_target)
+    repository_file.unlink()
+    repository_file.symlink_to(outside_target)
 
     # Update manifest sha
     man_file = valid_backup / "manifest.json"
@@ -574,11 +577,11 @@ def test_case_14_interrupted_activation_no_publication(
     active_locator = tmp_path / "active_catalog_link"
     active_locator.symlink_to(synthetic_catalog.resolve())
 
-    # Create invalid fresh destination missing core.sqlite3
+    # Create invalid fresh destination missing repository.sqlite3
     invalid_fresh = tmp_path / "invalid_fresh_dest"
     invalid_fresh.mkdir()
 
-    with pytest.raises(ActivationError, match="missing core.sqlite3"):
+    with pytest.raises(ActivationError, match="missing repository.sqlite3"):
         service.activate_catalog(invalid_fresh, active_locator)
 
     # Active locator is untouched and still points to original catalog
@@ -614,10 +617,10 @@ def test_case_16_p5_p6_reject_stopped_catalog(synthetic_catalog):
     service = RecoveryService()
     service.stop_suspect_catalog(synthetic_catalog, "Test fencing on stopped catalog")
 
-    # P2-P6 Core connection must fail with RECOVERY_STOP
-    core_path = synthetic_catalog / "core.sqlite3"
-    with pytest.raises(CoreFailure) as exc_info:
-        Core(core_path)
+    # P2-P6 Repository connection must fail with RECOVERY_STOP
+    repository_path = synthetic_catalog / "repository.sqlite3"
+    with pytest.raises(RepositoryFailure) as exc_info:
+        RepositoryStore(repository_path)
     assert exc_info.value.code == "RECOVERY_STOP"
 
 
@@ -629,15 +632,15 @@ def test_case_17_sha1_and_sha256_git_formats(tmp_path):
     catalog_256 = tmp_path / "catalog_sha256"
     catalog_256.mkdir()
 
-    core_path = catalog_256 / "core.sqlite3"
-    initialize(core_path, "core", repo_256, inst_256)
+    repository_path = catalog_256 / "repository.sqlite3"
+    initialize(repository_path, "repository", repo_256, inst_256)
     initialize(catalog_256 / "context.sqlite3", "context", repo_256, inst_256)
     initialize(catalog_256 / "operational.sqlite3", "operational", repo_256, inst_256)
     initialize(catalog_256 / "search.sqlite3", "search", repo_256, inst_256)
 
     # Populate sha256 objects
-    core = GitCore(core_path)
-    core.admit_repository(repo_256)
+    repository_store = GitRepositoryStore(repository_path)
+    repository_store.admit_repository(repo_256)
     budget = UnlimitedWorkBudget()
 
     tree_256 = make_tree("sha256", [(b"100644", b"file.txt", "a" * 64)])
@@ -645,8 +648,8 @@ def test_case_17_sha1_and_sha256_git_formats(tmp_path):
         "sha256", tree_256.object_oid.object_oid, [], message="SHA-256 commit\n"
     )
 
-    core.admit_metadata(tree_256, str(uuid4()), budget)
-    core.admit_metadata(commit_256, str(uuid4()), budget)
+    repository_store.admit_metadata(tree_256, str(uuid4()), budget)
+    repository_store.admit_metadata(commit_256, str(uuid4()), budget)
 
     # Backup and restore sha256 catalog
     backup_path = tmp_path / "backup_sha256"
@@ -671,8 +674,8 @@ def test_case_18_wrong_ddl_with_valid_file_hashes_rejected(
         synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
     )
 
-    core_file = backup_path / "stores" / "core.sqlite3"
-    conn = sqlite3.connect(str(core_file))
+    repository_file = backup_path / "stores" / "repository.sqlite3"
+    conn = sqlite3.connect(str(repository_file))
     register_functions(conn)
     # Alter DDL by adding an unauthorized table
     conn.execute("CREATE TABLE rogue_table (id INT PRIMARY KEY);")
@@ -680,11 +683,11 @@ def test_case_18_wrong_ddl_with_valid_file_hashes_rejected(
     conn.close()
 
     # Recalculate file hash and update manifest so file-level checks pass
-    new_core_sha = _sha256_file(core_file)
+    new_repository_sha = _sha256_file(repository_file)
     manifest_file = backup_path / "manifest.json"
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    manifest_data["stores"]["core"]["sha256"] = new_core_sha
-    manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    manifest_data["stores"]["repository"]["sha256"] = new_repository_sha
+    manifest_data["stores"]["repository"]["bytes"] = repository_file.stat().st_size
     overall_h = hashlib.sha256()
     for s in sorted(manifest_data["stores"].keys()):
         overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
@@ -760,8 +763,8 @@ def test_case_20_wrong_native_oid_rejected(synthetic_catalog, tmp_path, repo_uui
         synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
     )
 
-    core_file = backup_path / "stores" / "core.sqlite3"
-    conn = sqlite3.connect(str(core_file))
+    repository_file = backup_path / "stores" / "repository.sqlite3"
+    conn = sqlite3.connect(str(repository_file))
     register_functions(conn)
     conn.execute("PRAGMA ignore_check_constraints = ON;")
     conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
@@ -777,17 +780,17 @@ def test_case_20_wrong_native_oid_rejected(synthetic_catalog, tmp_path, repo_uui
         (tampered_body, tampered_digest, object_oid),
     )
     conn.execute(
-        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable repository fact'); END;"
     )
     conn.commit()
     conn.close()
 
     # Recompute file and manifest hashes
-    new_core_sha = _sha256_file(core_file)
+    new_repository_sha = _sha256_file(repository_file)
     manifest_file = backup_path / "manifest.json"
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    manifest_data["stores"]["core"]["sha256"] = new_core_sha
-    manifest_data["stores"]["core"]["bytes"] = core_file.stat().st_size
+    manifest_data["stores"]["repository"]["sha256"] = new_repository_sha
+    manifest_data["stores"]["repository"]["bytes"] = repository_file.stat().st_size
     overall_h = hashlib.sha256()
     for s in sorted(manifest_data["stores"].keys()):
         overall_h.update(manifest_data["stores"][s]["sha256"].encode("ascii"))
@@ -860,10 +863,10 @@ def test_case_21_invalid_context_text_digest_rejected(
         service.restore_backup(backup_path, restore_dest, repo_uuid)
 
 
-def test_case_22_inconsistent_core_context_pairing_rejected(
+def test_case_22_inconsistent_repository_context_pairing_rejected(
     synthetic_catalog, tmp_path, repo_uuid
 ):
-    """Case 22: Inconsistent Core/Context scope declaration and store set is rejected."""
+    """Case 22: Inconsistent Repository/Context scope declaration and store set is rejected."""
     service = RecoveryService()
     backup_path = tmp_path / "backups" / "case22_backup"
     service.create_consistent_backup(
@@ -930,10 +933,10 @@ def test_case_24_confirmed_source_corruption_stops_catalog_and_raises(
 ):
     """Case 24: Confirmed corruption in authoritative source stops catalog and raises CorruptionDetectedError."""
     service = RecoveryService()
-    core_path = synthetic_catalog / "core.sqlite3"
+    repository_path = synthetic_catalog / "repository.sqlite3"
 
-    # Intentionally corrupt authoritative stored core database bytes
-    conn = sqlite3.connect(str(core_path))
+    # Intentionally corrupt authoritative stored repository database bytes
+    conn = sqlite3.connect(str(repository_path))
     register_functions(conn)
     conn.execute("PRAGMA ignore_check_constraints = ON;")
     conn.execute("DROP TRIGGER IF EXISTS p1_immutable_retained_metadata_update;")
@@ -947,7 +950,7 @@ def test_case_24_confirmed_source_corruption_stops_catalog_and_raises(
         (tampered_body, object_oid),
     )
     conn.execute(
-        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+        "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable repository fact'); END;"
     )
     conn.commit()
     conn.close()
@@ -973,8 +976,10 @@ def test_case_25_staging_copy_defect_raises_validation_error_without_stopping_so
 
     # Inject damage only to staged files during snapshot cut callback
     def damage_staging():
-        for staged_core in backup_path.parent.glob("**/stores/core.sqlite3"):
-            conn = sqlite3.connect(str(staged_core))
+        for staged_repository in backup_path.parent.glob(
+            "**/stores/repository.sqlite3"
+        ):
+            conn = sqlite3.connect(str(staged_repository))
             register_functions(conn)
             conn.execute("PRAGMA ignore_check_constraints = ON;")
             conn.execute(
@@ -989,7 +994,7 @@ def test_case_25_staging_copy_defect_raises_validation_error_without_stopping_so
                 (b"X" + body[1:], object_oid),
             )
             conn.execute(
-                "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable core fact'); END;"
+                "CREATE TRIGGER p1_immutable_retained_metadata_update BEFORE UPDATE ON retained_metadata BEGIN SELECT RAISE(ABORT,'immutable repository fact'); END;"
             )
             conn.commit()
             conn.close()
@@ -1044,7 +1049,7 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
     import base64
 
     conn = sqlite3.connect(
-        f"file:{(fresh_dest / 'core.sqlite3').resolve()}?mode=ro", uri=True
+        f"file:{(fresh_dest / 'repository.sqlite3').resolve()}?mode=ro", uri=True
     )
     register_functions(conn)
     tree_object_oid = conn.execute(
@@ -1058,7 +1063,7 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
         "candidate_type": CandidateType.RETAINED_BODY.value,
         "capture_origin_uuidv4": None,
         "capture_uuidv4": None,
-        "extraction_provenance": {"store": "core", "table": "retained_metadata"},
+        "extraction_provenance": {"store": "repository", "table": "retained_metadata"},
         "payload": {
             "object_format": "sha1",
             "object_oid": commit1.object_oid.object_oid,
@@ -1075,7 +1080,7 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
     salvage_file.write_text(json.dumps(cand1) + "\n", encoding="utf-8")
 
     # One commit spends its decoded input once in recovery and once again
-    # through production Core admission. Preserve allowance for exactly one
+    # through production Repository admission. Preserve allowance for exactly one
     # such candidate, with insufficient remainder for a second decoding.
     budget = RecoveryBudget(
         max_work_units={
@@ -1102,7 +1107,7 @@ def test_case_29_cumulative_request_budget_persists_across_retries(
         "candidate_type": CandidateType.RETAINED_BODY.value,
         "capture_origin_uuidv4": None,
         "capture_uuidv4": None,
-        "extraction_provenance": {"store": "core", "table": "retained_metadata"},
+        "extraction_provenance": {"store": "repository", "table": "retained_metadata"},
         "payload": {
             "object_format": "sha1",
             "object_oid": commit2.object_oid.object_oid,
@@ -1138,9 +1143,9 @@ def test_case_30_restore_validation_rejects_mismatches_hardlinks_and_extraneous_
     )
 
     # 1. Hardlink rejection in stores
-    hardlink_path = backup_path / "stores" / "core_hl.sqlite3"
+    hardlink_path = backup_path / "stores" / "repository_hl.sqlite3"
     try:
-        os.link(backup_path / "stores" / "core.sqlite3", hardlink_path)
+        os.link(backup_path / "stores" / "repository.sqlite3", hardlink_path)
         with pytest.raises(
             RestoreValidationError, match="Hardlink forbidden|Unexpected or undeclared"
         ):

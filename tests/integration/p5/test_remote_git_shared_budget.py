@@ -12,7 +12,7 @@ from repo_catalog.application.remote_git_acquisition import (
     acquire_remote_git_with_budget,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 from tests.integration.p5.test_separated_remote_git import git_http, request
 
@@ -22,7 +22,7 @@ def test_real_remote_sources_share_parent_work_and_original_capture_across_tempo
 ):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     parent = RequestIdentity(str(uuid4()), str(uuid4()))
     sources = [str(uuid4()), str(uuid4())]
     native = [request(repository, objects), request(repository, objects)]
@@ -92,7 +92,7 @@ def test_real_remote_sources_share_parent_work_and_original_capture_across_tempo
                 )
             },
         ):
-            with pytest.raises(CoreFailure) as error:
+            with pytest.raises(RepositoryFailure) as error:
                 execute(0, **changes)
             assert error.value.code == "INCOMPATIBLE_REPLAY"
         assert len(events) == boundary
@@ -108,7 +108,7 @@ def test_parent_cumulative_transfer_bound_cannot_be_reset_for_next_remote_source
 ):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     parent = RequestIdentity(str(uuid4()), str(uuid4()))
     with (
         git_http(tmp_path) as (base, events),
@@ -138,7 +138,7 @@ def test_parent_cumulative_transfer_bound_cannot_be_reset_for_next_remote_source
         assert result.git_report.status == "complete"
         before = ledger.work_ledger.usage(parent)
         boundary = len(events)
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             acquire_remote_git_with_budget(
                 catalog,
                 {**document, "request": request(repository, objects, notes=False)},
@@ -166,8 +166,8 @@ def test_remote_shared_hook_refuses_foreign_parent_capabilities_and_child_accoun
 ):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog, other = tmp_path / "catalog", tmp_path / "other"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
-    init_catalog_stores(other, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
+    init_catalog_stores(other, stores=("repository", "operational"))
     parent = RequestIdentity(str(uuid4()), str(uuid4()))
     source = str(uuid4())
     with (
@@ -209,7 +209,7 @@ def test_remote_shared_hook_refuses_foreign_parent_capabilities_and_child_accoun
             {"work_limits": {"input_bytes": 100000000}},
             {"request_identity": [str(uuid4()), str(uuid4())]},
         ):
-            with pytest.raises((CoreFailure, CoordinationError)):
+            with pytest.raises((RepositoryFailure, CoordinationError)):
                 execute({**document, **changes})
         assert events == []
         assert (
@@ -223,7 +223,7 @@ def test_remote_units_share_frozen_transport_and_trusted_handler_uses_live_cache
 ):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     parent = RequestIdentity(str(uuid4()), str(uuid4()))
     source, service, traversal = str(uuid4()), str(uuid4()), str(uuid4())
     requests = [
@@ -284,7 +284,7 @@ def test_remote_units_share_frozen_transport_and_trusted_handler_uses_live_cache
         assert replay.git_report.capture_uuidv4 == first.git_report.capture_uuidv4
         assert ledger.work_ledger.usage(parent)["input_bytes"] > before["input_bytes"]
         boundary = len(events)
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             execute(1, username="changed-source-principal")
         assert error.value.code == "INCOMPATIBLE_REPLAY" and len(events) == boundary
         assert (

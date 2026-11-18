@@ -1,4 +1,4 @@
-"""Opt-in approved local Git -> Core acquisition with original Operational intent.
+"""Opt-in approved local Git -> Repository acquisition with original Operational intent.
 
 No initializer, network transport, automatic approval or default CLI activation.
 The caller supplies an already configured/approved Access selection, an existing
@@ -20,7 +20,7 @@ from repo_catalog.adapters.filesystem.access_executor import (
 from repo_catalog.adapters.git.access_native import AccessGitSource
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
 from repo_catalog.application.access_workflow import AccessWorkflow, Reviewer
-from repo_catalog.application.git_acquisition import GitAcquisition, _open_core
+from repo_catalog.application.git_acquisition import GitAcquisition, _open_repository
 from repo_catalog.domain.access_registry import AccessRegistryError
 from repo_catalog.domain.access_workflow import AccessSelection, review_document
 from repo_catalog.domain.git_acquisition import (
@@ -37,7 +37,12 @@ from repo_catalog.domain.p1_coordination import (
     NotesLimits,
     RequestIdentity,
 )
-from repo_catalog.domain.p1_core import CoreFailure, Provenance, RepositoryClaim, encode
+from repo_catalog.domain.p1_repository import (
+    Provenance,
+    RepositoryClaim,
+    RepositoryFailure,
+    encode,
+)
 from repo_catalog.domain.ports.access_connections import AccessConfiguration
 from repo_catalog.domain.ports.notes import request_scope
 
@@ -92,19 +97,19 @@ class AccessGitAcquisition:
                 "durable Operational store required",
             )
         with (
-            _open_core(self.catalog / "core.sqlite3") as core,
+            _open_repository(self.catalog / "repository.sqlite3") as repository_store,
             ExitStack() as preparation,
         ):
 
             def catalog_guard():
-                core.ensure_available()
+                repository_store.ensure_available()
                 if cancelled():
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "CANCELLED", "access-git", "local request cancelled"
                     )
 
             catalog_guard()
-            catalog_seed, instance = core.catalog_identity()
+            catalog_seed, instance = repository_store.catalog_identity()
             early = None
             if has_ref_inputs:
                 # Existing approval must exist before spending request work. Only
@@ -253,7 +258,7 @@ class AccessGitAcquisition:
                             request.notes.ref_inputs if has_ref_inputs else (), work
                         ):
                             if progress.save_once(coordinate, frozen) != frozen:
-                                raise CoreFailure(
+                                raise RepositoryFailure(
                                     "INCOMPATIBLE_REPLAY",
                                     "access-plan",
                                     "original request cannot change its route or intent",
@@ -268,7 +273,7 @@ class AccessGitAcquisition:
                                 ]
                             )
                             if progress.save_once(coordinate, identity) != identity:
-                                raise CoreFailure(
+                                raise RepositoryFailure(
                                     "INCOMPATIBLE_REPLAY",
                                     "access-source",
                                     "original physical source changed; explicit new request required",
@@ -309,7 +314,9 @@ class AccessGitAcquisition:
                                     observed_path,
                                 ),
                             )
-                            report = GitAcquisition(core).acquire_from_native(
+                            report = GitAcquisition(
+                                repository_store
+                            ).acquire_from_native(
                                 source,
                                 local_request,
                                 work=work,

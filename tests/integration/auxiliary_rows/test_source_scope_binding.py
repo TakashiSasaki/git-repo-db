@@ -120,4 +120,4 @@ def test_actual_scope_fields_and_detached_provenance_preserved_independently(
             ).fetchone()
             is None
         )
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()

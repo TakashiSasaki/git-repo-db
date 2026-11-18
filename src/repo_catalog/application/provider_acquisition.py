@@ -1,4 +1,4 @@
-"""Provider acquisition orchestration with optional explicit Core resolution."""
+"""Provider acquisition orchestration with optional explicit Repository resolution."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from repo_catalog.adapters.github.production_intake import (
     normalize_timeline_event,
 )
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.acquisition import (
@@ -40,7 +40,7 @@ from repo_catalog.domain.p1_context import (
     TransferEventReport,
     encode_transfer_supported_provenance,
 )
-from repo_catalog.domain.production_context import CoreReference
+from repo_catalog.domain.production_context import RepositoryReference
 
 
 class ProviderAcquisition:
@@ -50,13 +50,13 @@ class ProviderAcquisition:
         self,
         context: Context | Path | str,
         *,
-        core: GitCore | Path | str | None = None,
+        repository_store: GitRepositoryStore | Path | str | None = None,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
         authorization=None,
         admission=None,
     ) -> None:
         self.context = context
-        self.core = core
+        self.repository_store = repository_store
         self.operational = operational
         self.authorization = authorization
         self.admission = admission
@@ -82,31 +82,35 @@ class ProviderAcquisition:
         with Context.transaction(path, authorization=auth, admission=adm) as ctx:
             yield ctx
 
-    def _make_core_validator(
+    def _make_repository_validator(
         self,
         ctx: Context,
-        core_override: GitCore | None = None,
+        repository_override: GitRepositoryStore | None = None,
     ) -> Callable[[str, str], bool]:
-        target_core = core_override if core_override is not None else self.core
-        if isinstance(target_core, GitCore):
+        target_repository = (
+            repository_override
+            if repository_override is not None
+            else self.repository_store
+        )
+        if isinstance(target_repository, GitRepositoryStore):
             return lambda fmt, object_oid: bool(
-                target_core.sql(
+                target_repository.sql(
                     "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (fmt, object_oid),
                 )
             )
-        core_path: Path | None = None
-        if isinstance(target_core, (Path, str)):
-            p = Path(target_core)
-            core_path = p if p.is_file() else (p / "core.sqlite3")
-        elif (ctx.directory / "core.sqlite3").is_file():
-            core_path = ctx.directory / "core.sqlite3"
+        repository_path: Path | None = None
+        if isinstance(target_repository, (Path, str)):
+            p = Path(target_repository)
+            repository_path = p if p.is_file() else (p / "repository.sqlite3")
+        elif (ctx.directory / "repository.sqlite3").is_file():
+            repository_path = ctx.directory / "repository.sqlite3"
 
-        if core_path is None or not core_path.is_file():
+        if repository_path is None or not repository_path.is_file():
             return lambda _fmt, _oid: False
 
         def _validate(fmt: str, object_oid: str) -> bool:
-            with closing(connect(core_path, "core")) as db:
+            with closing(connect(repository_path, "repository")) as db:
                 row = db.execute(
                     "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (fmt, object_oid),
@@ -124,34 +128,37 @@ class ProviderAcquisition:
         if not exists:
             ctx.repository(repository_uuidv4, "{}")
 
-    def _admit_core_ref(
+    def _admit_repository_ref(
         self,
         ctx: Context,
-        core_ref: CoreReference,
+        repository_ref: RepositoryReference,
         clock: FieldClock,
         observed_at_us: int | None,
-        validate_core: Callable[[str, str], bool],
-        linked_list: list[CoreReference],
-        pending_list: list[CoreReference],
+        validate_repository: Callable[[str, str], bool],
+        linked_list: list[RepositoryReference],
+        pending_list: list[RepositoryReference],
     ) -> None:
-        self._register_reference(ctx, core_ref.resource)
-        ctx.report_core_reference(core_ref, clock=clock, observed_at_us=observed_at_us)
-        if validate_core(
-            core_ref.object_oid.object_format, core_ref.object_oid.object_oid
+        self._register_reference(ctx, repository_ref.resource)
+        ctx.report_repository_reference(
+            repository_ref, clock=clock, observed_at_us=observed_at_us
+        )
+        if validate_repository(
+            repository_ref.object_oid.object_format,
+            repository_ref.object_oid.object_oid,
         ):
-            ctx.link_core(
-                core_ref.resource,
-                core_ref.role,
-                core_ref.object_oid.object_format,
-                core_ref.object_oid.object_oid,
-                core_ref.provenance_json,
-                validate_core,
+            ctx.link_repository(
+                repository_ref.resource,
+                repository_ref.role,
+                repository_ref.object_oid.object_format,
+                repository_ref.object_oid.object_oid,
+                repository_ref.provenance_json,
+                validate_repository,
             )
-            if core_ref not in linked_list:
-                linked_list.append(core_ref)
+            if repository_ref not in linked_list:
+                linked_list.append(repository_ref)
         else:
-            if core_ref not in pending_list:
-                pending_list.append(core_ref)
+            if repository_ref not in pending_list:
+                pending_list.append(repository_ref)
 
     def _ensure_resource_hierarchy(
         self,
@@ -179,11 +186,11 @@ class ProviderAcquisition:
         self,
         ctx: Context,
         unit: NormalizedContextUnit,
-        validate_core: Callable[[str, str], bool],
+        validate_repository: Callable[[str, str], bool],
         admitted_resources: list[ResourceKey],
         admitted_texts: list[str],
-        linked_refs: list[CoreReference],
-        pending_refs: list[CoreReference],
+        linked_refs: list[RepositoryReference],
+        pending_refs: list[RepositoryReference],
     ) -> None:
         from repo_catalog.domain.resource_stage import (
             UnsupportedResourceStage,
@@ -243,13 +250,13 @@ class ProviderAcquisition:
                             )
         if unit.transfer_event:
             self._admit_transfer_unit(ctx, unit)
-        for core_ref, clock, obs_us in unit.core_references:
-            self._admit_core_ref(
+        for repository_ref, clock, obs_us in unit.repository_references:
+            self._admit_repository_ref(
                 ctx,
-                core_ref,
+                repository_ref,
                 clock,
                 obs_us,
-                validate_core,
+                validate_repository,
                 linked_refs,
                 pending_refs,
             )
@@ -503,16 +510,16 @@ class ProviderAcquisition:
         unit: NormalizedContextUnit,
         *,
         context: Context | None = None,
-        core: GitCore | None = None,
+        repository_store: GitRepositoryStore | None = None,
     ) -> None:
         """Admit a single NormalizedContextUnit into Context."""
         self._preflight_units((unit,))
         with self._open_context(context) as ctx, ctx._unit():
-            validate_core = self._make_core_validator(ctx, core)
+            validate_repository = self._make_repository_validator(ctx, repository_store)
             self._admit_normalized_unit(
                 ctx,
                 unit,
-                validate_core,
+                validate_repository,
                 [],
                 [],
                 [],
@@ -524,17 +531,17 @@ class ProviderAcquisition:
         units: Sequence[NormalizedContextUnit],
         *,
         context: Context | None = None,
-        core: GitCore | None = None,
+        repository_store: GitRepositoryStore | None = None,
     ) -> None:
         """Admit multiple NormalizedContextUnits into Context."""
         self._preflight_units(units)
         with self._open_context(context) as ctx, ctx._unit():
-            validate_core = self._make_core_validator(ctx, core)
+            validate_repository = self._make_repository_validator(ctx, repository_store)
             for unit in units:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     [],
                     [],
                     [],
@@ -571,7 +578,7 @@ class ProviderAcquisition:
         batch: ProviderIntakeBatch,
         *,
         context: Context | None = None,
-        core: GitCore | None = None,
+        repository_store: GitRepositoryStore | None = None,
     ) -> ProviderAcquisitionReport:
         """Normalize and admit a ProviderIntakeBatch into Context."""
         from repo_catalog.domain.context_registration import registration_json
@@ -605,7 +612,7 @@ class ProviderAcquisition:
         for relation in (*batch.mapping_claims, *batch.relations):
             refuse_transfer(relation.relation_kind)
         with self._open_context(context) as ctx, ctx._unit():
-            validate_core = self._make_core_validator(ctx, core)
+            validate_repository = self._make_repository_validator(ctx, repository_store)
 
             for prov in batch.providers:
                 ctx.provider(
@@ -623,8 +630,8 @@ class ProviderAcquisition:
 
             admitted_resources: list[ResourceKey] = []
             admitted_texts: list[str] = []
-            linked_refs: list[CoreReference] = []
-            pending_refs: list[CoreReference] = []
+            linked_refs: list[RepositoryReference] = []
+            pending_refs: list[RepositoryReference] = []
             skipped_pr_issues = 0
             admitted_collections = 0
             admitted_inventories = 0
@@ -675,7 +682,7 @@ class ProviderAcquisition:
                     self._admit_normalized_unit(
                         ctx,
                         unit,
-                        validate_core,
+                        validate_repository,
                         admitted_resources,
                         admitted_texts,
                         linked_refs,
@@ -700,7 +707,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -733,7 +740,7 @@ class ProviderAcquisition:
                     self._admit_normalized_unit(
                         ctx,
                         unit,
-                        validate_core,
+                        validate_repository,
                         admitted_resources,
                         admitted_texts,
                         linked_refs,
@@ -751,7 +758,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -770,7 +777,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -788,7 +795,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -808,7 +815,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -828,7 +835,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -839,7 +846,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -857,7 +864,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -875,7 +882,7 @@ class ProviderAcquisition:
                 self._admit_normalized_unit(
                     ctx,
                     unit,
-                    validate_core,
+                    validate_repository,
                     admitted_resources,
                     admitted_texts,
                     linked_refs,
@@ -900,13 +907,13 @@ class ProviderAcquisition:
                     self._register_reference(ctx, member)
                 ctx.relation(rel)
 
-            for core_ref, clock, obs_us in batch.core_references:
-                self._admit_core_ref(
+            for repository_ref, clock, obs_us in batch.repository_references:
+                self._admit_repository_ref(
                     ctx,
-                    core_ref,
+                    repository_ref,
                     clock,
                     obs_us,
-                    validate_core,
+                    validate_repository,
                     linked_refs,
                     pending_refs,
                 )
@@ -933,8 +940,8 @@ class ProviderAcquisition:
                 service_instance_uuidv4=batch.service_instance_uuidv4,
                 admitted_resources=tuple(admitted_resources),
                 skipped_pull_request_issues=skipped_pr_issues,
-                linked_core_references=tuple(linked_refs),
-                pending_core_references=tuple(pending_refs),
+                linked_repository_references=tuple(linked_refs),
+                pending_repository_references=tuple(pending_refs),
                 admitted_texts=tuple(admitted_texts),
                 admitted_collections=admitted_collections,
                 admitted_inventories=admitted_inventories,

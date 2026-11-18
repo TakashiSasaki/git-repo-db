@@ -1,6 +1,6 @@
 """Stable P1 ports. Implementations do not imply cross-database atomic COMMIT.
 
-Core-first partial success is intentional. Context units validate portable Core
+Repository-first partial success is intentional. Context units validate portable Repository
 dependencies before their local COMMIT. Every participating writer, reader,
 backup, stop and future activation must use the same catalog gate.
 """
@@ -23,7 +23,7 @@ Snapshot = TypeVar("Snapshot", covariant=True)
 class CoordinationPort(Protocol[Transaction, Snapshot]):
     def admit(
         self,
-        core_unit: Callable[[Transaction], None],
+        repository_unit: Callable[[Transaction], None],
         context_unit: Callable[[Transaction], None],
     ) -> PairAdmission: ...
 

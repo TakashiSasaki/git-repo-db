@@ -70,7 +70,7 @@ def snapshot(db):
 
 def authorities(path):
     result = {}
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         db = p1_schema.connect(path / (role + ".sqlite3"), role)
         try:
             result[role] = snapshot(db)
@@ -408,7 +408,7 @@ def test_structural_preflight_never_interprets_payload_text(nested):
     )
 
 
-def test_selected_real_wire_without_identification_refuses_before_core_effects(
+def test_selected_real_wire_without_identification_refuses_before_repository_effects(
     tmp_path,
 ):
     a, b = tmp_path / "a", tmp_path / "b"
@@ -425,7 +425,7 @@ def test_selected_real_wire_without_identification_refuses_before_core_effects(
     assert authorities(b) == before
     with Context.snapshot(b) as ctx:
         assert ctx.resources() == ()
-    # Same valid envelope can select Core independently, including on replay.
+    # Same valid envelope can select Repository independently, including on replay.
     report = receive(
         b,
         hostile,
@@ -433,7 +433,7 @@ def test_selected_real_wire_without_identification_refuses_before_core_effects(
         selection=scope(include_context=False),
         request=RequestIdentity(str(uuid4()), str(uuid4())),
     )
-    assert report.admitted_core_objects == 1
+    assert report.admitted_repository_objects == 1
 
 
 @pytest.mark.parametrize("provider_only", [False, True])

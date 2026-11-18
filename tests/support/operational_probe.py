@@ -53,11 +53,11 @@ def main(output):
                 assert str(member) not in owners, member
                 owners[str(member)] = name
     for module in (
-        "domain.p1_core",
+        "domain.p1_repository",
         "domain.p1_context",
         "domain.acquisition",
         "domain.search_query",
-        "adapters.sqlite.git_core",
+        "adapters.sqlite.git_repository",
         "adapters.sqlite.production_context",
         "adapters.sqlite.p1_coordination",
         "adapters.sqlite.access_schema",
@@ -68,7 +68,7 @@ def main(output):
         assert importlib.util.find_spec("repo_catalog." + module) is None, module
     assert importlib.util.find_spec("httpx") is None
     assert "repo_catalog/adapters/sqlite/p1_ddl/operational.sql" in owners
-    for role in ("core", "context", "search"):
+    for role in ("repository", "context", "search"):
         assert "repo_catalog/adapters/sqlite/p1_ddl/" + role + ".sql" not in owners
     checks = ["three_owner_closure_no_authority_or_high_level_code"]
     path = root / "operational.sqlite3"
@@ -83,7 +83,7 @@ def main(output):
     schema.initialize(path, "operational", repository, instance)
     assert not any(
         (root / (role + ".sqlite3")).exists()
-        for role in ("core", "context", "access", "search")
+        for role in ("repository", "context", "access", "search")
     )
     checks.append("explicit_only_initialization_no_optional_databases")
 

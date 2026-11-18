@@ -8,9 +8,9 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_core import OID, CoreFailure, Provenance
+from repo_catalog.domain.p1_repository import OID, Provenance, RepositoryFailure
 from repo_catalog.domain.ref_observation import (
     NotesMappingGroup,
     RefObservation,
@@ -39,7 +39,7 @@ def test_r227_01_group_only_object_and_wrong_claim_target(acquisition, paired):
     if paired:
         enable_context(acquisition)
     run_request(acquisition, with_input(acquisition, value), paired=paired)
-    assert not app.core.sql("SELECT 1 FROM notes_mappings")
+    assert not app.repository_store.sql("SELECT 1 FROM notes_mappings")
     service = ProductionQueryService(path.parent)
     entries = service.get_git_object(target).ref_notes_targets
     assert len(entries) == 1
@@ -48,9 +48,9 @@ def test_r227_01_group_only_object_and_wrong_claim_target(acquisition, paired):
     assert not entries[0].mapping.claims and not entries[0].mapping.evidence
     assert entries[0].mapping.canonical_note_object_oid is None
     wrong = OID(target.object_format, "b" * len(target.object_oid))
-    app.core.admit_object(wrong)
+    app.repository_store.admit_object(wrong)
     assert not service.get_git_object(wrong).ref_notes_targets
-    assert not app.core.sql("SELECT 1 FROM notes_mappings")
+    assert not app.repository_store.sql("SELECT 1 FROM notes_mappings")
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
@@ -76,14 +76,16 @@ def test_r227_01_group_only_paired_resource(tmp_path, fmt):
         ((target.object_oid, note.object_oid, target.object_oid),),
         provenance,
     )
-    with closing(GitCore(catalog / "core.sqlite3")) as core:
-        core.admit_ref_observation(subject)
-        core.admit_ref_observation_claim(claim)
-        core.admit_notes_mapping_group(group, UnlimitedWorkBudget())
+    with closing(
+        GitRepositoryStore(catalog / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_ref_observation(subject)
+        repository_store.admit_ref_observation_claim(claim)
+        repository_store.admit_notes_mapping_group(group, UnlimitedWorkBudget())
     view = ProductionQueryService(catalog).get_paired_resource(data["pr_key"])
     head = next(
         r
-        for r in view.core_resolutions
+        for r in view.repository_resolutions
         if r.object_view and r.object_view.object_oid == target
     )
     assert any(group in entry.mapping.groups for entry in head.ref_notes_targets)
@@ -139,13 +141,13 @@ def test_r227_02_real_stored_corruption_still_stops(acquisition, paired, route):
     else:
         _mutate(path, "notes_mapping_groups", "membership='{' ")
     service = ProductionQueryService(path.parent)
-    with pytest.raises(CoreFailure) as failure:
+    with pytest.raises(RepositoryFailure) as failure:
         if route == "observation":
             service.list_ref_observations()
         else:
             service.get_git_object(target)
     assert failure.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         service.list_ref_observations()
     assert stopped.value.code == "RECOVERY_STOP"

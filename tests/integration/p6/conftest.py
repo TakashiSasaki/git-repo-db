@@ -7,7 +7,7 @@ from contextlib import closing
 from pathlib import Path
 from uuid import uuid4
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
@@ -23,22 +23,22 @@ from repo_catalog.domain.p1_context import (
     ResourceRepositoryRelation,
     canonical,
 )
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
     GitObservation,
     NativeObject,
     Provenance,
     RelationGroup,
     RelationMember,
     RepositoryClaim,
+    RepositoryCoverageScope,
     ScalarClaim,
     native_object_oid,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.production_context import (
     CollectionObservation,
-    CoreReference,
+    RepositoryReference,
     ResourceObservation,
     ResourceRelation,
     SourceInventory,
@@ -105,7 +105,7 @@ def admit_provider_role(context, resource, role, clock, provenance, observed):
 
 def init_catalog(
     directory: Path,
-    roles: tuple[str, ...] = ("core", "context", "operational", "search"),
+    roles: tuple[str, ...] = ("repository", "context", "operational", "search"),
     *,
     repository_uuidv4: str = REPOSITORY,
     catalog_instance_uuidv4: str = INSTANCE,
@@ -185,13 +185,13 @@ def populate_rich_catalog(
     directory: Path,
     fmt: str = "sha1",
     *,
-    include_core: bool = True,
+    include_repository: bool = True,
     include_context: bool = True,
 ) -> dict[str, object]:
-    """Populate a catalog with rich Core, Notes, and Context fixtures for testing."""
+    """Populate a catalog with rich Repository, Notes, and Context fixtures for testing."""
     roles = []
-    if include_core:
-        roles.append("core")
+    if include_repository:
+        roles.append("repository")
     if include_context:
         roles.append("context")
     roles.extend(["operational", "search"])
@@ -255,20 +255,20 @@ def populate_rich_catalog(
     )
     ref_fixture = {}
 
-    def admit_core(core: GitCore) -> None:
-        core.admit_repository(REPOSITORY)
-        core.admit_repository_claim(
+    def admit_repository(repository_store: GitRepositoryStore) -> None:
+        repository_store.admit_repository(REPOSITORY)
+        repository_store.admit_repository_claim(
             RepositoryClaim(REPOSITORY, "name", "git-repo-db", prov_reported)
         )
-        core.admit_repository_claim(
+        repository_store.admit_repository_claim(
             RepositoryClaim(REPOSITORY, "object_format", fmt, prov_reported)
         )
-        core.admit_metadata(tree_obj, str(uuid4()), budget)
-        core.admit_metadata(commit_obj, str(uuid4()), budget)
-        core.admit_metadata(tag_obj, str(uuid4()), budget)
+        repository_store.admit_metadata(tree_obj, str(uuid4()), budget)
+        repository_store.admit_metadata(commit_obj, str(uuid4()), budget)
+        repository_store.admit_metadata(tag_obj, str(uuid4()), budget)
 
         # Competing reported scalar claim on commit_obj ("message")
-        core.admit_claim(
+        repository_store.admit_claim(
             ScalarClaim(
                 commit_obj.object_oid,
                 "message",
@@ -277,11 +277,11 @@ def populate_rich_catalog(
             )
         )
         # Nominal commit with reported claims only (no retained bytes)
-        core.admit_object(unretained_commit_oid)
-        core.admit_claim(
+        repository_store.admit_object(unretained_commit_oid)
+        repository_store.admit_claim(
             ScalarClaim(unretained_commit_oid, "type", "commit", prov_reported)
         )
-        core.admit_claim(
+        repository_store.admit_claim(
             ScalarClaim(
                 unretained_commit_oid,
                 "message",
@@ -289,7 +289,7 @@ def populate_rich_catalog(
                 prov_reported,
             )
         )
-        core.admit_group(
+        repository_store.admit_group(
             RelationGroup(
                 unretained_commit_oid,
                 "commit_parents",
@@ -301,7 +301,7 @@ def populate_rich_catalog(
         )
 
         # Ref observations
-        core.admit_observation(
+        repository_store.admit_observation(
             GitObservation(
                 ORIGIN,
                 str(uuid4()),
@@ -318,7 +318,7 @@ def populate_rich_catalog(
                 prov_reported,
             )
         )
-        core.admit_observation(
+        repository_store.admit_observation(
             GitObservation(
                 ORIGIN,
                 str(uuid4()),
@@ -352,7 +352,7 @@ def populate_rich_catalog(
         )
 
         key = RefObservationKey(ORIGIN, new_uuid7())
-        core.admit_ref_observation(
+        repository_store.admit_ref_observation(
             RefObservation(
                 key, REPOSITORY, b"refs/notes/commits", "local-notes", "visible"
             )
@@ -360,7 +360,7 @@ def populate_rich_catalog(
         claim = RefObservationClaim(
             key, prov_reported, "present", root_object_oid=notes_tree.object_oid
         )
-        core.admit_ref_observation_claim(claim)
+        repository_store.admit_ref_observation_claim(claim)
         mapping = NotesMapping(
             notes_tree.object_oid,
             "git-notes",
@@ -384,9 +384,9 @@ def populate_rich_catalog(
             ),
             (notes_tree,),
         )
-        core.admit_ref_note(evidence, note_blob, str(uuid4()), budget)
+        repository_store.admit_ref_note(evidence, note_blob, str(uuid4()), budget)
         ref_fixture.update(claim=claim, mapping=mapping)
-        core.admit_notes_mapping_claim(
+        repository_store.admit_notes_mapping_claim(
             NotesMappingClaim(
                 claim,
                 NotesMapping(
@@ -401,7 +401,7 @@ def populate_rich_catalog(
                 prov_alt,
             )
         )
-        core.admit_notes_mapping_group(
+        repository_store.admit_notes_mapping_group(
             NotesMappingGroup(
                 claim,
                 "git-notes",
@@ -421,14 +421,14 @@ def populate_rich_catalog(
             budget,
         )
 
-        # Core Coverage
-        cov_scope = CoreCoverageScope("repository", (REPOSITORY, "refs"))
-        core.admit_coverage_scope(cov_scope)
+        # Repository Coverage
+        cov_scope = RepositoryCoverageScope("repository", (REPOSITORY, "refs"))
+        repository_store.admit_coverage_scope(cov_scope)
         cov_claim = CoverageClaim(
             cov_scope, 1700000300000000, "complete", '{"refs_checked":2}'
         )
-        core.admit_coverage(cov_claim)
-        core.admit_coverage_proof(
+        repository_store.admit_coverage(cov_claim)
+        repository_store.admit_coverage_proof(
             cov_claim, (commit_obj.object_oid, tag_obj.object_oid), prov_reported
         )
 
@@ -444,7 +444,7 @@ def populate_rich_catalog(
     ctx_prov_1 = canonical({"source": "github.rest", "evidence": "event-101"})
     ctx_prov_2 = canonical({"source": "github.graphql", "evidence": "event-102"})
 
-    def admit_context(context: Context, core_present: bool) -> None:
+    def admit_context(context: Context, repository_present: bool) -> None:
         context.provider(SERVICE, "github", '{"name":"GitHub"}')
         context.repository(REPOSITORY, '{"default_branch":"main"}')
         context.source(SOURCE, SERVICE, '{"org":"example"}')
@@ -533,11 +533,13 @@ def populate_rich_catalog(
             100,
         )
 
-        # Core references on PR 42:
-        # 1) "head" -> commit_obj.object_oid (present in Core when core_present=True)
-        head_ref = CoreReference(pr_key, "head", commit_obj.object_oid, ctx_prov_1)
-        if core_present:
-            context.link_core(
+        # Repository references on PR 42:
+        # 1) "head" -> commit_obj.object_oid (present in Repository when repository_present=True)
+        head_ref = RepositoryReference(
+            pr_key, "head", commit_obj.object_oid, ctx_prov_1
+        )
+        if repository_present:
+            context.link_repository(
                 pr_key,
                 "head",
                 *commit_obj.object_oid.key,
@@ -545,16 +547,16 @@ def populate_rich_catalog(
                 lambda f, o: (f, o) == commit_obj.object_oid.key,
             )
         else:
-            context.report_core_reference(
+            context.report_repository_reference(
                 head_ref,
                 clock=FieldClock("github:pr:updated_at", 100),
                 observed_at_us=100,
             )
 
-        # 2) "base" -> absent OID (never in Core, reported only)
+        # 2) "base" -> absent OID (never in Repository, reported only)
         absent_oid = OID(fmt, "f" * width)
-        base_ref = CoreReference(pr_key, "base", absent_oid, ctx_prov_1)
-        context.report_core_reference(
+        base_ref = RepositoryReference(pr_key, "base", absent_oid, ctx_prov_1)
+        context.report_repository_reference(
             base_ref,
             clock=FieldClock("github:pr:updated_at", 100),
             observed_at_us=100,
@@ -764,24 +766,24 @@ def populate_rich_catalog(
     )
     admission = fixture_context(authorization)
 
-    if include_core and include_context:
+    if include_repository and include_context:
         coordinator = PairCoordinator(directory, authorization=authorization)
 
-        def core_cb(db):
-            with GitCore.for_transaction(db) as c:
-                admit_core(c)
+        def repository_cb(db):
+            with GitRepositoryStore.for_transaction(db) as c:
+                admit_repository(c)
 
         def ctx_cb(db):
             with Context.for_transaction(db, directory) as ctx:
-                admit_context(ctx, core_present=True)
+                admit_context(ctx, repository_present=True)
 
-        coordinator.admit(core_cb, ctx_cb, admission=admission)
-    elif include_core:
-        core = GitCore(directory / "core.sqlite3")
+        coordinator.admit(repository_cb, ctx_cb, admission=admission)
+    elif include_repository:
+        repository_store = GitRepositoryStore(directory / "repository.sqlite3")
         try:
-            admit_core(core)
+            admit_repository(repository_store)
         finally:
-            core.close()
+            repository_store.close()
     elif include_context:
         with closing(connect(directory / "context.sqlite3", "context")) as db:
             with Context.owned_transaction(
@@ -790,7 +792,7 @@ def populate_rich_catalog(
                 authorization=authorization,
                 admission=admission,
             ) as ctx:
-                admit_context(ctx, core_present=False)
+                admit_context(ctx, repository_present=False)
 
     return {
         "absent_oid": OID(fmt, "f" * width),

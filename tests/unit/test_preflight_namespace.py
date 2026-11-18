@@ -11,7 +11,7 @@ from scripts import preflight_access
 
 def console_check(tmp_path, namespace_extra=None, version_extra=False):
     members = [
-        "core",
+        "repository",
         "runtime",
         "context",
         "access",

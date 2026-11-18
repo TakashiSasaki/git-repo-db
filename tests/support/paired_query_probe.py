@@ -74,7 +74,7 @@ def main(output):
     }
     assert set(products) == {
         "repo-catalog-paired-query",
-        "repo-catalog-core",
+        "repo-catalog-repository",
         "repo-catalog-context",
         "repo-catalog-runtime",
         "repo-catalog-contracts",
@@ -124,7 +124,7 @@ def main(output):
                 assert uri.netloc == "" and uri.query == "mode=rw", value
                 value = unquote(uri.path)
             path = Path(value)
-            assert path.name in {"core.sqlite3", "context.sqlite3"}, path
+            assert path.name in {"repository.sqlite3", "context.sqlite3"}, path
             opened.append(path.name)
 
     sys.addaudithook(audit)
@@ -137,25 +137,29 @@ def main(output):
     assert query.detect_mode() == "paired"
     for mode in ("auto", "paired"):
         result = PairedQueryService(catalog, mode=mode).get_paired_resource(
-            key, include_core_bytes=True
+            key, include_repository_bytes=True
         )
         assert normalized(result.to_dict()) == data["paired"]
-        by_role = {v.reference.role: v for v in result.core_resolutions}
-        assert by_role["head"].available_in_core and by_role["head"].core_required
+        by_role = {v.reference.role: v for v in result.repository_resolutions}
+        assert (
+            by_role["head"].available_in_repository
+            and by_role["head"].repository_required
+        )
         assert by_role["head"].object_view.object_oid == oid
         assert len(by_role["head"].ref_notes_targets) == 1
         assert (
-            not by_role["base"].available_in_core and not by_role["base"].core_required
+            not by_role["base"].available_in_repository
+            and not by_role["base"].repository_required
         )
         assert by_role["base"].object_view is None
-    checks.append("paired_identity_semantic_core_and_report_only_resolution")
+    checks.append("paired_identity_semantic_repository_and_report_only_resolution")
 
     logical = query.get_paired_resource(key)
-    head = next(v for v in logical.core_resolutions if v.reference.role == "head")
-    assert head.available_in_core and head.object_view.metadata_retained
+    head = next(v for v in logical.repository_resolutions if v.reference.role == "head")
+    assert head.available_in_repository and head.object_view.metadata_retained
     assert head.object_view.retained_bytes is None
     checked = next(
-        v for v in result.core_resolutions if v.reference.role == "head"
+        v for v in result.repository_resolutions if v.reference.role == "head"
     ).object_view.retained_bytes
     assert (
         checked.available
@@ -176,8 +180,8 @@ def main(output):
     assert query.read_metadata_bytes(oid).body_bytes.hex() == data["body_hex"]
     assert query.list_providers() and query.list_source_views()
     token = SnapshotFenceToken.parse(query.snapshot_token().encode())
-    assert token.mode == "paired" and token.core_sha256 and token.context_sha256
-    checks.append("canonical_core_context_apis_and_paired_snapshot_token")
+    assert token.mode == "paired" and token.repository_sha256 and token.context_sha256
+    checks.append("canonical_repository_context_apis_and_paired_snapshot_token")
 
     def cli(command, directory=catalog, *extra):
         return subprocess.run(
@@ -207,7 +211,7 @@ def main(output):
         key.resource_kind,
         "--id",
         key.provider_resource_id,
-        "--include-core-bytes",
+        "--include-repository-bytes",
     )
     assert response.returncode == 0, response.stderr
     assert json.loads(response.stdout) == data["paired"]
@@ -388,7 +392,7 @@ def main(output):
             ).fetchone()[0],
         )
         assert current == old and pinned.token.encode() == before.snapshot_token
-        assert pinned.core.sql(
+        assert pinned.repository_store.sql(
             "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?", oid.key
         )
     refuses(
@@ -404,7 +408,10 @@ def main(output):
     assert not (changed / "p1-recovery-stop.json").exists()
     checks.append("pinned_pair_retains_authority_while_new_tokens_fence_continuation")
 
-    for selected, opaque_role in (("context_only", "core"), ("core_only", "context")):
+    for selected, opaque_role in (
+        ("context_only", "repository"),
+        ("repository_only", "context"),
+    ):
         dest = fresh("opaque-" + opaque_role)
         opaque = dest / (opaque_role + ".sqlite3")
         opaque.write_bytes(b"opaque-not-sqlite")
@@ -420,7 +427,7 @@ def main(output):
         refuses(lambda: service.get_paired_resource(key), {"STORE_UNAVAILABLE"})
         opaque.chmod(0o600)
         assert opaque.read_bytes() == b"opaque-not-sqlite"
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         dest = fresh("missing-" + role)
         (dest / (role + ".sqlite3")).unlink()
         refuses(
@@ -446,7 +453,7 @@ def main(output):
         lambda: query.get_paired_resource(bad_key),
         lambda: query.get_paired_resource(object()),
         lambda: query.get_paired_resource(key, include_text=1),
-        lambda: query.get_paired_resource(key, include_core_bytes="yes"),
+        lambda: query.get_paired_resource(key, include_repository_bytes="yes"),
         lambda: query.list_paired_resources(
             repository_uuidv4=HostileString(data["repository"])
         ),
@@ -463,7 +470,7 @@ def main(output):
         refuses(lambda: query.list_paired_resources(page), {code})
     invalid = root / "invalid-authority"
     invalid.mkdir()
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         (invalid / (role + ".sqlite3")).write_bytes(b"not sqlite")
     refuses(
         lambda: PairedQueryService(invalid).list_paired_resources(
@@ -506,19 +513,20 @@ def main(output):
     missing = fresh("missing-required-reference")
     with connect(missing / "context.sqlite3", "context") as db:
         triggers = db.execute(
-            "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='core_references'"
+            "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name='repository_references'"
         ).fetchall()
         for name, _ in triggers:
             db.execute('DROP TRIGGER "' + name + '"')
         db.execute(
-            "UPDATE core_references SET object_oid=?", ("0" * len(oid.object_oid),)
+            "UPDATE repository_references SET object_oid=?",
+            ("0" * len(oid.object_oid),),
         )
         for _, definition in triggers:
             db.execute(definition)
     assert PairedQueryService(missing, mode="context_only").get_context_resource(key)
     refuses(
         lambda: PairedQueryService(missing).get_paired_resource(key),
-        {"MISSING_CORE_REFERENCE"},
+        {"MISSING_REPOSITORY_REFERENCE"},
     )
     assert (missing / "p1-recovery-stop.json").exists()
     refuses(
@@ -531,7 +539,7 @@ def main(output):
 
     for role, table, sql, args in (
         (
-            "core",
+            "repository",
             "retained_metadata",
             "UPDATE retained_metadata SET body=? WHERE object_format=? AND object_oid=?",
             (b"tampered", *oid.key),
@@ -554,7 +562,7 @@ def main(output):
         before_hash = hashlib.sha256(path.read_bytes()).hexdigest()
         refuses(
             lambda: PairedQueryService(dest).get_paired_resource(
-                key, include_core_bytes=True
+                key, include_repository_bytes=True
             ),
             {"AUTHORITATIVE_CORRUPTION"},
         )
@@ -562,7 +570,7 @@ def main(output):
             path.read_bytes()
         ).hexdigest() == before_hash
     checks.append(
-        "actual_selected_core_and_context_corruption_stops_without_authority_repair"
+        "actual_selected_repository_and_context_corruption_stops_without_authority_repair"
     )
 
     original_snapshots = PairSnapshotCoordinator.snapshots
@@ -608,7 +616,7 @@ def main(output):
             assert path.is_relative_to(installed), (name, path)
             assert path.relative_to(installed).as_posix() in owners
             origins[name] = str(path)
-    assert opened and set(opened) == {"core.sqlite3", "context.sqlite3"}
+    assert opened and set(opened) == {"repository.sqlite3", "context.sqlite3"}
     assert not any(
         p.name in {"access.sqlite3", "operational.sqlite3", "search.sqlite3"}
         for p in root.rglob("*.sqlite3")

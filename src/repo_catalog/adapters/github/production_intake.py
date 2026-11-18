@@ -5,8 +5,8 @@ Enforces:
 - Canonical positive decimal database IDs (except GraphQL review threads)
 - Strict separation of ordinary Issues vs. Pull Requests
 - Explicit `None` (`"null"`) vs. omitted fields in partial projections
-- Content-addressed UTF-8 `text_bodies` in Context without ever retaining file blobs in Git Core
-- Portable `CoreReference` extraction for both `sha1` and `sha256` commit OIDs
+- Content-addressed UTF-8 `text_bodies` in Context without ever retaining file blobs in Git Repository
+- Portable `RepositoryReference` extraction for both `sha1` and `sha256` commit OIDs
 """
 
 from __future__ import annotations
@@ -23,9 +23,9 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.production_context import (
-    CoreReference,
+    RepositoryReference,
     ResourceObservation,
     ResourceRelation,
     json_value,
@@ -356,7 +356,9 @@ class NormalizedContextUnit:
     ]
     extra_texts: tuple[str, ...]
     relations: tuple[ResourceRelation, ...]
-    core_references: tuple[tuple[CoreReference, FieldClock, int | None], ...]
+    repository_references: tuple[
+        tuple[RepositoryReference, FieldClock, int | None], ...
+    ]
     transfer_event: bool = False
 
 
@@ -474,7 +476,7 @@ def normalize_repository_fields(
         text_admissions=(),
         extra_texts=(),
         relations=(),
-        core_references=(),
+        repository_references=(),
     )
 
 
@@ -695,7 +697,7 @@ def normalize_issue(
             else {},
             graphql=graphql,
         ),
-        core_references=(),
+        repository_references=(),
     )
 
 
@@ -703,7 +705,7 @@ def _pr_comparison_fields(
     pr_key, payload, clock, provenance_json, observed_at_us, *, graphql
 ):
     fields = []
-    core_refs = []
+    repository_refs = []
     seen_formats: set[str] = set()
     for role, gql_oid_key, gql_ref_key in (
         ("head", "headRefOid", "headRefName"),
@@ -769,9 +771,9 @@ def _pr_comparison_fields(
                                 observed_at_us,
                             )
                         )
-                        core_refs.append(
+                        repository_refs.append(
                             (
-                                CoreReference(
+                                RepositoryReference(
                                     pr_key, role, object_oid, provenance_json
                                 ),
                                 clock,
@@ -819,9 +821,11 @@ def _pr_comparison_fields(
                             observed_at_us,
                         )
                     )
-                    core_refs.append(
+                    repository_refs.append(
                         (
-                            CoreReference(pr_key, role, object_oid, provenance_json),
+                            RepositoryReference(
+                                pr_key, role, object_oid, provenance_json
+                            ),
                             clock,
                             observed_at_us,
                         )
@@ -852,9 +856,9 @@ def _pr_comparison_fields(
                     observed_at_us,
                 )
             )
-            core_refs.append(
+            repository_refs.append(
                 (
-                    CoreReference(pr_key, "merge", object_oid, provenance_json),
+                    RepositoryReference(pr_key, "merge", object_oid, provenance_json),
                     clock,
                     observed_at_us,
                 )
@@ -897,9 +901,11 @@ def _pr_comparison_fields(
                         observed_at_us,
                     )
                 )
-                core_refs.append(
+                repository_refs.append(
                     (
-                        CoreReference(pr_key, "merge", object_oid, provenance_json),
+                        RepositoryReference(
+                            pr_key, "merge", object_oid, provenance_json
+                        ),
                         clock,
                         observed_at_us,
                     )
@@ -915,7 +921,7 @@ def _pr_comparison_fields(
             "MIXED_OBJECT_FORMATS", pr_key, "mixed SHA-1 and SHA-256 commit OIDs in PR"
         )
 
-    return tuple(fields), tuple(core_refs)
+    return tuple(fields), tuple(repository_refs)
 
 
 def normalize_pr_comparison_header(
@@ -955,7 +961,7 @@ def normalize_pr_comparison_header(
         text_admissions=(),
         extra_texts=(),
         relations=(),
-        core_references=references,
+        repository_references=references,
     )
 
 
@@ -967,7 +973,7 @@ def normalize_pull_request(
     *,
     graphql: bool = False,
 ) -> NormalizedContextUnit:
-    """Normalize a GitHub Pull Request payload, including title/body documents and CoreReferences."""
+    """Normalize a GitHub Pull Request payload, including title/body documents and RepositoryReferences."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "pull_request", "dict required")
     if graphql and "__typename" in payload and payload["__typename"] != "PullRequest":
@@ -984,7 +990,7 @@ def normalize_pull_request(
     observations: list[ResourceObservation] = []
     text_admissions: list[tuple[ResourceKey, str | None, FieldClock, str, int]] = []
     relations: list[ResourceRelation] = []
-    core_refs: list[tuple[CoreReference, FieldClock, int]] = []
+    repository_refs: list[tuple[RepositoryReference, FieldClock, int]] = []
 
     if "number" in payload:
         num = payload["number"]
@@ -1081,7 +1087,7 @@ def normalize_pull_request(
         pr_key, payload, clock, provenance_json, observed_at_us, graphql=graphql
     )
     fields.extend(comparison_fields)
-    core_refs.extend(comparison_refs)
+    repository_refs.extend(comparison_refs)
 
     doc_members: list[ResourceKey] = []
     if "title" in payload:
@@ -1183,7 +1189,7 @@ def normalize_pull_request(
         text_admissions=tuple(text_admissions),
         extra_texts=(),
         relations=tuple(relations),
-        core_references=tuple(core_refs),
+        repository_references=tuple(repository_refs),
     )
 
 
@@ -1269,7 +1275,7 @@ def normalize_review(
                 observed_at_us,
             )
         )
-    core_refs: list[tuple[CoreReference, FieldClock, int]] = []
+    repository_refs: list[tuple[RepositoryReference, FieldClock, int]] = []
     commit_raw = None
     has_commit = False
     if "commit_id" in payload:
@@ -1303,9 +1309,9 @@ def normalize_review(
                     observed_at_us,
                 )
             )
-            core_refs.append(
+            repository_refs.append(
                 (
-                    CoreReference(
+                    RepositoryReference(
                         review_key, "target_commit", object_oid, provenance_json
                     ),
                     clock,
@@ -1349,7 +1355,7 @@ def normalize_review(
         text_admissions=tuple(text_admissions),
         extra_texts=(),
         relations=(relation,),
-        core_references=tuple(core_refs),
+        repository_references=tuple(repository_refs),
     )
 
 
@@ -1426,7 +1432,7 @@ def normalize_review_thread(
         text_admissions=(),
         extra_texts=(),
         relations=(relation,),
-        core_references=(),
+        repository_references=(),
     )
 
 
@@ -1473,7 +1479,7 @@ def normalize_review_comment(
             observed_at_us,
         )
     ]
-    core_refs: list[tuple[CoreReference, FieldClock, int]] = []
+    repository_refs: list[tuple[RepositoryReference, FieldClock, int]] = []
     extra_texts: list[str] = []
 
     has_author, login = _extract_actorLogin(payload, graphql=graphql)
@@ -1738,9 +1744,11 @@ def normalize_review_comment(
                         observed_at_us,
                     )
                 )
-                core_refs.append(
+                repository_refs.append(
                     (
-                        CoreReference(comment_key, role, object_oid, provenance_json),
+                        RepositoryReference(
+                            comment_key, role, object_oid, provenance_json
+                        ),
                         clock,
                         observed_at_us,
                     )
@@ -1776,7 +1784,7 @@ def normalize_review_comment(
         text_admissions=tuple(text_admissions),
         extra_texts=tuple(extra_texts),
         relations=tuple(relations),
-        core_references=tuple(core_refs),
+        repository_references=tuple(repository_refs),
     )
 
 
@@ -1899,7 +1907,7 @@ def normalize_issue_comment(
         text_admissions=tuple(text_admissions),
         extra_texts=(),
         relations=(relation,),
-        core_references=(),
+        repository_references=(),
     )
 
 
@@ -1987,7 +1995,7 @@ def normalize_timeline_event(
     )
     clock = FieldClock("github:timeline:created_at", created_us)
     fields: list[FieldCandidate] = []
-    core_refs: list[tuple[CoreReference, FieldClock, int]] = []
+    repository_refs: list[tuple[RepositoryReference, FieldClock, int]] = []
     if graphql and "__typename" in payload:
         fields.append(
             _candidate(
@@ -2053,9 +2061,9 @@ def normalize_timeline_event(
             )
         )
         if object_oid is not None:
-            core_refs.append(
+            repository_refs.append(
                 (
-                    CoreReference(
+                    RepositoryReference(
                         event_key, "referenced_commit", object_oid, provenance_json
                     ),
                     clock,
@@ -2113,7 +2121,7 @@ def normalize_timeline_event(
         text_admissions=(),
         extra_texts=(),
         relations=(relation, *role_relations),
-        core_references=tuple(core_refs),
+        repository_references=tuple(repository_refs),
         transfer_event=transferred,
     )
 
@@ -2125,7 +2133,7 @@ def normalize_pr_commit(
     observed_at_us: int | None,
     provenance_json: str,
 ) -> NormalizedContextUnit:
-    """Normalize a GitHub PR commit entry into a Context document and CoreReference."""
+    """Normalize a GitHub PR commit entry into a Context document and RepositoryReference."""
     if not isinstance(payload, dict):
         raise AcquisitionError("MALFORMED_PAYLOAD", "pr_commit", "dict required")
     validate_observation_us(observed_at_us)
@@ -2208,14 +2216,14 @@ def normalize_pr_commit(
                 observed_at_us,
             )
         )
-    core_refs = (
+    repository_refs = (
         (
-            CoreReference(commit_doc, "commit", object_oid, provenance_json),
+            RepositoryReference(commit_doc, "commit", object_oid, provenance_json),
             clock,
             observed_at_us,
         ),
         (
-            CoreReference(pr_key, "pr_commit", object_oid, provenance_json),
+            RepositoryReference(pr_key, "pr_commit", object_oid, provenance_json),
             clock,
             observed_at_us,
         ),
@@ -2248,7 +2256,7 @@ def normalize_pr_commit(
         text_admissions=tuple(text_admissions),
         extra_texts=(),
         relations=(relation,),
-        core_references=core_refs,
+        repository_references=repository_refs,
     )
 
 
@@ -2331,5 +2339,5 @@ def normalize_pr_file(
         text_admissions=tuple(text_admissions),
         extra_texts=(),
         relations=(relation,),
-        core_references=(),
+        repository_references=(),
     )

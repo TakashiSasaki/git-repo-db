@@ -8,22 +8,22 @@ from repo_catalog.application.git_history_query import GitHistoryQuery
 from repo_catalog.application.metadata_reparse import reparse
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.p1_core import Provenance, ScalarClaim, encode
-from tests.integration.p1.test_core import Budget, native, oid
-from tests.integration.p2.conftest import core as core
+from repo_catalog.domain.p1_repository import Provenance, ScalarClaim, encode
+from tests.integration.p1.test_repository import Budget, native, oid
+from tests.integration.p2.conftest import repository_store as repository_store
 from tests.integration.p2.test_native import commit_body, entry
 from tests.integration.p2.test_retired_git_obligations import reparse_fixture
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_actual_commit_message_decoders_keep_both_original_settings_and_values(
-    core, fmt
+    repository_store, fmt
 ):
     # This case compares valid message decoders, independently of the separate
     # invalid author-byte controls supplied by commit_body's default fixture.
     body = commit_body(oid("a", fmt), message=b"caf\xc3\xa9\n").replace(b"A\xff", b"A")
     incoming = native("commit", body, fmt)
-    store, path, unit = reparse_fixture(core, incoming)
+    store, path, unit = reparse_fixture(repository_store, incoming)
     original_native = store.scalar(incoming.object_oid, "message").canonical
     for encoding in ("utf-8", "latin-1"):
         reparse(
@@ -59,8 +59,10 @@ def test_actual_commit_message_decoders_keep_both_original_settings_and_values(
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-def test_real_gitlink_query_is_a_boundary_without_child_or_file_body_gaps(core, fmt):
-    store, path, _ = core
+def test_real_gitlink_query_is_a_boundary_without_child_or_file_body_gaps(
+    repository_store, fmt
+):
+    store, path, _ = repository_store
     missing = oid("a", fmt)
     incoming = native("tree", entry(b"160000", b"submodule", missing), fmt)
     store.admit_metadata(incoming, str(uuid4()), Budget())
@@ -79,11 +81,11 @@ def test_real_gitlink_query_is_a_boundary_without_child_or_file_body_gaps(core, 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_malformed_reported_decoder_settings_do_not_hide_valid_actual_tree_decode(
-    core, fmt
+    repository_store, fmt
 ):
     raw = b"caf\xc3\xa9.txt"
     incoming = native("tree", entry(b"100644", raw, oid("a", fmt)), fmt)
-    store, path, unit = reparse_fixture(core, incoming)
+    store, path, unit = reparse_fixture(repository_store, incoming)
     original = Provenance(
         "independent", "original", "tree-entry", "third_party.decoder", "999"
     )

@@ -54,7 +54,7 @@ import sysconfig
 from pathlib import Path
 from uuid import uuid4
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepository
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import initialize, verify_declared
 from repo_catalog.adapters.sqlite.production_context import Context
@@ -62,7 +62,7 @@ from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.context_admission import DependencySet
 from fixture_authority import fixture_service, fixture_context
 from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey, canonical
-from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
 from repo_catalog.domain.production_query import PageRequest, SearchQuery
 
 assert "site-packages" in str(Path(__import__("repo_catalog.application.production_query", fromlist=["x"]).__file__))
@@ -79,7 +79,7 @@ for module_name in (
 repo, instance, service = (str(uuid4()) for _ in range(3))
 cat = Path("catalog")
 cat.mkdir()
-for role in ("core", "context", "operational", "search"):
+for role in ("repository", "context", "operational", "search"):
     initialize(cat / f"{role}.sqlite3", role, repo, instance)
 
 class Budget:
@@ -106,11 +106,11 @@ commit_native = NativeObject(OID(fmt, commit_oid_hex), "commit", commit_raw, len
 pr_key = ResourceKey.from_native(service, "pull_request", "1")
 prov = canonical({"source": "github.rest", "evidence": "ev-1"})
 
-def core_unit(db):
-    with GitCore.for_transaction(db) as core:
-        core.admit_repository(repo)
-        core.admit_metadata(tree_native, str(uuid4()), Budget())
-        core.admit_metadata(commit_native, str(uuid4()), Budget())
+def repository_unit(db):
+    with GitRepository.for_transaction(db) as repository:
+        repository.admit_repository(repo)
+        repository.admit_metadata(tree_native, str(uuid4()), Budget())
+        repository.admit_metadata(commit_native, str(uuid4()), Budget())
 
 def ctx_unit(db):
     with Context.for_transaction(db, cat) as ctx:
@@ -118,20 +118,20 @@ def ctx_unit(db):
         ctx.repository(repo, "{}")
         ctx.resource(pr_key, repo)
         ctx.admit_field(FieldCandidate(pr_key, "title", canonical("installed p6 pr needle"), FieldClock("gh", 10), prov, 10))
-        ctx.link_core(pr_key, "head", fmt, commit_oid_hex, prov, lambda f, o: (f, o) == (fmt, commit_oid_hex))
+        ctx.link_repository(pr_key, "head", fmt, commit_oid_hex, prov, lambda f, o: (f, o) == (fmt, commit_oid_hex))
 
 authorization, _ = fixture_service(DependencySet(
     resources={pr_key}, repositories={repo}, provider_registrations={service},
     object_oids={OID(fmt, commit_oid_hex)},
 ))
 admission = fixture_context(authorization)
-PairCoordinator(cat, authorization=authorization).admit(core_unit, ctx_unit, admission=admission)
+PairCoordinator(cat, authorization=authorization).admit(repository_unit, ctx_unit, admission=admission)
 
 svc = ProductionQueryService(cat)
 assert svc.detect_mode() == "paired"
-paired_view = svc.get_paired_resource(pr_key, include_core_bytes=True)
-assert paired_view.core_resolutions[0].available_in_core is True
-assert paired_view.core_resolutions[0].object_view.retained_bytes.body_bytes == commit_raw
+paired_view = svc.get_paired_resource(pr_key, include_repository_bytes=True)
+assert paired_view.repository_resolutions[0].available_in_repository is True
+assert paired_view.repository_resolutions[0].object_view.retained_bytes.body_bytes == commit_raw
 
 counts = svc.rebuild_search()
 assert counts["git_metadata"] > 0 and counts["context_text"] > 0

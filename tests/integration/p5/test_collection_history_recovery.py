@@ -3,7 +3,7 @@
 from contextlib import closing
 from dataclasses import replace
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.pr_assessment import PRQueryService
 from repo_catalog.application.recovery import RecoveryService
@@ -40,7 +40,7 @@ def history_snapshot(directory):
 def test_paired_backup_restore_retains_old_collection_proof_and_newer_partial_originals(
     tmp_path,
 ):
-    fixture, _, key = setup(tmp_path / "source", core=True)
+    fixture, _, key = setup(tmp_path / "source", repository_store=True)
     scope = CoverageScope.collection(fixture.parent, "pr_files", key[4], "pr_files")
     with Context.snapshot(fixture.path) as context:
         original_scope = context.db.execute(
@@ -73,15 +73,17 @@ def test_paired_backup_restore_retains_old_collection_proof_and_newer_partial_or
         )
         context.admit_coverage(CoverageClaim(scope, 700, "partial"))
     before = history_snapshot(fixture.path)
-    with closing(GitCore(fixture.path / "core.sqlite3")) as core:
-        copy = core.sql(
+    with closing(
+        GitRepositoryStore(fixture.path / "repository.sqlite3")
+    ) as repository_store:
+        copy = repository_store.sql(
             "SELECT physical_copy_uuidv4 FROM retained_metadata WHERE object_format=? AND object_oid=? ORDER BY physical_copy_uuidv4 LIMIT 1",
             fixture.head.key,
         )[0][0]
-        body = core.read_metadata_copy(fixture.head, copy, UnlimitedWorkBudget())[
-            "body"
-        ]
-        assert core.catalog_identity() == before["pair_identity"]
+        body = repository_store.read_metadata_copy(
+            fixture.head, copy, UnlimitedWorkBudget()
+        )["body"]
+        assert repository_store.catalog_identity() == before["pair_identity"]
     backup, target = tmp_path / "backup", tmp_path / "restored"
     recovery = RecoveryService()
     recovery.create_consistent_backup(fixture.path, backup, BackupScope.PAIRED)
@@ -101,10 +103,12 @@ def test_paired_backup_restore_retains_old_collection_proof_and_newer_partial_or
         fixture.parent, "pr_files", key[4]
     )
     assert captured.state == "partial" and captured.page.total_count == 1
-    with closing(GitCore(target / "core.sqlite3")) as core:
-        assert core.catalog_identity() == after["pair_identity"]
+    with closing(GitRepositoryStore(target / "repository.sqlite3")) as repository_store:
+        assert repository_store.catalog_identity() == after["pair_identity"]
         assert (
-            core.read_metadata_copy(fixture.head, copy, UnlimitedWorkBudget())["body"]
+            repository_store.read_metadata_copy(
+                fixture.head, copy, UnlimitedWorkBudget()
+            )["body"]
             == body
         )
     assert not (target / "p1-recovery-stop.json").exists()

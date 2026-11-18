@@ -16,13 +16,13 @@ import pytest
 
 from repo_catalog.adapters.git.notes import GitNotesSource
 from repo_catalog.adapters.git.remote import fetch_remote
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.remote_git_acquisition import acquire_remote_git
 from repo_catalog.domain.git_acquisition import (
     GitNativeAcquisitionRequest,
     NotesAcquisitionSpec,
 )
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
 
 
@@ -108,7 +108,7 @@ def request(repository, objects, *, notes=True):
 def test_smart_http_actual_bytes_and_original_capture_retry(tmp_path):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     native = request(repository, objects)
     with git_http(tmp_path) as (base, events):
         document = {
@@ -137,24 +137,24 @@ def test_smart_http_actual_bytes_and_original_capture_retry(tmp_path):
     assert first.git_report.retained_objects
     assert objects["blob"] not in first.git_report.retained_objects
     assert any(item.body_retained for item in first.git_report.ref_note_acquisitions)
-    core = GitCore(catalog / "core.sqlite3")
+    repository_store = GitRepositoryStore(catalog / "repository.sqlite3")
     try:
         assert (
-            core.sql(
+            repository_store.sql(
                 "SELECT count(*) FROM retained_metadata WHERE object_oid=?",
                 (objects["blob"].object_oid,),
             )[0][0]
             == 0
         )
     finally:
-        core.close()
+        repository_store.close()
     assert not (catalog / "context.sqlite3").exists()
 
 
 def test_remote_transport_username_and_refspec_change_rejected_before_network(tmp_path):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     with git_http(tmp_path) as (base, events):
         document = {
             "locator": base + "/repository.git",
@@ -170,7 +170,7 @@ def test_remote_transport_username_and_refspec_change_rejected_before_network(tm
             {"refspecs": ["+refs/heads/*:refs/heads/*"]},
             {"locator": base + "/different.git"},
         ):
-            with pytest.raises(CoreFailure) as refusal:
+            with pytest.raises(RepositoryFailure) as refusal:
                 acquire_remote_git(
                     catalog, {**document, "new_request": False, **change}
                 )
@@ -181,9 +181,9 @@ def test_remote_transport_username_and_refspec_change_rejected_before_network(tm
 def test_http_budget_refusal_does_not_enter_catalog_recovery(tmp_path):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     with git_http(tmp_path) as (base, _):
-        with pytest.raises(CoreFailure) as refusal:
+        with pytest.raises(RepositoryFailure) as refusal:
             acquire_remote_git(
                 catalog,
                 {
@@ -201,7 +201,7 @@ def test_http_budget_refusal_does_not_enter_catalog_recovery(tmp_path):
 def test_ssh_argv_protocol_meter_and_strict_host_verification(tmp_path, monkeypatch):
     objects = build_sample_git_repo(tmp_path / "repository.git")
     catalog = tmp_path / "catalog"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     executable = tmp_path / "ssh-fixture"
     log = tmp_path / "argv.json"
     executable.write_text(
@@ -280,7 +280,7 @@ def test_declared_remote_scope_is_canonical_and_temporary_cache_is_removed(tmp_p
     ],
 )
 def test_embedded_secrets_and_cleartext_remote_urls_are_refused(locator):
-    with pytest.raises(CoreFailure) as refusal:
+    with pytest.raises(RepositoryFailure) as refusal:
         with fetch_remote(locator, object_format="sha1", work=None):
             pytest.fail("unsafe remote opened")
     assert refusal.value.code == "REMOTE_URL"

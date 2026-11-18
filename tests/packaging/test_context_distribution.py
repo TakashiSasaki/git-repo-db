@@ -44,7 +44,7 @@ def context_distributions(tmp_path_factory):
 
 
 @pytest.mark.parametrize("variant", ["wheel", "sdist_wheel"])
-def test_context_resource_reader_without_concrete_core(
+def test_context_resource_reader_without_concrete_repository(
     context_distributions, tmp_path, variant
 ):
     env, products = context_distributions
@@ -59,18 +59,18 @@ def test_context_resource_reader_without_concrete_core(
                     owners[name] = artifact.name
     assert "repo_catalog/adapters/sqlite/production_context.py" in owners
     assert "repo_catalog/adapters/sqlite/p1_ddl/context.sql" in owners
-    assert "repo_catalog/adapters/sqlite/p1_ddl/core.sql" not in owners
+    assert "repo_catalog/adapters/sqlite/p1_ddl/repository.sql" not in owners
     for name in owners:
         assert (
             not any(
                 part in name
                 for part in (
-                    "git_core",
-                    "core_coordination",
-                    "core_schema_functions",
-                    "core_recovery",
-                    "core_query",
-                    "p1_core",
+                    "git_repository",
+                    "repository_coordination",
+                    "repository_schema_functions",
+                    "repository_recovery",
+                    "repository_query",
+                    "p1_repository",
                     "p1_coordination.py",
                 )
             )
@@ -79,15 +79,19 @@ def test_context_resource_reader_without_concrete_core(
 
     # Rich producer uses current typed admission, and closes all capabilities.
     producer = tmp_path / "producer"
-    data = populate_rich_catalog(producer, include_core=False, include_context=True)
+    data = populate_rich_catalog(
+        producer, include_repository=False, include_context=True
+    )
     metadata = prepare_metadata_fixture(producer, data)
     key = data["pr_key"]
     service = ProductionQueryService(producer, mode="context_only")
     expected = service.get_context_resource(key, include_text=True).to_dict()
     assert (
-        expected["relations"] and expected["fields"] and expected["core_dependencies"]
+        expected["relations"]
+        and expected["fields"]
+        and expected["repository_dependencies"]
     )
-    assert all(not item["available"] for item in expected["core_dependencies"])
+    assert all(not item["available"] for item in expected["repository_dependencies"])
     digest, text = next(iter(expected["resolved_texts"].items()))
     assert service.read_context_text(digest).text_value == text
 
@@ -117,7 +121,7 @@ def test_context_resource_reader_without_concrete_core(
     (outside / "fixture.json").write_text(json.dumps(manifest))
     # Independently modeled Provider intake produces missing/null/unresolved and
     # competing mappings, then attributed disposition reports. Only closed T is
-    # copied; no producer acquisition/Core implementation enters the consumer.
+    # copied; no producer acquisition/Repository implementation enters the consumer.
     from repo_catalog.domain.acquisition import ProviderIntakeBatch
     from repo_catalog.domain.p1_context import (
         FieldClock,
@@ -248,7 +252,9 @@ def test_composed_context_reader_artifact_parity(
     outside = tmp_path / "outside"
     outside.mkdir()
     catalog = outside / "catalog"
-    fixture = populate_rich_catalog(catalog, include_core=True, include_context=True)
+    fixture = populate_rich_catalog(
+        catalog, include_repository=True, include_context=True
+    )
     key = fixture["pr_key"]
     expected = {
         mode: ProductionQueryService(catalog, mode=mode)
@@ -256,23 +262,23 @@ def test_composed_context_reader_artifact_parity(
         .to_dict()
         for mode in ("context_only", "paired")
     }
-    assert any(d["available"] for d in expected["paired"]["core_dependencies"])
+    assert any(d["available"] for d in expected["paired"]["repository_dependencies"])
     assert not any(
-        d["available"] for d in expected["context_only"]["core_dependencies"]
+        d["available"] for d in expected["context_only"]["repository_dependencies"]
     )
     (outside / "expected.json").write_text(
         json.dumps(
             {
                 "key": key.coordinates(),
                 "paired": ProductionQueryService(catalog, mode="paired")
-                .get_paired_resource(key, include_core_bytes=True)
+                .get_paired_resource(key, include_repository_bytes=True)
                 .to_dict(),
                 "views": expected,
                 "search": {
                     mode: ProductionQueryService(catalog, mode=mode)
                     .search(SearchQuery("e", limit=1000))
                     .to_dict()
-                    for mode in ("core_only", "context_only", "paired")
+                    for mode in ("repository_only", "context_only", "paired")
                 },
                 "metadata": {
                     mode: {
@@ -345,7 +351,7 @@ from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 from repo_catalog.domain.search_query import SearchQuery
 installed = Path(sysconfig.get_path("purelib")).resolve()
 products = {d.metadata["Name"]: d for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
-assert set(products) == {"repo-catalog-paired-recovery", "repo-catalog-exchange", "repo-catalog-git-acquisition", "repo-catalog-operational", "repo-catalog", "repo-catalog-search", "repo-catalog-paired-query", "repo-catalog-access", "repo-catalog-core", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
+assert set(products) == {"repo-catalog-paired-recovery", "repo-catalog-exchange", "repo-catalog-git-acquisition", "repo-catalog-operational", "repo-catalog", "repo-catalog-search", "repo-catalog-paired-query", "repo-catalog-access", "repo-catalog-repository", "repo-catalog-context", "repo-catalog-runtime", "repo-catalog-contracts"}
 owners = {}
 for name, distribution in products.items():
     for member in distribution.files:
@@ -369,8 +375,8 @@ for mode, expected in fixture["views"].items():
     assert json.loads(json.dumps(view.to_dict())) == expected
     reader = ProductionQueryService(Path("catalog"), mode=mode)
     if mode == "paired":
-        assert json.loads(json.dumps(reader.get_paired_resource(key, include_core_bytes=True).to_dict())) == fixture["paired"]
-        paired = subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "paired-resource", "--catalog", "catalog", "--mode", mode, "--service", key.service_instance_uuidv4, "--kind", key.resource_kind, "--id", key.provider_resource_id, "--include-core-bytes"], capture_output=True, text=True, timeout=30)
+        assert json.loads(json.dumps(reader.get_paired_resource(key, include_repository_bytes=True).to_dict())) == fixture["paired"]
+        paired = subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.production_query", "paired-resource", "--catalog", "catalog", "--mode", mode, "--service", key.service_instance_uuidv4, "--kind", key.resource_kind, "--id", key.provider_resource_id, "--include-repository-bytes"], capture_output=True, text=True, timeout=30)
         assert paired.returncode == 0, paired.stderr
         assert json.loads(paired.stdout) == fixture["paired"]
     assert [v.to_dict() for v in reader.list_providers()] == fixture["metadata"][mode]["providers"]

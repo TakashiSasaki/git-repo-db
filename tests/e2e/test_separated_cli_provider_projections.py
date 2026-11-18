@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from repo_catalog.domain.context_admission import AdmissionSelection, DependencySet
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.time import parse_iso8601_us
 from tests.e2e.test_separated_cli import document
 from tests.e2e.test_separated_cli_provider_regressions import (
@@ -259,7 +259,7 @@ def test_real_http_cross_projection_preserves_field_producers_and_exact_body(
         and relation["members"] == [list(case.keys["reply"].coordinates())]
         for relation in view["relations"]
     )
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
 
 
 @pytest.mark.parametrize("first", ["rest", "graphql"])

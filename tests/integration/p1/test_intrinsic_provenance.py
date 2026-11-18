@@ -6,10 +6,10 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
-from repo_catalog.adapters.sqlite.p1_core import Core
+from repo_catalog.adapters.sqlite.p1_repository import RepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.domain.p1_coordination import AdmissionFailure, PairAdmission
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_repository import (
     OID,
     NativeObject,
     Provenance,
@@ -31,21 +31,21 @@ class Budget:
 @pytest.mark.parametrize("kind", ["scalar", "group"])
 def test_callback_cannot_promote_original_report(tmp_path, object_format, kind):
     repository, instance = str(uuid4()), str(uuid4())
-    for store in ("core", "context"):
+    for store in ("repository", "context"):
         initialize(tmp_path / f"{store}.sqlite3", store, repository, instance)
     oid = OID(object_format, native_object_oid(object_format, "tree", b""))
     native = NativeObject(oid, "tree", b"", 0, hashlib.sha256(b"").hexdigest())
     provenance = Provenance("original", "observation", kind, "source-parser", "1")
     copy = str(uuid4())
-    core = Core(tmp_path / "core.sqlite3")
+    repository_store = RepositoryStore(tmp_path / "repository.sqlite3")
     try:
         if kind == "scalar":
             report = ScalarClaim(oid, "type", "tree", provenance)
-            core.admit_claim(report)
+            repository_store.admit_claim(report)
             table = "intrinsic_claims"
 
             def projection():
-                return core.scalar(oid, "type")
+                return repository_store.scalar(oid, "type")
         else:
             report = RelationGroup(
                 oid,
@@ -55,13 +55,13 @@ def test_callback_cannot_promote_original_report(tmp_path, object_format, kind):
                 (),
                 provenance,
             )
-            core.admit_group(report)
+            repository_store.admit_group(report)
             table = "intrinsic_groups"
 
             def projection():
-                return core.relations(oid, "tree_entries")
+                return repository_store.relations(oid, "tree_entries")
 
-        core.admit_metadata(native, copy, Budget())
+        repository_store.admit_metadata(native, copy, Budget())
         before = projection()
         original = [
             item
@@ -88,7 +88,7 @@ def test_callback_cannot_promote_original_report(tmp_path, object_format, kind):
 
         # Independently emitted receiver evidence remains valid and replays;
         # rejection changes neither the original report nor the checked value.
-        core.admit_metadata(native, copy, Budget())
+        repository_store.admit_metadata(native, copy, Budget())
         assert projection() == before
     finally:
-        core.close()
+        repository_store.close()

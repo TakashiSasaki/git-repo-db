@@ -30,12 +30,12 @@ from repo_catalog.domain.p1_context import (
     encode_transfer_supported_provenance,
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, CoordinationError
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.ports.p1_context import ContextAdmission
 from repo_catalog.domain.production_context import (
     CollectionObservation,
     ContextError,
-    CoreReference,
+    RepositoryReference,
     ResourceObservation,
     ResourceRelation,
     SourceInventory,
@@ -295,7 +295,7 @@ def claim_for(observation, stamp=None, state="complete"):
         p1_contract.test_current_candidates_preserve_equal_and_incomparable,
         p1_contract.test_exact_original_replay_does_not_rewrite_provenance,
         p1_contract.test_generated_source_clock_is_real_sqlite_value,
-        p1_contract.test_portable_core_reference_validated_and_no_sender_promotion,
+        p1_contract.test_portable_repository_reference_validated_and_no_sender_promotion,
         p1_contract.test_source_membership_cannot_be_removed_or_rebound,
         p1_contract.test_source_empty_inventory_is_durable_without_any_membership,
         p1_contract.test_children_have_real_parent_and_document_kind_coordinates,
@@ -355,7 +355,7 @@ def test_coreless_durable_context_and_derivative_loss(directory):
     with Context.snapshot(directory) as store:
         assert store.candidates(KEY, "title") == (field(),)
         assert store.resources(kind="issue") == (KEY,)
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()
     assert not (directory / "operational.sqlite3").exists()
 
 
@@ -680,23 +680,25 @@ def test_source_collection_cross_service_rejected_even_empty(context):
 @pytest.mark.parametrize(
     "object_format,object_oid", [("sha1", "a" * 40), ("sha256", "b" * 64)]
 )
-def test_unavailable_portable_core_reference_durable_and_honest(
+def test_unavailable_portable_repository_reference_durable_and_honest(
     context, object_format, object_oid
 ):
     _, store, _ = context
-    reference = CoreReference(KEY, "head", OID(object_format, object_oid), PROVENANCE)
-    store.report_core_reference(
+    reference = RepositoryReference(
+        KEY, "head", OID(object_format, object_oid), PROVENANCE
+    )
+    store.report_repository_reference(
         reference, clock=FieldClock("provider.updated_at", 1), observed_at_us=10
     )
-    assert store.core_dependencies(KEY)[0].available is False
-    assert store.core_dependencies(KEY)[0].reference == reference
-    assert store.core_dependencies(
+    assert store.repository_dependencies(KEY)[0].available is False
+    assert store.repository_dependencies(KEY)[0].reference == reference
+    assert store.repository_dependencies(
         KEY, lambda fmt, oid: (fmt, oid) == (object_format, object_oid)
     )[0].available
 
 
-def test_missing_core_dependency_rejects_certified_pair(directory):
-    initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
+def test_missing_repository_dependency_rejects_certified_pair(directory):
+    initialize(directory / "repository.sqlite3", "repository", REPO, INSTANCE)
     authorization, _ = fixture_service(production_grants())
     coordinator = PairCoordinator(directory, authorization=authorization)
 
@@ -704,20 +706,22 @@ def test_missing_core_dependency_rejects_certified_pair(directory):
         with Context.for_transaction(db, directory) as store:
             store.provider(SERVICE, "github")
             store.resource(KEY)
-            store.link_core(KEY, "head", "sha1", "a" * 40, PROVENANCE, lambda *_: True)
+            store.link_repository(
+                KEY, "head", "sha1", "a" * 40, PROVENANCE, lambda *_: True
+            )
 
     with pytest.raises(AdmissionFailure) as error:
         coordinator.admit(
             lambda db: None, context_unit, admission=fixture_context(authorization)
         )
-    assert error.value.outcome.core_committed
+    assert error.value.outcome.repository_committed
     assert not error.value.outcome.context_committed
     with Context.snapshot(directory) as store:
         assert store.resources() == ()
 
 
 def test_paired_read_context_projection_no_savepoint_escape(directory):
-    initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
+    initialize(directory / "repository.sqlite3", "repository", REPO, INSTANCE)
     authorization, _ = fixture_service(production_grants())
     coordinator = PairCoordinator(directory, authorization=authorization)
 
@@ -792,7 +796,7 @@ def test_all_inherited_methods_obey_stop(context, operation):
         "coverage": lambda: store.coverage(CoverageScope.resource(KEY, "reviews")),
         "resource": lambda: store.resource(PR),
         "candidates": lambda: store.candidates(KEY, "title"),
-        "link": lambda: store.link_core(
+        "link": lambda: store.link_repository(
             KEY, "head", "sha1", "a" * 40, PROVENANCE, lambda *_: True
         ),
     }
@@ -842,17 +846,17 @@ def test_forged_unpersisted_head_scope_cannot_create_proof(context):
 
 
 def test_missing_attributed_reference_does_not_poison_sound_pair(directory):
-    initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
-    reference = CoreReference(KEY, "head", OID("sha1", "a" * 40), PROVENANCE)
+    initialize(directory / "repository.sqlite3", "repository", REPO, INSTANCE)
+    reference = RepositoryReference(KEY, "head", OID("sha1", "a" * 40), PROVENANCE)
     with fixture_transaction(directory, production_grants()) as store:
         store.provider(SERVICE, "github")
         store.resource(KEY)
-        store.report_core_reference(
+        store.report_repository_reference(
             reference, clock=FieldClock("provider.updated_at", 7), observed_at_us=20
         )
     with PairCoordinator(directory).snapshots() as pair:
         with Context.for_snapshot(pair.context, directory) as store:
-            (dependency,) = store.core_dependencies(KEY)
+            (dependency,) = store.repository_dependencies(KEY)
             assert not dependency.available and not dependency.required
             assert dependency.candidate.clock == FieldClock("provider.updated_at", 7)
             assert dependency.candidate.observed_at_us == 20
@@ -952,7 +956,9 @@ def test_invalid_stored_field_is_corruption_not_bad_incoming_data(directory):
 def test_reserved_reference_field_requires_typed_identity(context):
     _, store, path = context
     with pytest.raises(ContextError, match="REFERENCE_VALUE"):
-        store.admit_field(field(name="reported_core_reference:head", value="false OID"))
+        store.admit_field(
+            field(name="reported_repository_reference:head", value="false OID")
+        )
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
 
@@ -1109,13 +1115,13 @@ def test_invalid_utf8_stored_field_stops_before_caller_can_swallow(directory):
 
 
 @pytest.mark.parametrize("mode", ["transaction", "snapshot"])
-def test_context_cannot_bind_core_shared_coverage_tables(directory, mode):
-    initialize(directory / "core.sqlite3", "core", REPO, INSTANCE)
+def test_context_cannot_bind_repository_shared_coverage_tables(directory, mode):
+    initialize(directory / "repository.sqlite3", "repository", REPO, INSTANCE)
     authorization, _ = fixture_service(production_grants())
     coordinator = PairCoordinator(directory, authorization=authorization)
     if mode == "transaction":
 
-        def wrong_core_unit(db):
+        def wrong_repository_unit(db):
             with Context.for_transaction(db, directory) as context:
                 scope = CoverageScope.repository(REPO, "provider-inventory")
                 context.scope(scope)
@@ -1123,22 +1129,25 @@ def test_context_cannot_bind_core_shared_coverage_tables(directory, mode):
 
         with pytest.raises(AdmissionFailure) as failure:
             coordinator.admit(
-                wrong_core_unit,
+                wrong_repository_unit,
                 lambda db: None,
                 admission=fixture_context(authorization),
             )
         assert isinstance(failure.value.cause, ContextError)
         assert failure.value.cause.code == "STORE_ROLE"
-        assert not failure.value.outcome.core_committed
+        assert not failure.value.outcome.repository_committed
     else:
         with coordinator.snapshots() as pair:
             with pytest.raises(ContextError, match="STORE_ROLE"):
-                with Context.for_snapshot(pair.core, directory):
-                    pytest.fail("Core claims mislabeled as Context")
+                with Context.for_snapshot(pair.repository_store, directory):
+                    pytest.fail("Repository claims mislabeled as Context")
     assert not (directory / "p1-recovery-stop.json").exists()
     with coordinator.snapshots() as pair:
         assert (
-            pair.core.execute("SELECT count(*) FROM coverage_claims").fetchone()[0] == 0
+            pair.repository_store.execute(
+                "SELECT count(*) FROM coverage_claims"
+            ).fetchone()[0]
+            == 0
         )
 
 

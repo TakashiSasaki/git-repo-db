@@ -1,6 +1,6 @@
 """Nominal identities and provenance shared by independent authority readers.
 
-No concrete Core implementation or native-admission code belongs to this module.
+No concrete Repository implementation or native-admission code belongs to this module.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import Literal
 from uuid import UUID
 
 
-class CoreFailure(ValueError):
+class RepositoryFailure(ValueError):
     """Typed failure with the smallest affected subject/scope."""
 
     def __init__(self, code: str, scope: object, message: str):
@@ -32,7 +32,7 @@ def uuid4_value(value: str) -> str:
         if parsed.version != 4 or str(parsed) != value:
             raise ValueError
     except (ValueError, TypeError, AttributeError) as exc:
-        raise CoreFailure("IDENTITY", value, "canonical UUIDv4 required") from exc
+        raise RepositoryFailure("IDENTITY", value, "canonical UUIDv4 required") from exc
     return value
 
 
@@ -48,7 +48,9 @@ class OID:
             or not isinstance(self.object_oid, str)
             or not re.fullmatch(f"[0-9a-f]{{{width}}}", self.object_oid)
         ):
-            raise CoreFailure("IDENTITY", self, "full lowercase typed Git OID required")
+            raise RepositoryFailure(
+                "IDENTITY", self, "full lowercase typed Git OID required"
+            )
 
     @property
     def key(self) -> tuple[str, str]:
@@ -68,7 +70,7 @@ class Provenance:
         if self.qualification not in ("reported", "receiver_intrinsic") or any(
             not isinstance(v, str) or not v for v in self.key
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "PROVENANCE", self, "genuine original coordinates required"
             )
 

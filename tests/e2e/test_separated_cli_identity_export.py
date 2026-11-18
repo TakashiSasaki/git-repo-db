@@ -78,7 +78,7 @@ def service_identity(tmp_path, capsys):
     selection = document(
         tmp_path,
         "selection.json",
-        ExchangeSelectionScope(include_core=False, all_selected=True),
+        ExchangeSelectionScope(include_repository=False, all_selected=True),
     )
     return source, credential, selection, record, grants
 
@@ -131,7 +131,7 @@ def test_normal_cli_service_identity_export_refuses_missing_read_grants(
     )
     assert error["code"] == "PERMISSION_DENIED"
     assert not output.exists()
-    assert not (source / "core.sqlite3").exists()
+    assert not (source / "repository.sqlite3").exists()
     assert not (source / "p1-recovery-stop.json").exists()
 
 
@@ -183,5 +183,5 @@ def test_normal_cli_service_identity_read_authority_exports_and_imports_original
         "service_equivalence_closure",
     ):
         assert received[key] == original[key]
-    assert not (target / "core.sqlite3").exists()
+    assert not (target / "repository.sqlite3").exists()
     assert record["relation_uuidv4"] in json.dumps(received)

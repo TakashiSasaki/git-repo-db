@@ -95,7 +95,7 @@ def test_actual_http_intake_and_restoration_do_not_depend_on_original_recording(
                 client=client,
             )
     assert report.status == "complete" and report.http_attempts == len(calls) == 2
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()
     assert not (directory / "p1-recovery-stop.json").exists()
     if recording == "failing":
         assert len(recorded) == 2
@@ -151,19 +151,19 @@ def test_actual_http_intake_and_restoration_do_not_depend_on_original_recording(
 
     scope = (
         ExchangeSelectionScope(
-            include_core=False,
+            include_repository=False,
             repository_uuidv4s=(identity[0],),
             object_oids=(),
             resource_keys=(key,),
             source_uuidv4s=(),
         )
         if recording == "archive-selective"
-        else ExchangeSelectionScope(include_core=False, all_selected=True)
+        else ExchangeSelectionScope(include_repository=False, all_selected=True)
     )
     package = ExchangeService(directory).export_package(
         selection=scope, exported_at_us=20
     )
-    assert package.context is not None and package.core is None
+    assert package.context is not None and package.repository_store is None
     if recording == "archive-selective":
         assert not scope.all_selected
         assert not package.context["sources"]
@@ -200,7 +200,7 @@ def test_actual_http_intake_and_restoration_do_not_depend_on_original_recording(
     )
 
     # Paired backup is explicitly initialized only for this later operation.
-    initialize(directory / "core.sqlite3", "core", *identity)
+    initialize(directory / "repository.sqlite3", "repository", *identity)
     adapter = SQLiteRecoveryAdapter()
     backup = tmp_path / "verified-backup"
     assert adapter.create_consistent_backup(

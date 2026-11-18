@@ -38,7 +38,7 @@ CREATE TABLE work_accounting (
 ) STRICT, WITHOUT ROWID;
 -- Operational cached expenditure; the application independently checks these
 -- counters against actual accounting rows and its mandatory durable checkpoint
--- on resume or unknown writes. No Core authority or success ledger is implied.
+-- on resume or unknown writes. No Repository authority or success ledger is implied.
 CREATE TRIGGER finite_work BEFORE INSERT ON work_accounting BEGIN
  SELECT CASE WHEN NEW.reserved >
  (SELECT finite_limit-spent_or_reserved FROM request_budgets WHERE request_origin_uuidv4=NEW.request_origin_uuidv4 AND request_uuidv4=NEW.request_uuidv4 AND work_kind=NEW.work_kind)

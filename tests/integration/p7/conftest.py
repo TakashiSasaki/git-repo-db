@@ -8,13 +8,13 @@ import shutil
 import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import connect as p1_connect
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.context_admission import DependencySet
-from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
 from tests.support.context_admission import fixture_context, fixture_service
 
 
@@ -109,29 +109,33 @@ def _synthetic_catalog_template(tmp_path_factory):
     template_dir = tmp_path_factory.mktemp("synthetic_template") / "catalog"
     template_dir.mkdir(parents=True)
 
-    core_path = template_dir / "core.sqlite3"
+    repository_path = template_dir / "repository.sqlite3"
     ctx_path = template_dir / "context.sqlite3"
     op_path = template_dir / "operational.sqlite3"
     search_path = template_dir / "search.sqlite3"
 
-    initialize(core_path, "core", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
+    initialize(repository_path, "repository", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
     initialize(ctx_path, "context", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
     initialize(op_path, "operational", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
     initialize(search_path, "search", DEFAULT_REPO_UUID, DEFAULT_INSTANCE_UUID)
 
     budget = UnlimitedWorkBudget()
 
-    # Populate real Git objects via GitCore
-    core = GitCore(core_path)
-    core.admit_repository(DEFAULT_REPO_UUID)
+    # Populate real Git objects via GitRepository
+    repository_store = GitRepositoryStore(repository_path)
+    repository_store.admit_repository(DEFAULT_REPO_UUID)
 
     tree = make_tree("sha1", [(b"100644", b"README.md", "1" * 40)])
     commit = make_commit("sha1", tree.object_oid.object_oid, [])
     tag = make_tag("sha1", commit.object_oid.object_oid)
 
-    core.admit_metadata(tree, "33333333-3333-4333-8333-333333333333", budget)
-    core.admit_metadata(commit, "44444444-4444-4444-8444-444444444444", budget)
-    core.admit_metadata(tag, "55555555-5555-4555-8555-555555555555", budget)
+    repository_store.admit_metadata(
+        tree, "33333333-3333-4333-8333-333333333333", budget
+    )
+    repository_store.admit_metadata(
+        commit, "44444444-4444-4444-8444-444444444444", budget
+    )
+    repository_store.admit_metadata(tag, "55555555-5555-4555-8555-555555555555", budget)
 
     # Populate a real verified Note
     note_blob = make_native(
@@ -148,7 +152,7 @@ def _synthetic_catalog_template(tmp_path_factory):
         ],
     )
     cap_origin = "66666666-6666-4666-8666-666666666666"
-    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.p1_repository import Provenance
     from repo_catalog.domain.ref_observation import (
         NotesMapping,
         NotesMappingEvidence,
@@ -159,7 +163,7 @@ def _synthetic_catalog_template(tmp_path_factory):
     )
 
     key = RefObservationKey(cap_origin, new_uuid7())
-    core.admit_ref_observation(
+    repository_store.admit_ref_observation(
         RefObservation(
             key, DEFAULT_REPO_UUID, b"refs/notes/commits", "local-notes", "visible"
         )
@@ -170,7 +174,7 @@ def _synthetic_catalog_template(tmp_path_factory):
         "present",
         root_object_oid=notes_tree.object_oid,
     )
-    core.admit_ref_observation_claim(claim)
+    repository_store.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
         notes_tree.object_oid,
         "git-notes",
@@ -189,7 +193,7 @@ def _synthetic_catalog_template(tmp_path_factory):
         ),
         (notes_tree,),
     )
-    core.admit_ref_note(
+    repository_store.admit_ref_note(
         evidence, note_blob, "88888888-8888-4888-8888-888888888888", budget
     )
 

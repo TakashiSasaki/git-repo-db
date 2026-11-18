@@ -8,7 +8,7 @@ members = [
     "repo-catalog-access",
     "repo-catalog-context",
     "repo-catalog-contracts",
-    "repo-catalog-core",
+    "repo-catalog-repository",
     "repo-catalog-exchange",
     "repo-catalog-filesystem",
     "repo-catalog-git-acquisition",
@@ -256,7 +256,7 @@ dependencies = [
     { name = "repo-catalog-access" },
     { name = "repo-catalog-context" },
     { name = "repo-catalog-contracts" },
-    { name = "repo-catalog-core" },
+    { name = "repo-catalog-repository" },
     { name = "repo-catalog-exchange" },
     { name = "repo-catalog-git-acquisition" },
     { name = "repo-catalog-operational" },
@@ -286,7 +286,7 @@ requires-dist = [
     { name = "repo-catalog-access", editable = "packages/access" },
     { name = "repo-catalog-context", editable = "packages/context" },
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
-    { name = "repo-catalog-core", editable = "packages/core" },
+    { name = "repo-catalog-repository", editable = "packages/repository" },
     { name = "repo-catalog-exchange", editable = "packages/exchange" },
     { name = "repo-catalog-git-acquisition", editable = "packages/git-acquisition" },
     { name = "repo-catalog-local", marker = "extra == 'local'", editable = "packages/local" },
@@ -333,9 +333,9 @@ version = "0.2.0"
 source = { editable = "packages/contracts" }
 
 [[package]]
-name = "repo-catalog-core"
+name = "repo-catalog-repository"
 version = "0.2.0"
-source = { editable = "packages/core" }
+source = { editable = "packages/repository" }
 dependencies = [
     { name = "repo-catalog-contracts" },
     { name = "repo-catalog-runtime" },
@@ -353,14 +353,14 @@ version = "0.2.0"
 source = { editable = "packages/exchange" }
 dependencies = [
     { name = "repo-catalog-contracts" },
-    { name = "repo-catalog-core" },
+    { name = "repo-catalog-repository" },
     { name = "repo-catalog-runtime" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
-    { name = "repo-catalog-core", editable = "packages/core" },
+    { name = "repo-catalog-repository", editable = "packages/repository" },
     { name = "repo-catalog-runtime", editable = "packages/runtime" },
 ]
 
@@ -375,7 +375,7 @@ version = "0.2.0"
 source = { editable = "packages/git-acquisition" }
 dependencies = [
     { name = "repo-catalog-contracts" },
-    { name = "repo-catalog-core" },
+    { name = "repo-catalog-repository" },
     { name = "repo-catalog-operational" },
     { name = "repo-catalog-runtime" },
 ]
@@ -383,7 +383,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
-    { name = "repo-catalog-core", editable = "packages/core" },
+    { name = "repo-catalog-repository", editable = "packages/repository" },
     { name = "repo-catalog-operational", editable = "packages/operational" },
     { name = "repo-catalog-runtime", editable = "packages/runtime" },
 ]
@@ -425,7 +425,7 @@ source = { editable = "packages/paired-query" }
 dependencies = [
     { name = "repo-catalog-context" },
     { name = "repo-catalog-contracts" },
-    { name = "repo-catalog-core" },
+    { name = "repo-catalog-repository" },
     { name = "repo-catalog-runtime" },
 ]
 
@@ -433,7 +433,7 @@ dependencies = [
 requires-dist = [
     { name = "repo-catalog-context", editable = "packages/context" },
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
-    { name = "repo-catalog-core", editable = "packages/core" },
+    { name = "repo-catalog-repository", editable = "packages/repository" },
     { name = "repo-catalog-runtime", editable = "packages/runtime" },
 ]
 
@@ -444,7 +444,7 @@ source = { editable = "packages/paired-recovery" }
 dependencies = [
     { name = "repo-catalog-context" },
     { name = "repo-catalog-contracts" },
-    { name = "repo-catalog-core" },
+    { name = "repo-catalog-repository" },
     { name = "repo-catalog-operational" },
     { name = "repo-catalog-runtime" },
     { name = "repo-catalog-search" },
@@ -454,7 +454,7 @@ dependencies = [
 requires-dist = [
     { name = "repo-catalog-context", editable = "packages/context" },
     { name = "repo-catalog-contracts", editable = "packages/contracts" },
-    { name = "repo-catalog-core", editable = "packages/core" },
+    { name = "repo-catalog-repository", editable = "packages/repository" },
     { name = "repo-catalog-operational", editable = "packages/operational" },
     { name = "repo-catalog-runtime", editable = "packages/runtime" },
     { name = "repo-catalog-search", editable = "packages/search" },

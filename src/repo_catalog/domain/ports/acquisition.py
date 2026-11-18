@@ -19,7 +19,7 @@ from repo_catalog.domain.exchange import (
     ExchangeSelectionScope,
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ports.p1_repository import WorkBudget
 
 
 class GitAcquisitionPort(Protocol):

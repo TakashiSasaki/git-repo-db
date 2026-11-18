@@ -94,7 +94,7 @@ def test_actual_parent_alternatives_survive_repeat_reopen_and_onward_exchange(
         return view.fields, set(reports)
 
     before = read(source)
-    selection = ExchangeSelectionScope(all_selected=True, include_core=False)
+    selection = ExchangeSelectionScope(all_selected=True, include_repository=False)
     package = ExchangeService(source).export_package(
         selection=selection, exported_at_us=100
     )

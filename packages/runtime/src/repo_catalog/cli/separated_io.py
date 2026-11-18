@@ -16,7 +16,7 @@ MAX_BYTES = 32 * 1024 * 1024
 DTO_MODULES = (
     "repo_catalog.domain.query_contracts",
     "repo_catalog.domain.shared_values",
-    "repo_catalog.domain.p1_core",
+    "repo_catalog.domain.p1_repository",
     "repo_catalog.domain.ref_observation",
     "repo_catalog.domain.p1_context",
     "repo_catalog.domain.production_context",
@@ -98,7 +98,7 @@ def _hints(cls):
         return get_type_hints(cls, globalns=namespace, localns=namespace)
     except NameError:
         # Optional Context annotations must not require that capability for a
-        # Core-only DTO invocation. Resolve each available owner annotation;
+        # Repository-only DTO invocation. Resolve each available owner annotation;
         # the typed constructor still rejects unavailable/invalid actual input.
         result = {}
         for member in dataclasses.fields(cls):

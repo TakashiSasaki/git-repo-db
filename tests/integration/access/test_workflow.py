@@ -558,7 +558,7 @@ def test_real_terminal_approval_and_directory_preflight(fixture):
     assert json.loads(output)["status"] == "local-directory-preflight-only"
     assert json.loads(output)["git_acquired"] is False
     assert b"executor_evidence_json" in shown
-    assert not (fixture[1].parent / "core.sqlite3").exists()
+    assert not (fixture[1].parent / "repository.sqlite3").exists()
 
 
 def test_real_terminal_decline_has_no_grant(fixture):

@@ -87,7 +87,7 @@ def test_actual_nested_sparse_reference_retains_original_until_explicit_parent_n
         assert values[0].provenance_json == cleared.provenance_json
         assert values[0].observed_at_us == 3
         assert context.db.execute("PRAGMA foreign_key_check").fetchall() == []
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()
     assert not (directory / "p1-recovery-stop.json").exists()
 
 
@@ -119,7 +119,7 @@ def test_actual_present_nested_oid_requires_an_exact_git_identity(
 
 
 @pytest.mark.parametrize("source,key,target,known", FIELDS[2:])
-def test_actual_selected_null_oid_is_an_observation_without_a_core_reference(
+def test_actual_selected_null_oid_is_an_observation_without_a_repository_reference(
     tmp_path, source, key, target, known
 ):
     directory = tmp_path / "context"
@@ -133,11 +133,11 @@ def test_actual_selected_null_oid_is_an_observation_without_a_core_reference(
         normalized(source, {key: None}, 2),
     )
     assert field(cleared, target)[0].value_json == "null"
-    assert not cleared.core_references
+    assert not cleared.repository_references
     acquisition.admit_units((first, cleared))
     with Context.snapshot(directory) as context:
         values = context.candidates(first.primary_resource, target)
         assert len(values) == 1 and values[0].value_json == "null"
         assert values[0].provenance_json == cleared.provenance_json
         assert values[0].observed_at_us == 2
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()

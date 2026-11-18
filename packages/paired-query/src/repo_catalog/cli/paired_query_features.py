@@ -10,7 +10,7 @@ def add_commands(sub, common, page):
     context_query_features.add_commands(sub, common, page)
     single = sub.add_parser(
         "paired-resource",
-        help="Query a paired Context resource with Core OID resolution",
+        help="Query a paired Context resource with Repository OID resolution",
     )
     common(single)
     single.add_argument("--service", required=True)
@@ -18,10 +18,10 @@ def add_commands(sub, common, page):
     single.add_argument(
         "--id", required=True, help="Serialized canonical Resource identity JSON TEXT"
     )
-    single.add_argument("--include-core-bytes", action="store_true")
+    single.add_argument("--include-repository-bytes", action="store_true")
     listing = sub.add_parser(
         "paired-resources",
-        help="List paired Context resources with Core OID resolution",
+        help="List paired Context resources with Repository OID resolution",
     )
     common(listing)
     listing.add_argument("--kind", default=None)
@@ -40,7 +40,7 @@ def query_payload(service, args, page_from_args):
         return service.get_paired_resource(
             ResourceKey(args.service, args.kind, args.id),
             include_text=True,
-            include_core_bytes=args.include_core_bytes,
+            include_repository_bytes=args.include_repository_bytes,
         ).to_dict()
     if args.command == "paired-resources":
         result = service.list_paired_resources(

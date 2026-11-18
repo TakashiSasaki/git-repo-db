@@ -5,12 +5,12 @@ from contextlib import closing
 from uuid import uuid4
 
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.exchange import ExchangeService
-from repo_catalog.domain import p1_core
+from repo_catalog.domain import p1_repository
 from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.p1_core import OID, NativeObject
+from repo_catalog.domain.p1_repository import OID, NativeObject
 from repo_catalog.domain.query_work import UnlimitedWorkBudget
 from tests.integration.p5.conftest import init_catalog_stores
 from tests.integration.p5.test_selected_exchange_work import measured_export
@@ -31,8 +31,8 @@ def test_selected_allowed_native_byte_authorization_and_receiver_work_are_linear
     tmp_path, monkeypatch
 ):
     actual = {"visits": 0, "bytes": 0, "copies": 0}
-    original_performed = p1_core._performed
-    original_copy = GitCore.read_metadata_copy
+    original_performed = p1_repository._performed
+    original_copy = GitRepositoryStore.read_metadata_copy
 
     def performed(unit, amount):
         if unit == "verification_bytes":
@@ -44,15 +44,17 @@ def test_selected_allowed_native_byte_authorization_and_receiver_work_are_linear
         actual["copies"] += 1
         return original_copy(self, *args, **kwargs)
 
-    monkeypatch.setattr(p1_core, "_performed", performed)
-    monkeypatch.setattr(GitCore, "read_metadata_copy", read_copy)
+    monkeypatch.setattr(p1_repository, "_performed", performed)
+    monkeypatch.setattr(GitRepositoryStore, "read_metadata_copy", read_copy)
     measured = []
     for count in (16, 64, 256):
         sender, receiver = (
             tmp_path / str(count) / "sender",
             tmp_path / str(count) / "receiver",
         )
-        repository, _ = init_catalog_stores(sender, stores=("core", "operational"))
+        repository, _ = init_catalog_stores(
+            sender, stores=("repository", "operational")
+        )
         tree = native("tree", b"")
         commits = tuple(
             native(
@@ -66,9 +68,13 @@ def test_selected_allowed_native_byte_authorization_and_receiver_work_are_linear
             )
             for index in range(count)
         )
-        with closing(GitCore(sender / "core.sqlite3")) as core:
+        with closing(
+            GitRepositoryStore(sender / "repository.sqlite3")
+        ) as repository_store:
             for value in (tree, *commits):
-                core.admit_metadata(value, str(uuid4()), UnlimitedWorkBudget())
+                repository_store.admit_metadata(
+                    value, str(uuid4()), UnlimitedWorkBudget()
+                )
         selection = ExchangeSelectionScope(
             include_context=False,
             repository_uuidv4s=(repository,),
@@ -80,15 +86,17 @@ def test_selected_allowed_native_byte_authorization_and_receiver_work_are_linear
         package, sql_steps = measured_export(sender, selection)
         exported = dict(actual)
         body_bytes = sum(len(value.body) for value in commits)
-        assert len(package.core["retained_metadata"]) == count + 1
-        assert {row["native_type"] for row in package.core["retained_metadata"]} == {
+        assert len(package.repository_store["retained_metadata"]) == count + 1
+        assert {
+            row["native_type"] for row in package.repository_store["retained_metadata"]
+        } == {
             "commit",
             "tree",
         }
         assert exported["copies"] == count + 1
         assert exported["bytes"] >= 2 * body_bytes
         init_catalog_stores(
-            receiver, repository_uuidv4=repository, stores=("core", "operational")
+            receiver, repository_uuidv4=repository, stores=("repository", "operational")
         )
         actual.update(visits=0, bytes=0, copies=0)
         ExchangeService(receiver).import_package(
@@ -106,8 +114,12 @@ def test_selected_allowed_native_byte_authorization_and_receiver_work_are_linear
             usage["metadata_units"] > 0
             and usage["verification_bytes"] >= received["bytes"]
         )
-        with closing(GitCore(receiver / "core.sqlite3")) as core:
-            assert core.scalar(commits[-1].object_oid, "message").canonical == [
+        with closing(
+            GitRepositoryStore(receiver / "repository.sqlite3")
+        ) as repository_store:
+            assert repository_store.scalar(
+                commits[-1].object_oid, "message"
+            ).canonical == [
                 "known",
                 f"selected commit {count - 1:08d}\n",
             ]

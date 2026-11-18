@@ -23,7 +23,7 @@ WORKTREES_FACTORY = "packages/worktrees/src/repo_catalog/worktrees/catalog.py"
 # Internal p1 identifiers name the canonical separated factories; they do not
 # imply opt-in startup or a requirement to initialize every registered role.
 STORE_LAYOUT = {
-    "p1.core": (P1_FACTORY, ["core"]),
+    "p1.repository": (P1_FACTORY, ["repository"]),
     "p1.context": (P1_FACTORY, ["context"]),
     "p1.operational": (P1_FACTORY, ["operational"]),
     "p1.search": (P1_FACTORY, ["search"]),
@@ -35,7 +35,7 @@ STORE_LAYOUT = {
 DOMAIN_DISTRIBUTIONS = {
     name: "repo-catalog-" + name
     for name in (
-        "core",
+        "repository",
         "context",
         "access",
         "operational",
@@ -127,7 +127,7 @@ def build_catalog() -> dict:
             "P1 " + role.title(),
             role + ".sqlite3",
             p1_schema.FORMAT,
-            None,
+            p1_schema.USER_VERSION,
             bytes.fromhex(p1_schema.fingerprint(role)),
             p1_schema.compose(role),
             {},
@@ -135,7 +135,7 @@ def build_catalog() -> dict:
             include_runtime_details=True,
         )
         sources[key] = [P1_FACTORY, f"packages/{role}/src/{SQLITE}p1_ddl/{role}.sql"]
-        if role in {"core", "context"}:
+        if role in {"repository", "context"}:
             sources[key].append(
                 "packages/contracts/src/" + SQLITE + "p1_ddl/coverage.sql"
             )
@@ -248,7 +248,7 @@ def build_catalog() -> dict:
                 "source_store": "worktrees",
                 "source_table": "repository_links",
                 "source_columns": ["repository_uuid"],
-                "target_domain": "core",
+                "target_domain": "repository",
                 "missing_target": "unresolved",
                 "physical_foreign_key": False,
                 "contract": "docs/adr/0039-independent-filesystem-and-worktree-catalogs.md",

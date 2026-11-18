@@ -523,14 +523,16 @@ def test_nested_invocation_limits_and_selection_are_bound_at_issue(
 
 
 @pytest.mark.parametrize("container", ["field", "tuple", "observation"])
-def test_reserved_core_reference_fields_carry_independent_oid_dependency(container):
+def test_reserved_repository_reference_fields_carry_independent_oid_dependency(
+    container,
+):
     from repo_catalog.domain.p1_context import FieldCandidate
-    from repo_catalog.domain.p1_core import OID
+    from repo_catalog.domain.p1_repository import OID
 
     oid = OID("sha1", "a" * 40)
     field = FieldCandidate(
         PARENT,
-        "reported_core_reference:head",
+        "reported_repository_reference:head",
         canonical(oid.key),
         CLOCK,
         PROVENANCE,
@@ -548,12 +550,12 @@ def test_reserved_core_reference_fields_carry_independent_oid_dependency(contain
     assert deps.resources == frozenset({PARENT})
 
 
-def test_reserved_core_reference_fields_reject_malformed_oid_before_sql():
+def test_reserved_repository_reference_fields_reject_malformed_oid_before_sql():
     from repo_catalog.domain.p1_context import FieldCandidate
 
     field = FieldCandidate(
         PARENT,
-        "reported_core_reference:head",
+        "reported_repository_reference:head",
         canonical(["sha1", "bad"]),
         CLOCK,
         PROVENANCE,

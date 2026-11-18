@@ -12,7 +12,7 @@ from repo_catalog.domain.p1_context import FieldClock, ResourceKey, canonical
 from repo_catalog.domain.production_context import ContextError
 from repo_catalog.domain.query_contracts import QueryError
 from repo_catalog.domain.search_query import SearchQuery
-from repo_catalog.domain.shared_values import CoreFailure
+from repo_catalog.domain.shared_values import RepositoryFailure
 from tests.integration.p3.test_production_context import (
     KEY,
     SERVICE,
@@ -93,7 +93,7 @@ def test_current_text_edits_and_ambiguous_originals_keep_exact_search_producers_
     assert service.get_context_resource(KEY, include_text=True).fields[
         "text_body_sha256"
     ]
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()
 
 
 def test_cancelled_large_rebuild_rolls_back_replacement_but_preserves_current_authority(
@@ -214,7 +214,7 @@ def test_damaged_current_body_stops_each_actual_reader_and_rebuild(
         "search": lambda: search(service, "needle"),
         "rebuild": lambda: service.rebuild_search(("context_text",)),
     }[operation]
-    with pytest.raises((ContextError, QueryError, CoreFailure)) as failure:
+    with pytest.raises((ContextError, QueryError, RepositoryFailure)) as failure:
         call()
     assert failure.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (directory / "p1-recovery-stop.json").is_file()

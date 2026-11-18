@@ -7,21 +7,27 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_rows import ROW_TYPES as CORE_ROWS
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
-from repo_catalog.domain.p1_core import (
+from repo_catalog.adapters.sqlite.repository_rows import ROW_TYPES as REPOSITORY_ROWS
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreFailure,
     RelationGroup,
     RelationMember,
+    RepositoryFailure,
     ScalarClaim,
     encode,
 )
-from tests.integration.p1.test_core import Budget, core, native, oid, provenance
+from tests.integration.p1.test_repository import (
+    Budget,
+    native,
+    oid,
+    provenance,
+    repository_store,
+)
 from tests.integration.p3.test_production_context import context, directory
 
-__all__ = ["core", "context", "directory"]
+__all__ = ["repository_store", "context", "directory"]
 
 
 def group():
@@ -35,11 +41,13 @@ def group():
     )
 
 
-def test_failed_inner_core_unit_preserves_outer_writes_and_its_pinned_read(core):
-    reader, path, _ = core
-    with closing(connect(path, "core")) as db:
+def test_failed_inner_repository_unit_preserves_outer_writes_and_its_pinned_read(
+    repository_store,
+):
+    reader, path, _ = repository_store
+    with closing(connect(path, "repository")) as db:
         db.execute("BEGIN IMMEDIATE")
-        with GitCore.for_transaction(db) as unit:
+        with GitRepositoryStore.for_transaction(db) as unit:
             first = ScalarClaim(oid("a"), "type", "commit", provenance("first"))
             unit.admit_claim(first)
             assert unit.scalar(oid("a"), "type").alternatives
@@ -65,8 +73,8 @@ def test_failed_inner_core_unit_preserves_outer_writes_and_its_pinned_read(core)
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_refused_core_commit_rolls_back_the_entire_actual_unit(core):
-    owner, path, _ = core
+def test_refused_repository_commit_rolls_back_the_entire_actual_unit(repository_store):
+    owner, path, _ = repository_store
     original = owner._db
 
     class RefusingCommit:
@@ -94,15 +102,15 @@ def test_refused_core_commit_rolls_back_the_entire_actual_unit(core):
     assert not original.in_transaction
     assert owner.sql("SELECT * FROM git_objects") == []
     assert owner.sql("SELECT * FROM relation_groups") == []
-    with closing(GitCore(path)) as reopened:
+    with closing(GitRepositoryStore(path)) as reopened:
         assert reopened.sql("SELECT * FROM git_objects") == []
 
 
 @pytest.mark.parametrize("external", [False, True], ids=["owned", "savepoint"])
-def test_failed_core_rollback_preserves_original_error_and_prevents_later_commit(
-    core, external
+def test_failed_repository_rollback_preserves_original_error_and_prevents_later_commit(
+    repository_store, external
 ):
-    owner, path, _ = core
+    owner, path, _ = repository_store
     original_error = ValueError("actual original evidence failure")
 
     def fail():
@@ -116,18 +124,20 @@ def test_failed_core_rollback_preserves_original_error_and_prevents_later_commit
             return getattr(self.original, name)
 
         def execute(self, statement, *args, **kwargs):
-            if statement == ("ROLLBACK TO p1_core_unit" if external else "ROLLBACK"):
+            if statement == (
+                "ROLLBACK TO p1_repository_unit" if external else "ROLLBACK"
+            ):
                 assert self.original.in_transaction
                 raise sqlite3.OperationalError("injected rollback cleanup failure")
             return self.original.execute(statement, *args, **kwargs)
 
-    original = connect(path, "core") if external else owner._db
+    original = connect(path, "repository") if external else owner._db
     if external:
         original.execute("BEGIN IMMEDIATE")
     try:
         with pytest.raises(ValueError) as failure:
             if external:
-                with GitCore.for_transaction(original) as unit:
+                with GitRepositoryStore.for_transaction(original) as unit:
                     unit.admit_object(oid("a"))
                     unit._db = RefusingRollback(original)
                     unit.admit_group(group(), before_commit=fail)
@@ -145,7 +155,7 @@ def test_failed_core_rollback_preserves_original_error_and_prevents_later_commit
             original.close()
         else:
             owner._db = original
-    with closing(GitCore(path)) as reopened:
+    with closing(GitRepositoryStore(path)) as reopened:
         assert reopened.sql("SELECT * FROM git_objects") == []
         assert reopened.sql("SELECT * FROM relation_groups") == []
 
@@ -153,19 +163,19 @@ def test_failed_core_rollback_preserves_original_error_and_prevents_later_commit
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("shape", ["inside-width", "after-valid-prefix"])
 def test_native_oid_cannot_hide_nonhex_bytes_after_nul_at_typed_or_sql_boundary(
-    core, fmt, shape
+    repository_store, fmt, shape
 ):
-    owner, path, _ = core
+    owner, path, _ = repository_store
     width = 40 if fmt == "sha1" else 64
     value = (
         "a" * (width - 2) + "\0a"
         if shape == "inside-width"
         else "a" * width + "\0hidden"
     )
-    with pytest.raises(CoreFailure) as failure:
+    with pytest.raises(RepositoryFailure) as failure:
         owner.admit_object(OID(fmt, value))
     assert failure.value.code == "IDENTITY"
-    with closing(connect(path, "core")) as db:
+    with closing(connect(path, "repository")) as db:
         before = db.execute("SELECT total_changes()").fetchone()[0]
         with pytest.raises(sqlite3.IntegrityError):
             db.execute("INSERT INTO git_objects VALUES(?,?)", (fmt, value))
@@ -175,12 +185,14 @@ def test_native_oid_cannot_hide_nonhex_bytes_after_nul_at_typed_or_sql_boundary(
     assert len(owner.sql("SELECT * FROM git_objects")) == 1
 
 
-def test_repository_uuid_cannot_hide_suffix_after_nul_in_typed_or_sql_admission(core):
-    owner, path, repository = core
+def test_repository_uuid_cannot_hide_suffix_after_nul_in_typed_or_sql_admission(
+    repository_store,
+):
+    owner, path, repository = repository_store
     value = str(uuid4()) + "\0hidden"
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         owner.admit_repository(value)
-    with closing(connect(path, "core")) as db:
+    with closing(connect(path, "repository")) as db:
         before = db.execute("SELECT total_changes()").fetchone()[0]
         with pytest.raises(sqlite3.IntegrityError):
             db.execute("INSERT INTO repositories VALUES(?)", (value,))
@@ -204,14 +216,14 @@ def test_repository_uuid_cannot_hide_suffix_after_nul_in_typed_or_sql_admission(
     ],
 )
 def test_actual_retained_native_copy_rejects_every_missing_required_component(
-    core, column
+    repository_store, column
 ):
-    owner, path, _ = core
+    owner, path, _ = repository_store
     metadata = native("tree", b"")
     owner.admit_metadata(metadata, str(uuid4()), Budget())
-    row_type = CORE_ROWS["retained_metadata"]
+    row_type = REPOSITORY_ROWS["retained_metadata"]
     columns = row_type.WRITE_COLUMNS
-    with closing(connect(path, "core")) as db:
+    with closing(connect(path, "repository")) as db:
         original = dict(
             zip(
                 row_type.COLUMNS,
@@ -236,12 +248,14 @@ def test_actual_retained_native_copy_rejects_every_missing_required_component(
     assert owner.read_metadata(metadata.object_oid) == b""
 
 
-def test_commit_tree_cannot_bind_an_independently_valid_foreign_format_oid(core):
-    owner, path, _ = core
+def test_commit_tree_cannot_bind_an_independently_valid_foreign_format_oid(
+    repository_store,
+):
+    owner, path, _ = repository_store
     subject, foreign = oid(), oid("b", "sha256")
     owner.admit_object(subject)
     owner.admit_object(foreign)
-    with pytest.raises(CoreFailure) as failure:
+    with pytest.raises(RepositoryFailure) as failure:
         owner.admit_group(
             RelationGroup(
                 subject,
@@ -253,7 +267,7 @@ def test_commit_tree_cannot_bind_an_independently_valid_foreign_format_oid(core)
             )
         )
     assert failure.value.code == "GROUP"
-    with closing(connect(path, "core")) as db:
+    with closing(connect(path, "repository")) as db:
         before = db.execute("SELECT total_changes()").fetchone()[0]
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(
@@ -309,7 +323,7 @@ def test_source_inventory_typed_and_sql_git_member_shapes_agree(context, case):
         "duplicate": (REPO, REPO),
         "replica": ({"raw_api_response": {"body": "synthetic original"}},),
     }[case]
-    with pytest.raises((CoreFailure, ValueError)):
+    with pytest.raises((RepositoryFailure, ValueError)):
         store.inventory(replace(valid, repositories=members))
     assert store.source_repositories(SOURCE) == ()
     assert (
@@ -403,14 +417,14 @@ def test_unclosed_source_inventory_preserves_positive_report_without_complete_pr
 
 @pytest.mark.parametrize("member", [None, "sha1:0123", {"oid": "not-an-oid"}])
 def test_root_enumeration_requires_structured_native_oid_members_in_typed_and_sql_admission(
-    core, member
+    repository_store, member
 ):
-    from repo_catalog.domain.p1_core import GitObservation
+    from repo_catalog.domain.p1_repository import GitObservation
 
-    owner, path, repository = core
+    owner, path, repository = repository_store
     origin, capture = str(uuid4()), str(uuid4())
     value = {"roots": [member], "predecessor": None, "observed_at_us": 10}
-    with pytest.raises((CoreFailure, ValueError, TypeError)):
+    with pytest.raises((RepositoryFailure, ValueError, TypeError)):
         owner.admit_observation(
             GitObservation(
                 origin,
@@ -422,7 +436,7 @@ def test_root_enumeration_requires_structured_native_oid_members_in_typed_and_sq
                 provenance(),
             )
         )
-    with closing(connect(path, "core")) as db:
+    with closing(connect(path, "repository")) as db:
         before = db.execute("SELECT total_changes()").fetchone()[0]
         with pytest.raises(sqlite3.IntegrityError):
             db.execute(

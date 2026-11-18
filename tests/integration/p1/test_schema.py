@@ -39,7 +39,7 @@ def test_independent_fresh_store_and_real_constraints(tmp_path, store):
             # INTEGER alone is never the direct identity of a target relation.
             pk = [c for c in columns if c[5]]
             assert not (len(pk) == 1 and pk[0][2] == "INTEGER"), table[1]
-        if store == "core":
+        if store == "repository":
             triggers = {
                 r[0]
                 for r in db.execute(
@@ -72,11 +72,11 @@ def test_foreign_or_tampered_catalog_is_rejected(tmp_path):
     with sqlite3.connect(path) as db:
         db.execute("CREATE TABLE unrelated(real TEXT PRIMARY KEY)")
     with pytest.raises(schema.SchemaError, match="physical schema"):
-        schema.connect(path, "core")
+        schema.connect(path, "repository")
     with sqlite3.connect(path) as db:
         assert db.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
     with pytest.raises(schema.SchemaError, match="absent"):
-        schema.connect(tmp_path / "absent.sqlite3", "core")
+        schema.connect(tmp_path / "absent.sqlite3", "repository")
     assert not (tmp_path / "absent.sqlite3").exists()
 
 

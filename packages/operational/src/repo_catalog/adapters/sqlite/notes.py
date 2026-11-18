@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.request_scope import request_scope
-from repo_catalog.domain.shared_values import CoreFailure
+from repo_catalog.domain.shared_values import RepositoryFailure
 
 
 class NotesProgress:
@@ -29,7 +29,9 @@ class NotesProgress:
         import fcntl
 
         if not isinstance(scope, str) or len(scope) > 4 * 1024 * 1024:
-            raise CoreFailure("BUDGET", "notes-scan", "finite guard scope required")
+            raise RepositoryFailure(
+                "BUDGET", "notes-scan", "finite guard scope required"
+            )
         upper = 16 * len(scope) + 80
         self.work.require("input_bytes", upper)
         try:
@@ -60,7 +62,7 @@ class NotesProgress:
             try:
                 fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError as error:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "ACQUISITION_BUSY",
                     scope,
                     "another scan owns the acquisition guard; retry",
@@ -114,7 +116,7 @@ class NotesProgress:
         if size is None:
             return None
         if size > max_bytes:
-            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+            raise RepositoryFailure("BUDGET", scope, "finite pinned metadata limit")
         self.work.require("input_bytes", size)
         try:
             value, actual = self.work.ledger.get_progress_bounded(
@@ -131,7 +133,7 @@ class NotesProgress:
         prior = self.work.ledger.progress_length(self.work.request, scope)
         upper = max(len(encoded), prior or 0)
         if upper > max_bytes:
-            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+            raise RepositoryFailure("BUDGET", scope, "finite pinned metadata limit")
         self.work.require("input_bytes", upper)
         try:
             result, actual = self.work.ledger.set_progress_once_bounded(

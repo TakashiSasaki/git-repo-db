@@ -1,7 +1,7 @@
 """P3 Context interfaces; every mutation participates in caller transaction.
 
 No method commits, fetches Git closure or rewrites original source provenance.
-Standalone Context is durable without Core. Dependent links use coordination.
+Standalone Context is durable without Repository. Dependent links use coordination.
 """
 
 from collections.abc import Callable, Iterable
@@ -103,7 +103,7 @@ class ContextAdmission(Protocol):
         self, claim: CoverageClaim, *, admission: AdmissionContext
     ) -> str: ...
     def coverage(self, scope: CoverageScope) -> CoverageProjection: ...
-    def link_core(
+    def link_repository(
         self,
         resource: ResourceKey,
         role: str,

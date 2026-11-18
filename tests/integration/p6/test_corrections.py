@@ -11,25 +11,25 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_coordination import SnapshotReadLimits
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.application.query_pagination import _paginate_items
 from repo_catalog.domain.context_admission import DependencySet
-from repo_catalog.domain.core_query import validate_cursor_key
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
     FieldClock,
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.p1_repository import OID, RepositoryFailure
 from repo_catalog.domain.production_query import (
     PageRequest,
     QueryError,
     SearchQuery,
     canonical_json,
 )
+from repo_catalog.domain.repository_query import validate_cursor_key
 from tests.integration.p6.conftest import (
     ORIGIN,
     REPOSITORY,
@@ -104,12 +104,12 @@ def test_recomputed_valid_position_grants_no_authenticity(tmp_path):
 @pytest.mark.parametrize("stored", ["'{'", "'123'", "CAST(x'ff' AS TEXT)"])
 def test_persisted_json_utf8_and_typed_metadata_stop(tmp_path, stored):
     populate_rich_catalog(tmp_path, include_context=False)
-    _mutate(tmp_path / "core.sqlite3", "repository_claims", "value=" + stored)
-    with pytest.raises(CoreFailure) as error:
+    _mutate(tmp_path / "repository.sqlite3", "repository_claims", "value=" + stored)
+    with pytest.raises(RepositoryFailure) as error:
         ProductionQueryService(tmp_path).get_repository_view()
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (tmp_path / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         ProductionQueryService(tmp_path).snapshot_token()
     assert stopped.value.code == "RECOVERY_STOP"
 
@@ -118,30 +118,32 @@ def test_metadata_queries_do_not_hydrate_or_rehash_all_retained_bodies(tmp_path)
     fixture = populate_rich_catalog(tmp_path)
     oid = fixture["commit_obj"].object_oid
     _mutate(
-        tmp_path / "core.sqlite3", "retained_metadata", "body=zeroblob(length(body))"
+        tmp_path / "repository.sqlite3",
+        "retained_metadata",
+        "body=zeroblob(length(body))",
     )
     service = ProductionQueryService(tmp_path)
     assert service.get_git_object(oid).metadata_retained
     assert not (tmp_path / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as corrupt:
+    with pytest.raises(RepositoryFailure) as corrupt:
         service.read_metadata_bytes(oid)
     assert corrupt.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (tmp_path / "p1-recovery-stop.json").exists()
 
 
-def test_core_and_context_snapshot_capabilities_expire(tmp_path):
+def test_repository_and_context_snapshot_capabilities_expire(tmp_path):
     populate_rich_catalog(tmp_path)
     with ProductionQueryService(tmp_path).open_snapshot() as snap:
-        core, context = snap.core, snap.context
-    with pytest.raises(CoreFailure) as expired:
-        core.sql("SELECT 1")
+        repository_store, context = snap.repository_store, snap.context
+    with pytest.raises(RepositoryFailure) as expired:
+        repository_store.sql("SELECT 1")
     assert expired.value.code == "CAPABILITY_EXPIRED"
     with pytest.raises(Exception) as expired_context:
         context.resources()
     assert getattr(expired_context.value, "code", None) == "CAPABILITY_EXPIRED"
 
 
-@pytest.mark.parametrize("mode", ["paired", "core_only", "context_only"])
+@pytest.mark.parametrize("mode", ["paired", "repository_only", "context_only"])
 def test_snapshot_budget_refusal_preserves_ordinary_reads(tmp_path, mode):
     populate_rich_catalog(tmp_path)
     service = ProductionQueryService(
@@ -195,13 +197,13 @@ def test_literal_unicode_short_special_search_semantics_and_cost_phases(
 
 
 def test_binary_notes_rebuild_and_scan_equivalence(tmp_path):
-    init_catalog(tmp_path, ("core", "search"))
+    init_catalog(tmp_path, ("repository", "search"))
     blob = make_native("sha1", "blob", b"hello\xff\x00world")
     target = OID("sha1", "1" * 40)
     tree = make_tree(
         "sha1", [(b"100644", target.object_oid.encode(), blob.object_oid.object_oid)]
     )
-    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.p1_repository import Provenance
     from repo_catalog.domain.ref_observation import (
         NotesMapping,
         NotesMappingEvidence,
@@ -237,10 +239,14 @@ def test_binary_notes_rebuild_and_scan_equivalence(tmp_path):
         ),
         (tree,),
     )
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        core.admit_ref_observation(subject)
-        core.admit_ref_observation_claim(claim)
-        core.admit_ref_note(evidence, blob, str(uuid4()), UnlimitedTestBudget())
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_ref_observation(subject)
+        repository_store.admit_ref_observation_claim(claim)
+        repository_store.admit_ref_note(
+            evidence, blob, str(uuid4()), UnlimitedTestBudget()
+        )
     service = ProductionQueryService(tmp_path)
     before = service.search(
         SearchQuery(query_text="\\xff", projection_kinds=("notes",))
@@ -325,8 +331,10 @@ def test_unlimited_p6_read_configuration_is_rejected(tmp_path):
 @pytest.mark.parametrize("stored", ["'123'", "'[]'", "'{}'"])
 def test_persisted_provenance_shape_failure_stops(tmp_path, stored):
     populate_rich_catalog(tmp_path, include_context=False)
-    _mutate(tmp_path / "core.sqlite3", "repository_claims", "provenance=" + stored)
-    with pytest.raises(CoreFailure) as invalid:
+    _mutate(
+        tmp_path / "repository.sqlite3", "repository_claims", "provenance=" + stored
+    )
+    with pytest.raises(RepositoryFailure) as invalid:
         ProductionQueryService(tmp_path).get_repository_view()
     assert invalid.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (tmp_path / "p1-recovery-stop.json").exists()
@@ -335,9 +343,9 @@ def test_persisted_provenance_shape_failure_stops(tmp_path, stored):
 @pytest.mark.parametrize("operation", ["search", "rebuild"])
 def test_persisted_search_observation_shape_stops(tmp_path, operation):
     populate_rich_catalog(tmp_path, include_context=False)
-    _mutate(tmp_path / "core.sqlite3", "git_observations", "value='[]'")
+    _mutate(tmp_path / "repository.sqlite3", "git_observations", "value='[]'")
     service = ProductionQueryService(tmp_path)
-    with pytest.raises(CoreFailure) as invalid:
+    with pytest.raises(RepositoryFailure) as invalid:
         if operation == "search":
             service.search(
                 SearchQuery(query_text="p6", projection_kinds=("git_metadata",))

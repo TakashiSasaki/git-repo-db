@@ -166,7 +166,7 @@ def test_paginated_all_issue_comments_survive_restart_with_latest_edits_and_no_o
 def test_review_projection_and_repeated_admission_preserve_clockless_states_sparse_absence_and_body_alternatives(
     tmp_path,
 ):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     third = make_document_key(fixture.parent, "review", "review_summary", "202")
     fixture.grants = replace(
         fixture.grants, resources=fixture.grants.resources | {third}
@@ -211,7 +211,7 @@ def test_review_projection_and_repeated_admission_preserve_clockless_states_spar
         for observation in comment.observations
         for candidate in observation.fields
     )
-    assert not comment.core_references
+    assert not comment.repository_references
     for observed in (300, 400, 500):
         fixture.admit(
             reviews=tuple(

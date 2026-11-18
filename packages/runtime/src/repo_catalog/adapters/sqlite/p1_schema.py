@@ -1,7 +1,7 @@
 """Canonical separated store factories with explicit per-role initialization.
 
 These factory connections are trusted adapter infrastructure, not a public SQL
-admission API. Core's supported application boundary is p1_core.Core. A process
+admission API. Use p1_repository.RepositoryStore for typed admission. A process
 with arbitrary DDL/filesystem access can replace the database or these guards.
 """
 
@@ -18,9 +18,10 @@ from uuid import UUID
 
 # Four factory roles, not an inventory of every responsibility or startup store.
 # Access has its own independent factory: adapters/sqlite/access_schema.py.
-STORES = ("core", "context", "operational", "search")
+STORES = ("repository", "context", "operational", "search")
 MIN_SQLITE = (3, 51, 3)  # Includes the verified WAL-reset fix, STRICT and JSON.
-FORMAT = "repo-catalog/p1-isolated-4"
+FORMAT = "repo-catalog/p1-isolated-5"
+USER_VERSION = 5
 
 REQUIRED_PRAGMAS = {
     "foreign_keys": 1,
@@ -33,6 +34,21 @@ REQUIRED_PRAGMAS = {
 
 class SchemaError(ValueError):
     """Wrong format, unsupported runtime or a nonempty initialization target."""
+
+
+class UnsupportedSchemaVersionError(SchemaError):
+    """A catalog uses a different persistence format."""
+
+    code = "UNSUPPORTED_SCHEMA_VERSION"
+
+
+def reject_legacy_layout(directory: Path) -> None:
+    old_path = directory / "core.sqlite3"
+    if old_path.exists() or old_path.is_symlink():
+        raise UnsupportedSchemaVersionError(
+            "Legacy core.sqlite3 found. Preserve the old catalog and initialize "
+            "the Repository format in a new empty directory."
+        )
 
 
 def uuid4(value: object) -> bool:
@@ -75,7 +91,7 @@ def register_functions(db: sqlite3.Connection, store: str | None = None) -> None
     db.create_function("p1_uuid4", 1, uuid4, deterministic=True)
     db.create_function("p1_object_oid", 2, valid_object_oid, deterministic=True)
     db.create_function("p1_json", 1, _json, deterministic=True)
-    if store in (None, "core", "context"):
+    if store in (None, "repository", "context"):
         from repo_catalog.domain.coverage_details import coverage_details_sql
 
         db.create_function(
@@ -84,12 +100,12 @@ def register_functions(db: sqlite3.Connection, store: str | None = None) -> None
     db.create_function(
         "p1_array", -1, lambda *values: canonical(values), deterministic=True
     )
-    if store in (None, "core"):
-        from repo_catalog.adapters.sqlite.core_schema_functions import (
-            register_functions as register_core,
+    if store in (None, "repository"):
+        from repo_catalog.adapters.sqlite.repository_schema_functions import (
+            register_functions as register_repository,
         )
 
-        register_core(db)
+        register_repository(db)
     if store in (None, "context"):
         from repo_catalog.adapters.sqlite.p1_context import (
             register_functions as register_context,
@@ -107,7 +123,7 @@ def _resource(name: str) -> str:
 
 
 def compose(store: str) -> str:
-    """Deterministic packaged DDL, including immutable guards for every Core row."""
+    """Deterministic packaged DDL, including immutable guards for every Repository row."""
     if store not in STORES:
         raise SchemaError(f"unknown store: {store}")
     identity = f"""CREATE TABLE store_identity(
@@ -117,16 +133,16 @@ def compose(store: str) -> str:
 ) STRICT, WITHOUT ROWID;
 """
     sql = identity + "\n" + _resource(f"{store}.sql")
-    if store in {"core", "context"}:
+    if store in {"repository", "context"}:
         sql += "\n" + _resource("coverage.sql")
-    if store == "core":
+    if store == "repository":
         tables = re.findall(r"CREATE TABLE\s+(\w+)\s*\(", sql, flags=re.IGNORECASE)
     else:
         tables = ["store_identity"]
     for table in tables:
         for action in ("UPDATE", "DELETE"):
             sql += f"\nCREATE TRIGGER p1_immutable_{table}_{action.lower()} BEFORE {action} ON {table} BEGIN SELECT RAISE(ABORT,'immutable {store} fact'); END;\n"
-    return sql
+    return f"PRAGMA user_version = {USER_VERSION};\n" + sql
 
 
 def fingerprint(store: str) -> str:
@@ -158,9 +174,9 @@ def verify_connection(db: sqlite3.Connection, store: str | None = None) -> None:
     if store is not None and store not in STORES:
         raise SchemaError(f"unknown store: {store}")
     required = [("p1_uuid4", 1), ("p1_object_oid", 2), ("p1_json", 1), ("p1_array", -1)]
-    if store in (None, "core", "context"):
+    if store in (None, "repository", "context"):
         required += [("p1_coverage_details", 1)]
-    if store == "core":
+    if store == "repository":
         required += [
             ("p1_identity_evidence_v1", 4),
             ("p1_uuid7", 1),
@@ -260,6 +276,8 @@ def _open(
         raise SchemaError("P1 requires SQLite >= 3.51.3 with safe WAL, STRICT and JSON")
     path = Path(path)
     if not fresh and not path.is_file():
+        if store == "repository":
+            reject_legacy_layout(path.parent)
         raise SchemaError(f"store absent: {path.name}")
     db = sqlite3.connect(
         path if fresh else path.resolve().as_uri() + "?mode=rw",
@@ -309,8 +327,8 @@ def initialize(
         db.execute(
             f"INSERT INTO store_identity ({','.join(columns)}) VALUES(?,?,?)", values
         )
-        if store == "core":
-            from repo_catalog.adapters.sqlite.core_schema_functions import (
+        if store == "repository":
+            from repo_catalog.adapters.sqlite.repository_schema_functions import (
                 initialize_repository,
             )
 
@@ -333,6 +351,11 @@ def _identity_row_type(store: str):
 
 
 def validate(db: sqlite3.Connection, store: str) -> None:
+    version = db.execute("PRAGMA user_version").fetchone()[0]
+    if version != USER_VERSION:
+        raise UnsupportedSchemaVersionError(
+            f"{store} schema version {version} is unsupported. Expected {USER_VERSION}."
+        )
     if schema_rows(db) != expected_schema(store):
         raise SchemaError(f"{store} physical schema differs from packaged target")
     verify_connection(db, store)

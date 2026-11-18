@@ -173,7 +173,7 @@ def test_normal_cli_explicit_tree_roots_and_raw_paths_never_union_other_recorded
     import hashlib
     from dataclasses import replace
 
-    from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+    from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
     from tests.e2e.test_separated_cli import document
     from tests.e2e.test_separated_cli_literal_bytes import setup as metadata
 
@@ -259,11 +259,13 @@ def test_normal_cli_explicit_tree_roots_and_raw_paths_never_union_other_recorded
     )
     from contextlib import closing
 
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 
-    with closing(GitCore(catalog / "core.sqlite3")) as core:
+    with closing(
+        GitRepositoryStore(catalog / "repository.sqlite3")
+    ) as repository_store:
         assert (
-            core.sql(
+            repository_store.sql(
                 "SELECT 1 FROM retained_metadata WHERE object_format=? AND object_oid=?",
                 ("sha1", "2" * 40),
             )

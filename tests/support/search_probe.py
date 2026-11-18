@@ -49,7 +49,7 @@ def main(output):
     os.environ["PYTHONPATH"] = str(root)
     spec = json.loads((root / "fixture.json").read_text())
     role, kinds = spec["role"], tuple(spec["kinds"])
-    other = "context" if role == "core" else "core"
+    other = "context" if role == "repository" else "repository"
     mode = role + "_only"
     module = importlib.import_module("repo_catalog.application." + role + "_search")
     Service = getattr(module, role.title() + "SearchService")
@@ -82,7 +82,8 @@ def main(output):
     for suffix in (
         "domain.p1_" + other,
         "application." + other + "_query",
-        "adapters.sqlite." + ("git_core" if other == "core" else "production_context"),
+        "adapters.sqlite."
+        + ("git_repository" if other == "repository" else "production_context"),
         "application.paired_query",
         "application.production_query",
         "application.acquisition",
@@ -350,7 +351,7 @@ def main(output):
         )
     checks.append("pinned_concurrent_authority_and_early_stale_cursor")
 
-    if role == "core":
+    if role == "repository":
         notes = Service(root / "exact-notes", mode=mode)
         body = SearchQuery("needle-only-one-claim", ("notes",))
         exact = notes.search(body)
@@ -369,7 +370,7 @@ def main(output):
         damaged = root / "bad-notes"
         shutil.copytree(root / "exact-notes", damaged)
         mutate(
-            damaged / "core.sqlite3",
+            damaged / "repository.sqlite3",
             "ref_retained_notes",
             "body=zeroblob(length(body))",
         )
@@ -385,18 +386,18 @@ def main(output):
         resource = service.get_context_resource(
             ResourceKey(*spec["resource"]), include_text=True
         )
-        assert resource.repository_roles and resource.core_dependencies
+        assert resource.repository_roles and resource.repository_dependencies
         assert all(
-            not dependency.available for dependency in resource.core_dependencies
+            not dependency.available for dependency in resource.repository_dependencies
         )
         assert all(hit.authoritative_summary for hit in response.hits)
-        checks.append("context_provenance_unresolved_core_references")
+        checks.append("context_provenance_unresolved_repository_references")
 
     damaged = fresh("damaged-authority")
     mutate(
         damaged / path.name,
-        "scalar_claims" if role == "core" else "text_bodies",
-        "value='not-json'" if role == "core" else "text_value='tampered'",
+        "scalar_claims" if role == "repository" else "text_bodies",
+        "value='not-json'" if role == "repository" else "text_value='tampered'",
     )
     damage_hash = hashlib.sha256((damaged / path.name).read_bytes()).hexdigest()
     damaged_service = Service(damaged, mode=mode)

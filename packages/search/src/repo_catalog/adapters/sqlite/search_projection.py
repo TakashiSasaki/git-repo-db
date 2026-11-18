@@ -18,12 +18,12 @@ if TYPE_CHECKING:
     from repo_catalog.adapters.sqlite.paired_coordination import PairedSnapshot
 
 
-def validate_pair(core, context):
+def validate_pair(repository_store, context):
     from repo_catalog.adapters.sqlite.paired_coordination import (
         validate_pair as validate,
     )
 
-    return validate(core, context)
+    return validate(repository_store, context)
 
 
 class SearchProjection:
@@ -38,7 +38,7 @@ class SearchProjection:
 
     @staticmethod
     def context_documents(pair: PairedSnapshot) -> dict[str, str]:
-        if validate_pair(pair.core, pair.context) != pair.token:
+        if validate_pair(pair.repository_store, pair.context) != pair.token:
             raise CoordinationError("SNAPSHOT_CONTENT", "search")
         documents = {}
         for row in pair.context.execute(
@@ -57,11 +57,11 @@ class SearchProjection:
         self._replace("context_text", pair.token, self.context_documents(pair))
 
     def rebuild_git_metadata(self, pair: PairedSnapshot):
-        if validate_pair(pair.core, pair.context) != pair.token:
+        if validate_pair(pair.repository_store, pair.context) != pair.token:
             raise CoordinationError("SNAPSHOT_CONTENT", "search")
         documents = {
             _json(tuple(row)): row[1]
-            for row in pair.core.execute(
+            for row in pair.repository_store.execute(
                 "SELECT object_format,object_oid FROM git_objects"
             )
         }

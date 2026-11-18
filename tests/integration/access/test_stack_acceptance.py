@@ -10,17 +10,17 @@ import pytest
 
 from repo_catalog.adapters.sqlite.access_backup import AccessBackup
 from repo_catalog.adapters.sqlite.access_connections import AccessConnections
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.application.access_maintenance import AccessMaintenance
 from repo_catalog.application.access_workflow import AccessWorkflow
 from repo_catalog.domain.access_registry import AccessRegistryError
 from repo_catalog.domain.access_workflow import AccessSelection
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from tests.integration.access.test_git_acquisition import acquire, rows, usage
 from tests.integration.access.test_git_acquisition import setup as setup
 
 
-def core_facts(data):
+def repository_facts(data):
     return {
         table: tuple(tuple(row) for row in rows(data, table))
         for table in (
@@ -50,12 +50,12 @@ def restored(data, tmp_path):
     return destination / "access.sqlite3"
 
 
-def test_restore_reapproval_resumes_same_request_without_rewriting_core(
+def test_restore_reapproval_resumes_same_request_without_rewriting_repository(
     setup, tmp_path
 ):
     data = setup
     first = acquire(data, new_request=True)
-    original = core_facts(data)
+    original = repository_facts(data)
     spent = usage(data)
     with AccessConnections(restored(data, tmp_path), writable=True) as store:
         copy = {**data, "store": store}
@@ -63,24 +63,24 @@ def test_restore_reapproval_resumes_same_request_without_rewriting_core(
         assert store.history(data["scope"]) == data["store"].history(data["scope"])
         with pytest.raises(AccessRegistryError, match="DISABLED"):
             acquire(copy)
-        assert core_facts(data) == original and usage(data) == spent
+        assert repository_facts(data) == original and usage(data) == spent
         store.set_locator_enabled(data["route"], True)
         with pytest.raises(AccessRegistryError, match="APPROVAL_REQUIRED"):
             acquire(copy)
-        assert core_facts(data) == original and usage(data) == spent
+        assert repository_facts(data) == original and usage(data) == spent
         approve(store, data["selection"])
         replay = acquire(copy)
         assert replay.repository_uuidv4 == first.repository_uuidv4
-        assert core_facts(data) == original
+        assert repository_facts(data) == original
         assert usage(data) > spent
     # Domain evidence has no dependency on the restored Access database.
-    core = GitCore(data["cat"] / "core.sqlite3")
+    repository_store = GitRepositoryStore(data["cat"] / "repository.sqlite3")
     try:
-        assert core.read_metadata(data["objects"]["commit2"]).endswith(
+        assert repository_store.read_metadata(data["objects"]["commit2"]).endswith(
             b"Second commit\n"
         )
     finally:
-        core.close()
+        repository_store.close()
 
 
 def test_fork_cannot_retarget_original_request_but_new_capture_can_acquire(
@@ -88,7 +88,7 @@ def test_fork_cannot_retarget_original_request_but_new_capture_can_acquire(
 ):
     data = setup
     acquire(data, new_request=True)
-    original = core_facts(data)
+    original = repository_facts(data)
     access = restored(data, tmp_path)
     target = str(uuid4())
     AccessMaintenance(AccessBackup(), clock_us=lambda: 42).fork_scope(
@@ -119,10 +119,10 @@ def test_fork_cannot_retarget_original_request_but_new_capture_can_acquire(
         selected = AccessSelection(data["target"], target)
         approve(store, selected)
         copy = {**data, "store": store}
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             acquire(copy, selection=selected)
         assert error.value.code == "INCOMPATIBLE_REPLAY"
-        assert core_facts(data) == original
+        assert repository_facts(data) == original
         fresh = replace(data["unit"], capture_uuidv4=str(uuid4()))
         report = acquire(copy, unit=fresh, selection=selected, new_request=True)
         assert report.repository_uuidv4 == data["target"] != data["seed"]
@@ -135,10 +135,12 @@ def test_fork_cannot_retarget_original_request_but_new_capture_can_acquire(
         assert store.history(target).registrations == (registration,)
 
 
-def test_remote_locator_registration_and_rotation_leave_core_facts_unchanged(setup):
+def test_remote_locator_registration_and_rotation_leave_repository_facts_unchanged(
+    setup,
+):
     data = setup
     acquire(data, new_request=True)
-    original = core_facts(data)
+    original = repository_facts(data)
     store = data["store"]
     binding = store.binding(data["scope"], data["key"].locator_text)
     profile = store.configuration(data["scope"], "local")
@@ -157,7 +159,7 @@ def test_remote_locator_registration_and_rotation_leave_core_facts_unchanged(set
             replace(new_profile, enabled=False), expected=new_profile
         )
         assert store.binding(data["scope"], locator).repository_uuidv4 == data["target"]
-    assert core_facts(data) == original
+    assert repository_facts(data) == original
 
 
 @pytest.mark.parametrize("access_state", ["absent", "stopped"])
@@ -168,7 +170,7 @@ def test_domain_read_survives_unavailable_access_after_real_acquisition(
 
     data = setup
     acquire(data, new_request=True)
-    original = core_facts(data)
+    original = repository_facts(data)
     data["store"].close()
     if access_state == "absent":
         data["access"].unlink()
@@ -176,11 +178,11 @@ def test_domain_read_survives_unavailable_access_after_real_acquisition(
         persist_stop(data["access"])
     with pytest.raises(AccessRegistryError, match="MISSING|STOPPED"):
         AccessConnections(data["access"])
-    assert core_facts(data) == original
-    core = GitCore(data["cat"] / "core.sqlite3")
+    assert repository_facts(data) == original
+    repository_store = GitRepositoryStore(data["cat"] / "repository.sqlite3")
     try:
-        assert core.read_metadata(data["objects"]["commit2"]).endswith(
+        assert repository_store.read_metadata(data["objects"]["commit2"]).endswith(
             b"Second commit\n"
         )
     finally:
-        core.close()
+        repository_store.close()

@@ -68,7 +68,7 @@ from uuid import uuid4
 import repo_catalog
 from repo_catalog.adapters.sqlite import p1_schema
 from repo_catalog.domain.git_acquisition import GitMetadataInput
-from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
 
 assert all("site-packages" in part for part in repo_catalog.__path__)
 assert "site-packages" in p1_schema.__file__
@@ -98,9 +98,9 @@ def document(name, value):
     return path
 
 catalog = Path("catalog")
-identity = cli("init", "--scope", "core", "--catalog", catalog)
+identity = cli("init", "--scope", "repository", "--catalog", catalog)
 cli("init", "--scope", "operational", "--catalog", catalog)
-assert sorted(path.name for path in catalog.glob("*.sqlite3")) == ["core.sqlite3", "operational.sqlite3"]
+assert sorted(path.name for path in catalog.glob("*.sqlite3")) == ["repository.sqlite3", "operational.sqlite3"]
 assert "parser" not in subprocess.check_output([str(cli_path), "--help"], text=True)
 fmt = "sha1"
 body = b"100644 raw\xff\0" + bytes.fromhex("1" * 40)
@@ -128,7 +128,7 @@ restored = Path("restored")
 cli("recovery", "restore", "--scope", "git_only", "--catalog", restored,
     "--input", backup, "--repository", identity["repository_uuidv4"])
 assert cli("query", "tree", "--catalog", restored, "--object-oid", tree.object_oid)["items"] == after["items"]
-assert sorted(path.name for path in restored.glob("*.sqlite3")) == ["core.sqlite3"]
+assert sorted(path.name for path in restored.glob("*.sqlite3")) == ["repository.sqlite3"]
 assert not (catalog / "context.sqlite3").exists()
 assert not (catalog / "search.sqlite3").exists()
 assert not (catalog / "transport-archive").exists()

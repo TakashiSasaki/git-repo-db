@@ -5,8 +5,8 @@ import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import is_catalog_stopped
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite.repository_recovery import is_catalog_stopped
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import (
     BackupScope,
@@ -36,19 +36,21 @@ def test_indeterminate_source_does_not_invent_corruption(
         # Real validators wrap SQLite exceptions; classify the cause as well.
         raise BackupValidationError("validation unavailable") from error
 
-    monkeypatch.setattr(adapter, "_validate_and_summarize_core", unavailable)
+    monkeypatch.setattr(adapter, "_validate_and_summarize_repository", unavailable)
     with pytest.raises(SourceIntegrityIndeterminateError, match="Indeterminate"):
         adapter._diagnose_and_stop_if_source_corrupt(
             synthetic_catalog,
-            synthetic_catalog / "core.sqlite3",
-            "core",
+            synthetic_catalog / "repository.sqlite3",
+            "repository",
             ValueError("stage"),
         )
     assert not is_catalog_stopped(synthetic_catalog)
 
 
 def test_real_not_a_database_stops_source(synthetic_catalog, tmp_path):
-    (synthetic_catalog / "core.sqlite3").write_bytes(b"not an SQLite database" * 200)
+    (synthetic_catalog / "repository.sqlite3").write_bytes(
+        b"not an SQLite database" * 200
+    )
     with pytest.raises(CorruptionDetectedError, match="Confirmed authoritative"):
         RecoveryService().create_consistent_backup(
             synthetic_catalog, tmp_path / "backup"
@@ -58,7 +60,7 @@ def test_real_not_a_database_stops_source(synthetic_catalog, tmp_path):
 
 
 def test_confirmed_schema_damage_stops_source(synthetic_catalog, tmp_path):
-    connection = sqlite3.connect(synthetic_catalog / "core.sqlite3")
+    connection = sqlite3.connect(synthetic_catalog / "repository.sqlite3")
     connection.execute("CREATE TABLE unwanted(value)")
     connection.commit()
     connection.close()
@@ -75,8 +77,8 @@ def test_already_stopped_is_not_rediagnosed(synthetic_catalog):
     with pytest.raises(CatalogStoppedError):
         service.adapter._diagnose_and_stop_if_source_corrupt(
             synthetic_catalog,
-            synthetic_catalog / "core.sqlite3",
-            "core",
+            synthetic_catalog / "repository.sqlite3",
+            "repository",
             ValueError("stage"),
         )
 
@@ -180,7 +182,7 @@ def test_intrinsic_projection_damage_is_not_certified(synthetic_catalog, tmp_pat
         schema_rows,
     )
 
-    connection = sqlite3.connect(synthetic_catalog / "core.sqlite3")
+    connection = sqlite3.connect(synthetic_catalog / "repository.sqlite3")
     register_functions(connection)
     triggers = connection.execute(
         "SELECT name, sql FROM sqlite_schema WHERE name IN ('p1_immutable_scalar_claims_update','p1_immutable_intrinsic_claims_update')"
@@ -196,7 +198,7 @@ def test_intrinsic_projection_damage_is_not_certified(synthetic_catalog, tmp_pat
     for _, sql in triggers:
         connection.execute(sql)
     connection.commit()
-    assert schema_rows(connection) == expected_schema("core")
+    assert schema_rows(connection) == expected_schema("repository")
     assert connection.execute("PRAGMA integrity_check").fetchall() == [("ok",)]
     assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
     connection.close()
@@ -289,7 +291,7 @@ def test_separate_sqlite_lock_has_finite_backup_wait(synthetic_catalog, tmp_path
             sys.executable,
             "-c",
             "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA locking_mode=EXCLUSIVE'); c.execute('BEGIN EXCLUSIVE'); print('LOCKED',flush=True); sys.stdin.read()",
-            str(synthetic_catalog / "core.sqlite3"),
+            str(synthetic_catalog / "repository.sqlite3"),
         ],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,

@@ -2,9 +2,9 @@
 and P6 (authoritative queries, derivative Search, pagination, and byte reads).
 
 Verifies:
-1. End-to-end acquisition (native Git Core + GitHub Provider Context) into query and Search.
+1. End-to-end acquisition (native Git Repository + GitHub Provider Context) into query and Search.
 2. Multi-hop Exchange (A -> B -> C) into authoritative query verification.
-3. Deferred / late Core dependency reconciliation into PairedResourceView.
+3. Deferred / late Repository dependency reconciliation into PairedResourceView.
 4. Derivative loss and corruption resilience (search.sqlite3 missing or corrupt falls back
    to authority_scan without recovery stop).
 5. Authoritative corruption detection halts the store and writes p1-recovery-stop.json.
@@ -42,7 +42,7 @@ from repo_catalog.domain.exchange import (
     encode_package,
 )
 from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, ResourceKey
-from repo_catalog.domain.p1_core import OID, CoreFailure
+from repo_catalog.domain.p1_repository import OID, RepositoryFailure
 from repo_catalog.domain.production_context import ResourceObservation
 from repo_catalog.domain.production_query import SearchQuery
 from tests.support.context_admission import (
@@ -58,7 +58,7 @@ from tests.support.context_admission import (
 
 def _init_catalog(cat_dir: Path, repo_uuid: str, inst_uuid: str) -> None:
     cat_dir.mkdir(parents=True, exist_ok=True)
-    for role in ("core", "context", "operational", "search"):
+    for role in ("repository", "context", "operational", "search"):
         initialize(cat_dir / f"{role}.sqlite3", role, repo_uuid, inst_uuid)
 
 
@@ -245,10 +245,10 @@ def test_end_to_end_acquisition_into_query_and_search(tmp_path: Path, fmt: str) 
     title_doc = qs.get_context_resource(title_doc_key, include_text=True)
     assert next(iter(title_doc.resolved_texts.values())) == "Add feature needle_kw"
 
-    # Dependencies to commit1 and commit2 resolved in Core
-    assert len(paired.core_resolutions) >= 2
-    for res in paired.core_resolutions:
-        assert res.available_in_core is True
+    # Dependencies to commit1 and commit2 resolved in Repository
+    assert len(paired.repository_resolutions) >= 2
+    for res in paired.repository_resolutions:
+        assert res.available_in_repository is True
         assert res.object_view is not None
 
     # 4. P6 Search integration
@@ -302,7 +302,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
 
     svc_b = ExchangeService(cat_b)
     rep_b = svc_b.import_package(decode_package(wire_a), new_request=True)
-    assert rep_b.admitted_core_objects >= 1
+    assert rep_b.admitted_repository_objects >= 1
 
     # Export B -> Import C
     pkg_b = svc_b.export_package(
@@ -313,7 +313,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
 
     svc_c = ExchangeService(cat_c)
     rep_c = svc_c.import_package(decode_package(wire_b), new_request=True)
-    assert rep_c.admitted_core_objects >= 1
+    assert rep_c.admitted_repository_objects >= 1
 
     # Query catalog C with P6 QueryService
     qs_c = ProductionQueryService(cat_c)
@@ -326,7 +326,7 @@ def test_multi_hop_exchange_into_query(tmp_path: Path, fmt: str) -> None:
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-def test_deferred_core_dependency_reconciliation_into_paired_queries(
+def test_deferred_repository_dependency_reconciliation_into_paired_queries(
     tmp_path: Path,
     fmt: str,
 ) -> None:
@@ -338,7 +338,7 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
     git_dir = tmp_path / "git_repo"
     oids = _setup_git_repo(git_dir, fmt)
 
-    # 1. Admit Context first with PR referencing commit1 (which is NOT in Core yet!)
+    # 1. Admit Context first with PR referencing commit1 (which is NOT in Repository yet!)
     service_uuid = str(uuid4())
     prov_acq = ProviderAcquisition(cat_dir)
     pr_payload = {
@@ -365,14 +365,16 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
     )
     prov_acq.admit_batch(batch)
 
-    # Query with P6 before Core arrives: PR dependency available_in_core is False
+    # Query with P6 before Repository arrives: PR dependency available_in_repository is False
     qs = ProductionQueryService(cat_dir)
     pr_key = ResourceKey.from_native(service_uuid, "pull_request", "901")
     paired_before = qs.get_paired_resource(pr_key)
-    assert all(not r.available_in_core for r in paired_before.core_resolutions)
-    assert all(r.object_view is None for r in paired_before.core_resolutions)
+    assert all(
+        not r.available_in_repository for r in paired_before.repository_resolutions
+    )
+    assert all(r.object_view is None for r in paired_before.repository_resolutions)
 
-    # 2. Later, acquire commit1 into Core
+    # 2. Later, acquire commit1 into Repository
     git_acq = GitAcquisition(cat_dir, operational=cat_dir)
     git_acq.acquire_from_native(
         GitNativeSource(git_dir),
@@ -390,14 +392,16 @@ def test_deferred_core_dependency_reconciliation_into_paired_queries(
 
     # 3. Reconcile dependencies via PairedAcquisitionCoordinator
     coord = PairedAcquisitionCoordinator(cat_dir)
-    reconciled = coord.reconcile_core_dependencies()
+    reconciled = coord.reconcile_repository_dependencies()
     assert len(reconciled.promoted_references) >= 1
 
-    # 4. Query again: now available_in_core is True and object_view is populated!
+    # 4. Query again: now available_in_repository is True and object_view is populated!
     qs_after = ProductionQueryService(cat_dir)
     paired_after = qs_after.get_paired_resource(pr_key)
-    assert any(r.available_in_core for r in paired_after.core_resolutions)
-    resolved_deps = [r for r in paired_after.core_resolutions if r.available_in_core]
+    assert any(r.available_in_repository for r in paired_after.repository_resolutions)
+    resolved_deps = [
+        r for r in paired_after.repository_resolutions if r.available_in_repository
+    ]
     assert resolved_deps[0].object_view is not None
     assert resolved_deps[0].object_view.object_oid.object_oid == oids["commit1"]
 
@@ -481,8 +485,8 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> No
         new_request=True,
     )
 
-    # Tamper with retained_metadata body in core.sqlite3
-    with closing(connect(cat_dir / "core.sqlite3", "core")) as db:
+    # Tamper with retained_metadata body in repository.sqlite3
+    with closing(connect(cat_dir / "repository.sqlite3", "repository")) as db:
         trigger = db.execute(
             "SELECT sql FROM sqlite_master WHERE type='trigger' AND name='p1_immutable_retained_metadata_update'"
         ).fetchone()[0]
@@ -496,8 +500,8 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> No
         db.execute(trigger)
         db.commit()
 
-    qs = ProductionQueryService(cat_dir, mode="core_only")
-    with pytest.raises(CoreFailure) as exc_info:
+    qs = ProductionQueryService(cat_dir, mode="repository_only")
+    with pytest.raises(RepositoryFailure) as exc_info:
         qs.read_metadata_bytes(OID(fmt, oids["commit1"]))
     assert exc_info.value.code == "AUTHORITATIVE_CORRUPTION"
 
@@ -505,7 +509,7 @@ def test_authoritative_corruption_immediate_stop(tmp_path: Path, fmt: str) -> No
     assert (cat_dir / "p1-recovery-stop.json").exists()
 
     # Subsequent reads fail closed immediately with RECOVERY_STOP
-    with pytest.raises(CoreFailure) as fenced:
+    with pytest.raises(RepositoryFailure) as fenced:
         qs.get_git_object(OID(fmt, oids["commit1"]))
     assert fenced.value.code == "RECOVERY_STOP"
 
@@ -547,7 +551,7 @@ def test_partial_reordered_repeat_reverse_onward_preserves_unknown_clocks(
     )
     exporter = ExchangeService(a)
     subset = ExchangeSelectionScope(
-        all_selected=True, include_core=False, resource_keys=(resource,)
+        all_selected=True, include_repository=False, resource_keys=(resource,)
     )
     earlier = exporter.export_package(selection=subset, exported_at_us=1)
     later = FieldCandidate(

@@ -1,4 +1,4 @@
-"""Shared P1 five-column Coverage values for Core and Context owners.
+"""Shared P1 five-column Coverage values for Repository and Context owners.
 
 The whole owner coordinate tuple is losslessly encoded by each typed scope.
 Advisory details are excluded from claim identity and latest-state selection.

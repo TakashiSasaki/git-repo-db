@@ -10,7 +10,7 @@ import time
 import pytest
 
 from repo_catalog.adapters.git.remote import _disk_guard, _stop
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 
 CHILD = """
 import json, os, signal, sys, time
@@ -72,7 +72,7 @@ def test_remote_capacity_scan_tolerates_actual_temporary_pack_removal(
     _disk_guard(tmp_path, keep.stat().st_size, work)
     assert work.charges and not temporary.exists()
     assert keep.read_bytes() == b"k" * 8192
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         _disk_guard(tmp_path, keep.stat().st_size - 1, work)
     assert error.value.code == "BUDGET"
 

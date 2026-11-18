@@ -86,7 +86,9 @@ def test_paired_query_without_optional_implementations(
         assert "repo_catalog/" + module not in owners, module
 
     producer = tmp_path / "producer"
-    data = populate_rich_catalog(producer, include_core=True, include_context=True)
+    data = populate_rich_catalog(
+        producer, include_repository=True, include_context=True
+    )
     plain = ProductionQueryService(producer)
     provider = ResourceKey.from_native(SERVICE, "repository", "1001")
     claim = plain.get_context_resource(provider).repository_relations[0].claim_key
@@ -106,7 +108,7 @@ def test_paired_query_without_optional_implementations(
     outside = tmp_path / "consumer"
     fixture = outside / "fixture"
     fixture.mkdir(parents=True)
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         for suffix in ("", "-wal", "-shm"):
             name = role + ".sqlite3" + suffix
             if (producer / name).exists():
@@ -128,7 +130,9 @@ def test_paired_query_without_optional_implementations(
         "repository": REPOSITORY,
         "oid": data["commit_obj"].object_oid.key,
         "body_hex": data["commit_obj"].body.hex(),
-        "paired": plain.get_paired_resource(key, include_core_bytes=True).to_dict(),
+        "paired": plain.get_paired_resource(
+            key, include_repository_bytes=True
+        ).to_dict(),
         "context_only": ProductionQueryService(producer, mode="context_only")
         .get_context_resource(key)
         .to_dict(),
@@ -139,7 +143,7 @@ def test_paired_query_without_optional_implementations(
             role: hashlib.sha256(
                 (fixture / (role + ".sqlite3")).read_bytes()
             ).hexdigest()
-            for role in ("core", "context")
+            for role in ("repository", "context")
         },
     }
     (outside / "fixture.json").write_text(json.dumps(manifest))
@@ -201,7 +205,7 @@ def test_paired_query_without_optional_implementations(
             "--no-index",
             "--find-links",
             links,
-            "repo-catalog-core==0.2.0",
+            "repo-catalog-repository==0.2.0",
             "repo-catalog-context==0.2.0",
         ],
         outside,
@@ -210,15 +214,15 @@ def test_paired_query_without_optional_implementations(
     program = """
 import importlib.metadata, importlib.util, json, subprocess, sys
 from pathlib import Path
-from repo_catalog.application.core_query import CoreQueryService
+from repo_catalog.application.repository_query import RepositoryQueryService
 from repo_catalog.application.context_query import ContextQueryService
 from repo_catalog.domain.p1_context import ResourceKey
 assert importlib.util.find_spec("repo_catalog.application.paired_query") is None
 assert importlib.util.find_spec("repo_catalog.cli.paired_query_features") is None
 products={d.metadata["Name"] for d in importlib.metadata.distributions() if d.metadata["Name"].startswith("repo-catalog")}
-assert products=={"repo-catalog-core","repo-catalog-context","repo-catalog-runtime","repo-catalog-contracts"}
+assert products=={"repo-catalog-repository","repo-catalog-context","repo-catalog-runtime","repo-catalog-contracts"}
 fixture=json.loads(Path("fixture.json").read_text()); catalog=Path("fixture")
-for cls in (CoreQueryService,ContextQueryService):
+for cls in (RepositoryQueryService,ContextQueryService):
  try: cls(catalog,mode="paired").snapshot_token()
  except Exception as error: assert error.code=="MISSING_CAPABILITY"
  else: raise AssertionError("paired silently downgraded")

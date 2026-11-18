@@ -4,6 +4,7 @@ import argparse
 import sqlite3
 from pathlib import Path
 
+from repo_catalog.adapters.sqlite.p1_schema import reject_legacy_layout
 from repo_catalog.application.separated_initialization import inspect_role
 from repo_catalog.cli.separated_io import emit, failure
 
@@ -17,8 +18,9 @@ def main(argv=None):
     if args.verify_retained and args.scope is None:
         parser.error("--verify-retained requires explicit --scope git_only or paired")
     try:
+        reject_legacy_layout(args.catalog)
         roles = {}
-        for role in ("core", "context", "operational", "search"):
+        for role in ("repository", "context", "operational", "search"):
             path = args.catalog / (role + ".sqlite3")
             if path.exists():
                 roles[role] = inspect_role(path, role)

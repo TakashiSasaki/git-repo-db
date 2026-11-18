@@ -30,7 +30,7 @@ from repo_catalog.domain.search_query import (
     canonical_projection_kinds,
     validate_cursor_key,
 )
-from repo_catalog.domain.shared_values import CoreFailure
+from repo_catalog.domain.shared_values import RepositoryFailure
 
 
 class SearchReader:
@@ -123,11 +123,15 @@ class SearchReader:
         )
 
         if kind == "git_metadata":
-            return ProductionSearchAdapter.extract_git_metadata_documents(snapshot.core)
+            return ProductionSearchAdapter.extract_git_metadata_documents(
+                snapshot.repository_store
+            )
         if kind == "notes":
             try:
-                return self._extract_ref_notes_documents(snapshot.core, work)
-            except CoreFailure as error:
+                return self._extract_ref_notes_documents(
+                    snapshot.repository_store, work
+                )
+            except RepositoryFailure as error:
                 if error.code in ("BUDGET", "QUERY_BUDGET"):
                     raise QueryError(
                         "QUERY_BUDGET", "ref-notes-search", str(error)
@@ -166,7 +170,7 @@ class SearchReader:
                 for kind in kinds:
                     if (
                         kind in ("git_metadata", "notes")
-                        and getattr(snap, "core", None) is None
+                        and getattr(snap, "repository", None) is None
                         or kind == "context_text"
                         and getattr(snap, "context", None) is None
                     ):
@@ -224,7 +228,7 @@ class SearchReader:
             for kind in projection_kinds:
                 if (
                     kind in ("git_metadata", "notes")
-                    and getattr(snap, "core", None) is None
+                    and getattr(snap, "repository", None) is None
                 ):
                     continue
                 if kind == "context_text" and getattr(snap, "context", None) is None:
@@ -286,7 +290,7 @@ class SearchReader:
             for kind in query.projection_kinds:
                 if (
                     kind in ("git_metadata", "notes")
-                    and getattr(snap, "core", None) is None
+                    and getattr(snap, "repository", None) is None
                 ):
                     continue
                 if kind == "context_text" and getattr(snap, "context", None) is None:

@@ -29,7 +29,7 @@ def test_fresh_restore_and_merge(synthetic_catalog, tmp_path, repo_uuid):
         "candidate_type": CandidateType.GIT_METADATA.value,
         "capture_origin_uuidv4": str(uuid4()),
         "capture_uuidv4": str(uuid4()),
-        "extraction_provenance": {"store": "core", "table": "repositories"},
+        "extraction_provenance": {"store": "repository", "table": "repositories"},
         "payload": {"repository_uuidv4": new_repo_id},
         "extraction_status": ExtractionStatus.CLEAN.value,
         "error": None,
@@ -80,7 +80,7 @@ def test_fresh_restore_and_merge(synthetic_catalog, tmp_path, repo_uuid):
     # 5. Verify actual authoritative row exists in reopened database
     import sqlite3
 
-    conn = sqlite3.connect(fresh_dir / "core.sqlite3")
+    conn = sqlite3.connect(fresh_dir / "repository.sqlite3")
     assert (
         conn.execute(
             "SELECT 1 FROM repositories WHERE repository_uuidv4=?", (new_repo_id,)

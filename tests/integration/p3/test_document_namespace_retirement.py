@@ -95,4 +95,4 @@ def test_natural_document_kind_parent_spelling_and_service_remain_distinct_with_
         assert json.loads(
             result.fields["text_body_sha256"][0].provenance_json
         ) == json.loads(producer)
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()

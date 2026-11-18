@@ -57,7 +57,7 @@ class _Git:
             self.executable,
             "--no-replace-objects",
             "-c",
-            "core.fsmonitor=false",
+            "repository.fsmonitor=false",
             "-c",
             f"core.hooksPath={os.devnull}",
             "-c",

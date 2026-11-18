@@ -9,12 +9,12 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite import core_recovery as module
+from repo_catalog.adapters.sqlite import repository_recovery as module
 from repo_catalog.adapters.sqlite.catalog_runtime import persist_catalog_stop
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import initialize
-from repo_catalog.application.core_recovery import CoreRecoveryService
 from repo_catalog.application.recovery import RecoveryService
+from repo_catalog.application.repository_recovery import RepositoryRecoveryService
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.recovery import BackupScope, RecoveryError
 
@@ -25,10 +25,14 @@ def restored(tmp_path, request):
     source = tmp_path / "source"
     source.mkdir()
     repository, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "context") if scope == BackupScope.PAIRED else ("core",):
+    for role in (
+        ("repository", "context") if scope == BackupScope.PAIRED else ("repository",)
+    ):
         initialize(source / (role + ".sqlite3"), role, repository, instance)
     service = (
-        RecoveryService() if scope == BackupScope.PAIRED else CoreRecoveryService()
+        RecoveryService()
+        if scope == BackupScope.PAIRED
+        else RepositoryRecoveryService()
     )
     backup, fresh = tmp_path / "backup", tmp_path / "fresh"
     service.create_consistent_backup(source, backup, scope)
@@ -53,17 +57,17 @@ def restored(tmp_path, request):
     } == preserved
 
 
-def test_merge_owned_core_cleanup_stop_refuses_receipt(restored, monkeypatch):
+def test_merge_owned_repository_cleanup_stop_refuses_receipt(restored, monkeypatch):
     service, fresh, stream = restored
-    original = GitCore.close
+    original = GitRepositoryStore.close
     closed = []
 
-    def stopped(core):
-        original(core)
+    def stopped(repository_store):
+        original(repository_store)
         closed.append(True)
-        persist_catalog_stop(fresh, "synthetic after Core.close")
+        persist_catalog_stop(fresh, "synthetic after Repository.close")
 
-    monkeypatch.setattr(GitCore, "close", stopped)
+    monkeypatch.setattr(GitRepositoryStore, "close", stopped)
     with pytest.raises(CoordinationError, match="RECOVERY_REQUIRED"):
         service.merge_salvage(fresh, stream)
     assert closed and service.is_stopped(fresh)
@@ -115,19 +119,19 @@ def test_final_accounting_loss_never_returns_or_repairs_receipt(
         "marker": fresh / "p1-recovery-requests.initialized",
     }
     lost = paths[missing]
-    original = GitCore.close
+    original = GitRepositoryStore.close
     removed = []
 
-    def remove_after_close(core):
-        original(core)
+    def remove_after_close(repository_store):
+        original(repository_store)
         if lost.exists():
             lost.unlink()
             removed.append(True)
 
-    monkeypatch.setattr(GitCore, "close", remove_after_close)
+    monkeypatch.setattr(GitRepositoryStore, "close", remove_after_close)
     with pytest.raises(RecoveryError):
         service.merge_salvage(fresh, stream, request_id="final")
     assert removed and not lost.exists()
     assert not service.is_stopped(fresh)
-    with closing(GitCore(fresh / "core.sqlite3")) as core:
-        assert len(core.sql("SELECT * FROM git_objects")) == 1
+    with closing(GitRepositoryStore(fresh / "repository.sqlite3")) as repository_store:
+        assert len(repository_store.sql("SELECT * FROM git_objects")) == 1

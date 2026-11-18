@@ -6,8 +6,8 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
-from repo_catalog.domain.ports.core_query import CoreQueryPort
-from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ports.p1_repository import WorkBudget
+from repo_catalog.domain.ports.repository_query import RepositoryQueryPort
 from repo_catalog.domain.ports.search_query import SearchIndexPort as SearchIndexPort
 from repo_catalog.domain.production_query import (
     ByteReadResult,
@@ -23,8 +23,8 @@ from repo_catalog.domain.production_query import (
 )
 
 
-class ProductionQueryPort(CoreQueryPort, Protocol):
-    """Port for authoritative Core, Context, Paired, and Search queries."""
+class ProductionQueryPort(RepositoryQueryPort, Protocol):
+    """Port for authoritative Repository, Context, Paired, and Search queries."""
 
     def list_providers(self) -> tuple[ProviderView, ...]: ...
 
@@ -58,7 +58,7 @@ class ProductionQueryPort(CoreQueryPort, Protocol):
         resource_key: ResourceKey,
         *,
         include_text: bool = True,
-        include_core_bytes: bool = False,
+        include_repository_bytes: bool = False,
     ) -> PairedResourceView: ...
 
     def list_paired_resources(

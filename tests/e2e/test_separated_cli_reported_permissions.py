@@ -75,4 +75,4 @@ def test_actual_http_body_producers_preserve_reported_permissions_without_author
     )
     assert case.view(capsys, case.keys["thread"])["collections"] == before
     assert not (case.directory / "access.sqlite3").exists()
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()

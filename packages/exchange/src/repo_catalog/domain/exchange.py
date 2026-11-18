@@ -1,4 +1,4 @@
-"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0036-exchange-v8`).
+"""P5 portable typed Exchange domain and wire contract (`git-repo-db/adr0036-exchange-v9`).
 
 Enforces strict separation between:
 - Transport envelope identity (`package_id`, `exported_at_us`, `sender_catalog_instance_uuidv4`)
@@ -16,14 +16,14 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from repo_catalog.domain.p1_core import OID, CoreFailure, uuid4_value
+from repo_catalog.domain.p1_repository import OID, RepositoryFailure, uuid4_value
 from repo_catalog.domain.time import validate_observation_us
 
 if TYPE_CHECKING:
     from repo_catalog.domain.p1_context import ResourceKey
     from repo_catalog.domain.ref_observation import RefObservationKey
 
-FORMAT = "git-repo-db/adr0036-exchange-v8"
+FORMAT = "git-repo-db/adr0036-exchange-v9"
 MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 MAX_DEPTH = 32
 MAX_ELEMENTS = 200_000
@@ -414,7 +414,7 @@ def _canonical_dictionary(data: dict[str, Any]) -> bytes:
     return result
 
 
-CORE_SECTION_KEYS = (
+REPOSITORY_SECTION_KEYS = (
     "repositories",
     "repository_claims",
     "git_objects",
@@ -451,7 +451,7 @@ CONTEXT_SECTION_KEYS = (
     "collections",
     "text_bodies",
     "field_candidates",
-    "core_references",
+    "repository_references",
     "coverage_scopes",
     "coverage_claims",
     "coverage_proofs",
@@ -474,7 +474,7 @@ class ExchangeError(ValueError):
 class ExchangeSelectionScope:
     """Selective export/import filter specification."""
 
-    include_core: bool = True
+    include_repository: bool = True
     include_context: bool = True
     include_retained_bytes: bool = True
     repository_uuidv4s: tuple[str, ...] | None = None
@@ -494,7 +494,7 @@ class ExchangeSelectionScope:
     def __post_init__(self) -> None:
         for value in (
             self.all_selected,
-            self.include_core,
+            self.include_repository,
             self.include_context,
             self.include_retained_bytes,
         ):
@@ -614,7 +614,7 @@ class ExchangeSelectionScope:
             "max_units": self.max_units,
             "max_bytes": self.max_bytes,
             "max_work": self.max_work,
-            "include_core": self.include_core,
+            "include_repository": self.include_repository,
             "include_context": self.include_context,
             "include_retained_bytes": self.include_retained_bytes,
             "object_oids": (
@@ -661,7 +661,7 @@ class ExchangeSelectionScope:
     def from_dict(cls, data: dict[str, Any]) -> ExchangeSelectionScope:
         if type(data) is not dict:
             raise ExchangeError("INVALID_SELECTION", "selection_scope", "dict required")
-        for key in ("include_core", "include_context", "include_retained_bytes"):
+        for key in ("include_repository", "include_context", "include_retained_bytes"):
             if type(data.get(key)) is not bool:
                 raise ExchangeError("INVALID_SELECTION", key, "boolean required")
         if set(data) - {"identity_assertion_uuidv4s", "collection_keys"} != {
@@ -671,7 +671,7 @@ class ExchangeSelectionScope:
             "max_units",
             "max_bytes",
             "max_work",
-            "include_core",
+            "include_repository",
             "include_context",
             "include_retained_bytes",
             "object_oids",
@@ -759,7 +759,7 @@ class ExchangeSelectionScope:
                 "INVALID_SELECTION", "selection_scope", str(exc)
             ) from exc
         result = cls(
-            include_core=data["include_core"],
+            include_repository=data["include_repository"],
             include_context=data["include_context"],
             include_retained_bytes=data["include_retained_bytes"],
             object_oids=oids,
@@ -794,8 +794,8 @@ class ExchangeSelectionScope:
         return result
 
 
-def empty_core_section() -> dict[str, list[dict[str, Any]]]:
-    return {key: [] for key in CORE_SECTION_KEYS}
+def empty_repository_section() -> dict[str, list[dict[str, Any]]]:
+    return {key: [] for key in REPOSITORY_SECTION_KEYS}
 
 
 def empty_context_section() -> dict[str, list[dict[str, Any]]]:
@@ -804,7 +804,7 @@ def empty_context_section() -> dict[str, list[dict[str, Any]]]:
 
 @dataclass(frozen=True)
 class ExchangePackage:
-    """Portable typed Exchange package (`git-repo-db/adr0036-exchange-v8`)."""
+    """Portable typed Exchange package (`git-repo-db/adr0036-exchange-v9`)."""
 
     package_id: str
     exported_at_us: int | None
@@ -813,7 +813,7 @@ class ExchangePackage:
     selection_scope: ExchangeSelectionScope = field(
         default_factory=ExchangeSelectionScope
     )
-    core: dict[str, list[dict[str, Any]]] | None = None
+    repository_store: dict[str, list[dict[str, Any]]] | None = None
     context: dict[str, list[dict[str, Any]]] | None = None
     selection_report: dict[str, Any] = field(default_factory=dict)
     format: str = FORMAT
@@ -846,7 +846,7 @@ class ExchangePackage:
             "repository_uuidv4": self.repository_uuidv4,
             "selection_scope": self.selection_scope.to_dict(),
             "selection_report": self.selection_report,
-            "core": self.core,
+            "repository": self.repository_store,
             "context": self.context,
         }
 
@@ -859,20 +859,20 @@ class ExchangeImportReport:
     package_digest_sha256: str
     sender_catalog_instance_uuidv4: str
     repository_uuidv4: str
-    core_imported: bool
+    repository_imported: bool
     context_imported: bool
     idempotent_replay: bool
-    admitted_core_objects: int
+    admitted_repository_objects: int
     admitted_retained_metadata: int
     admitted_note_roles: int
     admitted_retained_notes: int
     ignored_unverified_intrinsic_claims: int
     ignored_unverified_intrinsic_groups: int
     admitted_context_resources: int
-    linked_core_references: int
-    pending_core_references: int
+    linked_repository_references: int
+    pending_repository_references: int
     omissions: tuple[dict[str, Any], ...] = ()
-    core_checkpoint: bool = False
+    repository_checkpoint: bool = False
     context_checkpoint: bool = False
 
 
@@ -902,44 +902,44 @@ def validate_package_envelope(package: ExchangePackage) -> None:
         uuid4_value(package.sender_catalog_instance_uuidv4)
         uuid4_value(package.repository_uuidv4)
         validate_observation_us(package.exported_at_us)
-    except (ValueError, TypeError, CoreFailure) as exc:
+    except (ValueError, TypeError, RepositoryFailure) as exc:
         raise ExchangeError("ENVELOPE_IDENTITY", package.package_id, str(exc)) from exc
     if not isinstance(package.selection_scope, ExchangeSelectionScope):
         raise ExchangeError(
             "INVALID_SELECTION", package.package_id, "ExchangeSelectionScope required"
         )
-    if package.core is not None:
+    if package.repository_store is not None:
         optional = {
             "repository_identity_assertions",
             "repository_identity_cancellations",
         }
-        if not isinstance(package.core, dict) or not (
-            set(CORE_SECTION_KEYS) - optional
-            <= set(package.core)
-            <= set(CORE_SECTION_KEYS)
+        if not isinstance(package.repository_store, dict) or not (
+            set(REPOSITORY_SECTION_KEYS) - optional
+            <= set(package.repository_store)
+            <= set(REPOSITORY_SECTION_KEYS)
         ):
             raise ExchangeError(
-                "MALFORMED_CORE_SECTION",
+                "MALFORMED_REPOSITORY_SECTION",
                 package.package_id,
-                "core section must contain exact CORE_SECTION_KEYS",
+                "repository section must contain exact REPOSITORY_SECTION_KEYS",
             )
-        for key, items in package.core.items():
+        for key, items in package.repository_store.items():
             if not isinstance(items, list) or any(
                 type(item) is not dict for item in items
             ):
                 raise ExchangeError(
-                    "MALFORMED_CORE_SECTION",
+                    "MALFORMED_REPOSITORY_SECTION",
                     key,
-                    "core section entry must be a list of dicts",
+                    "repository section entry must be a list of dicts",
                 )
-        for meta in package.core["retained_metadata"]:
+        for meta in package.repository_store["retained_metadata"]:
             native_type = meta.get("native_type")
             if native_type == "blob":
                 object_oid = OID(
                     str(meta.get("object_format", "sha1")),
                     str(meta.get("object_oid", "0" * 40)),
                 )
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "RETENTION_PURPOSE",
                     object_oid,
                     "ordinary file blob bodies are excluded from retained_metadata",
@@ -992,7 +992,7 @@ def validate_package_envelope(package: ExchangePackage) -> None:
     from repo_catalog.domain.ref_exchange import account_ref_input
 
     with account_ref_input(_ref_input_work):
-        validate_rows(package.core, package.context)
+        validate_rows(package.repository_store, package.context)
 
 
 def encode_package(package: ExchangePackage) -> str:
@@ -1047,7 +1047,7 @@ def decode_package(
         "repository_uuidv4",
         "selection_scope",
         "selection_report",
-        "core",
+        "repository",
         "context",
     }
     if data.get("format") != FORMAT:
@@ -1080,7 +1080,7 @@ def decode_package(
         repository_uuidv4=data["repository_uuidv4"],
         selection_scope=selection,
         selection_report=data["selection_report"],
-        core=data["core"],
+        repository_store=data["repository"],
         context=data["context"],
     )
 

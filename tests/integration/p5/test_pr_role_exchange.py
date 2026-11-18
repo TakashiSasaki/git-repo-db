@@ -56,12 +56,13 @@ def test_full_and_selected_pr_checks_preserve_actual_ref_results_through_onward_
     original_key = tuple(check["ref_observation_key"])
     assert original_key in {
         (row["observation_origin_uuidv4"], row["ref_observation_uuidv7"])
-        for row in package.core["ref_observations"]
+        for row in package.repository_store["ref_observations"]
     }
-    assert package.core["ref_enumeration_observations"]
-    assert package.core["ref_enumeration_links"]
+    assert package.repository_store["ref_enumeration_observations"]
+    assert package.repository_store["ref_enumeration_links"]
     assert (target.object_format, target.object_oid) in {
-        (row["object_format"], row["object_oid"]) for row in package.core["git_objects"]
+        (row["object_format"], row["object_oid"])
+        for row in package.repository_store["git_objects"]
     }
     for name in ("receiver", "onward"):
         directory = tmp_path / name
@@ -101,7 +102,7 @@ def test_selected_pr_dependencies_cannot_bypass_repository_permission(tmp_path):
         repository_uuidv4s=(str(uuid4()),),
     )
     package = ExchangeService(fixture.path).export_package(selection=selection)
-    assert package.core["ref_observations"] == []
-    assert package.core["ref_observation_claims"] == []
-    assert package.core["ref_enumeration_observations"] == []
+    assert package.repository_store["ref_observations"] == []
+    assert package.repository_store["ref_observation_claims"] == []
+    assert package.repository_store["ref_enumeration_observations"] == []
     assert package.context["collections"]

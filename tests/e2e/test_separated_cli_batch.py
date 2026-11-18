@@ -61,7 +61,7 @@ def test_normal_cli_native_only_batch_needs_no_context_authority_and_replays_fro
     tmp_path, capsys, monkeypatch
 ):
     catalog = tmp_path / "catalog"
-    identity = init(capsys, catalog, "core")
+    identity = init(capsys, catalog, "repository")
     init(capsys, catalog, "operational")
     sources = [
         native(tmp_path / label, identity["repository_uuidv4"])

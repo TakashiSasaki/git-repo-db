@@ -35,8 +35,8 @@ from tests.integration.p5.test_selected_exchange_work import measured_export
 from tests.support.context_admission import fixture_transaction
 
 
-def setup(path, *, core=False):
-    fixture = Fixture(path, core=core)
+def setup(path, *, repository_store=False):
+    fixture = Fixture(path, repository_store=repository_store)
     fixture.code(patch="original file patch")
     source = str(uuid4())
     fixture.grants = replace(fixture.grants, sources={source})
@@ -88,7 +88,7 @@ def setup(path, *, core=False):
     )
     key = (*fixture.parent.coordinates(), "pr_files", provenance)
     selection = ExchangeSelectionScope(
-        include_core=False,
+        include_repository=False,
         repository_uuidv4s=(),
         object_oids=(),
         source_uuidv4s=(source,),

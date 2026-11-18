@@ -49,11 +49,11 @@ def test_new_only_acquisition_query_cli_search_replay(
         "note_roles",
         "retained_notes",
     ):
-        assert not app.core.sql(
+        assert not app.repository_store.sql(
             "SELECT 1 FROM sqlite_schema WHERE type='table' AND name=?", (table,)
         )
-    assert app.core.sql("SELECT 1 FROM ref_retained_notes")
-    assert not app.core.sql(
+    assert app.repository_store.sql("SELECT 1 FROM ref_retained_notes")
+    assert not app.repository_store.sql(
         "SELECT 1 FROM retained_metadata WHERE object_oid=?", (target.object_oid,)
     )
     service = ProductionQueryService(path.parent)

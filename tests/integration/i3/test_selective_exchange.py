@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.exchange import ExchangeService
@@ -24,7 +24,7 @@ from repo_catalog.domain.p1_context import (
     canonical,
 )
 from repo_catalog.domain.p1_coordination import AdmissionFailure, RequestIdentity
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.resource_identification import ResourceIdentification as RI
 from tests.integration.p5.conftest import init_catalog_stores
 from tests.support.context_admission import fixture_transaction
@@ -47,7 +47,7 @@ def local_grants(
 def catalog(path):
     seed = str(uuid4())
     init_catalog_stores(
-        path, repository_uuidv4=seed, stores=("core", "context", "operational")
+        path, repository_uuidv4=seed, stores=("repository", "context", "operational")
     )
     return seed
 
@@ -58,10 +58,10 @@ def fixture(path):
     service = str(uuid4())
     issue = ResourceKey.from_native(service, "issue", "7")
     oid = OID("sha1", "1" * 40)
-    core = GitCore(path / "core.sqlite3")
-    core.admit_repository(r2)
-    core.admit_object(oid)
-    core.close()
+    repository_store = GitRepositoryStore(path / "repository.sqlite3")
+    repository_store.admit_repository(r2)
+    repository_store.admit_object(oid)
+    repository_store.close()
     with fixture_transaction(path, local_grants(issue, r1, r2)) as ctx:
         ctx.provider(service, "github", "{}")
         ctx.repository(r1)
@@ -116,12 +116,12 @@ def test_cross_seed_permission_identity_replay(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, oid = fixture(a)
     seed = catalog(b)
-    old_identity = rows(b, "core", "store_identity")
+    old_identity = rows(b, "repository", "store_identity")
     package = ExchangeService(a).export_package(selection=scope())
     assert decode_package(encode_package(package)) == package
     report = receive(b, package, (r1,))
-    assert rows(b, "core", "store_identity") == old_identity
-    assert {r[0] for r in rows(b, "core", "repositories")} == {seed, r1}
+    assert rows(b, "repository", "store_identity") == old_identity
+    assert {r[0] for r in rows(b, "repository", "repositories")} == {seed, r1}
     assert len(rows(b, "context", "resource_repository_relations")) == 1
     assert report.omissions
     assert receive(b, package, (r1,)).idempotent_replay
@@ -139,8 +139,8 @@ def test_empty_and_omitted_independent_sets(tmp_path):
             source_uuidv4s=(),
         )
     )
-    assert package.core["repositories"] == [{"repository_uuidv4": r1}]
-    assert not package.core["git_objects"]
+    assert package.repository_store["repositories"] == [{"repository_uuidv4": r1}]
+    assert not package.repository_store["git_objects"]
     assert not package.context["resources"]
 
 
@@ -151,10 +151,13 @@ def test_package_key_binding_before_commits_and_sender_namespace(tmp_path):
     package = ExchangeService(a).export_package(selection=scope())
     receive(b, package, (r1,))
     changed = replace(package, exported_at_us=99, digest_sha256=None)
-    before = rows(b, "core", "repositories"), rows(b, "context", "resources")
+    before = rows(b, "repository", "repositories"), rows(b, "context", "resources")
     with pytest.raises(ExchangeError, match="PACKAGE_KEY_REBOUND"):
         receive(b, changed, (r1,), request=RequestIdentity(str(uuid4()), str(uuid4())))
-    assert before == (rows(b, "core", "repositories"), rows(b, "context", "resources"))
+    assert before == (
+        rows(b, "repository", "repositories"),
+        rows(b, "context", "resources"),
+    )
     another = replace(
         changed, sender_catalog_instance_uuidv4=str(uuid4()), digest_sha256=None
     )
@@ -162,12 +165,12 @@ def test_package_key_binding_before_commits_and_sender_namespace(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "point,core_committed,context_committed",
+    "point,repository_committed,context_committed",
     [
-        ("before_core_commit", False, False),
-        ("after_core_commit", True, False),
-        ("before_core_checkpoint", True, False),
-        ("after_core_checkpoint", True, False),
+        ("before_repository_commit", False, False),
+        ("after_repository_commit", True, False),
+        ("before_repository_checkpoint", True, False),
+        ("after_repository_checkpoint", True, False),
         ("during_context", True, False),
         ("after_context_commit", True, True),
         ("before_context_checkpoint", True, True),
@@ -175,7 +178,7 @@ def test_package_key_binding_before_commits_and_sender_namespace(tmp_path):
     ],
 )
 def test_crash_windows_and_fact_based_retry(
-    tmp_path, point, core_committed, context_committed
+    tmp_path, point, repository_committed, context_committed
 ):
     a, b = tmp_path / "a", tmp_path / "b"
     r1, *_ = fixture(a)
@@ -188,7 +191,9 @@ def test_crash_windows_and_fact_based_retry(
 
     with pytest.raises(AdmissionFailure):
         receive(b, package, (r1,), cut=cut)
-    assert (r1 in {r[0] for r in rows(b, "core", "repositories")}) == core_committed
+    assert (
+        r1 in {r[0] for r in rows(b, "repository", "repositories")}
+    ) == repository_committed
     assert bool(rows(b, "context", "resources")) == context_committed
     receive(b, package, (r1,))
     assert len(rows(b, "context", "resources")) == 1
@@ -200,7 +205,7 @@ def test_operational_loss_requires_new_issuance(tmp_path):
     catalog(b)
     package = ExchangeService(a).export_package(selection=scope())
     receive(b, package, (r1,))
-    identity = rows(b, "core", "store_identity")[0]
+    identity = rows(b, "repository", "store_identity")[0]
     (b / "operational.sqlite3").unlink()
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 
@@ -227,7 +232,7 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
     catalog(b)
     event = ResourceKey.timeline_event(issue, "event-1")
     # These are newly authored disposable fixture originals, declared before
-    # any selection. Provider native identities never come from Core UUIDs or
+    # any selection. Provider native identities never come from Repository UUIDs or
     # surviving translated endpoint rows.
     provider_from = ResourceKey.from_native(
         issue.service_instance_uuidv4, "repository", "fixture-from-provider"
@@ -375,14 +380,14 @@ def test_transfer_reports_never_shrunk_or_mixed(tmp_path):
             and row["relation_kind"] == "transfer_to_repository"
         ):
             row["target_json"] = "null"
-    before = rows(c, "core", "git_objects")
-    package.core["git_objects"].append(
+    before = rows(c, "repository", "git_objects")
+    package.repository_store["git_objects"].append(
         {"object_format": "sha1", "object_oid": "2" * 40}
     )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(c, changed, (r1, r2))
-    assert rows(c, "core", "git_objects") == before
+    assert rows(c, "repository", "git_objects") == before
 
 
 def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
@@ -479,9 +484,9 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
     assert rows(a, "context", "resource_relations") == rows(
         b, "context", "resource_relations"
     )
-    before = rows(b, "core", "git_objects")
+    before = rows(b, "repository", "git_objects")
     package.context["repository_mapping_dispositions"][0]["observed_at_us"] += 1
-    package.core["git_objects"].append(
+    package.repository_store["git_objects"].append(
         {"object_format": "sha1", "object_oid": "2" * 40}
     )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
@@ -493,19 +498,19 @@ def test_mapping_claim_support_and_dispositions_are_exact(tmp_path):
             grants=rcv_grants,
             selection=ExchangeSelectionScope(all_selected=True),
         )
-    assert rows(b, "core", "git_objects") == before
+    assert rows(b, "repository", "git_objects") == before
 
 
 def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
     from repo_catalog.domain.exchange import (
         ExchangePackage,
         empty_context_section,
-        empty_core_section,
+        empty_repository_section,
     )
     from repo_catalog.domain.resource_identification import ResourceIdentification
 
     seed = catalog(tmp_path)
-    data = empty_core_section()
+    data = empty_repository_section()
     data["git_objects"] = [{"object_format": "sha1", "object_oid": "a" * 40}]
     ctxdata = empty_context_section()
     service = str(uuid4())
@@ -525,21 +530,27 @@ def test_empty_oid_and_context_payload_cannot_override_selection(tmp_path):
         repository_uuidv4s=(), object_oids=(), resource_keys=(), source_uuidv4s=()
     )
     package = ExchangePackage(
-        str(uuid4()), None, str(uuid4()), seed, selected, core=data, context=ctxdata
+        str(uuid4()),
+        None,
+        str(uuid4()),
+        seed,
+        selected,
+        repository_store=data,
+        context=ctxdata,
     )
     receive(tmp_path, package)
-    assert not rows(tmp_path, "core", "git_objects")
+    assert not rows(tmp_path, "repository", "git_objects")
     assert not rows(tmp_path, "context", "resources")
 
 
 def test_malformed_unselected_repository_rejected_before_binding(tmp_path):
-    from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
+    from repo_catalog.domain.exchange import ExchangePackage, empty_repository_section
 
     seed = catalog(tmp_path)
-    data = empty_core_section()
+    data = empty_repository_section()
     data["repositories"] = [{"repository_uuidv4": "malformed"}]
     package = ExchangePackage(
-        str(uuid4()), None, str(uuid4()), seed, scope(), core=data
+        str(uuid4()), None, str(uuid4()), seed, scope(), repository_store=data
     )
     with pytest.raises(Exception):
         receive(tmp_path, package)
@@ -549,8 +560,8 @@ def test_malformed_unselected_repository_rejected_before_binding(tmp_path):
     )
 
 
-def test_bounded_typed_core_graph_and_shared_oid_identity(tmp_path):
-    from repo_catalog.domain.p1_core import (
+def test_bounded_typed_repository_graph_and_shared_oid_identity(tmp_path):
+    from repo_catalog.domain.p1_repository import (
         Provenance,
         RelationGroup,
         RelationMember,
@@ -561,10 +572,12 @@ def test_bounded_typed_core_graph_and_shared_oid_identity(tmp_path):
     two = OID("sha1", "2" * 40)
     three = OID("sha1", "3" * 40)
     provenance = Provenance("fixture", "graph", "actual-edge", "fixture", "1")
-    with __import__("contextlib").closing(GitCore(tmp_path / "core.sqlite3")) as core:
+    with __import__("contextlib").closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
         for oid, target in ((one, two), (two, three), (three, one)):
-            core.admit_claim(ScalarClaim(oid, "type", "commit", provenance))
-            core.admit_group(
+            repository_store.admit_claim(ScalarClaim(oid, "type", "commit", provenance))
+            repository_store.admit_group(
                 RelationGroup(
                     oid,
                     "commit_parents",
@@ -583,15 +596,19 @@ def test_bounded_typed_core_graph_and_shared_oid_identity(tmp_path):
     )
     package = ExchangeService(tmp_path).export_package(selection=selected)
     assert {
-        (r["object_format"], r["object_oid"]) for r in package.core["git_objects"]
+        (r["object_format"], r["object_oid"])
+        for r in package.repository_store["git_objects"]
     } == {one.key, two.key}
-    assert any(r["object_oid"] == two.object_oid for r in package.core["scalar_claims"])
+    assert any(
+        r["object_oid"] == two.object_oid
+        for r in package.repository_store["scalar_claims"]
+    )
     assert package.selection_report["dependency_reasons"]
     package = ExchangeService(tmp_path).export_package(
         selection=replace(selected, max_depth=8)
     )
-    assert len(package.core["git_objects"]) == 3
-    assert len(package.core["repositories"]) == 2
+    assert len(package.repository_store["git_objects"]) == 3
+    assert len(package.repository_store["repositories"]) == 2
 
 
 def test_graph_work_byte_unit_limits_are_reported_without_recovery_stop(tmp_path):
@@ -682,7 +699,7 @@ def test_competing_package_binding_connections(tmp_path):
     assert results.count("PACKAGE_KEY_REBOUND") == 1
 
 
-@pytest.mark.parametrize("point", ["after_core_commit", "after_context_commit"])
+@pytest.mark.parametrize("point", ["after_repository_commit", "after_context_commit"])
 def test_process_exit_before_checkpoint_recovery_uses_facts(tmp_path, point):
     import subprocess
     import sys
@@ -714,7 +731,7 @@ ExchangeService(Path(p)).import_package(raw,request=RequestIdentity(origin,reque
         timeout=30,
     )
     assert result.returncode == 77
-    assert r1 in {r[0] for r in rows(b, "core", "repositories")}
+    assert r1 in {r[0] for r in rows(b, "repository", "repositories")}
     assert bool(rows(b, "context", "resources")) == (point == "after_context_commit")
     receive(b, package, (r1,), request=request)
     assert len(rows(b, "context", "resources")) == 1
@@ -731,7 +748,9 @@ def test_receiver_selection_stop_and_access_unchanged(tmp_path):
         repository_uuidv4s=(), object_oids=(), resource_keys=(), source_uuidv4s=()
     )
     receive(b, package, (r1,), selection=empty)
-    assert not rows(b, "context", "resources") and not rows(b, "core", "git_objects")
+    assert not rows(b, "context", "resources") and not rows(
+        b, "repository", "git_objects"
+    )
     assert sentinel.read_bytes() == b"access-is-independent"
     (b / "p1-recovery-stop.json").write_text("{}")
     before = rows(b, "operational", "request_continuations")
@@ -746,31 +765,35 @@ def test_receiver_flags_and_zero_admission_limits_are_enforced(tmp_path):
     catalog(b)
     package = ExchangeService(a).export_package(selection=scope())
     for selection in (
-        scope(include_core=False, include_context=False, include_retained_bytes=False),
+        scope(
+            include_repository=False,
+            include_context=False,
+            include_retained_bytes=False,
+        ),
         scope(max_units=0),
         scope(max_bytes=0),
     ):
         receiver = tmp_path / str(uuid4())
         catalog(receiver)
         report = receive(receiver, package, (r1,), selection=selection)
-        assert not rows(receiver, "core", "git_objects")
+        assert not rows(receiver, "repository", "git_objects")
         assert not rows(receiver, "context", "resources")
         assert report.omissions
-    from repo_catalog.domain.p1_core import CoreFailure
+    from repo_catalog.domain.p1_repository import RepositoryFailure
 
-    with pytest.raises(CoreFailure) as exhausted:
+    with pytest.raises(RepositoryFailure) as exhausted:
         receive(b, package, (r1,), selection=scope(max_work=0))
     assert exhausted.value.code == "BUDGET"
-    assert not rows(b, "core", "git_objects")
+    assert not rows(b, "repository", "git_objects")
 
 
 def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
-    from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
-    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.exchange import ExchangePackage, empty_repository_section
+    from repo_catalog.domain.p1_repository import Provenance
 
     seed = catalog(tmp_path)
     unknown = str(uuid4())
-    data = empty_core_section()
+    data = empty_repository_section()
     data["git_objects"] = [{"object_format": "sha1", "object_oid": "b" * 40}]
     data["repository_claims"] = [
         {
@@ -783,11 +806,11 @@ def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
         }
     ]
     package = ExchangePackage(
-        str(uuid4()), None, str(uuid4()), seed, scope(), core=data
+        str(uuid4()), None, str(uuid4()), seed, scope(), repository_store=data
     )
     report = receive(tmp_path, package, (unknown,))
-    assert len(rows(tmp_path, "core", "git_objects")) == 1
-    assert not rows(tmp_path, "core", "repository_claims")
+    assert len(rows(tmp_path, "repository", "git_objects")) == 1
+    assert not rows(tmp_path, "repository", "repository_claims")
     assert any(
         r["section"] == "repository_claims"
         and r["reason"] == "missing_required_dependency"
@@ -796,11 +819,11 @@ def test_missing_repository_unit_does_not_rollback_independent_object(tmp_path):
 
 
 def test_malformed_scalar_tag_cannot_be_reencoded_as_known_claim(tmp_path):
-    from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
-    from repo_catalog.domain.p1_core import Provenance
+    from repo_catalog.domain.exchange import ExchangePackage, empty_repository_section
+    from repo_catalog.domain.p1_repository import Provenance
 
     seed = catalog(tmp_path)
-    data = empty_core_section()
+    data = empty_repository_section()
     data["git_objects"] = [{"object_format": "sha1", "object_oid": "c" * 40}]
     data["scalar_claims"] = [
         {
@@ -815,11 +838,11 @@ def test_malformed_scalar_tag_cannot_be_reencoded_as_known_claim(tmp_path):
         }
     ]
     package = ExchangePackage(
-        str(uuid4()), None, str(uuid4()), seed, scope(), core=data
+        str(uuid4()), None, str(uuid4()), seed, scope(), repository_store=data
     )
     with pytest.raises(ExchangeError, match="NONCANONICAL_CLAIM"):
         receive(tmp_path, package)
-    assert not rows(tmp_path, "core", "scalar_claims")
+    assert not rows(tmp_path, "repository", "scalar_claims")
     assert not any(
         "adr0030-package-binding" in r[2]
         for r in rows(tmp_path, "operational", "request_continuations")
@@ -863,7 +886,9 @@ def test_binding_sql_update_delete_replace_and_upsert_cannot_rebind(tmp_path):
         )
 
 
-def test_core_reference_missing_dependency_retains_original_report_clock(tmp_path):
+def test_repository_reference_missing_dependency_retains_original_report_clock(
+    tmp_path,
+):
     from repo_catalog.domain.p1_context import FieldCandidate
 
     a, b = tmp_path / "a", tmp_path / "b"
@@ -871,7 +896,7 @@ def test_core_reference_missing_dependency_retains_original_report_clock(tmp_pat
     catalog(b)
     original = FieldCandidate(
         issue,
-        "reported_core_reference:head",
+        "reported_repository_reference:head",
         canonical(list(oid.key)),
         FieldClock("provider-head", 73),
         make_provenance("provider", "original-head"),
@@ -879,16 +904,16 @@ def test_core_reference_missing_dependency_retains_original_report_clock(tmp_pat
     )
     with fixture_transaction(a, local_grants(issue, r1, r2, oids=(oid,))) as ctx:
         ctx.admit_field(original)
-        ctx.link_core(
+        ctx.link_repository(
             issue, "head", *oid.key, original.provenance_json, lambda *_: True
         )
     package = ExchangeService(a).export_package(selection=scope())
-    selected = scope(include_core=False)
+    selected = scope(include_repository=False)
     report = receive(b, package, (r1, r2), selection=selected)
     with Context.snapshot(b) as ctx:
         assert ctx.candidates(issue, original.field_name) == (original,)
-        assert not ctx.db.execute("SELECT 1 FROM core_references").fetchall()
-    assert any(r["reason"] == "missing_core_oid" for r in report.omissions)
+        assert not ctx.db.execute("SELECT 1 FROM repository_references").fetchall()
+    assert any(r["reason"] == "missing_repository_oid" for r in report.omissions)
 
 
 @pytest.mark.parametrize("kind", ["source_inventory", "collection"])
@@ -986,12 +1011,12 @@ def test_caller_mutation_after_preflight_cannot_change_bound_content(
 
     def mutate(point):
         if point == "after_preflight":
-            data = raw["core"] if raw_dict else raw.core
+            data = raw["repository"] if raw_dict else raw.repository_store
             data["git_objects"][0]["object_oid"] = "2" * 40
 
     report = receive(b, raw, (r1, r2), cut=mutate)
     assert report.package_digest_sha256 == original_digest
-    assert {tuple(r) for r in rows(b, "core", "git_objects")} == {oid.key}
+    assert {tuple(r) for r in rows(b, "repository", "git_objects")} == {oid.key}
 
 
 def test_selection_cannot_hide_conflicting_inventory_terminal_for_completeness(
@@ -1087,14 +1112,14 @@ def test_internally_contradictory_original_times_rejected_before_binding(
     package = replace(package, digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(b, package, (r1, r2))
-    assert not rows(b, "core", "git_objects")
+    assert not rows(b, "repository", "git_objects")
     assert not any(
         "adr0030-package-binding" in r[2]
         for r in rows(b, "operational", "request_continuations")
     )
 
 
-def test_existing_relation_time_conflict_rejected_before_independent_core_commit(
+def test_existing_relation_time_conflict_rejected_before_independent_repository_commit(
     tmp_path,
 ):
     a, b = tmp_path / "a", tmp_path / "b"
@@ -1102,15 +1127,15 @@ def test_existing_relation_time_conflict_rejected_before_independent_core_commit
     catalog(b)
     package = ExchangeService(a).export_package(selection=scope())
     receive(b, package, (r1, r2))
-    before = rows(b, "core", "git_objects")
+    before = rows(b, "repository", "git_objects")
     package.context["resource_repository_relations"][0]["observed_at_us"] += 1
-    package.core["git_objects"].append(
+    package.repository_store["git_objects"].append(
         {"object_format": "sha1", "object_oid": "2" * 40}
     )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(b, changed, (r1, r2))
-    assert rows(b, "core", "git_objects") == before
+    assert rows(b, "repository", "git_objects") == before
     assert not any(
         changed.package_id in r[2] and "adr0030-package-binding" in r[2]
         for r in rows(b, "operational", "request_continuations")
@@ -1120,14 +1145,14 @@ def test_existing_relation_time_conflict_rejected_before_independent_core_commit
 def test_shared_oid_does_not_coalesce_repository_membership_reports(tmp_path):
     from contextlib import closing
 
-    from repo_catalog.domain.p1_core import GitObservation, Provenance
+    from repo_catalog.domain.p1_repository import GitObservation, Provenance
 
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, _, oid = fixture(a)
     catalog(b)
     original = []
     capture_origin, capture_id = str(uuid4()), str(uuid4())
-    with closing(GitCore(a / "core.sqlite3")) as core:
+    with closing(GitRepositoryStore(a / "repository.sqlite3")) as repository_store:
         for repository in (r1, r2):
             observation = GitObservation(
                 capture_origin,
@@ -1142,22 +1167,24 @@ def test_shared_oid_does_not_coalesce_repository_membership_reports(tmp_path):
                 },
                 Provenance("fixture", "shared-original", "membership", "fixture", "1"),
             )
-            core.admit_observation(observation)
+            repository_store.admit_observation(observation)
             original.append(observation)
     package = ExchangeService(a).export_package(selection=scope())
     receive(b, package, (r1, r2))
-    assert len(rows(b, "core", "git_objects")) == 1
-    assert {r[2] for r in rows(b, "core", "git_observations")} == {r1, r2}
-    assert rows(a, "core", "git_observations") == rows(b, "core", "git_observations")
+    assert len(rows(b, "repository", "git_objects")) == 1
+    assert {r[2] for r in rows(b, "repository", "git_observations")} == {r1, r2}
+    assert rows(a, "repository", "git_observations") == rows(
+        b, "repository", "git_observations"
+    )
     c = tmp_path / "c"
     catalog(c)
     receive(c, package, (r1,))
-    assert {r[2] for r in rows(c, "core", "git_observations")} == {r1}
-    assert r2 not in {r[0] for r in rows(c, "core", "repositories")}
+    assert {r[2] for r in rows(c, "repository", "git_observations")} == {r1}
+    assert r2 not in {r[0] for r in rows(c, "repository", "repositories")}
 
 
 @pytest.mark.parametrize("existing", [False, True])
-def test_collection_scope_binding_rejected_before_core_commit(tmp_path, existing):
+def test_collection_scope_binding_rejected_before_repository_commit(tmp_path, existing):
     from repo_catalog.domain.production_context import CollectionObservation
 
     a, b = tmp_path / "a", tmp_path / "b"
@@ -1177,7 +1204,7 @@ def test_collection_scope_binding_rejected_before_core_commit(tmp_path, existing
     package = ExchangeService(a).export_package(selection=scope())
     if existing:
         receive(b, package, (r1, r2))
-    before = rows(b, "core", "git_objects")
+    before = rows(b, "repository", "git_objects")
     original = package.context["collections"][0]
     changed_row = {
         **original,
@@ -1186,13 +1213,13 @@ def test_collection_scope_binding_rejected_before_core_commit(tmp_path, existing
     package.context["collections"] = (
         [changed_row] if existing else [original, changed_row]
     )
-    package.core["git_objects"].append(
+    package.repository_store["git_objects"].append(
         {"object_format": "sha1", "object_oid": "2" * 40}
     )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(b, changed, (r1, r2))
-    assert rows(b, "core", "git_objects") == before
+    assert rows(b, "repository", "git_objects") == before
 
 
 @pytest.mark.parametrize("section", ["collections", "resource_relations"])
@@ -1238,7 +1265,7 @@ def test_modeled_collection_member_cannot_borrow_another_parent(tmp_path, sectio
     package.context[section][0]["members_json"] = canonical([child.coordinates()])
     with pytest.raises(ExchangeError, match="MEMBER_OWNER"):
         receive(b, replace(package, digest_sha256=None), (r1, r2))
-    assert not rows(b, "core", "git_objects")
+    assert not rows(b, "repository", "git_objects")
     assert not any(
         "adr0030-package-binding" in r[2]
         for r in rows(b, "operational", "request_continuations")
@@ -1254,10 +1281,10 @@ def test_modeled_collection_member_cannot_borrow_another_parent(tmp_path, sectio
         "relation_groups",
     ],
 )
-def test_core_immutable_unique_payload_preflight(tmp_path, section, existing):
+def test_repository_immutable_unique_payload_preflight(tmp_path, section, existing):
     from contextlib import closing
 
-    from repo_catalog.domain.p1_core import (
+    from repo_catalog.domain.p1_repository import (
         Provenance,
         RelationGroup,
         RepositoryClaim,
@@ -1268,17 +1295,19 @@ def test_core_immutable_unique_payload_preflight(tmp_path, section, existing):
     r1, r2, _, oid = fixture(a)
     catalog(b)
     prov = Provenance("fixture", "same-original", "claim", "fixture", "1")
-    with closing(GitCore(a / "core.sqlite3")) as core:
-        core.admit_repository_claim(RepositoryClaim(r1, "name", "one", prov))
-        core.admit_claim(ScalarClaim(oid, "type", "blob", prov))
-        core.admit_group(
+    with closing(GitRepositoryStore(a / "repository.sqlite3")) as repository_store:
+        repository_store.admit_repository_claim(
+            RepositoryClaim(r1, "name", "one", prov)
+        )
+        repository_store.admit_claim(ScalarClaim(oid, "type", "blob", prov))
+        repository_store.admit_group(
             RelationGroup(oid, "commit_parents", "all", "known_empty", (), prov)
         )
     package = ExchangeService(a).export_package(selection=scope())
     if existing:
         receive(b, package, (r1, r2))
-    before = rows(b, "core", "git_objects")
-    original = package.core[section][0]
+    before = rows(b, "repository", "git_objects")
+    original = package.repository_store[section][0]
     changed_row = dict(original)
     if section == "repository_claims":
         changed_row["value_json"] = '"two"'
@@ -1286,32 +1315,34 @@ def test_core_immutable_unique_payload_preflight(tmp_path, section, existing):
         changed_row["value_json"] = '["known","tree"]'
     elif section == "relation_groups":
         changed_row["status"] = "unknown"
-    package.core[section] = [changed_row] if existing else [original, changed_row]
-    package.core["git_objects"].append(
+    package.repository_store[section] = (
+        [changed_row] if existing else [original, changed_row]
+    )
+    package.repository_store["git_objects"].append(
         {"object_format": "sha1", "object_oid": "2" * 40}
     )
     changed = replace(package, package_id=str(uuid4()), digest_sha256=None)
     with pytest.raises(ExchangeError, match="IMMUTABLE_REPLAY_CONFLICT"):
         receive(b, changed, (r1, r2))
-    assert rows(b, "core", "git_objects") == before
+    assert rows(b, "repository", "git_objects") == before
 
 
-@pytest.mark.parametrize("store", ["core", "context"])
+@pytest.mark.parametrize("store", ["repository", "context"])
 def test_advisory_coverage_details_do_not_rebind_semantic_claim(tmp_path, store):
     from contextlib import closing
 
     from repo_catalog.domain.p1_context import CoverageScope
-    from repo_catalog.domain.p1_core import CoreCoverageScope
     from repo_catalog.domain.p1_coverage import CoverageClaim
+    from repo_catalog.domain.p1_repository import RepositoryCoverageScope
 
     a, b = tmp_path / "a", tmp_path / "b"
     r1, r2, issue, _ = fixture(a)
     catalog(b)
-    if store == "core":
-        claim_scope = CoreCoverageScope("repository", (r1, "fixture"))
-        with closing(GitCore(a / "core.sqlite3")) as core:
-            core.admit_coverage_scope(claim_scope)
-            core.admit_coverage(
+    if store == "repository":
+        claim_scope = RepositoryCoverageScope("repository", (r1, "fixture"))
+        with closing(GitRepositoryStore(a / "repository.sqlite3")) as repository_store:
+            repository_store.admit_coverage_scope(claim_scope)
+            repository_store.admit_coverage(
                 CoverageClaim(claim_scope, 40, "partial", '{"detail":"original"}')
             )
     else:
@@ -1326,7 +1357,7 @@ def test_advisory_coverage_details_do_not_rebind_semantic_claim(tmp_path, store)
     package = ExchangeService(a).export_package(selection=scope())
     receive(b, package, (r1, r2))
     before = rows(b, store, "coverage_claims")
-    data = package.core if store == "core" else package.context
+    data = package.repository_store if store == "repository" else package.context
     data["coverage_claims"][0]["details_json"] = '{"detail":"other-advisory"}'
     receive(b, replace(package, package_id=str(uuid4()), digest_sha256=None), (r1, r2))
     assert rows(b, store, "coverage_claims") == before
@@ -1385,8 +1416,8 @@ def test_context_coverage_export_does_not_reclassify_work_callback_errors(tmp_pa
     import sqlite3
 
     from repo_catalog.domain.p1_context import CoverageScope
-    from repo_catalog.domain.p1_core import CoreFailure
     from repo_catalog.domain.p1_coverage import CoverageClaim
+    from repo_catalog.domain.p1_repository import RepositoryFailure
 
     root = tmp_path / "a"
     repo, other, issue, _ = fixture(root)
@@ -1404,7 +1435,7 @@ def test_context_coverage_export_does_not_reclassify_work_callback_errors(tmp_pa
     class SmallWork:
         def require(self, unit, amount=1):
             if unit == "input_bytes" and amount > 1:
-                raise CoreFailure("BUDGET", unit, "small test budget")
+                raise RepositoryFailure("BUDGET", unit, "small test budget")
 
         def charge(self, unit, amount):
             pass
@@ -1412,7 +1443,7 @@ def test_context_coverage_export_does_not_reclassify_work_callback_errors(tmp_pa
     with Context.snapshot(root) as ctx:
         with pytest.raises(sqlite3.OperationalError, match="from callback"):
             ctx._exchange_metadata_rows("claims", FailingWork())
-        with pytest.raises(CoreFailure) as limited:
+        with pytest.raises(RepositoryFailure) as limited:
             ctx._exchange_metadata_rows("claims", SmallWork())
         assert limited.value.code == "BUDGET"
     assert not (root / "p1-recovery-stop.json").exists()
@@ -1444,7 +1475,7 @@ def test_context_row_validation_does_not_reclassify_work_callback_errors(
     monkeypatch.setattr(
         ref_exchange, "ref_export_work", lambda scope, counters: FailingWork()
     )
-    selection = ExchangeSelectionScope(all_selected=True, include_core=False)
+    selection = ExchangeSelectionScope(all_selected=True, include_repository=False)
     expected = sqlite3.OperationalError if failure == "sqlite" else ContextError
     with pytest.raises(expected) as error:
         ExchangeService(root).export_package(selection=selection)
@@ -1467,11 +1498,11 @@ def test_context_only_registration_budget_refusal_emits_no_rows(tmp_path, monkey
     budget = UnlimitedWorkBudget(work_limits={"input_bytes": 1024})
     monkeypatch.setattr(ref_exchange, "ref_export_work", lambda scope, counters: budget)
     package = ExchangeService(tmp_path).export_package(
-        selection=ExchangeSelectionScope(all_selected=True, include_core=False)
+        selection=ExchangeSelectionScope(all_selected=True, include_repository=False)
     )
     assert package.repository_uuidv4 == repository
     assert package.sender_catalog_instance_uuidv4 == instance
-    assert package.core is None and not any(package.context.values())
+    assert package.repository_store is None and not any(package.context.values())
     assert any(
         item["reason"] == "resource_limit"
         for item in package.selection_report["omissions"]
@@ -1745,7 +1776,7 @@ def test_context_scope_cannot_rebind_provider_or_source_service(tmp_path, case):
     row["scope_json"] = canonical(changed_scope)
     with pytest.raises(ExchangeError, match="COLLECTION_SERVICE|SOURCE_SERVICE"):
         receive(b, replace(package, digest_sha256=None), (r1, r2))
-    assert not rows(b, "core", "git_objects")
+    assert not rows(b, "repository", "git_objects")
     assert not any(
         "adr0030-package-binding" in r[2]
         for r in rows(b, "operational", "request_continuations")
@@ -1756,20 +1787,25 @@ def test_context_scope_cannot_rebind_provider_or_source_service(tmp_path, case):
 def test_empty_package_cannot_bypass_resolved_zero_work_ceiling(
     tmp_path, explicit_receiver
 ):
-    from repo_catalog.domain.exchange import ExchangePackage, empty_core_section
-    from repo_catalog.domain.p1_core import CoreFailure
+    from repo_catalog.domain.exchange import ExchangePackage, empty_repository_section
+    from repo_catalog.domain.p1_repository import RepositoryFailure
 
     seed = catalog(tmp_path)
     selection = scope(max_work=0)
     package = ExchangePackage(
-        str(uuid4()), None, str(uuid4()), seed, selection, core=empty_core_section()
+        str(uuid4()),
+        None,
+        str(uuid4()),
+        seed,
+        selection,
+        repository_store=empty_repository_section(),
     )
-    before = rows(tmp_path, "core", "repositories")
+    before = rows(tmp_path, "repository", "repositories")
     kwargs = {"selection": selection} if explicit_receiver else {}
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         receive(tmp_path, package, **kwargs)
     assert error.value.code == "BUDGET"
-    assert rows(tmp_path, "core", "repositories") == before
+    assert rows(tmp_path, "repository", "repositories") == before
     assert not any(
         "adr0030-package-binding" in r[2]
         for r in rows(tmp_path, "operational", "request_continuations")

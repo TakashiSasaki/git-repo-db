@@ -1,4 +1,4 @@
-"""A4 actual local Git -> Core, under Access approval and durable request budgets."""
+"""A4 actual local Git -> Repository, under Access approval and durable request budgets."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from repo_catalog.adapters.sqlite.access_schema import initialize as initialize_
 from repo_catalog.adapters.sqlite.acquisition import (
     OperationalAcquisitionLedger,
 )
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.application.access_acquisition import AccessGitAcquisition
@@ -45,11 +45,11 @@ from repo_catalog.domain.acquisition import (
     NotesAcquisitionSpec,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreFailure,
     Provenance,
     RepositoryClaim,
+    RepositoryFailure,
 )
 from tests.integration.p5.conftest import build_sample_git_repo, git
 
@@ -64,7 +64,7 @@ def setup(tmp_path, request):
     scope, target, seed, instance = (str(uuid4()) for _ in range(4))
     cat = tmp_path / "catalog"
     cat.mkdir()
-    for role in ("core", "operational"):
+    for role in ("repository", "operational"):
         initialize(cat / f"{role}.sqlite3", role, seed, instance)
     access = tmp_path / "access.sqlite3"
     initialize_access(access)
@@ -141,7 +141,7 @@ def acquire(data, *, unit=None, selection=None, **kwargs):
 
 
 def rows(data, table):
-    db = connect(data["cat"] / "core.sqlite3", "core")
+    db = connect(data["cat"] / "repository.sqlite3", "repository")
     try:
         return db.execute(f"SELECT * FROM {table}").fetchall()
     finally:
@@ -164,14 +164,14 @@ def test_nonseed_repository_acquires_actual_metadata(setup):
         setup["target"],
         setup["seed"],
     }
-    core = GitCore(setup["cat"] / "core.sqlite3")
+    repository_store = GitRepositoryStore(setup["cat"] / "repository.sqlite3")
     try:
-        assert core.catalog_identity() == (setup["seed"], setup["instance"])
-        assert core.read_metadata(setup["objects"]["commit2"]).endswith(
+        assert repository_store.catalog_identity() == (setup["seed"], setup["instance"])
+        assert repository_store.read_metadata(setup["objects"]["commit2"]).endswith(
             b"Second commit\n"
         )
     finally:
-        core.close()
+        repository_store.close()
     assert all(
         r[3] in ("commit", "tree", "tag") for r in rows(setup, "retained_metadata")
     )
@@ -246,7 +246,7 @@ def test_no_approval_no_git_or_request_accounting(setup, monkeypatch):
     assert usage(setup) == 0
 
 
-def test_decline_activation_leaves_core_and_budget_untouched(setup):
+def test_decline_activation_leaves_repository_and_budget_untouched(setup):
     with pytest.raises(AccessRegistryError, match="DECLINED"):
         acquire(setup, new_request=True, reviewer=lambda _: False)
     assert usage(setup) == 0 and rows(setup, "git_objects") == []
@@ -268,7 +268,7 @@ def test_foreign_repository_claim_rejected_before_admission(setup):
         setup["unit"],
         repository_claims=(RepositoryClaim(setup["seed"], "name", "wrong", prov),),
     )
-    with pytest.raises(CoreFailure, match="foreign repository"):
+    with pytest.raises(RepositoryFailure, match="foreign repository"):
         acquire(setup, unit=unit, new_request=True)
     assert usage(setup) == 0 and rows(setup, "repository_claims") == []
 
@@ -292,19 +292,19 @@ def test_foreign_ref_input_rejected_before_admission(setup):
         setup["unit"],
         notes=NotesAcquisitionSpec(ref_inputs=(RefNotesInput(subject, ()),)),
     )
-    with pytest.raises(CoreFailure, match="foreign"):
+    with pytest.raises(RepositoryFailure, match="foreign"):
         acquire(setup, unit=unit, new_request=True)
     assert usage(setup) > 0  # actual input preflight work is cumulative
     assert not rows(setup, "ref_observations")
     assert not (setup["cat"] / "p1-recovery-stop.json").exists()
 
 
-def test_core_stop_before_activation_blocks_git(setup, monkeypatch):
+def test_repository_stop_before_activation_blocks_git(setup, monkeypatch):
     persist_catalog_stop(setup["cat"], "synthetic stop")
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("Git after stop")
     )
-    with pytest.raises((CoreFailure, CoordinationError)):
+    with pytest.raises((RepositoryFailure, CoordinationError)):
         acquire(setup, new_request=True)
     assert usage(setup) == 0
 
@@ -317,7 +317,7 @@ def test_stop_during_confirmation_blocks_git_and_accounting(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("Git after stop")
     )
-    with pytest.raises((CoreFailure, CoordinationError)):
+    with pytest.raises((RepositoryFailure, CoordinationError)):
         acquire(setup, new_request=True, reviewer=confirm)
     assert usage(setup) == 0
 
@@ -326,19 +326,19 @@ def test_cancelled_before_source_input(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("Git despite cancel")
     )
-    with pytest.raises(CoreFailure, match="cancelled"):
+    with pytest.raises(RepositoryFailure, match="cancelled"):
         acquire(setup, new_request=True, cancelled=lambda: True)
     assert usage(setup) == 0
 
 
-def test_access_owned_core_cleanup_stop_prevents_completion(setup, monkeypatch):
-    original = GitCore.close
+def test_access_owned_repository_cleanup_stop_prevents_completion(setup, monkeypatch):
+    original = GitRepositoryStore.close
 
-    def stopped(core):
-        original(core)
+    def stopped(repository_store):
+        original(repository_store)
         persist_catalog_stop(setup["cat"], "synthetic Access cleanup stop")
 
-    monkeypatch.setattr(GitCore, "close", stopped)
+    monkeypatch.setattr(GitRepositoryStore, "close", stopped)
     with pytest.raises(CoordinationError) as failure:
         acquire(setup, new_request=True)
     assert failure.value.code == "RECOVERY_REQUIRED"
@@ -349,7 +349,7 @@ def test_zero_budget_never_starts_git(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("unbudgeted Git")
     )
-    with pytest.raises((CoreFailure, CoordinationError)):
+    with pytest.raises((RepositoryFailure, CoordinationError)):
         acquire(
             setup,
             new_request=True,
@@ -373,7 +373,7 @@ def test_access_plan_change_rejected_on_retry_before_git(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("retargeted retry")
     )
-    with pytest.raises(CoreFailure, match="original request cannot change"):
+    with pytest.raises(RepositoryFailure, match="original request cannot change"):
         acquire(setup)
 
 
@@ -382,7 +382,7 @@ def test_changed_request_oids_rejected_before_git(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("changed request executed")
     )
-    with pytest.raises(CoreFailure, match="original request cannot change"):
+    with pytest.raises(RepositoryFailure, match="original request cannot change"):
         acquire(
             setup,
             unit=replace(
@@ -401,7 +401,7 @@ def test_physical_source_replacement_cannot_resume(setup, monkeypatch):
         "Popen",
         lambda *_a, **_k: pytest.fail("replacement source consumed"),
     )
-    with pytest.raises(CoreFailure, match="original physical source changed"):
+    with pytest.raises(RepositoryFailure, match="original physical source changed"):
         acquire(setup)
 
 
@@ -423,7 +423,7 @@ def test_operational_loss_cannot_reset_request_budget(setup):
 
 
 def test_ordinary_blob_body_is_never_retained(setup):
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         acquire(
             setup,
             unit=replace(setup["unit"], select_object_oids=(setup["objects"]["blob"],)),
@@ -455,7 +455,7 @@ def test_alternate_object_database_rejected_before_git(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("external alternates input")
     )
-    with pytest.raises(CoreFailure, match="unsupported"):
+    with pytest.raises(RepositoryFailure, match="unsupported"):
         acquire(setup, new_request=True)
 
 
@@ -465,7 +465,7 @@ def test_gitdir_pointer_file_is_not_silently_followed(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("gitdir pointer followed")
     )
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         acquire(setup, new_request=True)
 
 
@@ -527,7 +527,7 @@ def test_reviewed_request_cannot_be_mutated_by_confirmation_callback(setup):
     assert report.retained_objects == original
 
 
-def test_actual_source_path_is_self_contained_core_evidence(setup):
+def test_actual_source_path_is_self_contained_repository_evidence(setup):
     acquire(setup, new_request=True)
     claims = rows(setup, "repository_claims")
     assert len(claims) == 1
@@ -552,7 +552,7 @@ def test_worktree_with_local_git_directory_is_supported(setup):
         "[include]\npath=/outside\n",
         '[includeIf "gitdir:/tmp/"]\npath=/outside\n',
         "[Include.path]\nfoo=bar\n",
-        "[core]\nworktree=/outside\n",
+        "[repository]\nworktree=/outside\n",
     ],
 )
 def test_indirect_config_rejected_before_git(setup, monkeypatch, text):
@@ -563,7 +563,7 @@ def test_indirect_config_rejected_before_git(setup, monkeypatch, text):
         "Popen",
         lambda *_a, **_k: pytest.fail("indirect configuration read"),
     )
-    with pytest.raises(CoreFailure, match="unsupported"):
+    with pytest.raises(RepositoryFailure, match="unsupported"):
         acquire(setup, new_request=True)
 
 
@@ -574,7 +574,7 @@ def test_symlink_objects_rejected(setup, monkeypatch):
     monkeypatch.setattr(
         subprocess, "Popen", lambda *_a, **_k: pytest.fail("object symlink followed")
     )
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         acquire(setup, new_request=True)
 
 
@@ -601,7 +601,7 @@ def test_stop_after_format_probe_stops_before_more_git(setup, monkeypatch):
         return result
 
     monkeypatch.setattr(AccessGitSource, "_run", stop)
-    with pytest.raises((CoreFailure, CoordinationError)):
+    with pytest.raises((RepositoryFailure, CoordinationError)):
         acquire(setup, new_request=True)
     assert rows(setup, "retained_metadata") == []
 
@@ -616,12 +616,12 @@ def test_changed_configuration_between_commands_is_detected(setup, monkeypatch):
         return result
 
     monkeypatch.setattr(AccessGitSource, "_run", edit)
-    with pytest.raises(CoreFailure, match="unsupported or changed"):
+    with pytest.raises(RepositoryFailure, match="unsupported or changed"):
         acquire(setup, new_request=True)
     assert rows(setup, "retained_metadata") == []
 
 
-def test_late_core_stop_cannot_return_success(setup, monkeypatch):
+def test_late_repository_stop_cannot_return_success(setup, monkeypatch):
     original = GitAcquisition.acquire_from_native
 
     def stop(self, *args, **kwargs):
@@ -630,7 +630,7 @@ def test_late_core_stop_cannot_return_success(setup, monkeypatch):
         return result
 
     monkeypatch.setattr(GitAcquisition, "acquire_from_native", stop)
-    with pytest.raises((CoreFailure, CoordinationError)):
+    with pytest.raises((RepositoryFailure, CoordinationError)):
         acquire(setup, new_request=True)
     assert rows(setup, "retained_metadata")  # Committed prefix is not rolled back.
 
@@ -731,7 +731,7 @@ def test_nonseed_paired_native_notes_preserves_catalog_pairing(setup):
     result = PairedAcquisitionCoordinator(setup["cat"]).admit_paired(
         git_source=GitNativeSource(setup["repo"]), git_request=unit, new_request=True
     )
-    assert result.admission.core_committed and result.admission.context_committed
+    assert result.admission.repository_committed and result.admission.context_committed
     assert result.git_report.repository_uuidv4 == setup["target"]
     assert not any(r[1] == "captures" for r in rows(setup, "sqlite_schema"))
     assert rows(setup, "ref_observations")
@@ -740,7 +740,7 @@ def test_nonseed_paired_native_notes_preserves_catalog_pairing(setup):
         for enumeration in result.git_report.ref_enumerations
         for link in enumeration.links
     )
-    db = connect(setup["cat"] / "core.sqlite3", "core")
+    db = connect(setup["cat"] / "repository.sqlite3", "repository")
     try:
         assert tuple(
             db.execute(
@@ -873,7 +873,7 @@ def test_r226_02_access_tiny_budget_stops_before_encoding_or_activation(
         pytest.fail("input preparation must fail before executor activation review")
 
     for fresh in (True, False):
-        with pytest.raises(CoreFailure) as failure:
+        with pytest.raises(RepositoryFailure) as failure:
             acquire(
                 setup,
                 unit=request,

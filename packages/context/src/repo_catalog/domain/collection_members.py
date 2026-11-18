@@ -1,7 +1,7 @@
-"""Typed canonical collection membership, independent of storage and Core.
+"""Typed canonical collection membership, independent of storage and Repository.
 
 Members describe nominal Context resources. They do not certify body retention,
-complete enumeration, remote freshness or an optional Core target's existence.
+complete enumeration, remote freshness or an optional Repository target's existence.
 """
 
 import json

@@ -51,7 +51,7 @@ def test_reparse_selected_repository_preserves_the_physical_catalog_identity(
     )
     assert reparsed["repository_uuidv4"] == selected
     assert (
-        init(capsys, catalog, "core")["repository_uuidv4"]
+        init(capsys, catalog, "repository")["repository_uuidv4"]
         == identity["repository_uuidv4"]
     )
     tree_view = run(

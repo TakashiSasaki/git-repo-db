@@ -189,14 +189,14 @@ class BootstrapCase(unittest.TestCase):
 
 class SuccessfulBootstrapTests(BootstrapCase):
     def test_workspace_metadata_is_bound_and_drift_requires_resynchronization(self):
-        metadata = self.root / "packages/core/pyproject.toml"
+        metadata = self.root / "packages/repository/pyproject.toml"
         metadata.parent.mkdir(parents=True)
-        metadata.write_text('[project]\nname = "repo-catalog-core"\n')
+        metadata.write_text('[project]\nname = "repo-catalog-repository"\n')
         self.assertEqual(self.bootstrap(), 0)
-        self.assertIn("packages/core/pyproject.toml", self.receipt()["inputs"])
-        metadata.write_text('[project]\nname = "modified-core"\n')
+        self.assertIn("packages/repository/pyproject.toml", self.receipt()["inputs"])
+        metadata.write_text('[project]\nname = "modified-repository"\n')
         with self.assertRaisesRegex(
-            local_env.EnvironmentRefused, "core/pyproject.toml changed"
+            local_env.EnvironmentRefused, "repository/pyproject.toml changed"
         ):
             local_env.verify_environment(self.root)
 

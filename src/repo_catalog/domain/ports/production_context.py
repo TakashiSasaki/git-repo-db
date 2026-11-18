@@ -16,8 +16,8 @@ from repo_catalog.domain.p1_context import (
 from repo_catalog.domain.ports.p1_context import ContextAdmission
 from repo_catalog.domain.production_context import (
     CollectionObservation,
-    CoreDependency,
-    CoreReference,
+    RepositoryDependency,
+    RepositoryReference,
     ResourceObservation,
     ResourceRelation,
     SourceInventory,
@@ -82,15 +82,15 @@ class ContextPersistence(ContextAdmission, Protocol):
         provenance_json: str,
         observed_at_us: int | None,
     ) -> str: ...
-    def report_core_reference(
+    def report_repository_reference(
         self,
-        reference: CoreReference,
+        reference: RepositoryReference,
         *,
         clock: FieldClock,
         observed_at_us: int | None,
     ) -> str: ...
-    def core_dependencies(
+    def repository_dependencies(
         self,
         resource: ResourceKey,
         validate: Callable[[str, str], bool] | None = None,
-    ) -> tuple[CoreDependency, ...]: ...
+    ) -> tuple[RepositoryDependency, ...]: ...

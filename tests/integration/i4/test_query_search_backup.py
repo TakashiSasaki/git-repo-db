@@ -19,7 +19,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.production_context import ResourceRelation
 from repo_catalog.domain.production_query import PageRequest, QueryError, SearchQuery
 from repo_catalog.domain.recovery import (
@@ -41,7 +41,7 @@ def query(text, **kwargs):
     return SearchQuery(text, projection_kinds=("context_text",), **kwargs)
 
 
-def test_current_provider_roles_never_fall_back_to_old_core_target(tmp_path):
+def test_current_provider_roles_never_fall_back_to_old_repository_target(tmp_path):
     service, r1, r2, claims = producer(tmp_path)
     q = ProductionQueryService(tmp_path)
     key = ResourceKey.from_native(service, "issue", "7")
@@ -217,7 +217,7 @@ def test_search_rebuild_fallback_and_current_historical_summary(tmp_path, damage
     old = [
         h
         for h in before.hits
-        if h.authoritative_summary.get("kind") == "stored_core_target_relation"
+        if h.authoritative_summary.get("kind") == "stored_repository_target_relation"
     ]
     assert old
     current = q.search(query("99"))
@@ -291,7 +291,7 @@ def test_query_search_pagination_snapshot_budget_and_stop(tmp_path):
         lambda: q.search(query("repository")),
         q.rebuild_search,
     ):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             operation()
         assert error.value.code == "RECOVERY_STOP"
     with pytest.raises(Exception):
@@ -366,9 +366,9 @@ def test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_store
     recovery = RecoveryService()
     receipt = recovery.create_consistent_backup(source, backup)
     assert receipt.verified_clean and receipt.scope == BackupScope.PAIRED
-    assert set(receipt.manifest.stores) == {"core", "context"}
+    assert set(receipt.manifest.stores) == {"repository", "context"}
     assert {p.name for p in (backup / "stores").iterdir()} == {
-        "core.sqlite3",
+        "repository.sqlite3",
         "context.sqlite3",
     }
     result = recovery.restore_backup(backup, restored, r1)
@@ -378,7 +378,7 @@ def test_paired_restore_preserves_all_keys_dependencies_and_excludes_other_store
         (restored / (name + ".sqlite3")).exists()
         for name in ("operational", "search", "access")
     )
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         with connect(restored / f"{role}.sqlite3", role) as db:
             validate(db, role)
             assert not db.execute("PRAGMA foreign_key_check").fetchall()
@@ -430,7 +430,7 @@ def test_paired_restore_coverage_source_text_and_git_only_boundary(tmp_path):
     target = tmp_path / "git-restored"
     r.restore_backup(git, target, REPOSITORY)
     assert not (target / "context.sqlite3").exists()
-    assert ProductionQueryService(target).detect_mode() == "core_only"
+    assert ProductionQueryService(target).detect_mode() == "repository_only"
 
 
 def rehash_backup(backup):
@@ -541,11 +541,13 @@ def test_invalid_authoritative_provider_scope_stops_service(tmp_path, operation)
             source, tmp_path / "backup"
         ),
     }
-    expected_error = CorruptionDetectedError if operation == "backup" else CoreFailure
+    expected_error = (
+        CorruptionDetectedError if operation == "backup" else RepositoryFailure
+    )
     with pytest.raises(expected_error):
         operations[operation]()
     assert (source / "p1-recovery-stop.json").exists()
     assert not (tmp_path / "backup").exists()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         q.get_context_resource(key)
     assert error.value.code == "RECOVERY_STOP"

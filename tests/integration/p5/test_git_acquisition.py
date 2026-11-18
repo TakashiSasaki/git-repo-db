@@ -10,7 +10,7 @@ import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.application.acquisition import GitAcquisition
 from repo_catalog.domain.acquisition import (
@@ -19,12 +19,12 @@ from repo_catalog.domain.acquisition import (
     NotesAcquisitionSpec,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
-    CoreFailure,
     Provenance,
     RepositoryClaim,
+    RepositoryCoverageScope,
+    RepositoryFailure,
     ScalarClaim,
     encode,
 )
@@ -41,7 +41,7 @@ def test_git_acquisition_metadata_only_and_retained_modes(
 
     # 1. Metadata-only acquisition (retain_bytes=False)
     cat_meta = tmp_path / "cat_meta"
-    repo_uuid, _ = init_catalog_stores(cat_meta, stores=("core", "operational"))
+    repo_uuid, _ = init_catalog_stores(cat_meta, stores=("repository", "operational"))
     origin_uuid = str(uuid4())
     cap_uuid = str(uuid4())
 
@@ -70,35 +70,35 @@ def test_git_acquisition_metadata_only_and_retained_modes(
     assert oids["blob"] in report_meta.admitted_objects
     assert len(report_meta.ref_observations) == 1
 
-    core_meta = GitCore(cat_meta / "core.sqlite3")
+    repository_meta = GitRepositoryStore(cat_meta / "repository.sqlite3")
     try:
         # Zero retained_metadata rows in metadata-only mode
-        assert core_meta.sql("SELECT COUNT(*) FROM retained_metadata")[0][0] == 0
-        with pytest.raises(CoreFailure) as exc_info:
-            core_meta.read_metadata(oids["commit2"])
+        assert repository_meta.sql("SELECT COUNT(*) FROM retained_metadata")[0][0] == 0
+        with pytest.raises(RepositoryFailure) as exc_info:
+            repository_meta.read_metadata(oids["commit2"])
         assert exc_info.value.code == "BYTES_UNAVAILABLE"
 
         # Scalar claims and relations are present as reported facts
-        msg_proj = core_meta.scalar(oids["commit2"], "message")
+        msg_proj = repository_meta.scalar(oids["commit2"], "message")
         assert msg_proj.canonical is None  # no receiver_intrinsic copy
         assert len(msg_proj.alternatives) == 1
         assert msg_proj.alternatives[0]["value"] == ["known", "Second commit\n"]
         assert msg_proj.alternatives[0]["checked"] is False
 
-        parents_proj = core_meta.relations(oids["commit2"], "commit_parents")
+        parents_proj = repository_meta.relations(oids["commit2"], "commit_parents")
         assert len(parents_proj.alternatives) == 1
         assert parents_proj.alternatives[0]["membership"] == [
             [0, git_format, oids["commit1"].object_oid]
         ]
     finally:
-        core_meta.close()
+        repository_meta.close()
 
     # 2. Hybrid mode (retain_object_oids={commit2, tag}) + P4 Notes discovery/inventory/note body
     cat_hybrid = tmp_path / "cat_hybrid"
     init_catalog_stores(
         cat_hybrid,
         repository_uuidv4=repo_uuid,
-        stores=("core", "operational"),
+        stores=("repository", "operational"),
     )
     notes_spec = NotesAcquisitionSpec(
         discover_notes=True,
@@ -141,11 +141,11 @@ def test_git_acquisition_metadata_only_and_retained_modes(
         item.group.status == "complete" for item in report_hybrid.ref_notes_inventories
     )
 
-    core_hybrid = GitCore(cat_hybrid / "core.sqlite3")
+    repository_hybrid = GitRepositoryStore(cat_hybrid / "repository.sqlite3")
     try:
-        assert core_hybrid.read_metadata(oids["commit2"]).startswith(b"tree ")
-        with pytest.raises(CoreFailure) as exc_info:
-            core_hybrid.read_metadata(oids["commit1"])
+        assert repository_hybrid.read_metadata(oids["commit2"]).startswith(b"tree ")
+        with pytest.raises(RepositoryFailure) as exc_info:
+            repository_hybrid.read_metadata(oids["commit1"])
         assert exc_info.value.code == "BYTES_UNAVAILABLE"
 
         from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
@@ -153,19 +153,22 @@ def test_git_acquisition_metadata_only_and_retained_modes(
         claim = report_hybrid.ref_note_acquisitions[0].claim
         work = UnlimitedWorkBudget()
         mapping = (
-            core_hybrid.notes_mapping_projection(
+            repository_hybrid.notes_mapping_projection(
                 claim, oids["commit2"], "git-notes", "1", "native-notes-tree", work
             )
             .evidence[0]
             .mapping
         )
-        assert core_hybrid.read_ref_note(claim, mapping, work) == b"Reviewed-by: CI\n"
-        assert not core_hybrid.sql(
+        assert (
+            repository_hybrid.read_ref_note(claim, mapping, work)
+            == b"Reviewed-by: CI\n"
+        )
+        assert not repository_hybrid.sql(
             "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
         )
 
     finally:
-        core_hybrid.close()
+        repository_hybrid.close()
 
 
 def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
@@ -177,7 +180,7 @@ def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
     source = GitNativeSource(repo_dir)
 
     cat_dir = tmp_path / "cat"
-    repo_uuid, _ = init_catalog_stores(cat_dir, stores=("core", "operational"))
+    repo_uuid, _ = init_catalog_stores(cat_dir, stores=("repository", "operational"))
     acq = GitAcquisition(cat_dir, operational=cat_dir)
 
     # Ordinary file blob requested as metadata object is rejected with RETENTION_PURPOSE
@@ -190,7 +193,7 @@ def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
         select_object_oids=(oids["blob"],),
         include_refs=False,
     )
-    with pytest.raises(CoreFailure) as exc_info:
+    with pytest.raises(RepositoryFailure) as exc_info:
         acq.acquire_from_native(source, bad_req, new_request=True)
     assert exc_info.value.code == "RETENTION_PURPOSE"
 
@@ -211,14 +214,14 @@ def test_git_acquisition_rejects_ordinary_file_blob_and_handles_missing_oids(
     assert missing_oid in report.nominal_missing_objects
     assert missing_oid in report.admitted_objects
 
-    core = GitCore(cat_dir / "core.sqlite3")
+    repository_store = GitRepositoryStore(cat_dir / "repository.sqlite3")
     try:
-        cov = core.coverage(
-            CoreCoverageScope("repository", (repo_uuid, "git_metadata"))
+        cov = repository_store.coverage(
+            RepositoryCoverageScope("repository", (repo_uuid, "git_metadata"))
         )
         assert cov.state == "partial"
     finally:
-        core.close()
+        repository_store.close()
 
 
 def test_git_metadata_input_competing_claims_and_operational_rebuild(
@@ -226,7 +229,9 @@ def test_git_metadata_input_competing_claims_and_operational_rebuild(
     git_format: Literal["sha1", "sha256"],
 ) -> None:
     cat_dir = tmp_path / "cat"
-    repo_uuid, inst_uuid = init_catalog_stores(cat_dir, stores=("core", "operational"))
+    repo_uuid, inst_uuid = init_catalog_stores(
+        cat_dir, stores=("repository", "operational")
+    )
     acq = GitAcquisition(cat_dir, operational=cat_dir)
 
     subject = OID(git_format, "1" * (40 if git_format == "sha1" else 64))
@@ -267,7 +272,7 @@ def test_git_metadata_input_competing_claims_and_operational_rebuild(
         assert ledger.get_cache_locator(["etag", "commit"])["locator"] == 'W/"123"'
 
     # Delete and recreate operational.sqlite3 with a new instance:
-    # old continuation fails with CONTINUATION_UNAVAILABLE, while Core facts remain intact!
+    # old continuation fails with CONTINUATION_UNAVAILABLE, while Repository facts remain intact!
     op_path.unlink()
     initialize(op_path, "operational", repo_uuid, str(uuid4()))
     with OperationalAcquisitionLedger(op_path) as new_ledger:
@@ -275,13 +280,13 @@ def test_git_metadata_input_competing_claims_and_operational_rebuild(
             new_ledger.load_continuation(req_id, ["cursor"])
         assert exc_info.value.code == "CONTINUATION_UNAVAILABLE"
 
-    core = GitCore(cat_dir / "core.sqlite3")
+    repository_store = GitRepositoryStore(cat_dir / "repository.sqlite3")
     try:
-        proj = core.scalar(subject, "message")
+        proj = repository_store.scalar(subject, "message")
         assert proj.reported_conflict is True
         assert len(proj.alternatives) == 2
     finally:
-        core.close()
+        repository_store.close()
 
 
 def test_native_ref_reads_pin_exact_result_and_preserve_symbolic_and_peeled(
@@ -295,7 +300,7 @@ def test_native_ref_reads_pin_exact_result_and_preserve_symbolic_and_peeled(
     oids = build_sample_git_repo(repo_path, git_format)
     git(repo_path, "symbolic-ref", "refs/heads/alias", "refs/heads/main")
     catalog = tmp_path / "catalog-i2"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     request = GitNativeAcquisitionRequest(
         repository_uuidv4=repository,
         capture_origin_uuidv4=str(uuid4()),
@@ -337,7 +342,7 @@ def test_nominated_ref_lookup_confirms_only_named_local_absence(tmp_path, git_fo
     repo_path = tmp_path / "repo-named"
     build_sample_git_repo(repo_path, git_format)
     catalog = tmp_path / "catalog-named"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     request = GitNativeAcquisitionRequest(
         repository_uuidv4=repository,
         capture_origin_uuidv4=str(uuid4()),
@@ -363,7 +368,7 @@ def test_invalid_nominated_name_does_not_become_absence(tmp_path, git_format):
     repo_path = tmp_path / "repo-invalid-ref"
     build_sample_git_repo(repo_path, git_format)
     catalog = tmp_path / "catalog-invalid-ref"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     request = GitNativeAcquisitionRequest(
         repository,
         str(uuid4()),
@@ -402,7 +407,7 @@ def test_native_ref_lossless_non_utf8_and_failed_lookup_no_absence(
         capture_output=True,
     )
     catalog = tmp_path / "catalog-lossless"
-    repository, _ = init_catalog_stores(catalog, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(catalog, stores=("repository", "operational"))
     source = GitNativeSource(repo_path)
     request = GitNativeAcquisitionRequest(
         repository,
@@ -416,7 +421,7 @@ def test_native_ref_lossless_non_utf8_and_failed_lookup_no_absence(
     )
 
     def fail(*_):
-        raise CoreFailure("GIT_INPUT", "lookup", "injected failure")
+        raise RepositoryFailure("GIT_INPUT", "lookup", "injected failure")
 
     monkeypatch.setattr(source, "lookup_ref_presence", fail)
     report = GitAcquisition(catalog, operational=catalog).acquire_from_native(

@@ -104,5 +104,5 @@ def test_cli_graphql_comment_page_keeps_valid_prefix_and_retries_same_request(
         in case.view(capsys, case.keys["comment"])["fields"]["text_body_sha256"]
         for candidate in original_producers
     )
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "p1-recovery-stop.json").exists()

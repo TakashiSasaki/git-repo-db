@@ -80,7 +80,7 @@ jobs:
           python scripts/ci_profile.py run --name fts -- uv run --no-sync python -c "import sqlite3; print(sqlite3.sqlite_version); c=sqlite3.connect(':memory:'); c.execute(\"CREATE VIRTUAL TABLE f USING fts5(body,tokenize='trigram case_sensitive 1',content='',detail=full)\")"
           catalog_smoke_root=$(mktemp -d)
           trap 'rm -rf "$catalog_smoke_root"' EXIT
-          uv run --no-sync repo-catalog init --scope core --catalog "$catalog_smoke_root"
+          uv run --no-sync repo-catalog init --scope repository --catalog "$catalog_smoke_root"
           python scripts/ci_profile.py run --name doctor -- uv run --no-sync repo-catalog doctor --catalog "$catalog_smoke_root"
       - name: Verify composed schema and generated guards
         if: steps.plan.outputs.smoke == 'true'

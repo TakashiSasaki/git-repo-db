@@ -27,7 +27,7 @@ LIVE_DOCS = frozenset(
         "docs/ci-performance.md",
         "docs/test-suite-efficiency.md",
         "website/content/development/index.md",
-        "docs/architecture/git-core-context-transition-plan.md",
+        "docs/architecture/git-repository-context-transition-plan.md",
         "docs/implementation/context-resource-design-handoff.md",
         "docs/implementation/context-exchange-design-handoff.md",
         "docs/implementation/p1-schema-contracts.md",

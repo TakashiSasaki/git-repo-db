@@ -18,7 +18,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 for source in (
     ROOT / "src",
-    ROOT / "packages/core/src",
+    ROOT / "packages/repository/src",
     ROOT / "packages/contracts/src",
     ROOT / "packages/runtime/src",
     ROOT / "packages/context/src",

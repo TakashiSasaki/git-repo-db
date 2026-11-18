@@ -164,7 +164,7 @@ def test_current_role_audit_has_separate_authority_definitions_without_legacy_dr
 
     report = build_report()
     assert set(report["stores"]) == {
-        "p1.core",
+        "p1.repository",
         "p1.context",
         "p1.operational",
         "p1.search",
@@ -172,13 +172,25 @@ def test_current_role_audit_has_separate_authority_definitions_without_legacy_dr
         "filesystem",
         "worktrees",
     }
-    core, context = report["stores"]["p1.core"], report["stores"]["p1.context"]
-    assert "resources" in context["tables"] and "resources" not in core["tables"]
-    assert "text_bodies" in context["tables"] and "text_bodies" not in core["tables"]
-    assert "git_objects" in core["tables"] and "git_objects" not in context["tables"]
+    repository_store, context = (
+        report["stores"]["p1.repository"],
+        report["stores"]["p1.context"],
+    )
+    assert (
+        "resources" in context["tables"]
+        and "resources" not in repository_store["tables"]
+    )
+    assert (
+        "text_bodies" in context["tables"]
+        and "text_bodies" not in repository_store["tables"]
+    )
+    assert (
+        "git_objects" in repository_store["tables"]
+        and "git_objects" not in context["tables"]
+    )
     modules = report["source"]["modules"]
     assert any("production_context.py" in module["path"] for module in modules)
-    assert any("p1_core.py" in module["path"] for module in modules)
+    assert any("p1_repository.py" in module["path"] for module in modules)
     assert "not operation reachability" in report["limits"][0]
 
 

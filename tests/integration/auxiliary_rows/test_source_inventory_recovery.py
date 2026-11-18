@@ -7,10 +7,13 @@ from dataclasses import replace
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget, stop_catalog
 from repo_catalog.adapters.sqlite.p1_schema import initialize, register_functions
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
+from repo_catalog.adapters.sqlite.repository_recovery import (
+    RecoveryWorkBudget,
+    stop_catalog,
+)
 from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.recovery import (
     BackupScope,
@@ -49,12 +52,12 @@ def setup_recovery(tmp_path):
         repository, instance = db.execute(
             "SELECT repository_uuidv4,catalog_instance_uuidv4 FROM store_identity"
         ).fetchone()
-    initialize(source / "core.sqlite3", "core", repository, instance)
+    initialize(source / "repository.sqlite3", "repository", repository, instance)
     # Baseline has no Context registrations. Typed units must reconcile their
     # exact Source/Provider/member dependencies under destination authority.
     empty = tmp_path / "empty"
     empty.mkdir()
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         initialize(empty / f"{role}.sqlite3", role, repository, instance)
     adapter = SQLiteRecoveryAdapter()
     backup = tmp_path / "baseline"

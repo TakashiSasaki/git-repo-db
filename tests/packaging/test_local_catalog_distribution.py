@@ -44,7 +44,7 @@ def available(module):
         return False
 
 for module in (
-    "repo_catalog.adapters.sqlite.git_core",
+    "repo_catalog.adapters.sqlite.git_repository",
     "repo_catalog.adapters.sqlite.production_context",
     "repo_catalog.adapters.sqlite.access_schema",
     "repo_catalog.adapters.sqlite.acquisition",
@@ -116,7 +116,7 @@ if scope != "worktrees":
         rows = list(csv.DictReader(stream))
     data = next(row for row in rows if row["Filename"].endswith("data.txt"))
     assert data["SHA256"] == hashlib.sha256(b"installed artifact bytes").hexdigest()
-assert not any(base.glob("core.sqlite3"))
+assert not any(base.glob("repository.sqlite3"))
 assert not any(base.glob("context.sqlite3"))
 assert not any(base.glob("access.sqlite3"))
 assert not any(base.glob("operational.sqlite3"))

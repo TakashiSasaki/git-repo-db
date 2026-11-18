@@ -62,10 +62,11 @@ def exercise_metadata(root, metadata, fresh, refuses):
         len(populated.repositories) == 2
     )  # partial inventory never deletes a positive association
     assert all(
-        v.to_dict().get("available_in_core") is None for v in query.list_source_views()
+        v.to_dict().get("available_in_repository") is None
+        for v in query.list_source_views()
     )
     checks.append(
-        "metadata_partial_inventory_keeps_known_positive_roster_no_core_claims"
+        "metadata_partial_inventory_keeps_known_positive_roster_no_repository_claims"
     )
 
     coverage = [query.get_context_coverage(scope).to_dict() for scope in scopes]
@@ -89,12 +90,12 @@ def exercise_metadata(root, metadata, fresh, refuses):
     assert [v.to_dict() for v in opaque.list_providers()] == metadata["providers"]
     assert [v.to_dict() for v in opaque.list_source_views()] == metadata["sources"]
     for name, operation in operations.items():
-        for mode in ("auto", "paired", "core_only"):
+        for mode in ("auto", "paired", "repository_only"):
             refuses(
                 lambda: operation(ContextQueryService(root / "opaque", mode=mode)),
                 {"MISSING_CAPABILITY"},
             )
-    checks.append("metadata_empty_and_opaque_core_explicit_topology_no_downgrade")
+    checks.append("metadata_empty_and_opaque_repository_explicit_topology_no_downgrade")
 
     class HostileString(str):
         def __eq__(self, other):
@@ -244,9 +245,14 @@ def exercise_metadata(root, metadata, fresh, refuses):
 
     assert not any(
         p.name
-        in {"core.sqlite3", "access.sqlite3", "operational.sqlite3", "search.sqlite3"}
+        in {
+            "repository.sqlite3",
+            "access.sqlite3",
+            "operational.sqlite3",
+            "search.sqlite3",
+        }
         for p in catalog.glob("*.sqlite3")
     )
-    assert query.snapshot_token().core_sha256 is None
+    assert query.snapshot_token().repository_sha256 is None
     checks.append("metadata_minimum_no_optional_database_creation")
     return checks

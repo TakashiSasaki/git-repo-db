@@ -41,15 +41,15 @@ from repo_catalog.application.git_acquisition import GitAcquisition as Canonical
 from repo_catalog.domain.acquisition import AcquisitionError, GitMetadataInput
 from repo_catalog.domain.git_acquisition import GitMetadataInput as CanonicalInput
 from repo_catalog.adapters.sqlite.p1_schema import initialize
-from repo_catalog.application.core_query import CoreQueryService
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.application.repository_query import RepositoryQueryService
+from repo_catalog.domain.p1_repository import OID
 
 assert GitAcquisition is CanonicalAcquisition
 assert GitMetadataInput is CanonicalInput
 directory = Path(sys.argv[1])
 assert not list(directory.iterdir())
 repository, instance = str(uuid4()), str(uuid4())
-for role in ("core", "operational"):
+for role in ("repository", "operational"):
     initialize(directory / (role + ".sqlite3"), role, repository, instance)
 object_oid = OID("sha1", "1" * 40)
 unit = GitMetadataInput(
@@ -61,7 +61,7 @@ report = service.acquire_metadata_only(unit, new_request=True)
 assert report.status == "complete"
 assert report.admitted_objects == (object_oid,)
 assert not report.retained_objects
-assert CoreQueryService(directory, mode="core_only").get_git_object(object_oid)
+assert RepositoryQueryService(directory, mode="repository_only").get_git_object(object_oid)
 assert not any((directory / (role + ".sqlite3")).exists() for role in (
     "context", "search", "access"
 ))
@@ -102,17 +102,17 @@ with closing(connect(path, "operational")) as db:
     ledger = WorkLedger(db)
     assert ledger.store_identity() == (repository, instance)
 assert not any((directory / (role + ".sqlite3")).exists() for role in (
-    "core", "context", "search", "access"
+    "repository", "context", "search", "access"
 ))
 """,
         (
-            "repo_catalog.adapters.sqlite.git_core",
-            "repo_catalog.adapters.sqlite.p1_core",
-            "repo_catalog.adapters.sqlite.core_coordination",
+            "repo_catalog.adapters.sqlite.git_repository",
+            "repo_catalog.adapters.sqlite.p1_repository",
+            "repo_catalog.adapters.sqlite.repository_coordination",
             "repo_catalog.adapters.sqlite.p1_context",
             "repo_catalog.adapters.sqlite.production_context",
             "repo_catalog.adapters.sqlite.p1_coordination",
-            "repo_catalog.domain.p1_core",
+            "repo_catalog.domain.p1_repository",
             "repo_catalog.domain.p1_context",
         ),
         tmp_path,

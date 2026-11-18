@@ -14,7 +14,7 @@ from repo_catalog.domain.exchange import (
     encode_package,
 )
 from repo_catalog.domain.p1_context import ResourceKey
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 
 SERVICE = "11111111-1111-4111-8111-111111111111"
 REPOSITORY = "22222222-2222-4222-8222-222222222222"

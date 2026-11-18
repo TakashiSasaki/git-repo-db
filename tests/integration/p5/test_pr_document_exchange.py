@@ -23,7 +23,7 @@ from tests.integration.p5.test_pr_assessment import Fixture
 
 
 def thread_fixture(path):
-    fixture = Fixture(path, core=False)
+    fixture = Fixture(path, repository_store=False)
     original = make_provenance(
         "actual-document-fixture", {"traversal_attempt_uuidv4": str(uuid4())}
     )
@@ -198,7 +198,7 @@ def test_numeric_thread_flag_does_not_equal_a_typed_boolean_filter(tmp_path):
 def test_current_review_body_missing_or_equal_clock_conflict_remains_visible_under_complete_listing(
     tmp_path, gap
 ):
-    fixture = Fixture(tmp_path, core=False)
+    fixture = Fixture(tmp_path, repository_store=False)
     first = make_provenance("actual-review-body", {"read": "original"})
     fixture.admit(
         reviews=(
@@ -253,7 +253,7 @@ def test_current_review_body_missing_or_equal_clock_conflict_remains_visible_und
 def test_real_current_review_family_exchange_retains_original_fields_exact_bodies_and_scope(
     tmp_path, kind
 ):
-    fixture = Fixture(tmp_path / "sender", core=False)
+    fixture = Fixture(tmp_path / "sender", repository_store=False)
     original = make_provenance("untrusted-reported-producer", {"capture": str(uuid4())})
     if kind == "reviews":
         fixture.admit(
@@ -287,7 +287,7 @@ def test_real_current_review_family_exchange_retains_original_fields_exact_bodie
     )
     assert before.state == "complete"
     package = ExchangeService(fixture.path).export_package(
-        selection=ExchangeSelectionScope(all_selected=True, include_core=False)
+        selection=ExchangeSelectionScope(all_selected=True, include_repository=False)
     )
     target = tmp_path / "receiver"
     init_catalog_stores(
@@ -306,7 +306,7 @@ def test_real_current_review_family_exchange_retains_original_fields_exact_bodie
     assert after.page.items == before.page.items
     assert after.page.items[0].fields["text_body_sha256"][0].provenance_json == original
     assert "\x00tail" in next(iter(after.page.items[0].resolved_texts.values()))
-    assert not (target / "core.sqlite3").exists()
+    assert not (target / "repository.sqlite3").exists()
     if kind == "reviews":
         filtered = PRQueryService(target).get_pr_documents(
             fixture.parent, kinds=(kind,), metadata_filters={"state": "APPROVED"}

@@ -1,4 +1,4 @@
-"""Git-only acquisition orchestration over explicit Core and durable Operational."""
+"""Git-only acquisition orchestration over explicit Repository and durable Operational."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.git.notes import GitNotesSource
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
 from repo_catalog.adapters.sqlite.catalog_runtime import catalog_completion
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.notes import NotesProgress
 from repo_catalog.adapters.sqlite.operational_coordination import (
     NotesWorkBudget,
@@ -43,23 +43,23 @@ from repo_catalog.domain.native_acquisition import (
     without_ref_inputs,
 )
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
-    CoreFailure,
     GitObservation,
     NativeObject,
     Provenance,
     RelationGroup,
     RelationMember,
+    RepositoryCoverageScope,
+    RepositoryFailure,
     ScalarClaim,
     account_verification,
     encode,
     uuid4_value,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ports.notes import NotesSource, request_scope
-from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ports.p1_repository import WorkBudget
 
 
 def _charge(work: WorkBudget, unit: str, amount: int = 1) -> None:
@@ -128,7 +128,7 @@ class _ParentSourceProgress:
         return self.original.request_identity()
 
 
-class _PreparedCore:
+class _PreparedRepository:
     """Finite in-memory typed admission plan; confers no database capability."""
 
     _methods = frozenset(
@@ -154,15 +154,15 @@ class _PreparedCore:
         )
     )
 
-    def __init__(self, core: GitCore):
-        self.core = core
+    def __init__(self, repository_store: GitRepositoryStore):
+        self.repository_store = repository_store
         self.operations = []
 
     def ensure_available(self):
-        self.core.ensure_available()
+        self.repository_store.ensure_available()
 
     def catalog_identity(self):
-        return self.core.catalog_identity()
+        return self.repository_store.catalog_identity()
 
     def ref_observation(self, key, work):
         from repo_catalog.domain.ref_observation import (
@@ -192,7 +192,7 @@ class _PreparedCore:
             return RefObservationProjection(
                 subject, tuple(claims), ref_claim_conflict(tuple(claims))
             )
-        return self.core.ref_observation(key, work)
+        return self.repository_store.ref_observation(key, work)
 
     def __getattr__(self, name):
         if name not in self._methods:
@@ -200,29 +200,35 @@ class _PreparedCore:
 
         def prepare(*args, **kwargs):
             if len(self.operations) >= 200_000:
-                raise CoreFailure("BUDGET", "admission-plan", "finite operation count")
+                raise RepositoryFailure(
+                    "BUDGET", "admission-plan", "finite operation count"
+                )
             self.operations.append((name, args, kwargs))
 
         return prepare
 
-    def apply(self, core: GitCore):
+    def apply(self, repository_store: GitRepositoryStore):
         for name, args, kwargs in self.operations:
-            getattr(core, name)(*args, **kwargs)
+            getattr(repository_store, name)(*args, **kwargs)
 
 
-def _finish_ref_inventories(report, core, source, work, progress, source_attribution):
-    """Verify reported groups only after their Core admission is durable."""
-    if isinstance(core, _PreparedCore):
+def _finish_ref_inventories(
+    report, repository_store, source, work, progress, source_attribution
+):
+    """Verify reported groups only after their Repository admission is durable."""
+    if isinstance(repository_store, _PreparedRepository):
         return report
     if not report.ref_notes_inventories:
-        return core._complete_read(report)
+        return repository_store._complete_read(report)
     if source is None:
-        raise CoreFailure("NOTES_SCOPE", "inventory", "actual Notes source required")
-    external = getattr(core, "_external", False)
+        raise RepositoryFailure(
+            "NOTES_SCOPE", "inventory", "actual Notes source required"
+        )
+    external = getattr(repository_store, "_external", False)
     notes_app = None
     if not external:
         notes_app = NotesAcquisition(
-            core,
+            repository_store,
             source,
             work,
             progress,
@@ -249,7 +255,7 @@ def _finish_ref_inventories(report, core, source, work, progress, source_attribu
                 None,
                 False,
                 "REF_INVENTORY_DEFERRED",
-                "verify after the caller-owned Core transaction commits",
+                "verify after the caller-owned Repository transaction commits",
             )
         else:
             assert notes_app is not None
@@ -267,8 +273,8 @@ def _finish_ref_inventories(report, core, source, work, progress, source_attribu
         if result.verified:
             selected.append((index, inventory.group))
     if selected:
-        # The checked adapter protects callbacks and pins one Core snapshot.
-        views = core.ref_notes_inventory_projections(
+        # The checked adapter protects callbacks and pins one Repository snapshot.
+        views = repository_store.ref_notes_inventory_projections(
             tuple(group for _, group in selected), work
         )
         for (index, _), (projection, current) in zip(selected, views, strict=True):
@@ -295,7 +301,7 @@ def _finish_ref_inventories(report, core, source, work, progress, source_attribu
         ref_inventory_verifications=tuple(verifications),
         ref_inventory_projections=tuple(projections),
     )
-    return core._complete_read(completed)
+    return repository_store._complete_read(completed)
 
 
 def _defer_ref_work(report, spec, source):
@@ -321,20 +327,26 @@ def _defer_ref_work(report, spec, source):
 
 
 @contextmanager
-def _open_core(target: GitCore | Path | str) -> Iterator[GitCore]:
-    if isinstance(target, (GitCore, _PreparedCore)):
+def _open_repository(
+    target: GitRepositoryStore | Path | str,
+) -> Iterator[GitRepositoryStore]:
+    if isinstance(target, (GitRepositoryStore, _PreparedRepository)):
         yield target
-        owner = target.core if isinstance(target, _PreparedCore) else target
+        owner = (
+            target.repository_store
+            if isinstance(target, _PreparedRepository)
+            else target
+        )
         owner._complete_read(None)
         return
     path = Path(target).resolve()
     if path.is_dir():
-        path = path / "core.sqlite3"
-    core = GitCore(path)
+        path = path / "repository.sqlite3"
+    repository_store = GitRepositoryStore(path)
     try:
-        yield core
+        yield repository_store
     finally:
-        core.close()
+        repository_store.close()
     # The normal result must remain fenced after every owned cleanup, including
     # a stop published by connection close. Exceptional exits retain their error.
     with catalog_completion(path.parent):
@@ -372,24 +384,24 @@ def _open_operational(
 
 
 class GitAcquisition:
-    """Metadata-first and selective native Git + Notes acquisition into P2 GitCore."""
+    """Metadata-first and selective native Git + Notes acquisition into P2 GitRepository."""
 
     def __init__(
         self,
-        core: GitCore | Path | str,
+        repository_store: GitRepositoryStore | Path | str,
         *,
         operational: OperationalAcquisitionLedger | Path | str | None = None,
         work: WorkBudget | None = None,
         progress: Any | None = None,
     ) -> None:
-        self.core = core
+        self.repository_store = repository_store
         self.operational = operational
         self.work = work
         self.progress = progress
 
     @staticmethod
     def _validate_native_accounting(
-        core, work, progress, scope, request, *, shared=None
+        repository_store, work, progress, scope, request, *, shared=None
     ):
         # Native input must never substitute a volatile or unrelated request.
         # Reuse the canonical durable capability and its existing identity,
@@ -406,7 +418,7 @@ class GitAcquisition:
                 "matching durable work/progress required",
             )
         ledger = work.ledger
-        if ledger.store_identity() != core.catalog_identity():
+        if ledger.store_identity() != repository_store.catalog_identity():
             raise CoordinationError("STORE_IDENTITY", "operational")
         if work.request != request:
             raise CoordinationError("REQUEST_SCOPE", "request")
@@ -427,9 +439,9 @@ class GitAcquisition:
             if (
                 type(owner) is not OperationalAcquisitionLedger
                 or owner.work_ledger is not ledger
-                or type(core) is not GitCore
+                or type(repository_store) is not GitRepositoryStore
                 or ledger._path.resolve()
-                != (core._directory / "operational.sqlite3").resolve()
+                != (repository_store._directory / "operational.sqlite3").resolve()
             ):
                 raise CoordinationError(
                     "CONTINUATION_UNAVAILABLE",
@@ -449,7 +461,7 @@ class GitAcquisition:
     @contextmanager
     def _resolve_budget_and_progress(
         self,
-        core_cap: GitCore,
+        repository_cap: GitRepositoryStore,
         scope_tag: str,
         origin_uuidv4: str,
         unit_uuidv4: str,
@@ -464,7 +476,7 @@ class GitAcquisition:
         if work is not None and progress is not None:
             yield work, progress
             return
-        repo_uuid, instance_uuid = core_cap.catalog_identity()
+        repo_uuid, instance_uuid = repository_cap.catalog_identity()
         with _open_operational(
             self.operational,
             repository_uuidv4=repo_uuid,
@@ -502,7 +514,7 @@ class GitAcquisition:
 
     def _admit_metadata_claims_only(
         self,
-        core_cap: GitCore,
+        repository_cap: GitRepositoryStore,
         native: NativeObject,
         source_attribution: str,
         origin_uuidv4: str,
@@ -518,7 +530,7 @@ class GitAcquisition:
             _charge(work, "metadata_units", 1)
 
         evidence_coord = encode([origin_uuidv4, capture_uuidv4, *native.object_oid.key])
-        core_cap.admit_object(native.object_oid)
+        repository_cap.admit_object(native.object_oid)
         discovered_targets: list[OID] = []
 
         for field_name, val in parsed.scalars.items():
@@ -532,7 +544,7 @@ class GitAcquisition:
             )
             claim = ScalarClaim(native.object_oid, field_name, val, prov)
             _charge(work, "metadata_units", 1)
-            core_cap.admit_claim(claim)
+            repository_cap.admit_claim(claim)
 
         for rel_name, raw_members in parsed.relations.items():
             prov = Provenance(
@@ -561,13 +573,13 @@ class GitAcquisition:
                 prov,
             )
             _charge(work, "metadata_units", 1)
-            core_cap.admit_group(group)
+            repository_cap.admit_group(group)
 
         return tuple(discovered_targets)
 
     def _run_notes_spec(
         self,
-        core_cap: GitCore,
+        repository_cap: GitRepositoryStore,
         spec: NotesAcquisitionSpec,
         *,
         repository_uuidv4: str,
@@ -592,10 +604,10 @@ class GitAcquisition:
         for unit in spec.ref_inputs:
             ref_notes_input_intent(unit, repository_uuidv4, work)
             _charge(work, "metadata_units", 1)
-            core_cap.admit_ref_observation(unit.observation)
+            repository_cap.admit_ref_observation(unit.observation)
             for claim in unit.claims:
                 _charge(work, "metadata_units", 1)
-                core_cap.admit_ref_observation_claim(claim)
+                repository_cap.admit_ref_observation_claim(claim)
                 active_ref_claims.append(claim)
                 extra_oids.extend(
                     object_oid
@@ -608,9 +620,9 @@ class GitAcquisition:
                     if object_oid is not None
                 )
             for mapping_claim in unit.mapping_claims:
-                core_cap.admit_notes_mapping(mapping_claim.mapping, work)
+                repository_cap.admit_notes_mapping(mapping_claim.mapping, work)
                 _charge(work, "metadata_units", 1)
-                core_cap.admit_notes_mapping_claim(mapping_claim)
+                repository_cap.admit_notes_mapping_claim(mapping_claim)
                 extra_oids.extend(
                     (
                         mapping_claim.mapping.root_object_oid,
@@ -619,7 +631,7 @@ class GitAcquisition:
                     )
                 )
             for group in unit.mapping_groups:
-                core_cap.admit_notes_mapping_group(group, work)
+                repository_cap.admit_notes_mapping_group(group, work)
                 extra_oids.append(group.ref_claim.root_object_oid)
                 fmt = group.ref_claim.root_object_oid.object_format
                 for target, note, _ in group.members:
@@ -629,7 +641,7 @@ class GitAcquisition:
             spec.discover_notes or spec.acquire_inventories or spec.target_object_oids
         ):
             notes_app = NotesAcquisition(
-                core_cap,
+                repository_cap,
                 notes_source,
                 work,
                 progress,
@@ -721,14 +733,14 @@ class GitAcquisition:
         """Acquire one explicitly selected repository; the catalog seed is not it.
 
         Validate all repository-owned claims/observations before any admission. Physical
-        Core/Operational identity pairing remains anchored to store_identity.
+        Repository/Operational identity pairing remains anchored to store_identity.
         """
         preflight_intent = native_request_intent(without_ref_inputs(request))
         if _metadata_walk is not None:
             from repo_catalog.adapters.git.metadata_walk import NativeMetadataWalk
 
             if type(_metadata_walk) is not NativeMetadataWalk:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "REQUEST", "metadata-walk", "trusted selection required"
                 )
             preflight_intent["metadata_walk"] = _metadata_walk.intent(
@@ -741,9 +753,11 @@ class GitAcquisition:
                 "REQUEST_SCOPE", "native-source", "existing parent work required"
             )
         with ExitStack() as stack:
-            core_cap = stack.enter_context(_open_core(self.core))
-            core_cap.ensure_available()
-            _catalog_seed, actual_inst = core_cap.catalog_identity()
+            repository_cap = stack.enter_context(
+                _open_repository(self.repository_store)
+            )
+            repository_cap.ensure_available()
+            _catalog_seed, actual_inst = repository_cap.catalog_identity()
             notes_scope = None
             if request.notes is not None:
                 notes_src = GitNotesSource(source)
@@ -755,7 +769,7 @@ class GitAcquisition:
                 )
             active_work, active_progress = stack.enter_context(
                 self._resolve_budget_and_progress(
-                    core_cap,
+                    repository_cap,
                     "p5-git-native",
                     request.capture_origin_uuidv4,
                     request.capture_uuidv4,
@@ -769,7 +783,7 @@ class GitAcquisition:
             )
 
             self._validate_native_accounting(
-                core_cap,
+                repository_cap,
                 active_work,
                 active_progress,
                 notes_scope
@@ -852,20 +866,20 @@ class GitAcquisition:
                     _shared_parent is not None
                     and active_progress.save_once(encode(["intent"]), intent) != intent
                 ):
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "INCOMPATIBLE_REPLAY",
                         "native-source",
                         "original Source intent changed",
                     )
                 if active_progress.save_once(intent_scope, intent) != intent:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "INCOMPATIBLE_REPLAY", intent_scope, "request intent changed"
                     )
-            core_cap.admit_repository(request.repository_uuidv4)
+            repository_cap.admit_repository(request.repository_uuidv4)
 
             for repo_claim in request.repository_claims:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_repository_claim(repo_claim)
+                repository_cap.admit_repository_claim(repo_claim)
 
             admitted_order: list[OID] = []
             retained_order: list[OID] = []
@@ -886,7 +900,7 @@ class GitAcquisition:
                     not (p.startswith(b"refs/") or b"refs/".startswith(p))
                     for p in configured
                 ):
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "REF", configured, "ref prefix must cover a full refs namespace"
                     )
                 prefixes = tuple(
@@ -923,7 +937,7 @@ class GitAcquisition:
                     return RefScan(selected, "complete", "git-for-each-ref:exit-0")
 
                 enumeration = pin_scan(
-                    core_cap,
+                    repository_cap,
                     active_progress,
                     active_work,
                     slot=slot,
@@ -961,10 +975,10 @@ class GitAcquisition:
                     _kind,
                     peeled_object_oid,
                 ) in selected_refs:
-                    core_cap.admit_object(target_object_oid)
+                    repository_cap.admit_object(target_object_oid)
                     _record_admitted(target_object_oid)
                     if peeled_object_oid is not None:
-                        core_cap.admit_object(peeled_object_oid)
+                        repository_cap.admit_object(peeled_object_oid)
                         _record_admitted(peeled_object_oid)
 
                 obs_prov = Provenance(
@@ -1001,7 +1015,7 @@ class GitAcquisition:
                     },
                     obs_prov,
                 )
-                core_cap.admit_observation(ref_obs)
+                repository_cap.admit_observation(ref_obs)
                 ref_observations.append(ref_obs)
 
             if request.nominated_ref_names:
@@ -1034,7 +1048,7 @@ class GitAcquisition:
 
                     try:
                         result = pin_scan(
-                            core_cap,
+                            repository_cap,
                             active_progress,
                             active_work,
                             slot=slot,
@@ -1053,7 +1067,7 @@ class GitAcquisition:
                             scan=lookup,
                         )
                         ref_enumerations.append(result)
-                    except CoreFailure as error:
+                    except RepositoryFailure as error:
                         if error.code in ("AUTHORITATIVE_CORRUPTION", "RECOVERY_STOP"):
                             raise
                         failure_code, failure_detail = error.code, str(error)
@@ -1069,13 +1083,13 @@ class GitAcquisition:
 
             for missing_oid in missing:
                 if missing_oid.object_format != source.object_format:
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "NATIVE_FORMAT",
                         missing_oid,
                         "nominal OID format differs from source format",
                     )
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_object(missing_oid)
+                repository_cap.admit_object(missing_oid)
                 _record_admitted(missing_oid)
                 if missing_oid not in nominal_missing_order:
                     nominal_missing_order.append(missing_oid)
@@ -1110,10 +1124,10 @@ class GitAcquisition:
                         copy_id = saved["copy"]
                 try:
                     native = source.metadata(object_oid, active_work)
-                except CoreFailure as err:
+                except RepositoryFailure as err:
                     if err.code == "OBJECT_UNAVAILABLE":
                         _charge(active_work, "metadata_units", 1)
-                        core_cap.admit_object(object_oid)
+                        repository_cap.admit_object(object_oid)
                         _record_admitted(object_oid)
                         if object_oid not in nominal_missing_order:
                             nominal_missing_order.append(object_oid)
@@ -1125,7 +1139,7 @@ class GitAcquisition:
                     raise
 
                 if should_retain:
-                    core_cap.admit_metadata(native, copy_id, active_work)
+                    repository_cap.admit_metadata(native, copy_id, active_work)
                     _record_admitted(object_oid)
                     if object_oid not in retained_order:
                         retained_order.append(object_oid)
@@ -1147,7 +1161,7 @@ class GitAcquisition:
                                     metadata_only_order.append(target_object_oid)
                 else:
                     targets = self._admit_metadata_claims_only(
-                        core_cap,
+                        repository_cap,
                         native,
                         request.source_attribution,
                         request.capture_origin_uuidv4,
@@ -1168,7 +1182,7 @@ class GitAcquisition:
 
             for claim in request.extra_scalar_claims:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_claim(claim)
+                repository_cap.admit_claim(claim)
                 _record_admitted(claim.subject)
                 if (
                     claim.subject not in retained_order
@@ -1178,7 +1192,7 @@ class GitAcquisition:
 
             for group in request.extra_relation_groups:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_group(group)
+                repository_cap.admit_group(group)
                 _record_admitted(group.subject)
                 if (
                     group.subject not in retained_order
@@ -1205,7 +1219,7 @@ class GitAcquisition:
                     ref_notes_inventories,
                     notes_oids,
                 ) = self._run_notes_spec(
-                    core_cap,
+                    repository_cap,
                     request.notes,
                     repository_uuidv4=request.repository_uuidv4,
                     source_attribution=request.source_attribution,
@@ -1257,7 +1271,7 @@ class GitAcquisition:
                         failure_code or discovery.failure_code or "NOTES_INCOMPLETE"
                     )
                     failure_detail = failure_detail or discovery.detail
-            cov_scope = CoreCoverageScope(
+            cov_scope = RepositoryCoverageScope(
                 "repository", (request.repository_uuidv4, "git_metadata")
             )
             cov_claim = CoverageClaim(
@@ -1275,8 +1289,8 @@ class GitAcquisition:
                 ),
             )
             _charge(active_work, "metadata_units", 1)
-            core_cap.admit_coverage_scope(cov_scope)
-            core_cap.admit_coverage(cov_claim)
+            repository_cap.admit_coverage_scope(cov_scope)
+            repository_cap.admit_coverage(cov_claim)
             if cov_state == "complete":
                 cov_prov = Provenance(
                     request.source_attribution,
@@ -1286,7 +1300,7 @@ class GitAcquisition:
                     DECODER_VERSION,
                     "reported",
                 )
-                core_cap.admit_coverage_proof(
+                repository_cap.admit_coverage_proof(
                     cov_claim, tuple(admitted_order), cov_prov
                 )
 
@@ -1311,7 +1325,7 @@ class GitAcquisition:
             )
             return _finish_ref_inventories(
                 _defer_ref_work(report, request.notes, notes_src),
-                core_cap,
+                repository_cap,
                 notes_src,
                 active_work,
                 active_progress,
@@ -1336,7 +1350,7 @@ class GitAcquisition:
         """Run one frozen Source with actual parent work and no child request.
 
         Each source pins its complete native/Notes intent and owns separate
-        continuation coordinates. Original Core captures remain caller supplied.
+        continuation coordinates. Original Repository captures remain caller supplied.
         """
         return self.acquire_from_native(
             source,
@@ -1371,25 +1385,27 @@ class GitAcquisition:
                 type(reparse_source) is not RetainedReparseSource
                 or reparse_source.unit is not unit
             ):
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "REQUEST",
                     "metadata-reparse",
                     "trusted retained read source required",
                 )
         with ExitStack() as stack:
-            core_cap = stack.enter_context(_open_core(self.core))
-            core_cap.ensure_available()
+            repository_cap = stack.enter_context(
+                _open_repository(self.repository_store)
+            )
+            repository_cap.ensure_available()
             notes_scope = None
             if unit.notes is not None and notes_source is not None:
                 notes_scope = request_scope(
                     unit.repository_uuidv4,
-                    core_cap.catalog_identity()[1],
+                    repository_cap.catalog_identity()[1],
                     unit.source_attribution,
                     notes_source.scope,
                 )
             active_work, active_progress = stack.enter_context(
                 self._resolve_budget_and_progress(
-                    core_cap,
+                    repository_cap,
                     "p5-git-metadata-input",
                     unit.capture_origin_uuidv4,
                     unit.capture_uuidv4,
@@ -1425,7 +1441,7 @@ class GitAcquisition:
                     active_progress.save_once(intent_scope, semantic_intent)
                     != semantic_intent
                 ):
-                    raise CoreFailure(
+                    raise RepositoryFailure(
                         "INCOMPATIBLE_REPLAY", "metadata", "request intent changed"
                     )
             derived_claims = (
@@ -1433,7 +1449,7 @@ class GitAcquisition:
                 if reparse_source is None
                 else reparse_source.read_claims(active_work)
             )
-            core_cap.admit_repository(unit.repository_uuidv4)
+            repository_cap.admit_repository(unit.repository_uuidv4)
 
             admitted_order: list[OID] = []
             retained_order: list[OID] = []
@@ -1445,15 +1461,15 @@ class GitAcquisition:
 
             for repo_claim in unit.repository_claims:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_repository_claim(repo_claim)
+                repository_cap.admit_repository_claim(repo_claim)
 
             for obs in unit.observations:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_observation(obs)
+                repository_cap.admit_observation(obs)
 
             for nom_oid in unit.nominal_objects:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_object(nom_oid)
+                repository_cap.admit_object(nom_oid)
                 _record_admitted(nom_oid)
                 if nom_oid not in metadata_only_order:
                     metadata_only_order.append(nom_oid)
@@ -1473,7 +1489,7 @@ class GitAcquisition:
                     if saved is None:
                         saved = active_progress.save_once(key, {"copy": str(uuid4())})
                     copy_id = saved["copy"]
-                core_cap.admit_metadata(native, copy_id, active_work)
+                repository_cap.admit_metadata(native, copy_id, active_work)
                 _record_admitted(native.object_oid)
                 if native.object_oid not in retained_order:
                     retained_order.append(native.object_oid)
@@ -1493,7 +1509,7 @@ class GitAcquisition:
 
             for s_claim in (*unit.scalar_claims, *derived_claims):
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_claim(s_claim)
+                repository_cap.admit_claim(s_claim)
                 _record_admitted(s_claim.subject)
                 if (
                     s_claim.subject not in retained_order
@@ -1503,7 +1519,7 @@ class GitAcquisition:
 
             for r_group in unit.relation_groups:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_group(r_group)
+                repository_cap.admit_group(r_group)
                 _record_admitted(r_group.subject)
                 if (
                     r_group.subject not in retained_order
@@ -1528,7 +1544,7 @@ class GitAcquisition:
                     ref_notes_inventories,
                     notes_oids,
                 ) = self._run_notes_spec(
-                    core_cap,
+                    repository_cap,
                     unit.notes,
                     repository_uuidv4=unit.repository_uuidv4,
                     source_attribution=unit.source_attribution,
@@ -1546,19 +1562,19 @@ class GitAcquisition:
             admitted_cov_claims: list[CoverageClaim] = []
             for scope in unit.coverage_scopes:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_coverage_scope(scope)
+                repository_cap.admit_coverage_scope(scope)
 
             for c_claim in unit.coverage_claims:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_coverage_scope(c_claim.scope)
-                core_cap.admit_coverage(c_claim)
+                repository_cap.admit_coverage_scope(c_claim.scope)
+                repository_cap.admit_coverage(c_claim)
                 admitted_cov_claims.append(c_claim)
 
             for p_claim, p_members, p_prov in unit.coverage_proofs:
                 _charge(active_work, "metadata_units", 1)
-                core_cap.admit_coverage_scope(p_claim.scope)
-                core_cap.admit_coverage(p_claim)
-                core_cap.admit_coverage_proof(p_claim, p_members, p_prov)
+                repository_cap.admit_coverage_scope(p_claim.scope)
+                repository_cap.admit_coverage(p_claim)
+                repository_cap.admit_coverage_proof(p_claim, p_members, p_prov)
                 if p_claim not in admitted_cov_claims:
                     admitted_cov_claims.append(p_claim)
 
@@ -1609,7 +1625,7 @@ class GitAcquisition:
             )
             return _finish_ref_inventories(
                 _defer_ref_work(report, unit.notes, notes_source),
-                core_cap,
+                repository_cap,
                 notes_source,
                 active_work,
                 active_progress,

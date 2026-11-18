@@ -9,7 +9,7 @@ from repo_catalog.adapters.github.production_intake import (
     normalize_pr_file,
 )
 from repo_catalog.domain.context_admission import AdmissionSelection, DependencySet
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.provider_acquisition import make_provenance
 from tests.e2e.test_separated_cli import document
 from tests.e2e.test_separated_cli_pr_assessment import query
@@ -141,5 +141,5 @@ def test_normal_cli_document_path_and_commit_queries_need_exact_provider_scope_w
     )
     assert scoped["state"] == "partial" and scoped["total_count"] == 1
     assert any(gap["kind"] == "code_selector" for gap in scoped["coverage"]["missing"])
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "p1-recovery-stop.json").exists()

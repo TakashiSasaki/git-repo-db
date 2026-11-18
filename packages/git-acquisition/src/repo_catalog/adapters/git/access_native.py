@@ -25,7 +25,7 @@ from repo_catalog.adapters.filesystem.access_executor import (
     _identity,
 )
 from repo_catalog.adapters.git.native import GitNativeSource
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 
 
 class AccessGitSource(GitNativeSource):
@@ -43,11 +43,11 @@ class AccessGitSource(GitNativeSource):
         metadata_bytes: int = 64 * 1024 * 1024,
     ):
         if object_format not in ("sha1", "sha256"):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "NATIVE_FORMAT", "access", "explicit expected format required"
             )
         if type(metadata_bytes) is not int or not 0 < metadata_bytes < 2**63:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "BUDGET", "access", "positive finite metadata bound required"
             )
         self.path = Path(path)  # Actual reviewed spelling, never /proc fd as identity.
@@ -91,14 +91,14 @@ class AccessGitSource(GitNativeSource):
         except BaseException as error:
             self.close()
             if isinstance(error, OSError):
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "GIT_INPUT", "access", "local storage unavailable"
                 ) from None
             raise
 
     @staticmethod
     def _fail(code="EXECUTOR_CHANGED"):
-        raise CoreFailure(
+        raise RepositoryFailure(
             code, "access-git", "reviewed local Git storage is unsupported or changed"
         )
 
@@ -248,7 +248,7 @@ class AccessGitSource(GitNativeSource):
             "--no-replace-objects",
             f"--git-dir=/proc/self/fd/{self._gitdir}",
             "-c",
-            "core.fsmonitor=false",
+            "repository.fsmonitor=false",
             "-c",
             f"core.hooksPath={os.devnull}",
             "-c",

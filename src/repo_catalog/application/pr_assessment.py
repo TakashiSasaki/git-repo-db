@@ -18,7 +18,11 @@ from repo_catalog.application.query_pagination import (
 )
 from repo_catalog.domain.git_native import parse_metadata
 from repo_catalog.domain.p1_context import CoverageScope, ResourceKey, canonical
-from repo_catalog.domain.p1_core import OID, CoreFailure, account_verification
+from repo_catalog.domain.p1_repository import (
+    OID,
+    RepositoryFailure,
+    account_verification,
+)
 from repo_catalog.domain.pr_assessment import anchored_code_scope as anchored_code_scope
 from repo_catalog.domain.pr_assessment import decode_git_role_checks
 from repo_catalog.domain.query_contracts import PageRequest, PageResult, QueryError
@@ -187,7 +191,9 @@ class PRRepositoryAssessment:
 class PRQueryService(ProductionQueryService):
     """Full requested-scope preflight before paginating exact PR documents."""
 
-    def _view(self, context, key, work, *, include_text=False, validate_core=None):
+    def _view(
+        self, context, key, work, *, include_text=False, validate_repository=None
+    ):
         # Reserve stored metadata before Python materialization. The same work
         # object follows every parent/child read in a repository assessment.
         projections = {
@@ -195,7 +201,7 @@ class PRQueryService(ProductionQueryService):
             "resource_relations": "relation_kind,members_json,provenance_json,scope_json",
             "collections": "collection_kind,provenance_json,scope_json",
             "collection_terminals": "collection_kind,provenance_json,members_json",
-            "core_references": "role,object_format,object_oid,provenance_json",
+            "repository_references": "role,object_format,object_oid,provenance_json",
             "resource_repository_relations": "relation_kind,clock_json,target_json,provenance_json",
         }
         size = 0
@@ -217,7 +223,10 @@ class PRQueryService(ProductionQueryService):
         work.require("input_bytes", size)
         try:
             result = self._context_resource_in_snapshot(
-                context, key, include_text=include_text, validate_core=validate_core
+                context,
+                key,
+                include_text=include_text,
+                validate_repository=validate_repository,
             )
         except BaseException:
             work.abandon("input_bytes")
@@ -704,11 +713,11 @@ class PRQueryService(ProductionQueryService):
             ),
         }
 
-    def _git(self, core, anchors, work):
-        if core is None:
+    def _git(self, repository_store, anchors, work):
+        if repository_store is None:
             return {
                 "state": "unknown",
-                "reason": "core_unavailable",
+                "reason": "repository_unavailable",
                 "verified_objects": 0,
             }
         pending = [(target, "commit") for target in anchors.values()]
@@ -725,19 +734,21 @@ class PRQueryService(ProductionQueryService):
                     }
                 continue
             _spend(work)
-            copies = core.sql(
+            copies = repository_store.sql(
                 "SELECT physical_copy_uuidv4 FROM retained_metadata WHERE object_format=? "
                 "AND object_oid=? ORDER BY physical_copy_uuidv4 LIMIT 1",
                 object_oid.key,
             )
             if not copies:
-                missing = core.sql(
+                missing = repository_store.sql(
                     "SELECT 1 FROM intrinsic_claims WHERE object_format=? AND object_oid=? "
                     "UNION ALL SELECT 1 FROM intrinsic_groups WHERE object_format=? AND object_oid=? LIMIT 1",
                     (*object_oid.key, *object_oid.key),
                 )
                 if missing:
-                    core._integrity_stop((object_oid, "lost-retained-metadata-copy"))
+                    repository_store._integrity_stop(
+                        (object_oid, "lost-retained-metadata-copy")
+                    )
                 # Metadata-only input remains valid, but cannot prove retained
                 # structural metadata availability for this requested comparison.
                 return {
@@ -746,7 +757,7 @@ class PRQueryService(ProductionQueryService):
                     "object_oid": list(object_oid.key),
                     "verified_objects": len(checked),
                 }
-            row = core.read_metadata_copy(object_oid, copies[0][0], work)
+            row = repository_store.read_metadata_copy(object_oid, copies[0][0], work)
             if row["native_type"] != expected_kind:
                 return {
                     "state": "conflict",
@@ -821,7 +832,7 @@ class PRQueryService(ProductionQueryService):
         result = {"state": listing["state"], "reason": listing["reason"], "checked": 0}
         if listing["state"] in {"conflict", "unknown"}:
             return result
-        if snapshot.core is None:
+        if snapshot.repository_store is None:
             return {
                 "state": "unknown",
                 "reason": "native_ref_evidence_unavailable",
@@ -839,10 +850,10 @@ class PRQueryService(ProductionQueryService):
                         "reason": "native_ref_comparison_mismatch",
                     }
                 try:
-                    projection = snapshot.core.ref_observation(
+                    projection = snapshot.repository_store.ref_observation(
                         RefObservationKey(*check["ref_observation_key"]), work
                     )
-                except CoreFailure as error:
+                except RepositoryFailure as error:
                     if error.code != "OBSERVATION_UNAVAILABLE":
                         raise
                     return {
@@ -939,7 +950,7 @@ class PRQueryService(ProductionQueryService):
                     key,
                     work,
                     include_text=True,
-                    validate_core=self._context_core_resolver(snapshot),
+                    validate_repository=self._context_repository_resolver(snapshot),
                 )
                 for key in selected.items
             ),
@@ -1019,7 +1030,7 @@ class PRQueryService(ProductionQueryService):
                         snapshot.context, view, anchors, work
                     )
                     git = (
-                        self._git(snapshot.core, anchors, work)
+                        self._git(snapshot.repository_store, anchors, work)
                         if role_state == "complete"
                         else {
                             "state": role_state,
@@ -1091,7 +1102,7 @@ class PRQueryService(ProductionQueryService):
                     git,
                     tuple(set(members)),
                 )
-        except CoreFailure as error:
+        except RepositoryFailure as error:
             if error.code in {"BUDGET", "QUERY_BUDGET"}:
                 raise QueryError(
                     "QUERY_BUDGET",
@@ -1204,7 +1215,7 @@ class PRQueryService(ProductionQueryService):
                         "reason": "captured_comparison_unavailable",
                     }
                 git = (
-                    self._git(snapshot.core, anchors, work)
+                    self._git(snapshot.repository_store, anchors, work)
                     if require_git and anchors is not None
                     else {
                         "state": "unknown" if require_git else "complete",
@@ -1254,7 +1265,7 @@ class PRQueryService(ProductionQueryService):
                             repository_uuidv4=None,
                             repository_roles=(),
                             repository_relations=(),
-                            core_dependencies=(),
+                            repository_dependencies=(),
                         )
                     )
                 selected = replace(selected, items=tuple(items))
@@ -1290,7 +1301,7 @@ class PRQueryService(ProductionQueryService):
                     git,
                     tuple(set(members)),
                 )
-        except CoreFailure as error:
+        except RepositoryFailure as error:
             if error.code in {"BUDGET", "QUERY_BUDGET"}:
                 raise QueryError(
                     "QUERY_BUDGET", endpoint, "captured listing exceeded finite budget"
@@ -1619,7 +1630,7 @@ class PRQueryService(ProductionQueryService):
                     {"state": "not_applicable", "reason": "document_scope"},
                     tuple(set(members)),
                 )
-        except CoreFailure as error:
+        except RepositoryFailure as error:
             if error.code in {"BUDGET", "QUERY_BUDGET"}:
                 raise QueryError(
                     "QUERY_BUDGET",
@@ -1968,7 +1979,7 @@ class PRQueryService(ProductionQueryService):
                     {key: value for key, value in listing.items() if key != "members"},
                     selected,
                 )
-        except CoreFailure as error:
+        except RepositoryFailure as error:
             if error.code in {"BUDGET", "QUERY_BUDGET"}:
                 raise QueryError(
                     "QUERY_BUDGET",

@@ -34,7 +34,7 @@ KEY = ResourceKey.from_native(PROVIDER, "issue", "7")
 
 @pytest.fixture
 def catalog(tmp_path):
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         initialize(tmp_path / f"{role}.sqlite3", role, REPOSITORY, INSTANCE)
     return tmp_path
 
@@ -129,7 +129,7 @@ def test_missing_context_binding_does_not_create_authority(catalog):
     assert resource_count(catalog) == 0
 
 
-def test_foreign_context_refuses_before_store_lookup_or_core_callback(tmp_path):
+def test_foreign_context_refuses_before_store_lookup_or_repository_callback(tmp_path):
     service, policy, _ = authority()
     foreign, foreign_policy, foreign_context = authority()
     calls = []
@@ -137,7 +137,7 @@ def test_foreign_context_refuses_before_store_lookup_or_core_callback(tmp_path):
     coordinator._open = lambda role: calls.append(role)
     with pytest.raises(AdmissionRefused, match="^PERMISSION_DENIED$"):
         coordinator.admit(
-            lambda tx: calls.append("core"),
+            lambda tx: calls.append("repository"),
             lambda tx: None,
             authorization=service,
             admission=foreign_context,
@@ -236,7 +236,7 @@ class ExportPolicy:
         yield Lease()
 
 
-def test_export_invocation_cannot_open_mutation_or_commit_core(catalog):
+def test_export_invocation_cannot_open_mutation_or_commit_repository(catalog):
     policy = ExportPolicy()
     service = ContextAdmissionService(policy, lambda credential: "export-user")
     admission = service.context(
@@ -245,10 +245,10 @@ def test_export_invocation_cannot_open_mutation_or_commit_core(catalog):
         AdmissionSelection(all_selected=True),
         AdmissionBudget(),
     )
-    core_called = []
+    repository_called = []
     with pytest.raises(AdmissionRefused, match="^PERMISSION_DENIED$"):
         PairCoordinator(catalog, authorization=service).admit(
-            lambda tx: core_called.append(True),
+            lambda tx: repository_called.append(True),
             lambda tx: None,
             authorization=service,
             admission=admission,
@@ -263,7 +263,7 @@ def test_export_invocation_cannot_open_mutation_or_commit_core(catalog):
         with pytest.raises(AdmissionRefused, match="^PERMISSION_DENIED$"):
             store.resource(KEY, admission=admission)
         assert statements == [] and not db.in_transaction
-    assert not core_called and not policy.calls
+    assert not repository_called and not policy.calls
 
 
 class SubstitutionAttackPolicy:
@@ -301,7 +301,7 @@ def test_foreign_policy_service_cannot_supply_coordinator_authority(tmp_path, bo
     coordinator._open = lambda role: events.append(role)
     with pytest.raises(AdmissionRefused, match="^PERMISSION_DENIED$"):
         coordinator.admit(
-            lambda tx: events.append("core"),
+            lambda tx: events.append("repository"),
             lambda tx: events.append("context"),
             authorization=attack_service,
             admission=attack_context,

@@ -8,9 +8,9 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite import core_recovery as recovery
+from repo_catalog.adapters.sqlite import repository_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.recovery import RecoveryBudget
 from tests.integration.p7.conftest import merge_preflight_input_bytes
 
@@ -28,7 +28,7 @@ def test_nominal_metadata_cannot_bypass_single_unit_ceiling(
 ):
     import sqlite3
 
-    with sqlite3.connect(restored_catalog / "core.sqlite3") as conn:
+    with sqlite3.connect(restored_catalog / "repository.sqlite3") as conn:
         if table == "git_objects":
             oid = (
                 conn.execute("SELECT object_oid FROM git_objects LIMIT 1").fetchone()[0]
@@ -80,7 +80,7 @@ def test_base64_budget_refusal_precedes_decoder(monkeypatch):
 
     monkeypatch.setattr(recovery.base64, "b64decode", forbidden_decoder)
     work = recovery.RecoveryWorkBudget(work_limits={"input_bytes": 1})
-    with pytest.raises(CoreFailure, match="budget"):
+    with pytest.raises(RepositoryFailure, match="budget"):
         recovery._decode_bounded_base64("A" * 1336, 2000, work)
     assert work.usage["input_bytes"] == 0
 
@@ -98,7 +98,7 @@ def test_context_encoding_reserves_decoded_input_before_allocation():
             pytest.fail("unreserved Context UTF-8 allocation")
 
     work = recovery.RecoveryWorkBudget(work_limits={"input_bytes": 1})
-    with pytest.raises(CoreFailure, match="budget"):
+    with pytest.raises(RepositoryFailure, match="budget"):
         recovery._bounded_utf8(ForbiddenText("xx"), 10, work)
     assert work.usage["input_bytes"] == 0
 

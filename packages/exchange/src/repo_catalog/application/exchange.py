@@ -7,7 +7,7 @@ Enforces:
 - Untrusted package import: re-verifies every native object, note proof, note inventory,
   and text body digest; rejects ordinary file blobs (`RETENTION_PURPOSE`); never trusts
   sender-claimed `intrinsic` / `receiver_intrinsic` rows without accompanying verified bytes;
-  evaluates `core_references` against the receiver's actual `core.sqlite3`; and records
+  evaluates `repository_references` against the receiver's actual `repository.sqlite3`; and records
   package receipts only in `operational.sqlite3`.
 """
 
@@ -33,7 +33,7 @@ from repo_catalog.adapters.sqlite.catalog_runtime import (
     catalog_completion,
     catalog_gate,
 )
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.exchange import (
     ExchangeError,
@@ -42,7 +42,7 @@ from repo_catalog.domain.exchange import (
     ExchangeSelectionScope,
     decode_package,
     empty_context_section,
-    empty_core_section,
+    empty_repository_section,
     require_context,
 )
 from repo_catalog.domain.git_native import DECODER, DECODER_VERSION, parse_metadata
@@ -56,16 +56,17 @@ from repo_catalog.domain.p1_coordination import (
     CoordinationError,
     RequestIdentity,
 )
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
-    CoreFailure,
     GitObservation,
     NativeObject,
     Provenance,
     RelationGroup,
     RelationMember,
     RepositoryClaim,
+    RepositoryCoverageScope,
+    RepositoryFailure,
     ScalarClaim,
     _performed,
     account_verification,
@@ -75,11 +76,10 @@ from repo_catalog.domain.p1_core import (
     valid_coverage_members,
     valid_group,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
-from repo_catalog.domain.ports.p1_core import WorkBudget
+from repo_catalog.domain.ports.p1_repository import WorkBudget
 from repo_catalog.domain.scalar_wire import encode_scalar_row, scalar_value_json
 from repo_catalog.domain.selective_exchange import (
-    CorePreflight,
+    RepositoryPreflight,
     bound_sections,
     expand_resources,
     explicit_scope,
@@ -110,7 +110,7 @@ def _recomputed_intrinsic_keys(
 ) -> tuple[
     set[tuple[str, str, str, str, str]], set[tuple[str, str, str, str, str, str]]
 ]:
-    """Compute exact (object_format, object_oid, ...) keys that GitCore.admit_metadata generates."""
+    """Compute exact (object_format, object_oid, ...) keys that GitRepository.admit_metadata generates."""
     claim_keys: set[tuple[str, str, str, str, str]] = set()
     group_keys: set[tuple[str, str, str, str, str, str]] = set()
 
@@ -235,7 +235,7 @@ class _ReceiveWork:
     def _check(self, amount):
         spent = self._work.ledger.usage(self._work.request)
         if spent["metadata_units"] + spent["proof_steps"] + amount > self._limit:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "BUDGET",
                 "exchange_work",
                 "finite cumulative receive processing limit",
@@ -277,8 +277,8 @@ class ExchangeService:
         self.admission = admission
         self.grants = grants
 
-    def _has_core(self) -> bool:
-        return (self.directory / "core.sqlite3").is_file()
+    def _has_repository(self) -> bool:
+        return (self.directory / "repository.sqlite3").is_file()
 
     def _has_context(self) -> bool:
         return (self.directory / "context.sqlite3").is_file()
@@ -306,18 +306,18 @@ class ExchangeService:
 
     def _store_identity(self, *, validation_work=None) -> tuple[str, str]:
         self._check_stop()
-        core_identity = None
-        if self._has_core():
-            core = GitCore(self.directory / "core.sqlite3")
+        repository_identity = None
+        if self._has_repository():
+            repository_store = GitRepositoryStore(self.directory / "repository.sqlite3")
             try:
-                core_identity = core.catalog_identity()
+                repository_identity = repository_store.catalog_identity()
             finally:
-                core.close()
+                repository_store.close()
             with catalog_completion(self.directory):
                 self._check_stop()
         if not self._has_context():
-            if core_identity is not None:
-                return core_identity
+            if repository_identity is not None:
+                return repository_identity
             raise CoordinationError("AUTHORITY_UNAVAILABLE", "catalog")
         if self._has_context():
             require_context()
@@ -329,8 +329,8 @@ class ExchangeService:
                 if len(rows) != 1 or rows[0][0] != "context":
                     raise CoordinationError("STORE_IDENTITY", "context")
                 pair = (uuid4_value(rows[0][1]), uuid4_value(rows[0][2]))
-                if core_identity is not None and pair != core_identity:
-                    raise CoordinationError("PAIR_IDENTITY", "core+context")
+                if repository_identity is not None and pair != repository_identity:
+                    raise CoordinationError("PAIR_IDENTITY", "repository+context")
                 identity.append(pair)
 
             limits = (
@@ -355,7 +355,9 @@ class ExchangeService:
             except _ContextCallbackFailure as error:
                 if (
                     identity
-                    and isinstance(error.original, (CoreFailure, CoordinationError))
+                    and isinstance(
+                        error.original, (RepositoryFailure, CoordinationError)
+                    )
                     and error.original.code in ("BUDGET", "QUERY_BUDGET")
                 ):
                     raise _IdentityBudgetRefusal(identity[0]) from error.original
@@ -372,7 +374,7 @@ class ExchangeService:
                 ):
                     raise _IdentityBudgetRefusal(identity[0]) from error
                 raise
-            return core_identity or identity[0]
+            return repository_identity or identity[0]
 
     @contextmanager
     def _open_operational(
@@ -427,7 +429,7 @@ class ExchangeService:
         package_id: str | None = None,
         exported_at_us: int | None = None,
     ) -> ExchangePackage:
-        """Export a verification-checked ExchangePackage from Core and/or Context."""
+        """Export a verification-checked ExchangePackage from Repository and/or Context."""
         with catalog_gate(self.directory, exclusive=False):
             self._check_stop()
             scope = selection or ExchangeSelectionScope()
@@ -435,7 +437,7 @@ class ExchangeService:
             if (
                 scope.include_context
                 and not self._has_context()
-                and not self._has_core()
+                and not self._has_repository()
             ):
                 from repo_catalog.domain.context_admission import AdmissionRefused
 
@@ -481,8 +483,8 @@ class ExchangeService:
                         repository_uuidv4=repo_uuid,
                         selection_scope=scope,
                         selection_report=self._selection_details,
-                        core=empty_core_section()
-                        if scope.include_core and self._has_core()
+                        repository_store=empty_repository_section()
+                        if scope.include_repository and self._has_repository()
                         else None,
                         context=empty_context_section()
                         if scope.include_context and self._has_context()
@@ -512,7 +514,7 @@ class ExchangeService:
                     self._selection_details["omissions"].append(
                         {"section": "context", "reason": "work_limit"}
                     )
-                except CoreFailure as error:
+                except RepositoryFailure as error:
                     if error.code not in ("BUDGET", "QUERY_BUDGET"):
                         raise
                     context_section = empty_context_section()
@@ -520,14 +522,16 @@ class ExchangeService:
                         {"section": "context", "reason": "resource_limit"}
                     )
 
-            core_section: dict[str, list[dict[str, Any]]] | None = None
-            if scope.include_core and self._has_core():
+            repository_section: dict[str, list[dict[str, Any]]] | None = None
+            if scope.include_repository and self._has_repository():
                 try:
                     with account_verification(self._export_work):
-                        core_scope = self._expand_core_selection(
+                        repository_scope = self._expand_repository_selection(
                             role_check_dependencies(context_section, scope)
                         )
-                        core_section = self._export_core(core_scope, sender_instance)
+                        repository_section = self._export_repository(
+                            repository_scope, sender_instance
+                        )
                 except (sqlite3.OperationalError, CoordinationError) as error:
                     if (
                         getattr(error, "sqlite_errorcode", None)
@@ -535,17 +539,17 @@ class ExchangeService:
                         and getattr(error, "code", None) != "QUERY_BUDGET"
                     ):
                         raise
-                    core_section = empty_core_section()
+                    repository_section = empty_repository_section()
                     self._selection_details["omissions"].append(
-                        {"section": "core", "reason": "work_limit"}
+                        {"section": "repository", "reason": "work_limit"}
                     )
-                except CoreFailure as error:
+                except RepositoryFailure as error:
                     if error.code not in ("BUDGET", "QUERY_BUDGET"):
                         raise
-                    core_section = empty_core_section()
+                    repository_section = empty_repository_section()
                     self._selection_details["omissions"].append(
                         {
-                            "section": "core",
+                            "section": "repository",
                             "reason": "work_limit"
                             if error.scope == "ref-exchange"
                             and "cumulative export work" in str(error)
@@ -556,22 +560,22 @@ class ExchangeService:
             with account_verification(self._export_work):
                 self._selection_details["omissions"].extend(
                     filter_sections(
-                        core_section,
+                        repository_section,
                         context_section,
                         scope,
                     )
                 )
                 limited, counts = bound_sections(
-                    core_section, context_section, scope, work=self._export_work
+                    repository_section, context_section, scope, work=self._export_work
                 )
                 self._selection_details["omissions"].extend(limited)
                 self._selection_details.update(counts)
                 self._selection_details["omissions"].extend(
-                    filter_sections(core_section, context_section, scope)
+                    filter_sections(repository_section, context_section, scope)
                 )
             self._selection_details["emitted_units"] = sum(
                 len(rows)
-                for data in (core_section, context_section)
+                for data in (repository_section, context_section)
                 if data is not None
                 for rows in data.values()
             )
@@ -581,7 +585,7 @@ class ExchangeService:
                         row, ensure_ascii=False, sort_keys=True, separators=(",", ":")
                     ).encode()
                 )
-                for data in (core_section, context_section)
+                for data in (repository_section, context_section)
                 if data is not None
                 for rows in data.values()
                 for row in rows
@@ -597,11 +601,11 @@ class ExchangeService:
                 ],
                 "repositories": [
                     r["repository_uuidv4"]
-                    for r in (core_section or {}).get("repositories", [])
+                    for r in (repository_section or {}).get("repositories", [])
                 ],
                 "objects": [
                     [r["object_format"], r["object_oid"]]
-                    for r in (core_section or {}).get("git_objects", [])
+                    for r in (repository_section or {}).get("git_objects", [])
                 ],
                 "resources": [
                     [
@@ -644,21 +648,23 @@ class ExchangeService:
                         repository_uuidv4=repo_uuid,
                         selection_scope=scope,
                         selection_report=self._selection_details,
-                        core=core_section,
+                        repository_store=repository_section,
                         context=context_section,
                     )
 
-    def _expand_core_selection(self, scope):
+    def _expand_repository_selection(self, scope):
         if scope.object_oids is None:
             return scope
         chosen = set(scope.object_oids)
         frontier = chosen.copy()
-        with closing(GitCore(self.directory / "core.sqlite3")) as core:
-            self._bound_export_connection(core._db)
+        with closing(
+            GitRepositoryStore(self.directory / "repository.sqlite3")
+        ) as repository_store:
+            self._bound_export_connection(repository_store._db)
             for depth in range(scope.max_depth):
                 added = set()
                 for owner in sorted(frontier, key=lambda object_oid: object_oid.key):
-                    for row in core.exchange_metadata_rows(
+                    for row in repository_store.exchange_metadata_rows(
                         "relation_membership", owner.key, self._export_work
                     ):
 
@@ -685,13 +691,15 @@ class ExchangeService:
                             return targets
 
                         if type(row[3]) is not str or type(row[4]) is not str:
-                            core._integrity_stop(
+                            repository_store._integrity_stop(
                                 (owner, "invalid relation metadata type")
                             )
                         size = len(row[3]) + len(row[4])
                         self._export_work.require("input_bytes", 13 * size + 2)
                         try:
-                            targets = core._stored(owner, stored_members, row)
+                            targets = repository_store._stored(
+                                owner, stored_members, row
+                            )
                         except BaseException:
                             self._export_work.abandon("input_bytes")
                             raise
@@ -707,7 +715,7 @@ class ExchangeService:
                                         "reason": "unit_limit",
                                     }
                                 )
-                            elif not core.sql(
+                            elif not repository_store.sql(
                                 "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                                 target.key,
                             ):
@@ -743,32 +751,32 @@ class ExchangeService:
     def _bound_export_connection(self, db):
         db.set_progress_handler(lambda: self._export_steps(100), 100)
 
-    def _export_core(
+    def _export_repository(
         self,
         scope: ExchangeSelectionScope,
         sender_instance: str,
     ) -> dict[str, list[dict[str, Any]]]:
-        section = empty_core_section()
+        section = empty_repository_section()
         selected_oids = None if scope.object_oids is None else set(scope.object_oids)
 
-        core = GitCore(self.directory / "core.sqlite3")
+        repository_store = GitRepositoryStore(self.directory / "repository.sqlite3")
         try:
-            self._bound_export_connection(core._db)
-            core.ensure_available()
-            with core._snapshot():
+            self._bound_export_connection(repository_store._db)
+            repository_store.ensure_available()
+            with repository_store._snapshot():
                 from repo_catalog.application.ref_exchange import export_ref_units
 
                 ref_work = self._export_work
                 with account_verification(ref_work):
                     referenced_oids: set[OID] = export_ref_units(
-                        core,
+                        repository_store,
                         section,
                         scope,
                         ref_work,
                         self._selection_details["omissions"],
                     )
 
-                for row in core.exchange_metadata_rows(
+                for row in repository_store.exchange_metadata_rows(
                     "repositories",
                     (),
                     ref_work,
@@ -776,19 +784,21 @@ class ExchangeService:
                     if scope.repository_uuidv4s is None
                     else tuple((key,) for key in scope.repository_uuidv4s),
                 ):
-                    core._stored("repository", uuid4_value, row[0])
+                    repository_store._stored("repository", uuid4_value, row[0])
                     section["repositories"].append({"repository_uuidv4": row[0]})
 
                 for name in (
                     "repository_identity_assertions",
                     "repository_identity_cancellations",
                 ):
-                    for values in core.exchange_metadata_rows(name, (), ref_work):
+                    for values in repository_store.exchange_metadata_rows(
+                        name, (), ref_work
+                    ):
                         row = dict(zip(identity_columns(name), values, strict=True))
                         size = sum(len(value) for value in values)
                         ref_work.require("input_bytes", 13 * size + 2)
                         try:
-                            core._stored(
+                            repository_store._stored(
                                 "identity Exchange evidence",
                                 decode_identity_row,
                                 name,
@@ -800,7 +810,7 @@ class ExchangeService:
                         ref_work.charge("input_bytes", 4 * size)
                         section[name].append(row)
 
-                for row in core.exchange_metadata_rows(
+                for row in repository_store.exchange_metadata_rows(
                     "repository_claims",
                     (),
                     ref_work,
@@ -821,11 +831,15 @@ class ExchangeService:
                         return claim
 
                     if type(row[2]) is not str or type(row[3]) is not str:
-                        core._integrity_stop(("repository claim", "invalid JSON type"))
+                        repository_store._integrity_stop(
+                            ("repository claim", "invalid JSON type")
+                        )
                     size = len(row[2]) + len(row[3])
                     ref_work.require("input_bytes", 13 * size + 2)
                     try:
-                        core._stored("repository claim", stored_repository_claim, row)
+                        repository_store._stored(
+                            "repository claim", stored_repository_claim, row
+                        )
                     except BaseException:
                         ref_work.abandon("input_bytes")
                         raise
@@ -839,8 +853,8 @@ class ExchangeService:
                         }
                     )
 
-                # Verify all retained_metadata rows via core.read_metadata(oid)
-                meta_rows = core.exchange_metadata_rows(
+                # Verify all retained_metadata rows via repository.read_metadata(oid)
+                meta_rows = repository_store.exchange_metadata_rows(
                     "retained_metadata",
                     (),
                     ref_work,
@@ -850,7 +864,9 @@ class ExchangeService:
                 )
                 for row in meta_rows:
                     if type(row[4]) is not int or row[4] < 0:
-                        core._integrity_stop(("retained metadata", "invalid size"))
+                        repository_store._integrity_stop(
+                            ("retained metadata", "invalid size")
+                        )
                     if row[4] > scope.max_bytes:
                         self._selection_details["omissions"].append(
                             {
@@ -860,11 +876,17 @@ class ExchangeService:
                             }
                         )
                         continue
-                    object_oid = core._stored("retained metadata", OID, row[0], row[1])
+                    object_oid = repository_store._stored(
+                        "retained metadata", OID, row[0], row[1]
+                    )
                     if selected_oids is not None and object_oid not in selected_oids:
                         continue
-                    copy = core._stored("retained metadata", uuid4_value, row[2])
-                    actual = core.read_metadata_copy(object_oid, copy, ref_work)
+                    copy = repository_store._stored(
+                        "retained metadata", uuid4_value, row[2]
+                    )
+                    actual = repository_store.read_metadata_copy(
+                        object_oid, copy, ref_work
+                    )
                     if tuple(
                         actual[name]
                         for name in (
@@ -876,7 +898,7 @@ class ExchangeService:
                             "digest_sha256",
                         )
                     ) != tuple(row):
-                        core._integrity_stop(
+                        repository_store._integrity_stop(
                             (object_oid, copy, "changed metadata copy")
                         )
                     body = actual["body"]
@@ -894,7 +916,7 @@ class ExchangeService:
                             }
                         )
 
-                claim_rows = core.exchange_metadata_rows(
+                claim_rows = repository_store.exchange_metadata_rows(
                     "scalar_claims",
                     (),
                     ref_work,
@@ -903,11 +925,13 @@ class ExchangeService:
                     else tuple(sorted(oid.key for oid in selected_oids)),
                 )
                 for row in claim_rows:
-                    object_oid = core._stored("scalar claim", OID, row[0], row[1])
+                    object_oid = repository_store._stored(
+                        "scalar claim", OID, row[0], row[1]
+                    )
                     if selected_oids is not None and object_oid not in selected_oids:
                         continue
                     # Run typed scalar projection check on this field
-                    core.scalar(object_oid, row[2])
+                    repository_store.scalar(object_oid, row[2])
                     referenced_oids.add(object_oid)
                     is_checked = bool(row[5])
                     if is_checked and not scope.include_retained_bytes:
@@ -946,7 +970,7 @@ class ExchangeService:
                         section["scalar_claims"][-1]
                     )
 
-                group_rows = core.exchange_metadata_rows(
+                group_rows = repository_store.exchange_metadata_rows(
                     "relation_groups",
                     (),
                     ref_work,
@@ -955,10 +979,12 @@ class ExchangeService:
                     else tuple(sorted(oid.key for oid in selected_oids)),
                 )
                 for row in group_rows:
-                    object_oid = core._stored("relation group", OID, row[0], row[1])
+                    object_oid = repository_store._stored(
+                        "relation group", OID, row[0], row[1]
+                    )
                     if selected_oids is not None and object_oid not in selected_oids:
                         continue
-                    core.relations(object_oid, row[2], row[3])
+                    repository_store.relations(object_oid, row[2], row[3])
                     referenced_oids.add(object_oid)
                     for m in json.loads(row[5]):
                         referenced_oids.add(OID(m[1], m[2]))
@@ -999,7 +1025,7 @@ class ExchangeService:
                             }
                         )
 
-                for row in core.exchange_metadata_rows(
+                for row in repository_store.exchange_metadata_rows(
                     "git_observations", (), ref_work
                 ):
 
@@ -1036,11 +1062,15 @@ class ExchangeService:
                         return observation
 
                     if any(type(row[index]) is not str for index in (4, 5, 6)):
-                        core._integrity_stop(("Git observation", "invalid JSON type"))
+                        repository_store._integrity_stop(
+                            ("Git observation", "invalid JSON type")
+                        )
                     size = sum(len(row[index]) for index in (4, 5, 6))
                     ref_work.require("input_bytes", 13 * size + 2)
                     try:
-                        core._stored("Git observation", stored_git_observation, row)
+                        repository_store._stored(
+                            "Git observation", stored_git_observation, row
+                        )
                     except BaseException:
                         ref_work.abandon("input_bytes")
                         raise
@@ -1078,7 +1108,7 @@ class ExchangeService:
                     for repository in section["repositories"]:
                         add_prefix("repository", (repository["repository_uuidv4"],))
                     prefixes = tuple(sorted(prefix_set))
-                cov_scope_rows = core.exchange_metadata_rows(
+                cov_scope_rows = repository_store.exchange_metadata_rows(
                     "coverage_scopes", (), ref_work, prefixes=prefixes
                 )
                 scopes_by_key = {}
@@ -1087,7 +1117,7 @@ class ExchangeService:
                     coordinates = json.loads(row[1])
                     if type(coordinates) is not list:
                         raise ValueError("Coverage coordinates must be a list")
-                    stored = CoreCoverageScope(row[0], tuple(coordinates))
+                    stored = RepositoryCoverageScope(row[0], tuple(coordinates))
                     if (
                         stored.encoded != row["owner_coordinates_json"]
                         or stored.coordinates[-1] != row["coverage_kind"]
@@ -1127,12 +1157,14 @@ class ExchangeService:
                     # Validate the actual stored identity, including its
                     # denormalized coordinates, before selection uses it.
                     if type(row[1]) is not str:
-                        core._integrity_stop(
+                        repository_store._integrity_stop(
                             ("coverage scope", "invalid coordinates type")
                         )
                     ref_work.require("input_bytes", 13 * len(row[1]) + 2)
                     try:
-                        c_scope = core._stored("coverage scope", stored_scope, row)
+                        c_scope = repository_store._stored(
+                            "coverage scope", stored_scope, row
+                        )
                     except BaseException:
                         ref_work.abandon("input_bytes")
                         raise
@@ -1148,7 +1180,7 @@ class ExchangeService:
                         and c_scope.coordinates[:2] not in exported_ref_keys
                     ):
                         continue
-                    core.coverage(c_scope, ref_work)
+                    repository_store.coverage(c_scope, ref_work)
                     exported_cov_scopes.add((row[0], row[1]))
                     scopes_by_key[(row[0], row[1])] = c_scope
                     section["coverage_scopes"].append(
@@ -1158,7 +1190,7 @@ class ExchangeService:
                         }
                     )
 
-                for row in core.exchange_metadata_rows(
+                for row in repository_store.exchange_metadata_rows(
                     "coverage_claims",
                     (),
                     ref_work,
@@ -1169,11 +1201,13 @@ class ExchangeService:
                     # Latest-state projection does not validate older claims.
                     # Preserve and validate every exported historical claim.
                     if row[4] is not None and type(row[4]) is not str:
-                        core._integrity_stop(("coverage claim", "invalid details type"))
+                        repository_store._integrity_stop(
+                            ("coverage claim", "invalid details type")
+                        )
                     details_size = len(row[4]) if row[4] is not None else 0
                     ref_work.require("input_bytes", 13 * details_size + 2)
                     try:
-                        core._stored(
+                        repository_store._stored(
                             "coverage claim",
                             CoverageClaim,
                             scopes_by_key[(row[0], row[1])],
@@ -1208,7 +1242,7 @@ class ExchangeService:
                         or row["coverage_state"] != "complete"
                     ):
                         continue
-                    c_scope = CoreCoverageScope(
+                    c_scope = RepositoryCoverageScope(
                         row["owner_kind"],
                         tuple(json.loads(row["owner_coordinates_json"])),
                     )
@@ -1219,7 +1253,7 @@ class ExchangeService:
                     c_claim = CoverageClaim(
                         c_scope, row["observed_at_us"], row["coverage_state"]
                     )
-                    for proof in core.ref_coverage_proofs(
+                    for proof in repository_store.ref_coverage_proofs(
                         c_claim,
                         ref_work,
                         max_proofs=max(1, scope.max_units),
@@ -1267,7 +1301,7 @@ class ExchangeService:
                     )
                     for row in section["coverage_claims"]
                 }
-                for row in core.exchange_metadata_rows(
+                for row in repository_store.exchange_metadata_rows(
                     "coverage_proofs",
                     (),
                     ref_work,
@@ -1277,13 +1311,17 @@ class ExchangeService:
                         continue
                     c_scope = scopes_by_key[(row[0], row[1])]
                     if tuple(row[:4]) not in exported_cov_claims:
-                        core._integrity_stop((c_scope, "missing Coverage proof claim"))
+                        repository_store._integrity_stop(
+                            (c_scope, "missing Coverage proof claim")
+                        )
                     if c_scope.owner_kind == "ref_observation":
-                        core._integrity_stop(
+                        repository_store._integrity_stop(
                             (c_scope, "unsupported generic ref Coverage proof")
                         )
                     if type(row[4]) is not str or type(row[5]) is not str:
-                        core._integrity_stop((c_scope, "invalid Coverage proof type"))
+                        repository_store._integrity_stop(
+                            (c_scope, "invalid Coverage proof type")
+                        )
 
                     def stored_proof(value):
                         CoverageClaim(c_scope, value[2], value[3])
@@ -1309,17 +1347,17 @@ class ExchangeService:
                     input_size = len(row[4]) + len(row[5])
                     ref_work.require("input_bytes", 13 * input_size + 2)
                     try:
-                        members = core._stored(c_scope, stored_proof, row)
+                        members = repository_store._stored(c_scope, stored_proof, row)
                     except BaseException:
                         ref_work.abandon("input_bytes")
                         raise
                     ref_work.charge("input_bytes", 2 * input_size)
                     for m in members:
-                        if not core.sql(
+                        if not repository_store.sql(
                             "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                             m.key,
                         ):
-                            core._integrity_stop(
+                            repository_store._integrity_stop(
                                 (c_scope, "missing Coverage proof member", m.key)
                             )
                         referenced_oids.add(m)
@@ -1334,7 +1372,7 @@ class ExchangeService:
                         }
                     )
 
-                for row in core.exchange_metadata_rows(
+                for row in repository_store.exchange_metadata_rows(
                     "git_objects",
                     (),
                     ref_work,
@@ -1344,7 +1382,9 @@ class ExchangeService:
                         sorted(oid.key for oid in selected_oids | referenced_oids)
                     ),
                 ):
-                    object_oid = core._stored("git object", OID, row[0], row[1])
+                    object_oid = repository_store._stored(
+                        "git object", OID, row[0], row[1]
+                    )
                     if (
                         selected_oids is not None
                         and object_oid not in selected_oids
@@ -1357,7 +1397,7 @@ class ExchangeService:
 
                 return section
         finally:
-            core.close()
+            repository_store.close()
 
     def _export_context(
         self,
@@ -1419,7 +1459,7 @@ class ExchangeService:
                             isinstance(error, ExchangeError)
                             and error.code == "INPUT_LIMIT"
                         ):
-                            raise CoreFailure(
+                            raise RepositoryFailure(
                                 "QUERY_BUDGET", name, "finite Context row limit"
                             ) from error
                         if isinstance(error, (ValueError, TypeError, RecursionError)):
@@ -1942,7 +1982,7 @@ class ExchangeService:
                 )
 
             cr_rows = ctx._exchange_metadata_rows(
-                "core_references",
+                "repository_references",
                 self._export_work,
                 keys=tuple(sorted(key.coordinates() for key in included_rks)),
             )
@@ -1950,8 +1990,8 @@ class ExchangeService:
                 rk = ResourceKey(row[0], row[1], row[2])
                 if rk not in included_rks:
                     continue
-                ctx.core_dependencies(rk)
-                section["core_references"].append(
+                ctx.repository_dependencies(rk)
+                section["repository_references"].append(
                     {
                         "service_instance_uuidv4": row[0],
                         "resource_kind": row[1],
@@ -2235,9 +2275,9 @@ class ExchangeService:
         admission: Any = None,
         grants: Any = None,
     ) -> ExchangeImportReport:
-        """Validate and import an ExchangePackage into Core and/or Context."""
+        """Validate and import an ExchangePackage into Repository and/or Context."""
         self._check_stop()
-        from repo_catalog.domain.p1_core import uuid4_value
+        from repo_catalog.domain.p1_repository import uuid4_value
 
         if not isinstance(permitted_repository_uuidv4s, tuple):
             raise ExchangeError("INVALID_PERMISSION", "repositories")
@@ -2419,7 +2459,7 @@ class ExchangeService:
         import json
 
         from repo_catalog.domain.p1_context import ResourceKey
-        from repo_catalog.domain.p1_core import OID
+        from repo_catalog.domain.p1_repository import OID
         from repo_catalog.domain.selective_exchange import (
             disposition as decode_disposition,
         )
@@ -2529,7 +2569,7 @@ class ExchangeService:
                 except Exception:
                     pass
 
-        for ref in context_data.get("core_references", ()):
+        for ref in context_data.get("repository_references", ()):
             fmt = ref.get("object_format")
             object_oid = ref.get("object_oid")
             if fmt and object_oid:
@@ -2634,11 +2674,11 @@ class ExchangeService:
 
         active_work = work
 
-        want_core = (
-            package.core is not None
-            and package.selection_scope.include_core
-            and selection.include_core
-            and self._has_core()
+        want_repository = (
+            package.repository_store is not None
+            and package.selection_scope.include_repository
+            and selection.include_repository
+            and self._has_repository()
         )
         want_context = (
             package.context is not None
@@ -2650,10 +2690,14 @@ class ExchangeService:
         with account_verification(active_work):
             from repo_catalog.domain.exchange_rows import validate_replay_consistency
 
-            validate_replay_consistency(package.core, package.context)
-            if package.core is not None:
-                self._prevalidate_core_section(package.core, active_work)
-                self._import_core_units(CorePreflight(), package.core, active_work)
+            validate_replay_consistency(package.repository_store, package.context)
+            if package.repository_store is not None:
+                self._prevalidate_repository_section(
+                    package.repository_store, active_work
+                )
+                self._import_repository_units(
+                    RepositoryPreflight(), package.repository_store, active_work
+                )
             if package.context is not None:
                 if want_context:
                     from repo_catalog.domain.selective_exchange import (
@@ -2676,16 +2720,19 @@ class ExchangeService:
             and not self._has_context()
         ):
             raise ExchangeError("CONTEXT_UNAVAILABLE", "identity_evidence")
-        core_data = copy.deepcopy(package.core)
+        repository_data = copy.deepcopy(package.repository_store)
         context_data = copy.deepcopy(package.context)
         with account_verification(active_work):
             omissions = filter_sections(
-                core_data, context_data, package.selection_scope, permitted=permitted
+                repository_data,
+                context_data,
+                package.selection_scope,
+                permitted=permitted,
             )
             if selection != package.selection_scope:
                 omissions.extend(
                     filter_sections(
-                        core_data, context_data, selection, permitted=permitted
+                        repository_data, context_data, selection, permitted=permitted
                     )
                 )
         # Fence the receiver-selected atomic unit before dependency rewriting,
@@ -2696,25 +2743,31 @@ class ExchangeService:
             preflight_i2_context(context_data)
         with account_verification(active_work):
             limited, _ = bound_sections(
-                core_data, context_data, selection, work=active_work
+                repository_data, context_data, selection, work=active_work
             )
             omissions.extend(limited)
             omissions.extend(
-                filter_sections(core_data, context_data, selection, permitted=permitted)
+                filter_sections(
+                    repository_data, context_data, selection, permitted=permitted
+                )
             )
         # Nothing outside the receiver permission can enter even when it is a
         # required dependency of an otherwise selected unit.
         self._receive_selection = selection
         self._dependency_rows = 0
-        if core_data is not None and self._has_core():
+        if repository_data is not None and self._has_repository():
             omissions.extend(
-                self._preflight_ref_receiver(core_data, active_work, selection)
+                self._preflight_ref_receiver(repository_data, active_work, selection)
             )
         read_bound = 4 * max(10000, selection.max_units)
         active_work.require("metadata_units", read_bound)
         try:
-            if core_data is not None and any(core_data.values()) and self._has_core():
-                omissions.extend(self._core_dependencies(core_data))
+            if (
+                repository_data is not None
+                and any(repository_data.values())
+                and self._has_repository()
+            ):
+                omissions.extend(self._repository_dependencies(repository_data))
             if (
                 context_data is not None
                 and any(context_data.values())
@@ -2737,8 +2790,8 @@ class ExchangeService:
         cut("after_package_binding")
         prior_receipt = None
 
-        core_stats: dict[str, Any] = {
-            "admitted_core_objects": 0,
+        repository_stats: dict[str, Any] = {
+            "admitted_repository_objects": 0,
             "admitted_retained_metadata": 0,
             "admitted_note_roles": 0,
             "admitted_retained_notes": 0,
@@ -2748,19 +2801,21 @@ class ExchangeService:
         }
         ctx_stats: dict[str, Any] = {
             "admitted_context_resources": 0,
-            "linked_core_references": 0,
-            "pending_core_references": 0,
+            "linked_repository_references": 0,
+            "pending_repository_references": 0,
             "new_rows": 0,
         }
 
-        checkpoint_written = {"core": False, "context": False}
+        checkpoint_written = {"repository": False, "context": False}
 
         def checkpoint(point):
             cut(point)
-            if point in ("after_core_commit", "after_context_commit"):
-                stage = "core" if point == "after_core_commit" else "context"
+            if point in ("after_repository_commit", "after_context_commit"):
+                stage = (
+                    "repository" if point == "after_repository_commit" else "context"
+                )
                 cut("before_" + stage + "_checkpoint")
-                stats = core_stats if stage == "core" else ctx_stats
+                stats = repository_stats if stage == "repository" else ctx_stats
                 ledger.work_ledger.set_progress_once(
                     request,
                     encode(
@@ -2778,12 +2833,16 @@ class ExchangeService:
                 checkpoint_written[stage] = True
                 cut("after_" + stage + "_checkpoint")
 
-        if self._has_core() and self._has_context() and (want_core or want_context):
+        if (
+            self._has_repository()
+            and self._has_context()
+            and (want_repository or want_context)
+        ):
             auth = authorization if authorization is not None else self.authorization
             adm = admission if admission is not None else self.admission
             active_grants = grants if grants is not None else self.grants
             if want_context:
-                admit_selection = replace(selection, include_core=True)
+                admit_selection = replace(selection, include_repository=True)
                 if auth is None or adm is None:
                     if not permitted and active_grants is None:
                         from repo_catalog.domain.context_admission import (
@@ -2812,11 +2871,15 @@ class ExchangeService:
 
             coordinator = PairCoordinator(self.directory, authorization=auth)
 
-            def _core_unit(core_tx: AdmissionTransaction) -> None:
-                if want_core and package.core is not None:
-                    with GitCore.for_transaction(core_tx) as core_cap:  # type: ignore[arg-type]
-                        core_stats.update(
-                            self._import_core_into(core_cap, core_data, active_work)
+            def _repository_unit(repository_tx: AdmissionTransaction) -> None:
+                if want_repository and package.repository_store is not None:
+                    with GitRepositoryStore.for_transaction(
+                        repository_tx
+                    ) as repository_cap:  # type: ignore[arg-type]
+                        repository_stats.update(
+                            self._import_repository_into(
+                                repository_cap, repository_data, active_work
+                            )
                         )
 
             def _context_unit(context_tx: AdmissionTransaction) -> None:
@@ -2833,14 +2896,14 @@ class ExchangeService:
                             self._import_context_accounted(
                                 ctx_cap,
                                 context_data,
-                                self._core_validator_on_disk(),
+                                self._repository_validator_on_disk(),
                                 active_work,
                             )
                         )
 
             try:
                 coordinator.admit(
-                    _core_unit,
+                    _repository_unit,
                     _context_unit,
                     cut=checkpoint,
                     authorization=auth,
@@ -2859,27 +2922,33 @@ class ExchangeService:
                         ]
                     ),
                     {
-                        "core_committed": error.outcome.core_committed,
+                        "repository_committed": error.outcome.repository_committed,
                         "context_committed": error.outcome.context_committed,
                     },
                 )
                 raise
-        elif want_core and core_data is not None:
+        elif want_repository and repository_data is not None:
             with (
                 catalog_gate(self.directory, exclusive=True),
-                closing(connect(self.directory / "core.sqlite3", "core")) as db,
+                closing(
+                    connect(self.directory / "repository.sqlite3", "repository")
+                ) as db,
             ):
                 db.execute("BEGIN IMMEDIATE")
                 try:
-                    with GitCore.for_transaction(AdmissionTransaction(db)) as core_cap:
-                        core_stats.update(
-                            self._import_core_into(core_cap, core_data, active_work)
+                    with GitRepositoryStore.for_transaction(
+                        AdmissionTransaction(db)
+                    ) as repository_cap:
+                        repository_stats.update(
+                            self._import_repository_into(
+                                repository_cap, repository_data, active_work
+                            )
                         )
                     db.set_authorizer(None)
-                    checkpoint("before_core_commit")
+                    checkpoint("before_repository_commit")
                     with catalog_completion(self.directory):
                         db.commit()
-                    checkpoint("after_core_commit")
+                    checkpoint("after_repository_commit")
                 except BaseException as error:
                     rollback_after_failure(db, error)
                     raise
@@ -2889,7 +2958,7 @@ class ExchangeService:
             auth = authorization if authorization is not None else self.authorization
             adm = admission if admission is not None else self.admission
             active_grants = grants if grants is not None else self.grants
-            admit_selection = replace(selection, include_core=True)
+            admit_selection = replace(selection, include_repository=True)
             if auth is None or adm is None:
                 if not permitted and active_grants is None:
                     from repo_catalog.domain.context_admission import (
@@ -2917,7 +2986,7 @@ class ExchangeService:
                     self._import_context_accounted(
                         ctx_cap,
                         context_data,
-                        self._core_validator_on_disk(),
+                        self._repository_validator_on_disk(),
                         active_work,
                     )
                 )
@@ -2925,11 +2994,17 @@ class ExchangeService:
             checkpoint("after_context_commit")
 
         has_payload = bool(
-            (want_core and package.core and any(package.core.values()))
+            (
+                want_repository
+                and package.repository_store
+                and any(package.repository_store.values())
+            )
             or (want_context and package.context and any(package.context.values()))
         )
         is_replay = prior_receipt is not None or (
-            has_payload and core_stats["new_rows"] == 0 and ctx_stats["new_rows"] == 0
+            has_payload
+            and repository_stats["new_rows"] == 0
+            and ctx_stats["new_rows"] == 0
         )
 
         omissions.extend(ctx_stats.get("missing_refs", ()))
@@ -2938,24 +3013,24 @@ class ExchangeService:
             package_digest_sha256=digest,
             sender_catalog_instance_uuidv4=package.sender_catalog_instance_uuidv4,
             repository_uuidv4=package.repository_uuidv4,
-            core_imported=want_core,
+            repository_imported=want_repository,
             context_imported=want_context,
             idempotent_replay=is_replay,
-            admitted_core_objects=core_stats["admitted_core_objects"],
-            admitted_retained_metadata=core_stats["admitted_retained_metadata"],
-            admitted_note_roles=core_stats["admitted_note_roles"],
-            admitted_retained_notes=core_stats["admitted_retained_notes"],
-            ignored_unverified_intrinsic_claims=core_stats[
+            admitted_repository_objects=repository_stats["admitted_repository_objects"],
+            admitted_retained_metadata=repository_stats["admitted_retained_metadata"],
+            admitted_note_roles=repository_stats["admitted_note_roles"],
+            admitted_retained_notes=repository_stats["admitted_retained_notes"],
+            ignored_unverified_intrinsic_claims=repository_stats[
                 "ignored_unverified_intrinsic_claims"
             ],
-            ignored_unverified_intrinsic_groups=core_stats[
+            ignored_unverified_intrinsic_groups=repository_stats[
                 "ignored_unverified_intrinsic_groups"
             ],
             admitted_context_resources=ctx_stats["admitted_context_resources"],
-            linked_core_references=ctx_stats["linked_core_references"],
-            pending_core_references=ctx_stats["pending_core_references"],
+            linked_repository_references=ctx_stats["linked_repository_references"],
+            pending_repository_references=ctx_stats["pending_repository_references"],
             omissions=tuple(omissions),
-            core_checkpoint=checkpoint_written["core"],
+            repository_checkpoint=checkpoint_written["repository"],
             context_checkpoint=checkpoint_written["context"],
         )
 
@@ -2970,7 +3045,11 @@ class ExchangeService:
                     work.attempt_uuidv4,
                 ]
             ),
-            {"core": core_stats, "context": ctx_stats, "omitted_units": len(omissions)},
+            {
+                "repository": repository_stats,
+                "context": ctx_stats,
+                "omitted_units": len(omissions),
+            },
         )
         cut("after_summary")
 
@@ -2990,25 +3069,27 @@ class ExchangeService:
                 _performed("metadata_units", 1)
                 claims_by_subject.setdefault(identity[:2], []).append(claim)
             with closing(
-                GitCore(
-                    self.directory / "core.sqlite3", read_limits=self._read_limits()
+                GitRepositoryStore(
+                    self.directory / "repository.sqlite3",
+                    read_limits=self._read_limits(),
                 )
-            ) as core:
+            ) as repository_store:
                 for key, incoming in observations.items():
                     try:
-                        current = core.ref_observation(
+                        current = repository_store.ref_observation(
                             RefObservationKey(*key),
                             work,
                             max_claims=max(1, selection.max_units),
                             max_bytes=max(1, selection.max_bytes),
                         )
-                    except CoreFailure as error:
+                    except RepositoryFailure as error:
                         if error.code == "OBSERVATION_UNAVAILABLE":
                             continue
                         raise
                     if current.ref_observation != incoming:
                         raise ExchangeError(
-                            "IMMUTABLE_REPLAY_CONFLICT", ["core", "ref_observations"]
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["repository", "ref_observations"],
                         )
                     by_coordinate = {
                         existing.provenance.key[:3]: existing
@@ -3020,17 +3101,17 @@ class ExchangeService:
                         if previous is not None and previous != claim:
                             raise ExchangeError(
                                 "IMMUTABLE_REPLAY_CONFLICT",
-                                ["core", "ref_observation_claims"],
+                                ["repository", "ref_observation_claims"],
                             )
                 for key, incoming in events.items():
                     try:
-                        current = core.ref_enumeration(
+                        current = repository_store.ref_enumeration(
                             *key,
                             work,
                             max_links=max(1, selection.max_units),
                             max_bytes=max(1, selection.max_bytes),
                         )
-                    except CoreFailure as error:
+                    except RepositoryFailure as error:
                         if error.code == "ENUMERATION_UNAVAILABLE":
                             continue
                         raise
@@ -3039,18 +3120,18 @@ class ExchangeService:
                     if current.event != incoming or current.links != expected:
                         raise ExchangeError(
                             "IMMUTABLE_REPLAY_CONFLICT",
-                            ["core", "ref_enumeration_observations"],
+                            ["repository", "ref_enumeration_observations"],
                         )
                 for row in data["coverage_claims"]:
                     if row["owner_kind"] != "ref_observation":
                         continue
                     _performed("metadata_units", 1)
                     _performed("input_bytes", len(row["owner_coordinates_json"]))
-                    scope = CoreCoverageScope(
+                    scope = RepositoryCoverageScope(
                         row["owner_kind"],
                         tuple(json.loads(row["owner_coordinates_json"])),
                     )
-                    current = core.coverage(
+                    current = repository_store.coverage(
                         scope,
                         work,
                         max_proofs=max(1, selection.max_units),
@@ -3092,11 +3173,13 @@ class ExchangeService:
                 data[section] = kept
         return omissions
 
-    def _core_dependencies(self, data):
+    def _repository_dependencies(self, data):
         omissions = []
         with closing(
-            GitCore(self.directory / "core.sqlite3", read_limits=self._read_limits())
-        ) as core:
+            GitRepositoryStore(
+                self.directory / "repository.sqlite3", read_limits=self._read_limits()
+            )
+        ) as repository_store:
             # These I1 UNIQUE keys deliberately exclude the immutable assertion
             # payload. Check them before either domain commits, not only the PK.
             for section, keys, payload in (
@@ -3129,7 +3212,7 @@ class ExchangeService:
                 for row in data[section]:
                     if row.get("authority", "reported") != "reported":
                         continue
-                    found = core.sql(
+                    found = repository_store.sql(
                         "SELECT "
                         + ",".join((column(k) for k in payload))
                         + " FROM "
@@ -3149,13 +3232,16 @@ class ExchangeService:
                             )
                         ):
                             raise ExchangeError(
-                                "IMMUTABLE_REPLAY_CONFLICT", ["core", section]
+                                "IMMUTABLE_REPLAY_CONFLICT", ["repository", section]
                             )
             repos = {
-                r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
+                r[0]
+                for r in repository_store.sql(
+                    "SELECT repository_uuidv4 FROM repositories"
+                )
             }
             for row in data["git_observations"]:
-                existing = core.sql(
+                existing = repository_store.sql(
                     "SELECT value FROM git_observations WHERE capture_origin_uuidv4=? AND capture_uuidv4=? AND repository_uuidv4=? AND kind=? AND scope=? AND provenance=?",
                     (
                         row["capture_origin_uuidv4"],
@@ -3170,11 +3256,14 @@ class ExchangeService:
                     self._dependency_rows += 1
                     if existing[0][0] != row["value_json"]:
                         raise ExchangeError(
-                            "IMMUTABLE_REPLAY_CONFLICT", ["core", "git_observations"]
+                            "IMMUTABLE_REPLAY_CONFLICT",
+                            ["repository", "git_observations"],
                         )
             oids = {
                 tuple(r)
-                for r in core.sql("SELECT object_format,object_oid FROM git_objects")
+                for r in repository_store.sql(
+                    "SELECT object_format,object_oid FROM git_objects"
+                )
             }
         self._dependency_rows += len(repos) + len(oids)
         repos.update(r["repository_uuidv4"] for r in data["repositories"])
@@ -3736,7 +3825,7 @@ class ExchangeService:
                     )
                 ),
             )
-        for key in ("field_candidates", "core_references"):
+        for key in ("field_candidates", "repository_references"):
             keep(key, lambda r: resource(r) in resources)
         # Omit the entire associated Coverage assertion if a collection or
         # inventory unit is missing. A terminal is not reconstructed from rows.
@@ -3768,13 +3857,13 @@ class ExchangeService:
         keep("coverage_proofs", scope_available)
         return omissions
 
-    def _core_validator_on_disk(self) -> Callable[[str, str], bool]:
-        core_path = self.directory / "core.sqlite3"
+    def _repository_validator_on_disk(self) -> Callable[[str, str], bool]:
+        repository_path = self.directory / "repository.sqlite3"
 
         def _validate(fmt: str, object_oid: str) -> bool:
-            if not core_path.is_file():
+            if not repository_path.is_file():
                 return False
-            with closing(connect(core_path, "core")) as db:
+            with closing(connect(repository_path, "repository")) as db:
                 row = db.execute(
                     "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (fmt, object_oid),
@@ -3783,13 +3872,13 @@ class ExchangeService:
 
         return _validate
 
-    def _prevalidate_core_section(
+    def _prevalidate_repository_section(
         self,
-        core_data: dict[str, list[dict[str, Any]]],
+        repository_data: dict[str, list[dict[str, Any]]],
         work: WorkBudget,
     ) -> None:
-        # Validate all direct repository values before any Core unit is committed.
-        for row in core_data["repository_claims"]:
+        # Validate all direct repository values before any Repository unit is committed.
+        for row in repository_data["repository_claims"]:
             claim = RepositoryClaim(
                 row["repository_uuidv4"],
                 row["field"],
@@ -3798,14 +3887,14 @@ class ExchangeService:
             )
             if claim.key[2] != row["value_json"]:
                 raise ExchangeError(
-                    "REPOSITORY_CLAIM", "core", "canonical value required"
+                    "REPOSITORY_CLAIM", "repository", "canonical value required"
                 )
 
-        for meta in core_data["retained_metadata"]:
+        for meta in repository_data["retained_metadata"]:
             object_oid = OID(meta["object_format"], meta["object_oid"])
             native_type = meta["native_type"]
             if native_type == "blob":
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "RETENTION_PURPOSE",
                     object_oid,
                     "ordinary file blob bodies are excluded from retained_metadata",
@@ -3813,7 +3902,7 @@ class ExchangeService:
             try:
                 body = bytes.fromhex(meta["body_hex"])
             except (ValueError, TypeError) as exc:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "NATIVE_INTEGRITY",
                     object_oid,
                     "invalid hex body in retained_metadata",
@@ -3875,52 +3964,54 @@ class ExchangeService:
                         "field_candidate references text_body_sha256 absent from text_bodies",
                     )
 
-    def _import_core_into(self, core_cap, core_data, work):
+    def _import_repository_into(self, repository_cap, repository_data, work):
         with account_verification(work):
-            return self._import_core_units(core_cap, core_data, work)
+            return self._import_repository_units(repository_cap, repository_data, work)
 
-    def _import_core_units(
+    def _import_repository_units(
         self,
-        core_cap: GitCore,
-        core_data: dict[str, list[dict[str, Any]]],
+        repository_cap: GitRepositoryStore,
+        repository_data: dict[str, list[dict[str, Any]]],
         work: WorkBudget,
     ) -> dict[str, int]:
-        # Core units are INSERT-only. Connection-local SQLite change counts
+        # Repository units are INSERT-only. Connection-local SQLite change counts
         # capture every actual insertion, including new ref families, without
         # repeatedly scanning the entire catalog merely to classify replay.
-        core_db = getattr(core_cap, "_db", None)
-        before_changes = core_db.total_changes if core_db is not None else 0
+        repository_db = getattr(repository_cap, "_db", None)
+        before_changes = repository_db.total_changes if repository_db is not None else 0
 
-        for repo in core_data["repositories"]:
+        for repo in repository_data["repositories"]:
             _performed("metadata_units", 1)
-            core_cap.admit_repository(repo["repository_uuidv4"])
+            repository_cap.admit_repository(repo["repository_uuidv4"])
 
         for name in (
             "repository_identity_assertions",
             "repository_identity_cancellations",
         ):
-            for row in core_data.get(name, ()):
+            for row in repository_data.get(name, ()):
                 _performed("metadata_units", 1)
                 kind, provenance, _ = decode_identity_row(name, row)
-                core_cap.admit_identity_evidence(kind, row["record_json"], provenance)
+                repository_cap.admit_identity_evidence(
+                    kind, row["record_json"], provenance
+                )
 
-        for rc in core_data["repository_claims"]:
+        for rc in repository_data["repository_claims"]:
             _performed("metadata_units", 1)
             prov = Provenance(*json.loads(rc["provenance_json"]))
             # RepositoryClaim stores a direct JSON value, unlike ScalarClaim's
             # ["known", value]/["unknown"] tagged encoding. Never index a string.
             original_value = json.loads(rc["value_json"])
-            core_cap.admit_repository_claim(
+            repository_cap.admit_repository_claim(
                 RepositoryClaim(
                     rc["repository_uuidv4"], rc["field"], original_value, prov
                 )
             )
 
         admitted_objects = 0
-        for obj in core_data["git_objects"]:
+        for obj in repository_data["git_objects"]:
             _performed("metadata_units", 1)
             object_oid = OID(obj["object_format"], obj["object_oid"])
-            core_cap.admit_object(object_oid)
+            repository_cap.admit_object(object_oid)
             admitted_objects += 1
 
         # Original ref subjects/results and whole enumeration links are typed
@@ -3930,14 +4021,16 @@ class ExchangeService:
             import_ref_units,
         )
 
-        ref_claims = import_ref_units(core_cap, core_data, work)
-        import_ref_notes(core_cap, core_data, ref_claims, work, self._receiver_instance)
+        ref_claims = import_ref_units(repository_cap, repository_data, work)
+        import_ref_notes(
+            repository_cap, repository_data, ref_claims, work, self._receiver_instance
+        )
 
         # Admit retained_metadata first so receiver_intrinsic claims/groups are generated by receiver
         verified_intrinsic_claims: set[tuple[str, str, str, str, str]] = set()
         verified_intrinsic_groups: set[tuple[str, str, str, str, str, str]] = set()
         admitted_meta = 0
-        for meta in core_data["retained_metadata"]:
+        for meta in repository_data["retained_metadata"]:
             _performed("metadata_units", 1)
             object_oid = OID(meta["object_format"], meta["object_oid"])
             body = bytes.fromhex(meta["body_hex"])
@@ -3951,11 +4044,11 @@ class ExchangeService:
             c_keys, g_keys = _recomputed_intrinsic_keys(native)
             verified_intrinsic_claims.update(c_keys)
             verified_intrinsic_groups.update(g_keys)
-            core_cap.admit_metadata(native, meta["physical_copy_uuidv4"], work)
+            repository_cap.admit_metadata(native, meta["physical_copy_uuidv4"], work)
             admitted_meta += 1
 
         ignored_claims = 0
-        for sc in core_data["scalar_claims"]:
+        for sc in repository_data["scalar_claims"]:
             _performed("metadata_units", 1)
             object_oid = OID(sc["object_format"], sc["object_oid"])
             prov = Provenance(*json.loads(sc["provenance_json"]))
@@ -3973,10 +4066,10 @@ class ExchangeService:
                 if claim.key not in verified_intrinsic_claims:
                     ignored_claims += 1
                 continue
-            core_cap.admit_claim(claim)
+            repository_cap.admit_claim(claim)
 
         ignored_groups = 0
-        for rg in core_data["relation_groups"]:
+        for rg in repository_data["relation_groups"]:
             _performed("metadata_units", 1)
             object_oid = OID(rg["object_format"], rg["object_oid"])
             prov = Provenance(*json.loads(rg["provenance_json"]))
@@ -4005,9 +4098,9 @@ class ExchangeService:
                 if group.key not in verified_intrinsic_groups:
                     ignored_groups += 1
                 continue
-            core_cap.admit_group(group)
+            repository_cap.admit_group(group)
 
-        for obs in core_data["git_observations"]:
+        for obs in repository_data["git_observations"]:
             _performed("metadata_units", 1)
             prov = Provenance(*json.loads(obs["provenance_json"]))
             scope_val = json.loads(obs["scope_json"])
@@ -4016,7 +4109,7 @@ class ExchangeService:
             )
             origin_uuid = obs.get("capture_origin_uuidv4", obs.get("origin_uuidv4"))
             cap_uuid = obs.get("capture_uuidv4", obs.get("observation_uuidv4"))
-            core_cap.admit_observation(
+            repository_cap.admit_observation(
                 GitObservation(
                     origin_uuid,
                     cap_uuid,
@@ -4028,24 +4121,26 @@ class ExchangeService:
                 )
             )
 
-        admitted_roles = len(core_data["notes_mapping_evidence"])
+        admitted_roles = len(repository_data["notes_mapping_evidence"])
 
-        admitted_notes = len(core_data["ref_retained_notes"])
+        admitted_notes = len(repository_data["ref_retained_notes"])
 
-        for cs in core_data["coverage_scopes"]:
+        for cs in repository_data["coverage_scopes"]:
             _performed("metadata_units", 1)
             coords = tuple(json.loads(cs["owner_coordinates_json"]))
-            core_cap.admit_coverage_scope(CoreCoverageScope(cs["owner_kind"], coords))
+            repository_cap.admit_coverage_scope(
+                RepositoryCoverageScope(cs["owner_kind"], coords)
+            )
 
         sorted_claims = sorted(
-            core_data["coverage_claims"], key=lambda item: item["observed_at_us"]
+            repository_data["coverage_claims"], key=lambda item: item["observed_at_us"]
         )
         for cc in sorted_claims:
             _performed("metadata_units", 1)
             coords = tuple(json.loads(cc["owner_coordinates_json"]))
-            c_scope = CoreCoverageScope(cc["owner_kind"], coords)
-            core_cap.admit_coverage_scope(c_scope)
-            core_cap.admit_coverage(
+            c_scope = RepositoryCoverageScope(cc["owner_kind"], coords)
+            repository_cap.admit_coverage_scope(c_scope)
+            repository_cap.admit_coverage(
                 CoverageClaim(
                     c_scope,
                     cc["observed_at_us"],
@@ -4057,13 +4152,13 @@ class ExchangeService:
         from repo_catalog.application.ref_exchange import import_ref_coverage
 
         import_ref_coverage(
-            core_cap, core_data, ref_claims, work, self._receiver_instance
+            repository_cap, repository_data, ref_claims, work, self._receiver_instance
         )
 
-        for cp in core_data["coverage_proofs"]:
+        for cp in repository_data["coverage_proofs"]:
             _performed("metadata_units", 1)
             coords = tuple(json.loads(cp["owner_coordinates_json"]))
-            c_scope = CoreCoverageScope(cp["owner_kind"], coords)
+            c_scope = RepositoryCoverageScope(cp["owner_kind"], coords)
             c_claim = CoverageClaim(
                 c_scope,
                 cp["observed_at_us"],
@@ -4071,11 +4166,15 @@ class ExchangeService:
             )
             members = tuple(OID(m[0], m[1]) for m in json.loads(cp["members_json"]))
             prov = Provenance(*json.loads(cp["provenance_json"]))
-            core_cap.admit_coverage_proof(c_claim, members, prov)
+            repository_cap.admit_coverage_proof(c_claim, members, prov)
 
-        new_rows = core_db.total_changes - before_changes if core_db is not None else 0
+        new_rows = (
+            repository_db.total_changes - before_changes
+            if repository_db is not None
+            else 0
+        )
         return {
-            "admitted_core_objects": admitted_objects,
+            "admitted_repository_objects": admitted_objects,
             "admitted_retained_metadata": admitted_meta,
             "admitted_note_roles": admitted_roles,
             "admitted_retained_notes": admitted_notes,
@@ -4092,7 +4191,7 @@ class ExchangeService:
         self,
         ctx: Context,
         ctx_data: dict[str, list[dict[str, Any]]],
-        validate_core: Callable[[str, str], bool],
+        validate_repository: Callable[[str, str], bool],
     ) -> dict[str, int]:
         from repo_catalog.domain.p1_context import CoverageClaim as ContextCoverageClaim
         from repo_catalog.domain.p1_context import CoverageScope as ContextCoverageScope
@@ -4109,7 +4208,7 @@ class ExchangeService:
         from repo_catalog.domain.selective_exchange import preflight_i2_context
 
         preflight_i2_context(ctx_data)
-        count_sql = "SELECT (SELECT count(*) FROM providers)+(SELECT count(*) FROM repository_context)+(SELECT count(*) FROM sources)+(SELECT count(*) FROM source_repositories)+(SELECT count(*) FROM resources)+(SELECT count(*) FROM resource_repository_relations)+(SELECT count(*) FROM repository_mapping_dispositions)+(SELECT count(*) FROM field_candidates)+(SELECT count(*) FROM resource_relations)+(SELECT count(*) FROM text_bodies)+(SELECT count(*) FROM collections)+(SELECT count(*) FROM collection_terminals)+(SELECT count(*) FROM core_references)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM coverage_proofs)+(SELECT count(*) FROM source_inventory_evidence)+(SELECT count(*) FROM source_coverage_proofs)+(SELECT count(*) FROM service_identity_assertions)+(SELECT count(*) FROM service_identity_cancellations)"
+        count_sql = "SELECT (SELECT count(*) FROM providers)+(SELECT count(*) FROM repository_context)+(SELECT count(*) FROM sources)+(SELECT count(*) FROM source_repositories)+(SELECT count(*) FROM resources)+(SELECT count(*) FROM resource_repository_relations)+(SELECT count(*) FROM repository_mapping_dispositions)+(SELECT count(*) FROM field_candidates)+(SELECT count(*) FROM resource_relations)+(SELECT count(*) FROM text_bodies)+(SELECT count(*) FROM collections)+(SELECT count(*) FROM collection_terminals)+(SELECT count(*) FROM repository_references)+(SELECT count(*) FROM coverage_scopes)+(SELECT count(*) FROM coverage_claims)+(SELECT count(*) FROM coverage_proofs)+(SELECT count(*) FROM source_inventory_evidence)+(SELECT count(*) FROM source_coverage_proofs)+(SELECT count(*) FROM service_identity_assertions)+(SELECT count(*) FROM service_identity_cancellations)"
         before_changes = ctx.db.execute(count_sql).fetchone()[0]
         before_res_count = ctx.db.execute("SELECT COUNT(*) FROM resources").fetchone()[
             0
@@ -4118,7 +4217,7 @@ class ExchangeService:
             "SELECT COUNT(*) FROM field_candidates"
         ).fetchone()[0]
         before_cr_count = ctx.db.execute(
-            "SELECT COUNT(*) FROM core_references"
+            "SELECT COUNT(*) FROM repository_references"
         ).fetchone()[0]
 
         for prov in ctx_data["providers"]:
@@ -4221,7 +4320,7 @@ class ExchangeService:
         linked_refs = 0
         pending_refs = 0
         missing_refs = []
-        seen_core_refs: set[tuple[ResourceKey, str, str, str, str]] = set()
+        seen_repository_refs: set[tuple[ResourceKey, str, str, str, str]] = set()
 
         for fc in ctx_data["field_candidates"]:
             _performed("metadata_units", 1)
@@ -4231,8 +4330,8 @@ class ExchangeService:
                 fc["provider_resource_id"],
             )
             field_name = fc["field_name"]
-            if field_name.startswith("reported_core_reference:"):
-                role = field_name.removeprefix("reported_core_reference:")
+            if field_name.startswith("reported_repository_reference:"):
+                role = field_name.removeprefix("reported_repository_reference:")
                 oid_pair = json.loads(fc["value_json"])
                 object_oid = OID(oid_pair[0], oid_pair[1])
                 ref_key = (
@@ -4242,7 +4341,7 @@ class ExchangeService:
                     object_oid.object_oid,
                     fc["provenance_json"],
                 )
-                seen_core_refs.add(ref_key)
+                seen_repository_refs.add(ref_key)
                 ctx.admit_field(
                     FieldCandidate(
                         rk,
@@ -4253,27 +4352,27 @@ class ExchangeService:
                         fc["observed_at_us"],
                     )
                 )
-                if validate_core(object_oid.object_format, object_oid.object_oid):
-                    ctx.link_core(
+                if validate_repository(object_oid.object_format, object_oid.object_oid):
+                    ctx.link_repository(
                         rk,
                         role,
                         object_oid.object_format,
                         object_oid.object_oid,
                         fc["provenance_json"],
-                        validate_core,
+                        validate_repository,
                     )
                     linked_refs += 1
                 else:
                     missing_refs.append(
                         {
-                            "section": "core_references",
+                            "section": "repository_references",
                             "unit": [
                                 list(rk.coordinates()),
                                 role,
                                 *object_oid.key,
                                 fc["provenance_json"],
                             ],
-                            "reason": "missing_core_oid",
+                            "reason": "missing_repository_oid",
                         }
                     )
                     pending_refs += 1
@@ -4289,7 +4388,7 @@ class ExchangeService:
                     )
                 )
 
-        for cr in ctx_data["core_references"]:
+        for cr in ctx_data["repository_references"]:
             _performed("metadata_units", 1)
             rk = ResourceKey(
                 cr["service_instance_uuidv4"],
@@ -4306,30 +4405,30 @@ class ExchangeService:
                 object_oid.object_oid,
                 prov_json,
             )
-            if ref_key in seen_core_refs:
+            if ref_key in seen_repository_refs:
                 continue
-            seen_core_refs.add(ref_key)
-            if validate_core(object_oid.object_format, object_oid.object_oid):
-                ctx.link_core(
+            seen_repository_refs.add(ref_key)
+            if validate_repository(object_oid.object_format, object_oid.object_oid):
+                ctx.link_repository(
                     rk,
                     role,
                     object_oid.object_format,
                     object_oid.object_oid,
                     prov_json,
-                    validate_core,
+                    validate_repository,
                 )
                 linked_refs += 1
             else:
                 missing_refs.append(
                     {
-                        "section": "core_references",
+                        "section": "repository_references",
                         "unit": [
                             list(rk.coordinates()),
                             role,
                             *object_oid.key,
                             prov_json,
                         ],
-                        "reason": "missing_core_oid",
+                        "reason": "missing_repository_oid",
                     }
                 )
                 pending_refs += 1
@@ -4497,7 +4596,7 @@ class ExchangeService:
             "SELECT COUNT(*) FROM field_candidates"
         ).fetchone()[0]
         after_cr_count = ctx.db.execute(
-            "SELECT COUNT(*) FROM core_references"
+            "SELECT COUNT(*) FROM repository_references"
         ).fetchone()[0]
         new_rows = (
             (after_res_count - before_res_count)
@@ -4509,7 +4608,7 @@ class ExchangeService:
         return {
             "missing_refs": missing_refs,
             "admitted_context_resources": admitted_resources,
-            "linked_core_references": linked_refs,
-            "pending_core_references": pending_refs,
+            "linked_repository_references": linked_refs,
+            "pending_repository_references": pending_refs,
             "new_rows": new_rows,
         }

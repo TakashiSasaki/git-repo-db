@@ -47,11 +47,11 @@ def exchange_distributions(tmp_path_factory):
 
 
 def source_fixture(outside):
-    """A producer may use G; its closed Core alone enters the independent consumer."""
+    """A producer may use G; its closed Repository alone enters the independent consumer."""
     producer = outside / "producer"
     producer.mkdir()
     repository, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "operational"):
+    for role in ("repository", "operational"):
         initialize(producer / (role + ".sqlite3"), role, repository, instance)
     source = outside / "source.git"
     objects = build_sample_git_repo(source, "sha1")
@@ -69,13 +69,13 @@ def source_fixture(outside):
             target_object_oids=(objects["commit2"],),
         ),
     )
-    GitAcquisition(producer / "core.sqlite3", operational=producer).acquire_from_native(
-        GitNativeSource(source), request, new_request=True
-    )
-    assert not (producer / "core.sqlite3-wal").exists()
+    GitAcquisition(
+        producer / "repository.sqlite3", operational=producer
+    ).acquire_from_native(GitNativeSource(source), request, new_request=True)
+    assert not (producer / "repository.sqlite3-wal").exists()
     destination = outside / "source"
     destination.mkdir()
-    shutil.copy2(producer / "core.sqlite3", destination / "core.sqlite3")
+    shutil.copy2(producer / "repository.sqlite3", destination / "repository.sqlite3")
     return repository
 
 

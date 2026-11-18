@@ -12,18 +12,18 @@ from repo_catalog.application.notes import (
     RefNotesInventoryVerification,
 )
 from repo_catalog.domain.acquisition_errors import AcquisitionError as AcquisitionError
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
     GitObservation,
     NativeObject,
     Provenance,
     RelationGroup,
     RepositoryClaim,
+    RepositoryCoverageScope,
     ScalarClaim,
     uuid4_value,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.ref_observation import (
     NotesMappingClaim,
     NotesMappingGroup,
@@ -45,10 +45,12 @@ class RefNotesInput:
     mapping_groups: tuple[NotesMappingGroup, ...] = ()
 
     def __post_init__(self) -> None:
-        from repo_catalog.domain.p1_core import CoreFailure
+        from repo_catalog.domain.p1_repository import RepositoryFailure
 
         if type(self.observation) is not RefObservation:
-            raise CoreFailure("REQUEST", "ref-notes", "typed original subject required")
+            raise RepositoryFailure(
+                "REQUEST", "ref-notes", "typed original subject required"
+            )
         self.observation.__post_init__()
         for values, expected in (
             (self.claims, RefObservationClaim),
@@ -56,21 +58,27 @@ class RefNotesInput:
             (self.mapping_groups, NotesMappingGroup),
         ):
             if type(values) is not tuple or len(values) > 100_000:
-                raise CoreFailure("REQUEST", "ref-notes", "bounded tuple required")
+                raise RepositoryFailure(
+                    "REQUEST", "ref-notes", "bounded tuple required"
+                )
             for value in values:
                 if type(value) is not expected:
-                    raise CoreFailure("REQUEST", "ref-notes", "typed report required")
+                    raise RepositoryFailure(
+                        "REQUEST", "ref-notes", "typed report required"
+                    )
         if any(
             claim.ref_observation_key != self.observation.ref_observation_key
             for claim in self.claims
         ):
-            raise CoreFailure("REQUEST", "ref-notes", "claim subject mismatch")
+            raise RepositoryFailure("REQUEST", "ref-notes", "claim subject mismatch")
         claims = set(self.claims)
         if any(
             item.ref_claim not in claims
             for item in (*self.mapping_claims, *self.mapping_groups)
         ):
-            raise CoreFailure("REQUEST", "ref-notes", "exact result Claim required")
+            raise RepositoryFailure(
+                "REQUEST", "ref-notes", "exact result Claim required"
+            )
 
 
 @dataclass(frozen=True)
@@ -103,7 +111,7 @@ class GitMetadataInput:
     relation_groups: tuple[RelationGroup, ...] = ()
     native_objects: tuple[NativeObject, ...] = ()
     physical_copy_uuidv4s: dict[OID, str] = field(default_factory=dict)
-    coverage_scopes: tuple[CoreCoverageScope, ...] = ()
+    coverage_scopes: tuple[RepositoryCoverageScope, ...] = ()
     coverage_claims: tuple[CoverageClaim, ...] = ()
     coverage_proofs: tuple[tuple[CoverageClaim, tuple[OID, ...], Provenance], ...] = ()
     notes: NotesAcquisitionSpec | None = None

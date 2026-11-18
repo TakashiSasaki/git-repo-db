@@ -4,7 +4,7 @@ Owns reconstructible progress, finite cumulative actual-work accounting via `Wor
 continuation checkpoints, retry/backoff state (`retry_state`), cache locators
 (`cache_locators`), and non-authoritative Exchange receipt tracking.
 Deleting and recreating `operational.sqlite3` invalidates old in-flight continuations
-(`CONTINUATION_UNAVAILABLE`) while preserving committed Core and Context facts.
+(`CONTINUATION_UNAVAILABLE`) while preserving committed Repository and Context facts.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ from repo_catalog.domain.p1_coordination import (
 from repo_catalog.domain.query_work import UnlimitedWorkBudget as UnlimitedWorkBudget
 from repo_catalog.domain.request_scope import request_scope
 from repo_catalog.domain.retry_deadline import validate_retry_deadline_us
-from repo_catalog.domain.shared_values import CoreFailure, encode, uuid4_value
+from repo_catalog.domain.shared_values import RepositoryFailure, encode, uuid4_value
 from repo_catalog.domain.time import (
     validate_observation_us,
 )
@@ -58,7 +58,7 @@ class InMemoryNotesProgress:
         with self._scan_locks_guard:
             lock = self._scan_locks.setdefault(stripe, threading.Lock())
         if not lock.acquire(blocking=False):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "ACQUISITION_BUSY",
                 scope,
                 "another scan owns the acquisition guard; retry",
@@ -96,14 +96,14 @@ class InMemoryNotesProgress:
     def load_bounded(self, scope: str, max_bytes: int):
         value = self._store.get(scope)
         if value is not None and len(encode(value)) > max_bytes:
-            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+            raise RepositoryFailure("BUDGET", scope, "finite pinned metadata limit")
         return value
 
     def save_once_bounded(
         self, scope: str, value: dict[str, Any], max_bytes: int, *, encoded
     ):
         if len(encoded) > max_bytes:
-            raise CoreFailure("BUDGET", scope, "finite pinned metadata limit")
+            raise RepositoryFailure("BUDGET", scope, "finite pinned metadata limit")
         if scope not in self._store:
             self._store[scope] = json.loads(encoded)
         return self._store[scope]

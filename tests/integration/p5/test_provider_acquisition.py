@@ -3,12 +3,12 @@
 Verifies:
 - Service, repository, source registration and source-repository associations
 - Issues vs. PRs (Issues API entries with "pull_request" never alias into ordinary issues)
-- PR head/base/merge commit CoreReference extraction (SHA-1 and SHA-256)
+- PR head/base/merge commit RepositoryReference extraction (SHA-1 and SHA-256)
 - Review summaries, review threads, review comments, issue comments, timeline, files
-- Text body content-addressing in Context text_bodies (no Git blob retention in Core)
+- Text body content-addressing in Context text_bodies (no Git blob retention in Repository)
 - Explicit null vs. missing fields, clock progression, competing field candidates
 - Detached issue-attachment transfer preserving prior provenance
-- Context-only operation without core.sqlite3
+- Context-only operation without repository.sqlite3
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from repo_catalog.adapters.github.production_intake import (
     normalize_review_comment,
     normalize_review_thread,
 )
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.acquisition import (
     ProviderIntakeBatch,
@@ -176,8 +176,8 @@ def test_issue_vs_pull_request_intake_isolation(tmp_path: Path) -> None:
     assert pr_unit.primary_resource == ResourceKey.from_native(
         service_uuid, "pull_request", "2001"
     )
-    assert len(pr_unit.core_references) == 3
-    assert {ref.role for ref, _, _ in pr_unit.core_references} == {
+    assert len(pr_unit.repository_references) == 3
+    assert {ref.role for ref, _, _ in pr_unit.repository_references} == {
         "head",
         "base",
         "merge",
@@ -255,8 +255,8 @@ def test_reviews_threads_comments_and_relations(tmp_path: Path) -> None:
         json.loads(rev_unit.primary_resource.provider_resource_id)[2]
         == "review_summary"
     )
-    assert len(rev_unit.core_references) == 1
-    assert rev_unit.core_references[0][0].role == "target_commit"
+    assert len(rev_unit.repository_references) == 1
+    assert rev_unit.repository_references[0][0].role == "target_commit"
 
     # Review thread (GraphQL ID)
     thread_payload = {
@@ -300,7 +300,9 @@ def test_reviews_threads_comments_and_relations(tmp_path: Path) -> None:
         == "review_comment"
     )
     assert len(comment_unit.relations) >= 2  # review/parent/thread relations
-    assert len(comment_unit.core_references) == 2  # target_commit, original_commit
+    assert (
+        len(comment_unit.repository_references) == 2
+    )  # target_commit, original_commit
 
     acq.admit_units((rev_unit, thread_unit, comment_unit))
 
@@ -382,10 +384,12 @@ def test_explicit_null_vs_missing_fields_and_clock_competition(tmp_path: Path) -
         assert json.loads(ctx.candidates(key, "milestone")[0].value_json) is None
 
 
-def test_context_file_metadata_never_retains_blob_in_git_core(tmp_path: Path) -> None:
+def test_context_file_metadata_never_retains_blob_in_git_repository(
+    tmp_path: Path,
+) -> None:
     cat_dir = tmp_path / "paired_cat"
     repo_uuid, _ = init_catalog_stores(
-        cat_dir, stores=("core", "context", "operational")
+        cat_dir, stores=("repository", "context", "operational")
     )
     service_uuid = str(uuid4())
     prov_json = make_provenance("gh-rest", "file-test")
@@ -424,15 +428,17 @@ def test_context_file_metadata_never_retains_blob_in_git_core(tmp_path: Path) ->
         patch_digest = json.loads(ctx.candidates(res, "text_body_sha256")[0].value_json)
         assert ctx.read_text(patch_digest) == "@@ -1 +1 @@\n-old\n+new"
 
-    # Core must NOT contain any retained blob for the file!
-    core = GitCore(cat_dir / "core.sqlite3")
+    # Repository must NOT contain any retained blob for the file!
+    repository_store = GitRepositoryStore(cat_dir / "repository.sqlite3")
     try:
         assert (
-            core.sql("SELECT COUNT(*) FROM retained_metadata WHERE native_type='blob'")[
-                0
-            ][0]
+            repository_store.sql(
+                "SELECT COUNT(*) FROM retained_metadata WHERE native_type='blob'"
+            )[0][0]
             == 0
         )
-        assert core.sql("SELECT COUNT(*) FROM ref_retained_notes")[0][0] == 0
+        assert (
+            repository_store.sql("SELECT COUNT(*) FROM ref_retained_notes")[0][0] == 0
+        )
     finally:
-        core.close()
+        repository_store.close()

@@ -48,7 +48,7 @@ from uuid import uuid4
 
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.github.production_intake import make_document_key
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepository
 from repo_catalog.adapters.sqlite.p1_coordination import PairCoordinator
 from repo_catalog.adapters.sqlite.p1_schema import initialize, verify_declared
 from repo_catalog.adapters.sqlite.production_context import Context
@@ -86,7 +86,7 @@ from repo_catalog.domain.p1_context import (
     canonical,
 )
 from repo_catalog.domain.p1_coordination import RequestIdentity
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 
 assert "site-packages" in str(Path(__import__("repo_catalog.application.acquisition", fromlist=["x"]).__file__))
 assert "site-packages" in str(Path(__import__("repo_catalog.application.exchange", fromlist=["x"]).__file__))
@@ -115,7 +115,7 @@ cat_b.mkdir()
 
 inst_a = str(uuid4())
 inst_b = str(uuid4())
-for role in ("core", "context", "operational"):
+for role in ("repository", "context", "operational"):
     initialize(cat_a / f"{role}.sqlite3", role, repo_uuid, inst_a)
     initialize(cat_b / f"{role}.sqlite3", role, repo_uuid, inst_b)
 
@@ -154,11 +154,11 @@ assert git_report.status == "complete"
 assert len(git_report.admitted_objects) >= 1
 
 # Exercise installed I2 acquisition and the I3 rootless ref exchange in a
-# separate disposable Core, retaining the object/Context roundtrip below.
+# separate disposable Repository, retaining the object/Context roundtrip below.
 cat_i2 = Path("catalog_i2")
 cat_i2.mkdir()
 instance_i2 = str(uuid4())
-for role in ("core", "operational"):
+for role in ("repository", "operational"):
     initialize(cat_i2 / f"{role}.sqlite3", role, repo_uuid, instance_i2)
 request_i2 = GitNativeAcquisitionRequest(
     repository_uuidv4=repo_uuid,
@@ -181,29 +181,29 @@ selection_i3 = ExchangeSelectionScope(
     object_oids=(), ref_observation_keys=(absent.observation.ref_observation_key,),
 )
 package_i3 = ExchangeService(cat_i2).export_package(selection=selection_i3)
-assert not package_i3.core["git_objects"]
-assert len(package_i3.core["ref_enumeration_links"]) == 1
+assert not package_i3.repository["git_objects"]
+assert len(package_i3.repository["ref_enumeration_links"]) == 1
 cat_i3 = Path("catalog_i3")
 cat_i3.mkdir()
 instance_i3 = str(uuid4())
-for role in ("core", "operational"):
+for role in ("repository", "operational"):
     initialize(cat_i3 / f"{role}.sqlite3", role, repo_uuid, instance_i3)
 ExchangeService(cat_i3, operational=cat_i3).import_package(
     package_i3, new_request=True, permitted_repository_uuidv4s=(repo_uuid,)
 )
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-core_i3 = GitCore(cat_i3 / "core.sqlite3")
+repository_i3 = GitRepository(cat_i3 / "repository.sqlite3")
 try:
-    assert core_i3.ref_observation(absent.observation.ref_observation_key, UnlimitedWorkBudget()).claims == (absent.claim,)
+    assert repository_i3.ref_observation(absent.observation.ref_observation_key, UnlimitedWorkBudget()).claims == (absent.claim,)
 finally:
-    core_i3.close()
+    repository_i3.close()
 
 # Exercise automatic whole-inventory receiver checks from the installed artifact.
 subprocess.run(["git", "-C", str(git_dir), "update-ref", "refs/notes/empty", tree1], check=True)
 cat_inventory = Path("catalog_inventory")
 cat_inventory.mkdir()
 inventory_instance = str(uuid4())
-for role in ("core", "operational"):
+for role in ("repository", "operational"):
     initialize(cat_inventory / f"{role}.sqlite3", role, repo_uuid, inventory_instance)
 inventory_request = GitNativeAcquisitionRequest(
     repository_uuidv4=repo_uuid,
@@ -221,7 +221,7 @@ assert inventory_report.ref_inventory_verifications
 assert all(item.verified and item.group.status == "known_empty" for item in inventory_report.ref_inventory_verifications)
 assert all(item.coverage.state == "complete" and item.coverage.known_empty for item in inventory_report.ref_inventory_projections)
 from repo_catalog.application.production_query import ProductionQueryService
-inventory_query = ProductionQueryService(cat_inventory, mode="core_only")
+inventory_query = ProductionQueryService(cat_inventory, mode="repository_only")
 for item in inventory_report.ref_inventory_verifications:
     projection = inventory_query.list_ref_notes_inventories(item.group.ref_claim, UnlimitedWorkBudget())
     assert projection.coverage.known_empty
@@ -300,7 +300,7 @@ pkg = svc_a.export_package(
     selection=ExchangeSelectionScope(all_selected=True),
     exported_at_us=1_700_000_100_000_000,
 )
-assert pkg.core is not None
+assert pkg.repository is not None
 assert pkg.context is not None
 
 wire = encode_package(pkg)
@@ -314,7 +314,7 @@ rep_b = svc_b.import_package(
     permitted_repository_uuidv4s=(repo_uuid,),
     grants=grants,
 )
-assert rep_b.admitted_core_objects >= 1
+assert rep_b.admitted_repository_objects >= 1
 assert rep_b.admitted_context_resources >= 1
 with Context.snapshot(cat_b) as context:
     assert context.provider_repository_roles(pr_key) == original_roles
@@ -323,11 +323,11 @@ with Context.snapshot(cat_b) as context:
         relation.relation for relation in context.repository_relations(mapping.resource)
     ) == (mapping,)
 
-# Verify catalog B received commit1 in Core
-core_b = GitCore(cat_b / "core.sqlite3")
+# Verify catalog B received commit1 in Repository
+repository_b = GitRepository(cat_b / "repository.sqlite3")
 try:
-    assert core_b.read_metadata(OID("FORMAT", commit1)) is not None
+    assert repository_b.read_metadata(OID("FORMAT", commit1)) is not None
 finally:
-    core_b.close()
+    repository_b.close()
 """.replace("FORMAT", fmt)
     run([python, "-c", script], outside, env)

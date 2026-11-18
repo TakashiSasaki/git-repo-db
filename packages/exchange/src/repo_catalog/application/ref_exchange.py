@@ -7,7 +7,12 @@ from dataclasses import replace
 from repo_catalog.application.query_encoding import encode_metered
 from repo_catalog.application.ref_reconstruction import decode_ref_units
 from repo_catalog.domain.p1_coordination import NotesLimits
-from repo_catalog.domain.p1_core import CoreFailure, Provenance, _performed, encode
+from repo_catalog.domain.p1_repository import (
+    Provenance,
+    RepositoryFailure,
+    _performed,
+    encode,
+)
 from repo_catalog.domain.query_work import UnlimitedWorkBudget
 from repo_catalog.domain.ref_exchange import (
     claim_to_wire,
@@ -24,7 +29,7 @@ from repo_catalog.domain.ref_exchange import (
 from repo_catalog.domain.ref_observation import RefObservationKey
 
 
-def _export_ref_notes(core, section, claim, work, scope):
+def _export_ref_notes(repository_store, section, claim, work, scope):
     """Export reported groups and locally checked claim-specific proofs."""
     if claim.root_object_oid is None:
         return set()
@@ -47,7 +52,7 @@ def _export_ref_notes(core, section, claim, work, scope):
         "membership",
         "provenance",
     )
-    for values in core.ref_exchange_rows(
+    for values in repository_store.ref_exchange_rows(
         "groups", identity, work, maximum=maximum, max_bytes=max_bytes
     ):
         row = dict(zip(group_columns, values, strict=True))
@@ -57,19 +62,21 @@ def _export_ref_notes(core, section, claim, work, scope):
             "membership_json": row["membership"],
             "provenance_json": row["provenance"],
         }
-        group = core._stored(claim.identity, mapping_group_from_wire, wire, claim)
+        group = repository_store._stored(
+            claim.identity, mapping_group_from_wire, wire, claim
+        )
         for target, note, _ in group.members:
             for object_oid in (target, note):
                 work.require("metadata_units", 1)
                 work.charge("metadata_units", 1)
-                if not core.sql(
+                if not repository_store.sql(
                     "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (claim.root_object_oid.object_format, object_oid),
                 ):
-                    core._integrity_stop(
+                    repository_store._integrity_stop(
                         (claim.identity, "missing-mapping-group-object", object_oid)
                     )
-                from repo_catalog.domain.p1_core import OID
+                from repo_catalog.domain.p1_repository import OID
 
                 oids.add(OID(claim.root_object_oid.object_format, object_oid))
         section["notes_mapping_groups"].append(wire)
@@ -85,7 +92,7 @@ def _export_ref_notes(core, section, claim, work, scope):
         "mapping_path_json",
         "provenance",
     )
-    for values in core.ref_exchange_rows(
+    for values in repository_store.ref_exchange_rows(
         "mappings", identity, work, maximum=maximum, max_bytes=max_bytes
     ):
         row = dict(zip(mapping_columns, values, strict=True))
@@ -94,10 +101,10 @@ def _export_ref_notes(core, section, claim, work, scope):
             **{k: v for k, v in row.items() if k != "provenance"},
             "provenance_json": row["provenance"],
         }
-        mapping_claim = core._stored(
+        mapping_claim = repository_store._stored(
             claim.identity, mapping_claim_from_wire, wire, claim
         )
-        core._assert_stored_mapping(mapping_claim.mapping, claim.identity)
+        repository_store._assert_stored_mapping(mapping_claim.mapping, claim.identity)
         oids.update(
             (
                 mapping_claim.mapping.root_object_oid,
@@ -115,18 +122,18 @@ def _export_ref_notes(core, section, claim, work, scope):
         "interpretation_scope",
         "annotated_object_oid",
     )
-    for values in core.ref_exchange_rows(
+    for values in repository_store.ref_exchange_rows(
         "evidence", identity, work, maximum=maximum, max_bytes=max_bytes
     ):
         row = dict(zip(evidence_columns, values, strict=True))
-        from repo_catalog.domain.p1_core import OID
+        from repo_catalog.domain.p1_repository import OID
 
         if (row["object_format"], row["root_object_oid"]) != claim.root_object_oid.key:
-            core._integrity_stop((claim.identity, "wrong-evidence-root"))
-        target = core._stored(
+            repository_store._integrity_stop((claim.identity, "wrong-evidence-root"))
+        target = repository_store._stored(
             claim.identity, OID, row["object_format"], row["annotated_object_oid"]
         )
-        projection = core.notes_mapping_projection(
+        projection = repository_store.notes_mapping_projection(
             claim,
             target,
             row["interpretation_kind"],
@@ -149,13 +156,13 @@ def _export_ref_notes(core, section, claim, work, scope):
             )
 
     if scope.include_retained_bytes:
-        for fmt, object_oid, copy in core.ref_exchange_rows(
+        for fmt, object_oid, copy in repository_store.ref_exchange_rows(
             "copies", identity, work, maximum=maximum, max_bytes=max_bytes
         ):
-            from repo_catalog.domain.p1_core import OID
+            from repo_catalog.domain.p1_repository import OID
 
-            object_oid = core._stored(claim.identity, OID, fmt, object_oid)
-            stored_claim, record, native = core.read_ref_note_copy(
+            object_oid = repository_store._stored(claim.identity, OID, fmt, object_oid)
+            stored_claim, record, native = repository_store.read_ref_note_copy(
                 object_oid,
                 copy,
                 work,
@@ -163,7 +170,9 @@ def _export_ref_notes(core, section, claim, work, scope):
                 max_proof_bytes=max_bytes,
             )
             if stored_claim != claim:
-                core._integrity_stop((claim.identity, "wrong-physical-copy-claim"))
+                repository_store._integrity_stop(
+                    (claim.identity, "wrong-physical-copy-claim")
+                )
             wire = mapping_evidence_to_wire(claim, record)
             work.require("input_bytes", 2 * len(native.body))
             try:
@@ -189,8 +198,8 @@ def _export_ref_notes(core, section, claim, work, scope):
     return oids
 
 
-def _pairs(core, selector, parameters, work, maximum):
-    return core.ref_exchange_rows(
+def _pairs(repository_store, selector, parameters, work, maximum):
+    return repository_store.ref_exchange_rows(
         selector, parameters, work, maximum=maximum, max_bytes=72 * maximum
     )
 
@@ -211,7 +220,7 @@ class _ExportWork:
         tracked = unit in ("metadata_units", "proof_steps")
         if tracked:
             if self._counters["work"] + amount > self._limit:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "QUERY_BUDGET", "ref-exchange", "finite cumulative export work"
                 )
             self._counters["work"] += amount
@@ -249,7 +258,7 @@ def ref_export_work(scope, counters):
     return _ExportWork(inner, counters, scope.max_work)
 
 
-def export_ref_units(core, section, scope, work, omissions):
+def export_ref_units(repository_store, section, scope, work, omissions):
     """Select original observations and complete original enumeration events.
 
     Selecting an event member includes its entire original event and sibling
@@ -262,10 +271,10 @@ def export_ref_units(core, section, scope, work, omissions):
         return set()
     chosen = set(scope.ref_observation_keys or ())
     pending_events = set()
-    with core._snapshot():
+    with repository_store._snapshot():
         if scope.object_oids is None and scope.ref_observation_keys is None:
             pairs = _pairs(
-                core,
+                repository_store,
                 "observations",
                 (),
                 work,
@@ -275,7 +284,7 @@ def export_ref_units(core, section, scope, work, omissions):
             if scope.notes_refs is None:
                 pending_events.update(
                     _pairs(
-                        core,
+                        repository_store,
                         "enumerations",
                         (),
                         work,
@@ -285,7 +294,7 @@ def export_ref_units(core, section, scope, work, omissions):
         elif scope.object_oids is not None:
             for object_oid in scope.object_oids:
                 pairs = _pairs(
-                    core,
+                    repository_store,
                     "root_claims",
                     object_oid.key,
                     work,
@@ -306,7 +315,7 @@ def export_ref_units(core, section, scope, work, omissions):
                 len(visited) + len(pending) + len(events) + len(pending_events)
                 > maximum
             ):
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "QUERY_BUDGET", "ref-exchange", "finite dependency limit"
                 )
             while pending:
@@ -316,13 +325,13 @@ def export_ref_units(core, section, scope, work, omissions):
                     continue
                 visited.add(key)
                 try:
-                    projection = core.ref_observation(
+                    projection = repository_store.ref_observation(
                         key,
                         work,
                         max_claims=max(1, maximum),
                         max_bytes=max(1, scope.max_bytes),
                     )
-                except CoreFailure as error:
+                except RepositoryFailure as error:
                     if error.code == "OBSERVATION_UNAVAILABLE" and key in chosen:
                         omissions.append(
                             {
@@ -373,7 +382,7 @@ def export_ref_units(core, section, scope, work, omissions):
                 projections[key.key] = projection
                 pending_events.update(
                     _pairs(
-                        core,
+                        repository_store,
                         "links",
                         key.key,
                         work,
@@ -385,14 +394,16 @@ def export_ref_units(core, section, scope, work, omissions):
                 pending_events.remove(identity)
                 if identity in events:
                     continue
-                event = core.ref_enumeration(
+                event = repository_store.ref_enumeration(
                     *identity,
                     work,
                     max_links=max(1, maximum),
                     max_bytes=max(1, scope.max_bytes),
                 )
                 if event is None:
-                    core._integrity_stop((identity, "missing selected enumeration"))
+                    repository_store._integrity_stop(
+                        (identity, "missing selected enumeration")
+                    )
                 if (
                     scope.repository_uuidv4s is not None
                     and event.event.repository_uuidv4 not in scope.repository_uuidv4s
@@ -441,7 +452,9 @@ def export_ref_units(core, section, scope, work, omissions):
                     )
                     if object_oid is not None
                 )
-                oids.update(_export_ref_notes(core, section, claim, work, scope))
+                oids.update(
+                    _export_ref_notes(repository_store, section, claim, work, scope)
+                )
         for identity in sorted(events):
             event = events[identity]
             section["ref_enumeration_observations"].append(
@@ -453,21 +466,21 @@ def export_ref_units(core, section, scope, work, omissions):
         return oids
 
 
-def import_ref_units(core, section, work):
+def import_ref_units(repository_store, section, work):
     observations, claims, events, links = decode_ref_units(section)
     for key in sorted(observations):
-        core.admit_ref_observation(observations[key])
+        repository_store.admit_ref_observation(observations[key])
     for key in sorted(claims):
-        core.admit_ref_observation_claim(claims[key])
+        repository_store.admit_ref_observation_claim(claims[key])
     for key in sorted(events):
         bucket = links.get(key, {})
-        core.admit_ref_enumeration(
+        repository_store.admit_ref_enumeration(
             events[key], tuple(bucket[position] for position in sorted(bucket)), work
         )
     return claims
 
 
-def import_ref_notes(core, section, claims, work, receiver_instance):
+def import_ref_notes(repository_store, section, claims, work, receiver_instance):
     """Recheck imported structures and bodies, binding local verification anew."""
 
     def owner(row):
@@ -477,7 +490,9 @@ def import_ref_notes(core, section, claims, work, receiver_instance):
             row["ref_claim_provenance_json"],
         )
         if identity not in claims:
-            raise CoreFailure("NOTES_ROLE", identity, "original result claim missing")
+            raise RepositoryFailure(
+                "NOTES_ROLE", identity, "original result claim missing"
+            )
         return claims[identity]
 
     def local_evidence(evidence):
@@ -513,25 +528,29 @@ def import_ref_notes(core, section, claims, work, receiver_instance):
 
     for row in section["notes_mapping_claims"]:
         _performed("metadata_units", 1)
-        core.admit_notes_mapping_claim(mapping_claim_from_wire(row, owner(row)))
+        repository_store.admit_notes_mapping_claim(
+            mapping_claim_from_wire(row, owner(row))
+        )
     for row in section["notes_mapping_groups"]:
         _performed("metadata_units", 1)
-        core.admit_notes_mapping_group(mapping_group_from_wire(row, owner(row)), work)
+        repository_store.admit_notes_mapping_group(
+            mapping_group_from_wire(row, owner(row)), work
+        )
     for row in section["notes_mapping_evidence"]:
         _performed("metadata_units", 1)
         evidence = mapping_evidence_from_wire(row, owner(row))
         # Preserve the original evidence coordinate, but only after validating
         # its structure here; separately record this receiver's actual check.
-        core.admit_notes_mapping_evidence(evidence, work)
-        core.admit_notes_mapping_evidence(local_evidence(evidence), work)
+        repository_store.admit_notes_mapping_evidence(evidence, work)
+        repository_store.admit_notes_mapping_evidence(local_evidence(evidence), work)
     for row in section["ref_retained_notes"]:
         _performed("metadata_units", 1)
         evidence = mapping_evidence_from_wire(row, owner(row))
         native, copy = ref_note_from_wire(row, evidence)
         # Constructor-only preflight must check the body even though it has no DB.
         native.validate()
-        core.admit_ref_note(evidence, native, copy, work)
-        core.admit_notes_mapping_evidence(local_evidence(evidence), work)
+        repository_store.admit_ref_note(evidence, native, copy, work)
+        repository_store.admit_notes_mapping_evidence(local_evidence(evidence), work)
 
 
 def _original_lineage(provenance, label, work):
@@ -553,12 +572,12 @@ def _original_lineage(provenance, label, work):
         return provenance
 
 
-def import_ref_coverage(core, section, claims, work, receiver_instance):
+def import_ref_coverage(repository_store, section, claims, work, receiver_instance):
     """Recompute complete inventories; sender completeness flags grant no proof."""
     import json
 
-    from repo_catalog.domain.p1_core import CoreCoverageScope
     from repo_catalog.domain.p1_coverage import CoverageClaim
+    from repo_catalog.domain.p1_repository import RepositoryCoverageScope
     from repo_catalog.domain.ref_coverage import (
         RefNotesInventoryCoverageProof,
         deserialize_structures,
@@ -571,7 +590,7 @@ def import_ref_coverage(core, section, claims, work, receiver_instance):
         _performed("input_bytes", len(row["group_json"]))
         group_row = json.loads(row["group_json"])
         if type(group_row) is not dict or encode(group_row) != row["group_json"]:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "REF_COVERAGE_PROOF", "group", "canonical original group required"
             )
         identity = (
@@ -580,11 +599,11 @@ def import_ref_coverage(core, section, claims, work, receiver_instance):
             group_row["ref_claim_provenance_json"],
         )
         if identity not in claims:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "REF_COVERAGE_PROOF", identity, "original result claim missing"
             )
         group = mapping_group_from_wire(group_row, claims[identity])
-        scope = CoreCoverageScope(
+        scope = RepositoryCoverageScope(
             row["owner_kind"], tuple(json.loads(row["owner_coordinates_json"]))
         )
         coverage = CoverageClaim(scope, row["observed_at_us"], row["coverage_state"])
@@ -600,12 +619,12 @@ def import_ref_coverage(core, section, claims, work, receiver_instance):
             _provenance(row["verification_provenance_json"]),
             structures,
         )
-        # The constructor-only preflight has no Core writer, so re-run the
+        # The constructor-only preflight has no Repository writer, so re-run the
         # complete traversal here as well as in the actual admission boundary.
         verify_ref_notes_inventory(
             proof, work, max_structures=100_000, max_bytes=64 * 1024 * 1024
         )
-        core.admit_ref_coverage_proof(proof, work)
+        repository_store.admit_ref_coverage_proof(proof, work)
         local = replace(
             proof,
             verification_provenance=Provenance(
@@ -641,4 +660,4 @@ def import_ref_coverage(core, section, claims, work, receiver_instance):
                 "receiver_intrinsic",
             ),
         )
-        core.admit_ref_coverage_proof(local, work)
+        repository_store.admit_ref_coverage_proof(local, work)

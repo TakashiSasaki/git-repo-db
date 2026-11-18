@@ -91,19 +91,19 @@ def main(output):
                 assert str(member) not in owners, str(member)
                 owners[str(member)] = name
     for suffix in (
-        "adapters.sqlite.git_core",
-        "adapters.sqlite.core_schema_functions",
-        "adapters.sqlite.core_coordination",
+        "adapters.sqlite.git_repository",
+        "adapters.sqlite.repository_schema_functions",
+        "adapters.sqlite.repository_coordination",
         "adapters.sqlite.p1_coordination",
         "adapters.sqlite.access_schema",
         "adapters.sqlite.production_search",
-        "application.core_query",
-        "application.core_recovery",
+        "application.repository_query",
+        "application.repository_recovery",
         "application.production_query",
         "application.acquisition",
         "application.exchange",
-        "domain.p1_core",
-        "domain.core_query",
+        "domain.p1_repository",
+        "domain.repository_query",
         "domain.production_query",
         "cli.query_features",
         "cli.main",
@@ -146,7 +146,8 @@ def main(output):
         == data["expected"]
     )
     assert all(
-        not dep.available for dep in service.get_context_resource(key).core_dependencies
+        not dep.available
+        for dep in service.get_context_resource(key).repository_dependencies
     )
     result = service.read_context_text(data["digest"])
     assert result.available and result.verified
@@ -156,7 +157,7 @@ def main(output):
     )
     assert touched
     assert sorted(p.name for p in catalog.glob("*.sqlite3")) == ["context.sqlite3"]
-    assert service.snapshot_token().core_sha256 is None
+    assert service.snapshot_token().repository_sha256 is None
     checks.append("resource_provenance_relations_unresolved_refs_exact_verified_text")
 
     def cli(directory, *extra):
@@ -191,9 +192,9 @@ def main(output):
     checks.append("existing_cli_same_meaning")
 
     opaque = fresh("opaque")
-    core = opaque / "core.sqlite3"
-    core.write_bytes(b"opaque-not-a-sqlite-database")
-    core.chmod(0)
+    repository_store = opaque / "repository.sqlite3"
+    repository_store.write_bytes(b"opaque-not-a-sqlite-database")
+    repository_store.chmod(0)
     assert (
         json.loads(
             json.dumps(
@@ -205,19 +206,19 @@ def main(output):
         == data["expected"]
     )
     assert cli(opaque).returncode == 0
-    core.chmod(0o600)
-    assert core.read_bytes() == b"opaque-not-a-sqlite-database"
+    repository_store.chmod(0o600)
+    assert repository_store.read_bytes() == b"opaque-not-a-sqlite-database"
     assert sorted(p.name for p in opaque.glob("*.sqlite3")) == [
         "context.sqlite3",
-        "core.sqlite3",
+        "repository.sqlite3",
     ]
     refuses(
         lambda: ContextQueryService(opaque).get_context_resource(key),
         {"MISSING_CAPABILITY"},
     )
-    checks.append("opaque_coexisting_core_untouched_auto_refuses")
+    checks.append("opaque_coexisting_repository_untouched_auto_refuses")
 
-    for mode in ("paired", "core_only"):
+    for mode in ("paired", "repository_only"):
         refuses(
             lambda: ContextQueryService(catalog, mode=mode).get_context_resource(key),
             {"MISSING_CAPABILITY"},
@@ -471,7 +472,7 @@ def main(output):
         lambda: ContextQueryService(catalog, mode="paired").list_context_resources(),
         {"MISSING_CAPABILITY"},
     )
-    checks.append("enumeration_cli_continuation_capability_opaque_core")
+    checks.append("enumeration_cli_continuation_capability_opaque_repository")
 
     # Page/filter/cursor failures are caller errors even if stored rows are bad.
     small = service.list_context_resources(PageRequest(limit=1))

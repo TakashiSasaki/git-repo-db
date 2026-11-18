@@ -1,7 +1,7 @@
 """Finite in-memory work accounting; never a durable acquisition/recovery ledger."""
 
 from repo_catalog.domain.p1_coordination import CoordinationError, NotesLimits
-from repo_catalog.domain.shared_values import CoreFailure
+from repo_catalog.domain.shared_values import RepositoryFailure
 
 
 class UnlimitedWorkBudget:
@@ -27,7 +27,7 @@ class UnlimitedWorkBudget:
         if limit is None:
             raise ValueError(f"unknown work unit: {unit}")
         if self.usage[unit] + amount > limit:
-            raise CoreFailure("BUDGET", unit, "finite cumulative request budget")
+            raise RepositoryFailure("BUDGET", unit, "finite cumulative request budget")
         if unit in self._pending:
             raise CoordinationError("UNSETTLED_WORK", "request", unit)
         self.usage[unit] += amount

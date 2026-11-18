@@ -37,7 +37,7 @@ def search_distributions(tmp_path_factory):
     base = tmp_path_factory.getbasetemp()
     env = package_build_environment()
     products = {}
-    for name in ("search", "core", "context"):
+    for name in ("search", "repository", "context"):
         project = ROOT / "packages" / name
         products[name] = build_once(
             base / (name + "-distributions"),
@@ -57,7 +57,7 @@ def copy_authority(source, destination, role):
             shutil.copy2(path, destination / path.name)
 
 
-@pytest.mark.parametrize("role", ["core", "context"])
+@pytest.mark.parametrize("role", ["repository", "context"])
 @pytest.mark.parametrize("variant", ["wheel", "sdist_wheel"])
 def test_search_minimum(search_distributions, tmp_path, role, variant):
     env, products = search_distributions
@@ -77,17 +77,19 @@ def test_search_minimum(search_distributions, tmp_path, role, variant):
     assert owners["repo_catalog/application/search_query.py"].startswith(
         "repo_catalog_search-"
     )
-    other = "context" if role == "core" else "core"
+    other = "context" if role == "repository" else "repository"
     assert "repo_catalog/domain/p1_" + other + ".py" not in owners
     for name in ("paired_query", "production_query", "acquisition", "exchange"):
         assert "repo_catalog/application/" + name + ".py" not in owners
 
     producer = tmp_path / "producer"
     data = populate_rich_catalog(
-        producer, include_core=role == "core", include_context=role == "context"
+        producer,
+        include_repository=role == "repository",
+        include_context=role == "context",
     )
     service = ProductionQueryService(producer, mode=role + "_only")
-    kinds = ("git_metadata", "notes") if role == "core" else ("context_text",)
+    kinds = ("git_metadata", "notes") if role == "repository" else ("context_text",)
     outside = tmp_path / "consumer"
     copy_authority(producer, outside / "fixture", role)
     manifest = {
@@ -96,8 +98,8 @@ def test_search_minimum(search_distributions, tmp_path, role, variant):
         "resource": data["pr_key"].coordinates(),
         "expected": service.search(SearchQuery("e", kinds, limit=1000)).to_dict(),
     }
-    if role == "core":
-        # One representative real local Git producer; only its closed Core
+    if role == "repository":
+        # One representative real local Git producer; only its closed Repository
         # enters the consumer. No Operational/acquisition implementation does.
         notes = tmp_path / "notes-producer"
         notes.mkdir()

@@ -1,4 +1,4 @@
-"""Native identity, partial metadata and provenance obligations on separated Core."""
+"""Native identity, partial metadata and provenance obligations on separated Repository."""
 
 import json
 import sqlite3
@@ -8,31 +8,31 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.git_native import parse_metadata
-from repo_catalog.domain.p1_core import (
-    CoreFailure,
+from repo_catalog.domain.p1_repository import (
     GitObservation,
     Provenance,
     RelationGroup,
     RelationMember,
+    RepositoryFailure,
     ScalarClaim,
 )
-from tests.integration.p1.test_core import Budget, native, oid, provenance
+from tests.integration.p1.test_repository import Budget, native, oid, provenance
 from tests.integration.p2.test_native import commit_body, entry, git, repository, write
-from tests.integration.p5.test_exchange_core_import_independence import catalog
+from tests.integration.p5.test_exchange_repository_import_independence import catalog
 
 __all__ = ["repository"]
 
 
 @pytest.mark.parametrize("later_header", ["object", "type"])
 def test_later_tag_extensions_preserve_git_initial_identity_and_exact_bytes(
-    core, repository, later_header
+    repository_store, repository, later_header
 ):
-    store, _, _ = core
+    store, _, _ = repository_store
     path, fmt = repository
     tree = write(path, fmt, "tree", b"")
     first = write(path, fmt, "commit", commit_body(tree.object_oid))
@@ -78,9 +78,9 @@ def test_later_tag_extensions_preserve_git_initial_identity_and_exact_bytes(
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("bad_first", ["object", "type"])
 def test_later_valid_tag_extension_cannot_repair_invalid_initial_identity(
-    core, fmt, bad_first
+    repository_store, fmt, bad_first
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     target = oid("a", fmt).object_oid.encode()
     first_object = b"bad" if bad_first == "object" else target
     first_type = b"file" if bad_first == "type" else b"commit"
@@ -93,7 +93,7 @@ def test_later_valid_tag_extension_cannot_repair_invalid_initial_identity(
         + target
         + b"\ntype commit\n\nmessage"
     )
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         store.admit_metadata(native("tag", body, fmt), str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     assert store.sql("SELECT count(*) FROM git_objects")[0][0] == 0
@@ -106,16 +106,16 @@ def test_later_valid_tag_extension_cannot_repair_invalid_initial_identity(
     "damage", ["truncated-target", "valid-prefix-trailing-junk", "signed-mode"]
 )
 def test_exact_legacy_malformed_tree_shapes_leave_no_partial_metadata(
-    core, fmt, damage
+    repository_store, fmt, damage
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     raw_target = bytes.fromhex(oid("a", fmt).object_oid)
     body = {
         "truncated-target": b"100644 a\0bad",
         "valid-prefix-trailing-junk": b"100644 a\0" + raw_target + b"invalid",
         "signed-mode": b"+100644 a\0" + raw_target,
     }[damage]
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         store.admit_metadata(native("tree", body, fmt), str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     for table in (
@@ -136,9 +136,9 @@ def test_exact_legacy_malformed_tree_shapes_leave_no_partial_metadata(
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("kind", ["tree", "commit"])
 def test_interruption_after_checked_relation_write_rolls_back_entire_native_unit(
-    core, fmt, kind, monkeypatch
+    repository_store, fmt, kind, monkeypatch
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     unrelated = native("tree", b"", fmt)
     store.admit_metadata(unrelated, str(uuid4()), Budget())
     target = oid("a", fmt)
@@ -172,14 +172,14 @@ def test_interruption_after_checked_relation_write_rolls_back_entire_native_unit
         result = original(self, table, values)
         if table == "intrinsic_groups" and not fired:
             fired.append(table)
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "CANCELLED", incoming.object_oid, "after actual checked relation write"
             )
         return result
 
     with monkeypatch.context() as patch:
         patch.setattr(type(store), "_insert", interrupt)
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             store.admit_metadata(incoming, str(uuid4()), Budget())
         assert error.value.code == "CANCELLED"
     assert fired == ["intrinsic_groups"]
@@ -202,9 +202,9 @@ def test_interruption_after_checked_relation_write_rolls_back_entire_native_unit
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("attack", ["name", "child", "inflated-prefix"])
 def test_whole_checked_tree_group_refuses_matching_count_or_prefix_forgery(
-    core, fmt, attack
+    repository_store, fmt, attack
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     target, other = oid("a", fmt), oid("b", fmt)
     body = entry(b"100644", b"a", target) + entry(b"100644", b"b", target)
     incoming = native("tree", body, fmt)
@@ -230,7 +230,7 @@ def test_whole_checked_tree_group_refuses_matching_count_or_prefix_forgery(
         replace(provenance(), qualification="receiver_intrinsic"),
     )
     expected = store.relations(incoming.object_oid, "tree_entries").canonical
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         db.execute("BEGIN")
         db.execute("INSERT INTO relation_groups VALUES(?,?,?,?,?,?,?)", forged.key)
@@ -251,9 +251,9 @@ def test_whole_checked_tree_group_refuses_matching_count_or_prefix_forgery(
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("width", [2, 2048])
 def test_one_reported_name_cannot_swallow_multiple_native_tree_entries(
-    core, fmt, width
+    repository_store, fmt, width
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     target = oid("a", fmt)
     entries = [
         entry(b"100644", f"n{index:04}".encode(), target) for index in range(width)
@@ -261,7 +261,7 @@ def test_one_reported_name_cannot_swallow_multiple_native_tree_entries(
     incoming = native("tree", b"".join(entries), fmt)
     store.admit_metadata(incoming, str(uuid4()), Budget())
     swallowed = b"".join(entries)[: -len(bytes.fromhex(target.object_oid)) - 1]
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         RelationGroup(
             incoming.object_oid,
             "tree_entries",
@@ -293,9 +293,9 @@ def test_one_reported_name_cannot_swallow_multiple_native_tree_entries(
     ],
 )
 def test_independent_decoder_reports_preserve_settings_attribution_without_ranked_winner(
-    core, family, encoding, errors
+    repository_store, family, encoding, errors
 ):
-    store, _, _ = core
+    store, _, _ = repository_store
     target = oid()
     raw = (
         b"genuine caf\xc3\xa9"
@@ -369,9 +369,9 @@ def test_independent_decoder_reports_preserve_settings_attribution_without_ranke
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_reanalysis_replays_exact_metadata_without_new_capture_or_git_access(
-    core, fmt, monkeypatch
+    repository_store, fmt, monkeypatch
 ):
-    store, path, repository_uuid = core
+    store, path, repository_uuid = repository_store
     store.admit_repository(repository_uuid)
     target = oid("a", fmt)
     incoming = native(
@@ -438,11 +438,11 @@ def test_reanalysis_replays_exact_metadata_without_new_capture_or_git_access(
 
 @pytest.mark.parametrize("terminal_kind", ["blob", "tree", "commit"])
 def test_nested_tags_survive_onward_partial_and_late_metadata_delivery(
-    core, repository, tmp_path, terminal_kind
+    repository_store, repository, tmp_path, terminal_kind
 ):
     from contextlib import closing
 
-    store, core_path, repository_uuid = core
+    store, repository_path, repository_uuid = repository_store
     git_path, fmt = repository
     tree = write(git_path, fmt, "tree", b"")
     terminal_body = (
@@ -487,7 +487,7 @@ def test_nested_tags_survive_onward_partial_and_late_metadata_delivery(
     source = GitNativeSource(git_path)
     store.admit_metadata(source.metadata(tags[-1].object_oid), str(uuid4()), Budget())
     selection = ExchangeSelectionScope(all_selected=True, include_context=False)
-    source_service = ExchangeService(core_path.parent)
+    source_service = ExchangeService(repository_path.parent)
     first = source_service.export_package(selection=selection, exported_at_us=10)
     receiver_path, onward_path = tmp_path / "receiver", tmp_path / "onward"
     for destination in (receiver_path, onward_path):
@@ -495,21 +495,21 @@ def test_nested_tags_survive_onward_partial_and_late_metadata_delivery(
     receiver = ExchangeService(receiver_path)
     assert receiver.import_package(
         first, new_request=True, permitted_repository_uuidv4s=(repository_uuid,)
-    ).core_imported
+    ).repository_imported
     partial = receiver.export_package(selection=selection, exported_at_us=11)
     onward = ExchangeService(onward_path)
     assert onward.import_package(
         partial, new_request=True, permitted_repository_uuidv4s=(repository_uuid,)
-    ).core_imported
+    ).repository_imported
     for destination in (receiver_path, onward_path):
-        with closing(GitCore(destination / "core.sqlite3")) as saved:
+        with closing(GitRepositoryStore(destination / "repository.sqlite3")) as saved:
             assert saved.read_metadata(tags[-1].object_oid) == tags[-1].body
             assert saved.relations(tags[-1].object_oid, "tag_target").canonical == [
                 "complete",
                 [[0, *tags[-2].object_oid.key]],
             ]
             assert saved.relations(tags[-2].object_oid, "tag_target").canonical is None
-            with pytest.raises(CoreFailure) as unavailable:
+            with pytest.raises(RepositoryFailure) as unavailable:
                 saved.read_metadata(tags[-2].object_oid)
             assert unavailable.value.code == "BYTES_UNAVAILABLE"
             assert saved.sql("SELECT count(*) FROM retained_metadata")[0][0] == 1
@@ -525,8 +525,8 @@ def test_nested_tags_survive_onward_partial_and_late_metadata_delivery(
     for service, destination in ((receiver, receiver_path), (onward, onward_path)):
         assert service.import_package(
             late, new_request=True, permitted_repository_uuidv4s=(repository_uuid,)
-        ).core_imported
-        with closing(GitCore(destination / "core.sqlite3")) as saved:
+        ).repository_imported
+        with closing(GitRepositoryStore(destination / "repository.sqlite3")) as saved:
             for number, incoming in enumerate(tags):
                 expected = (
                     terminal.object_oid if number == 0 else tags[number - 1].object_oid
@@ -540,7 +540,7 @@ def test_nested_tags_survive_onward_partial_and_late_metadata_delivery(
                 3 if terminal_kind == "blob" else 4
             )
             if terminal_kind == "blob":
-                with pytest.raises(CoreFailure) as unavailable:
+                with pytest.raises(RepositoryFailure) as unavailable:
                     saved.read_metadata(terminal.object_oid)
                 assert unavailable.value.code == "BYTES_UNAVAILABLE"
             else:
@@ -645,11 +645,11 @@ def test_native_ref_peel_budget_refuses_before_process_and_can_retry(
         def require(self, unit, amount=1):
             super().require(unit, amount)
             if self.counts.get(unit, 0) + amount > self.caps[unit]:
-                raise CoreFailure("BUDGET", unit, "finite ref test work cap")
+                raise RepositoryFailure("BUDGET", unit, "finite ref test work cap")
 
     monkeypatch.setattr(subprocess, "Popen", popen)
     stopped = Finite(2)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         source.ref_records(stopped)
     assert error.value.code == "BUDGET"
     assert len(commands) == 1 and "for-each-ref" in commands[0]
@@ -665,21 +665,23 @@ def test_native_ref_peel_budget_refuses_before_process_and_can_retry(
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_explicit_authority_validation_detects_typed_byte_contradiction_and_preserves_source(
-    core, fmt, tmp_path
+    repository_store, fmt, tmp_path
 ):
-    from repo_catalog.adapters.sqlite.core_recovery import CoreRecoveryAdapter
-    from repo_catalog.adapters.sqlite.core_recovery_validation import (
+    from repo_catalog.adapters.sqlite.repository_recovery import (
+        RepositoryRecoveryAdapter,
+    )
+    from repo_catalog.adapters.sqlite.repository_recovery_validation import (
         validate_stored_admission_guards,
         validate_stored_checks,
     )
-    from repo_catalog.domain.p1_core import claim_value
+    from repo_catalog.domain.p1_repository import claim_value
     from repo_catalog.domain.recovery import (
         BackupScope,
         BackupValidationError,
         CorruptionDetectedError,
     )
 
-    store, path, _ = core
+    store, path, _ = repository_store
     incoming = native("commit", commit_body(oid("a", fmt)), fmt)
     store.admit_metadata(incoming, str(uuid4()), Budget())
     statements = []
@@ -696,7 +698,7 @@ def test_explicit_authority_validation_detects_typed_byte_contradiction_and_pres
     # Disposable privileged damage changes matching typed source/evidence keys,
     # leaving CHECKs, FK endpoints, retained bytes and restored guards intact.
     forged = claim_value("message", "typed but byte-contradictory message")
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         names = (
             "p1_immutable_scalar_claims_update",
@@ -724,20 +726,20 @@ def test_explicit_authority_validation_detects_typed_byte_contradiction_and_pres
             table: [tuple(row) for row in db.execute(f"SELECT * FROM {table}")]
             for table in ("retained_metadata", "scalar_claims", "intrinsic_claims")
         }
-        validate_stored_checks(db, "core", retained_bytes=False)
-        validate_stored_checks(db, "core", retained_bytes=True)
+        validate_stored_checks(db, "repository", retained_bytes=False)
+        validate_stored_checks(db, "repository", retained_bytes=True)
         with pytest.raises(BackupValidationError, match="intrinsic_claim_guard"):
-            validate_stored_admission_guards(db, "core")
+            validate_stored_admission_guards(db, "repository")
     finally:
         db.close()
     destination = tmp_path / "must-not-publish-backup"
     with pytest.raises(CorruptionDetectedError, match="intrinsic_claim_guard"):
-        CoreRecoveryAdapter().create_consistent_backup(
+        RepositoryRecoveryAdapter().create_consistent_backup(
             path.parent, destination, BackupScope.GIT_ONLY
         )
     assert (path.parent / "p1-recovery-stop.json").exists()
     assert not destination.exists()
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         store.scalar(incoming.object_oid, "message")
     assert stopped.value.code == "RECOVERY_STOP"
     diagnostic = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
@@ -752,11 +754,11 @@ def test_explicit_authority_validation_detects_typed_byte_contradiction_and_pres
         diagnostic.close()
 
 
-def reparse_fixture(core, incoming):
+def reparse_fixture(repository_store, incoming):
     from repo_catalog.adapters.sqlite.p1_schema import initialize
     from repo_catalog.domain.git_acquisition import GitMetadataInput
 
-    store, path, repository_uuid = core
+    store, path, repository_uuid = repository_store
     store.admit_repository(repository_uuid)
     store.admit_metadata(incoming, str(uuid4()), Budget())
     instance = store.sql("SELECT catalog_instance_uuidv4 FROM store_identity")[0][0]
@@ -787,13 +789,13 @@ def reparse_fixture(core, incoming):
     ],
 )
 def test_actual_reparse_preserves_supported_settings_and_original_producer(
-    core, family, encoding, errors
+    repository_store, family, encoding, errors
 ):
     from repo_catalog.application.git_history_query import GitHistoryQuery
     from repo_catalog.application.metadata_reparse import reparse
     from repo_catalog.domain.git_native import DECODER, DECODER_VERSION
     from repo_catalog.domain.p1_coordination import RequestIdentity
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.domain.p1_repository import encode
 
     target = oid()
     raw = (
@@ -811,7 +813,7 @@ def test_actual_reparse_preserves_supported_settings_and_original_producer(
         + b"\ncommitter C <c@invalid> 2 +0000\n\nmessage"
     )
     incoming = native("tree" if family == "name" else "commit", body)
-    store, path, unit = reparse_fixture(core, incoming)
+    store, path, unit = reparse_fixture(repository_store, incoming)
     settings = {
         "text_encoding": "utf-8",
         "errors": "surrogateescape",
@@ -898,7 +900,7 @@ def test_actual_reparse_preserves_supported_settings_and_original_producer(
     ids=["different-values", "same-values", "utf8-different-values"],
 )
 def test_actual_tree_decoder_alternatives_remain_entry_specific_without_a_winner(
-    core, raw, conflicting
+    repository_store, raw, conflicting
 ):
     from repo_catalog.application.git_history_query import GitHistoryQuery
     from repo_catalog.application.metadata_reparse import reparse
@@ -909,7 +911,7 @@ def test_actual_tree_decoder_alternatives_remain_entry_specific_without_a_winner
         entry(b"100644", name, target) for name in sorted([raw, b"other.txt"])
     )
     incoming = native("tree", body)
-    store, path, unit = reparse_fixture(core, incoming)
+    store, path, unit = reparse_fixture(repository_store, incoming)
     original_group = store.relations(incoming.object_oid, "tree_entries").canonical
     for encoding, errors in [("utf-8", "backslashreplace"), ("latin-1", "strict")]:
         reparse(
@@ -950,7 +952,7 @@ def test_actual_tree_decoder_alternatives_remain_entry_specific_without_a_winner
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("invalid_part", ["header", "message", "name"])
 def test_strict_reparse_failure_preserves_native_authority_and_charges_failed_decode(
-    core, fmt, invalid_part
+    repository_store, fmt, invalid_part
 ):
     from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
     from repo_catalog.application.metadata_reparse import reparse
@@ -976,7 +978,7 @@ def test_strict_reparse_failure_preserves_native_authority_and_charges_failed_de
             + message,
             fmt,
         )
-    store, path, unit = reparse_fixture(core, incoming)
+    store, path, unit = reparse_fixture(repository_store, incoming)
     tables = (
         "git_objects",
         "git_observations",
@@ -990,7 +992,7 @@ def test_strict_reparse_failure_preserves_native_authority_and_charges_failed_de
         for table in tables
     }
     request = RequestIdentity(str(uuid4()), str(uuid4()))
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         reparse(
             path.parent,
             unit,
@@ -1029,16 +1031,16 @@ def test_strict_reparse_failure_preserves_native_authority_and_charges_failed_de
     "false_first", [True, False], ids=["false-first", "real-first"]
 )
 def test_tree_query_refuses_fabricated_decoding_but_keeps_qualified_original_report(
-    core, false_first
+    repository_store, false_first
 ):
     from repo_catalog.application.git_history_query import GitHistoryQuery
     from repo_catalog.application.metadata_reparse import reparse
     from repo_catalog.domain.p1_coordination import RequestIdentity
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.domain.p1_repository import encode
 
     raw = b"caf\xc3\xa9.txt"
     incoming = native("tree", entry(b"100644", raw, oid()))
-    store, path, unit = reparse_fixture(core, incoming)
+    store, path, unit = reparse_fixture(repository_store, incoming)
     original = store.relations(incoming.object_oid, "tree_entries").canonical
     source = Provenance(
         "unverified-original-source",
@@ -1096,7 +1098,7 @@ def test_tree_query_refuses_fabricated_decoding_but_keeps_qualified_original_rep
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_large_tree_decoder_processing_reads_one_copy_and_query_does_not_rehydrate(
-    core, fmt, monkeypatch
+    repository_store, fmt, monkeypatch
 ):
     from repo_catalog.application.git_history_query import GitHistoryQuery
     from repo_catalog.application.metadata_reparse import reparse
@@ -1108,16 +1110,16 @@ def test_large_tree_decoder_processing_reads_one_copy_and_query_does_not_rehydra
     incoming = native(
         "tree", b"".join(entry(b"100644", name, target) for name in names), fmt
     )
-    store, path, unit = reparse_fixture(core, incoming)
-    # CoreQueryService.open_snapshot binds the production GitCore reader.
-    original = GitCore.read_metadata_copy
+    store, path, unit = reparse_fixture(repository_store, incoming)
+    # RepositoryQueryService.open_snapshot binds the production GitRepository reader.
+    original = GitRepositoryStore.read_metadata_copy
     copies = []
 
     def read_copy(self, subject, *args, **kwargs):
         copies.append(subject.key)
         return original(self, subject, *args, **kwargs)
 
-    monkeypatch.setattr(GitCore, "read_metadata_copy", read_copy)
+    monkeypatch.setattr(GitRepositoryStore, "read_metadata_copy", read_copy)
     reparse(
         path.parent,
         unit,
@@ -1140,11 +1142,11 @@ def test_large_tree_decoder_processing_reads_one_copy_and_query_does_not_rehydra
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_absent_native_child_stays_nominal_until_matching_real_bytes_are_acquired(
-    core, fmt
+    repository_store, fmt
 ):
     import hashlib
 
-    store, path, _ = core
+    store, path, _ = repository_store
     child = native("tree", b"", fmt)
     parent = native("commit", commit_body(child.object_oid), fmt)
     store.admit_metadata(parent, str(uuid4()), Budget())
@@ -1156,7 +1158,7 @@ def test_absent_native_child_stays_nominal_until_matching_real_bytes_are_acquire
     original = store.relations(parent.object_oid, "commit_tree").canonical
     assert original == ["complete", [[0, *child.object_oid.key]]]
     assert store.scalar(child.object_oid, "type").canonical is None
-    with pytest.raises(CoreFailure) as unavailable:
+    with pytest.raises(RepositoryFailure) as unavailable:
         store.read_metadata(child.object_oid)
     assert unavailable.value.code == "BYTES_UNAVAILABLE"
     forged = replace(
@@ -1165,7 +1167,7 @@ def test_absent_native_child_stays_nominal_until_matching_real_bytes_are_acquire
         declared_size=4,
         digest_sha256=hashlib.sha256(b"fake").hexdigest(),
     )
-    with pytest.raises(CoreFailure) as mismatch:
+    with pytest.raises(RepositoryFailure) as mismatch:
         store.admit_metadata(forged, str(uuid4()), Budget())
     assert mismatch.value.code == "NATIVE_INTEGRITY"
     assert store.sql("SELECT count(*) FROM retained_metadata")[0][0] == 1

@@ -1,6 +1,6 @@
 """Explicit identity evidence routed to its independent owning authority.
 
-Callers supply Core and/or already scoped Context capabilities. This service
+Callers supply Repository and/or already scoped Context capabilities. This service
 opens no stores, creates no registrations, and never turns provenance into
 sender authentication or rewrites either nominal endpoint.
 """
@@ -12,14 +12,14 @@ from repo_catalog.domain.identity_assertions import (
     identity_status,
     identity_values,
 )
-from repo_catalog.domain.shared_values import CoreFailure, Provenance
+from repo_catalog.domain.shared_values import Provenance, RepositoryFailure
 
 
 class IdentityAssertions:
-    def __init__(self, core=None, context=None):
-        if core is None and context is None:
+    def __init__(self, repository_store=None, context=None):
+        if repository_store is None and context is None:
             raise ValueError("at least one identity authority is required")
-        self.core, self.context = core, context
+        self.repository_store, self.context = repository_store, context
 
     def admit(self, kind, record, provenance: Provenance, *, entity_kind=None):
         """Admit a portable original; cancellations require their owning kind.
@@ -32,12 +32,16 @@ class IdentityAssertions:
         if kind == "relation":
             actual = record["entity_kind"]
             if entity_kind is not None and entity_kind != actual:
-                raise CoreFailure("IDENTITY_RECORD", kind, "identity authority differs")
+                raise RepositoryFailure(
+                    "IDENTITY_RECORD", kind, "identity authority differs"
+                )
             entity_kind = actual
         identity_values(kind, entity_kind, raw, provenance)
-        authority = self.core if entity_kind == "repository" else self.context
+        authority = (
+            self.repository_store if entity_kind == "repository" else self.context
+        )
         if authority is None:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "IDENTITY_AUTHORITY_UNAVAILABLE",
                 entity_kind,
                 "owning authority required",
@@ -54,13 +58,16 @@ class IdentityAssertions:
     ):
         """Combine explicitly supplied, independently pinned authority snapshots.
 
-        No shared cross-database snapshot or pairing is claimed. Core-only use
-        cannot touch Context; Context-only use cannot touch Core. Service links
+        No shared cross-database snapshot or pairing is claimed. Repository-only use
+        cannot touch Context; Context-only use cannot touch Repository. Service links
         resolve solely against the supplied Context capability's Providers.
         """
         combined = None
         authorities = []
-        for kind, authority in (("repository", self.core), ("service", self.context)):
+        for kind, authority in (
+            ("repository", self.repository_store),
+            ("service", self.context),
+        ):
             if authority is None:
                 continue
             snapshot = authority.identity_evidence_snapshot(
@@ -83,6 +90,6 @@ class IdentityAssertions:
             else:
                 for name, records in projected.items():
                     combined[name].extend(records)
-            authorities.append("core" if kind == "repository" else "context")
+            authorities.append("repository" if kind == "repository" else "context")
         combined["authorities"] = authorities
         return combined

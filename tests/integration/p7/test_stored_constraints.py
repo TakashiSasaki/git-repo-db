@@ -4,9 +4,9 @@ import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import is_catalog_stopped
-from repo_catalog.adapters.sqlite.core_recovery_validation import _packaged_checks
 from repo_catalog.adapters.sqlite.p1_schema import expected_schema, schema_rows
+from repo_catalog.adapters.sqlite.repository_recovery import is_catalog_stopped
+from repo_catalog.adapters.sqlite.repository_recovery_validation import _packaged_checks
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import CorruptionDetectedError
 
@@ -21,10 +21,10 @@ from repo_catalog.domain.recovery import CorruptionDetectedError
         ("scalar_claims", "value", "'{'"),
     ],
 )
-def test_invalid_core_text_or_udf_check_stops_source(
+def test_invalid_repository_text_or_udf_check_stops_source(
     synthetic_catalog, tmp_path, table, column, value
 ):
-    connection = sqlite3.connect(synthetic_catalog / "core.sqlite3")
+    connection = sqlite3.connect(synthetic_catalog / "repository.sqlite3")
     triggers = connection.execute(
         "SELECT name,sql FROM sqlite_schema WHERE type='trigger' AND tbl_name=? AND sql LIKE '%BEFORE UPDATE%'",
         (table,),
@@ -44,7 +44,7 @@ def test_invalid_core_text_or_udf_check_stops_source(
     for _, sql in triggers:
         connection.execute(sql)
     connection.commit()
-    assert schema_rows(connection) == expected_schema("core")
+    assert schema_rows(connection) == expected_schema("repository")
     connection.close()
     with pytest.raises(
         CorruptionDetectedError,
@@ -59,9 +59,9 @@ def test_invalid_core_text_or_udf_check_stops_source(
 
 def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path):
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.p1_schema import connect
-    from repo_catalog.domain.p1_core import OID
+    from repo_catalog.domain.p1_repository import OID
     from tests.integration.p7.conftest import (
         DEFAULT_REPO_UUID,
         admit_context_text,
@@ -69,12 +69,12 @@ def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path
         make_tree,
     )
 
-    core = GitCore(synthetic_catalog / "core.sqlite3")
+    repository_store = GitRepositoryStore(synthetic_catalog / "repository.sqlite3")
     target = OID(
         "sha1",
-        core.sql("SELECT object_oid FROM retained_metadata WHERE native_type='commit'")[
-            0
-        ][0],
+        repository_store.sql(
+            "SELECT object_oid FROM retained_metadata WHERE native_type='commit'"
+        )[0][0],
     )
     note = make_native("sha1", "blob", b"\xff\x00\xfe")
     tree = make_tree(
@@ -83,7 +83,7 @@ def test_binary_notes_and_split_unicode_remain_valid(synthetic_catalog, tmp_path
     from tests.support.ref_notes import admit_fixture_note
 
     admit_fixture_note(
-        core, DEFAULT_REPO_UUID, tree, target, note, UnlimitedWorkBudget()
+        repository_store, DEFAULT_REPO_UUID, tree, target, note, UnlimitedWorkBudget()
     )
     connection = connect(synthetic_catalog / "context.sqlite3", "context")
     admit_context_text(connection, "a" * 65535 + "📝" * 4)

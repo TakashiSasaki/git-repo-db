@@ -330,27 +330,28 @@ def test_selected_workspace_distribution_and_sibling_inputs_are_cache_identity(
 ):
     workspace = tmp_path / "workspace"
     shutil.copytree(source, workspace)
-    child = workspace / "packages/core"
+    child = workspace / "packages/repository"
     shutil.copytree(source, child)
     root_config = workspace / "pyproject.toml"
     root_config.write_text(
-        root_config.read_text() + '\n[tool.uv.workspace]\nmembers = ["packages/core"]\n'
+        root_config.read_text()
+        + '\n[tool.uv.workspace]\nmembers = ["packages/repository"]\n'
     )
     child_config = child / "pyproject.toml"
     child_config.write_text(
         child_config.read_text().replace(
-            'name="repo-catalog"', 'name="repo-catalog-core"'
+            'name="repo-catalog"', 'name="repo-catalog-repository"'
         )
     )
     before = package_build_inputs(workspace, {})
-    selected_core = package_build_inputs(child, {})
-    assert before != selected_core
+    selected_repository = package_build_inputs(child, {})
+    assert before != selected_repository
     resource = child / "src/repo_catalog/schema.sql"
     # The specimen's runtime source set is finite; use a new classified resource
     # to show a same-path checkout edit affects both owning and composed builds.
     resource.write_text("SELECT 1;")
     assert package_build_inputs(workspace, {}) != before
-    assert package_build_inputs(child, {}) != selected_core
+    assert package_build_inputs(child, {}) != selected_repository
     old = package_build_inputs(child, {})
     root_config.write_text(root_config.read_text() + "# changed workspace metadata\n")
     assert package_build_inputs(child, {}) != old

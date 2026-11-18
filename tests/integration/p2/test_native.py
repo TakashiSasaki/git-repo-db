@@ -1,4 +1,4 @@
-"""Real Git SHA-1/SHA-256 bytes, supported grammar and atomic Core semantics."""
+"""Real Git SHA-1/SHA-256 bytes, supported grammar and atomic Repository semantics."""
 
 from __future__ import annotations
 
@@ -10,11 +10,15 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.git_native import parse_metadata, parse_tree
-from repo_catalog.domain.p1_core import CoreFailure, GitObservation, ScalarClaim
-from tests.integration.p1.test_core import Budget, native, oid, provenance
+from repo_catalog.domain.p1_repository import (
+    GitObservation,
+    RepositoryFailure,
+    ScalarClaim,
+)
+from tests.integration.p1.test_repository import Budget, native, oid, provenance
 
 
 def git(path, *args, data=None):
@@ -70,8 +74,10 @@ def entry(mode, name, target):
     return mode + b" " + name + b"\0" + bytes.fromhex(target.object_oid)
 
 
-def test_real_git_signed_extension_encoding_and_exact_binary_metadata(core, repository):
-    c, _, _ = core
+def test_real_git_signed_extension_encoding_and_exact_binary_metadata(
+    repository_store, repository
+):
+    c, _, _ = repository_store
     path, fmt = repository
     tree = write(path, fmt, "tree", b"")
     # These parents are genuinely absent; only the requested commit is present.
@@ -118,14 +124,16 @@ def test_real_git_signed_extension_encoding_and_exact_binary_metadata(core, repo
     ]
     assert len(c.sql("SELECT physical_copy_uuidv4 FROM retained_metadata")) == 1
     assert c.scalar(parents[0], "type").canonical is None
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         source.metadata(parents[0])
     assert error.value.code == "OBJECT_UNAVAILABLE"
 
 
 @pytest.mark.parametrize("mode", [b"100644", b"100755", b"120000", b"160000", b"40000"])
-def test_real_git_binary_tree_names_and_modes_missing_children(core, repository, mode):
-    c, _, _ = core
+def test_real_git_binary_tree_names_and_modes_missing_children(
+    repository_store, repository, mode
+):
+    c, _, _ = repository_store
     path, fmt = repository
     target = oid("a", fmt)
     body = entry(mode, b"a\n\xff\t", target)
@@ -157,9 +165,9 @@ def test_tree_native_basename_order_differs_from_plain_filename_order(repository
 @pytest.mark.parametrize("tagger", [False, True])
 @pytest.mark.parametrize("target_kind", ["commit", "tree", "blob", "tag"])
 def test_real_git_annotated_tag_to_any_type_without_target_body(
-    core, repository, tagger, target_kind
+    repository_store, repository, tagger, target_kind
 ):
-    c, _, _ = core
+    c, _, _ = repository_store
     path, fmt = repository
     target = oid("a", fmt)
     body = (
@@ -199,10 +207,12 @@ def test_real_git_annotated_tag_to_any_type_without_target_body(
         + b" +0000\ncommitter B <b> 0 +0000\n\n",
     ],
 )
-def test_malformed_commit_is_typed_refusal_and_never_partial_admission(core, body):
-    c, _, _ = core
+def test_malformed_commit_is_typed_refusal_and_never_partial_admission(
+    repository_store, body
+):
+    c, _, _ = repository_store
     incoming = native("commit", body)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_metadata(incoming, str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     assert c.sql("SELECT * FROM git_objects") == []
@@ -221,17 +231,17 @@ def test_malformed_commit_is_typed_refusal_and_never_partial_admission(core, bod
         b"100644 a\0" + b"a" * 20 + b"100755 a\0" + b"b" * 20,
     ],
 )
-def test_malformed_tree_fails_atomically(core, body):
-    c, _, _ = core
-    with pytest.raises(CoreFailure) as error:
+def test_malformed_tree_fails_atomically(repository_store, body):
+    c, _, _ = repository_store
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_metadata(native("tree", body), str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     assert c.sql("SELECT * FROM git_objects") == []
 
 
 @pytest.mark.parametrize("change", ["oid", "digest", "size", "type"])
-def test_exact_native_integrity_failure_not_corruption_stop(core, change):
-    c, path, _ = core
+def test_exact_native_integrity_failure_not_corruption_stop(repository_store, change):
+    c, path, _ = repository_store
     incoming = native("tree", b"")
     bad = {
         "oid": {"object_oid": oid()},
@@ -239,15 +249,17 @@ def test_exact_native_integrity_failure_not_corruption_stop(core, change):
         "size": {"declared_size": 1},
         "type": {"native_type": "tag"},
     }[change]
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_metadata(replace(incoming, **bad), str(uuid4()), Budget())
     assert error.value.code == "NATIVE_INTEGRITY"
     assert not (path.parent / "p1-recovery-stop.json").exists()
     c.admit_object(oid())
 
 
-def test_native_atomic_failure_after_intrinsic_install_rolls_back(core, monkeypatch):
-    c, _, _ = core
+def test_native_atomic_failure_after_intrinsic_install_rolls_back(
+    repository_store, monkeypatch
+):
+    c, _, _ = repository_store
     incoming = native("commit", commit_body(oid()))
     original = c._insert
 
@@ -269,11 +281,11 @@ def test_native_atomic_failure_after_intrinsic_install_rolls_back(core, monkeypa
     assert c.sql("SELECT physical_copy_uuidv4 FROM retained_metadata") == []
 
 
-def test_no_context_no_derivatives_reopen_preserves_native_authority(core):
-    c, path, _ = core
+def test_no_context_no_derivatives_reopen_preserves_native_authority(repository_store):
+    c, path, _ = repository_store
     incoming = native("tree", b"")
     c.admit_metadata(incoming, str(uuid4()), Budget())
-    other = GitCore(path)
+    other = GitRepositoryStore(path)
     try:
         assert other.relations(incoming.object_oid, "tree_entries").canonical == [
             "known_empty",
@@ -288,13 +300,15 @@ def test_no_context_no_derivatives_reopen_preserves_native_authority(core):
         other.close()
 
 
-def test_corruption_metadata_history_independent_until_byte_read_stops_catalog(core):
-    c, path, _ = core
+def test_corruption_metadata_history_independent_until_byte_read_stops_catalog(
+    repository_store,
+):
+    c, path, _ = repository_store
     incoming = native("tree", b"")
     copy = str(uuid4())
     c.admit_metadata(incoming, copy, Budget())
     # Privileged adversary damages actual stored bytes outside supported APIs.
-    db = connect(path, "core")
+    db = connect(path, "repository")
     db.execute("DROP TRIGGER p1_immutable_retained_metadata_update")
     db.execute("PRAGMA ignore_check_constraints=ON")
     db.execute("UPDATE retained_metadata SET body=x'01'")
@@ -303,15 +317,15 @@ def test_corruption_metadata_history_independent_until_byte_read_stops_catalog(c
         "known_empty",
         [],
     ]
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.read_metadata(incoming.object_oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         c.admit_object(oid())
     assert stopped.value.code == "RECOVERY_STOP"
-    with pytest.raises(CoreFailure):
-        GitCore(path)
+    with pytest.raises(RepositoryFailure):
+        GitRepositoryStore(path)
 
 
 @pytest.mark.parametrize(
@@ -323,19 +337,19 @@ def test_corruption_metadata_history_independent_until_byte_read_stops_catalog(c
         "SELECT proof_bundle FROM notes_mapping_evidence",
     ],
 )
-def test_generic_sql_cannot_emit_unchecked_retained_payloads(core, query):
+def test_generic_sql_cannot_emit_unchecked_retained_payloads(repository_store, query):
     with pytest.raises(sqlite3.DatabaseError):
-        core[0].sql(query)
+        repository_store[0].sql(query)
 
 
-def test_ordinary_blob_excluded_before_source_body_read(core, repository):
-    c, _, _ = core
+def test_ordinary_blob_excluded_before_source_body_read(repository_store, repository):
+    c, _, _ = repository_store
     path, fmt = repository
     blob = write(path, fmt, "blob", b"ordinary file")
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         GitNativeSource(path).metadata(blob.object_oid)
     assert error.value.code == "RETENTION_PURPOSE"
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         c.admit_metadata(blob, str(uuid4()), Budget())
     assert c.sql("SELECT physical_copy_uuidv4 FROM retained_metadata") == []
 
@@ -348,14 +362,16 @@ def test_source_size_limit_and_environment_cannot_redirect(
     commit = write(path, fmt, "commit", commit_body(tree.object_oid))
     monkeypatch.setenv("GIT_DIR", str(tmp_path / "unavailable"))
     source = GitNativeSource(path, metadata_bytes=1)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         source.metadata(commit.object_oid)
     assert error.value.code == "BUDGET"
     assert source.metadata(tree.object_oid) == tree
 
 
-def test_real_ref_root_observations_retain_force_push_and_replay(core, repository):
-    c, _, repo = core
+def test_real_ref_root_observations_retain_force_push_and_replay(
+    repository_store, repository
+):
+    c, _, repo = repository_store
     path, fmt = repository
     first = write(path, fmt, "commit", commit_body(oid("a", fmt)))
     second = write(path, fmt, "commit", commit_body(oid("b", fmt)))
@@ -390,13 +406,13 @@ def test_parser_format_and_tag_refusals_are_typed():
         b"object " + b"a" * 40 + b"\ntype file\ntag a\n\n",
         b"object " + b"a" * 40 + b"\ntype commit\ntag a\ntagger invalid\n\n",
     ):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             parse_metadata("sha1", "tag", body)
         assert error.value.code == "NATIVE_SYNTAX"
 
 
-def test_actual_relation_work_is_charged_on_replay_and_rejected_parse(core):
-    c, _, _ = core
+def test_actual_relation_work_is_charged_on_replay_and_rejected_parse(repository_store):
+    c, _, _ = repository_store
     incoming = native("commit", commit_body(oid(), (oid("b"), oid("c"))))
     work = Budget()
     physical = str(uuid4())
@@ -406,7 +422,7 @@ def test_actual_relation_work_is_charged_on_replay_and_rejected_parse(core):
     c.admit_metadata(incoming, physical, work)
     assert work.counts["metadata_units"] == 2 * first["metadata_units"]
     before = work.counts["metadata_units"]
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         c.admit_metadata(
             native("commit", b"tree invalid\n\nmessage"), str(uuid4()), work
         )
@@ -414,15 +430,17 @@ def test_actual_relation_work_is_charged_on_replay_and_rejected_parse(core):
     assert work.counts["input_bytes"] > 2 * len(incoming.body)
 
 
-def test_relation_budget_exhaustion_rolls_back_without_corruption_stop(core):
-    c, path, _ = core
+def test_relation_budget_exhaustion_rolls_back_without_corruption_stop(
+    repository_store,
+):
+    c, path, _ = repository_store
 
     class Limited(Budget):
         def require(self, unit, amount=1):
             if unit == "metadata_units" and self.counts.get(unit, 0) + amount > 2:
-                raise CoreFailure("BUDGET", unit, "test metadata work limit")
+                raise RepositoryFailure("BUDGET", unit, "test metadata work limit")
 
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_metadata(native("commit", commit_body(oid())), str(uuid4()), Limited())
     assert error.value.code == "BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
@@ -438,7 +456,7 @@ def test_source_operating_system_and_timeout_failures_are_scoped(
         raise FileNotFoundError("synthetic missing Git")
 
     monkeypatch.setattr(subprocess, "run", missing)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         GitNativeSource(path)
     assert error.value.code == "GIT_INPUT"
 
@@ -446,25 +464,27 @@ def test_source_operating_system_and_timeout_failures_are_scoped(
         raise subprocess.TimeoutExpired("git", 30)
 
     monkeypatch.setattr(subprocess, "run", timeout)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         GitNativeSource(path)
     assert error.value.code == "GIT_INPUT"
 
 
-def test_native_messages_with_nul_are_rejected_not_silently_truncated(core):
-    c, _, _ = core
+def test_native_messages_with_nul_are_rejected_not_silently_truncated(repository_store):
+    c, _, _ = repository_store
     incoming = native("commit", commit_body(oid(), message=b"a\0b"))
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_metadata(incoming, str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     assert c.sql("SELECT * FROM git_objects") == []
 
 
-def test_loss_of_admitted_metadata_copy_is_corruption_not_optional_nonacquisition(core):
-    c, path, _ = core
+def test_loss_of_admitted_metadata_copy_is_corruption_not_optional_nonacquisition(
+    repository_store,
+):
+    c, path, _ = repository_store
     incoming = native("tree", b"")
     c.admit_metadata(incoming, str(uuid4()), Budget())
-    db = connect(path, "core")
+    db = connect(path, "repository")
     db.execute("PRAGMA foreign_keys=OFF")
     db.execute("DROP TRIGGER p1_immutable_retained_metadata_delete")
     db.execute("DELETE FROM retained_metadata")
@@ -473,17 +493,19 @@ def test_loss_of_admitted_metadata_copy_is_corruption_not_optional_nonacquisitio
         "known_empty",
         [],
     ]
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.read_metadata(incoming.object_oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("operation", ["scalar", "relations", "bytes", "sql"])
-def test_stop_published_during_last_read_prevents_ordinary_completion(core, operation):
+def test_stop_published_during_last_read_prevents_ordinary_completion(
+    repository_store, operation
+):
     from repo_catalog.adapters.sqlite.p1_coordination import persist_catalog_stop
 
-    c, path, _ = core
+    c, path, _ = repository_store
     incoming = native("tree", b"")
     c.admit_metadata(incoming, str(uuid4()), Budget())
     patterns = {
@@ -500,7 +522,7 @@ def test_stop_published_during_last_read_prevents_ordinary_completion(core, oper
             persist_catalog_stop(path.parent, "independent detector during last read")
 
     c._db.set_trace_callback(trace)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         if operation == "scalar":
             c.scalar(incoming.object_oid, "size")
         elif operation == "relations":
@@ -526,14 +548,14 @@ def test_large_folded_signature_header_preserves_exact_bytes_with_linear_bufferi
     assert parsed.relations["commit_tree"] == [[0, *oid().key]]
 
 
-def test_core_transaction_binding_refuses_context_even_for_shared_coverage_tables(
+def test_repository_transaction_binding_refuses_context_even_for_shared_coverage_tables(
     tmp_path,
 ):
     from repo_catalog.adapters.sqlite.p1_schema import initialize
     from repo_catalog.domain.context_admission import DependencySet
     from repo_catalog.domain.p1_context import CoverageScope
-    from repo_catalog.domain.p1_core import CoreCoverageScope
     from repo_catalog.domain.p1_coverage import CoverageClaim
+    from repo_catalog.domain.p1_repository import RepositoryCoverageScope
     from tests.support.authorized_context import FixtureContextStore
 
     repository = str(uuid4())
@@ -546,13 +568,15 @@ def test_core_transaction_binding_refuses_context_even_for_shared_coverage_table
             db.execute("INSERT INTO repository_context VALUES(?,?)", (repository, "{}"))
             store.scope(CoverageScope.repository(repository, "git-object-inventory"))
             claim = CoverageClaim(
-                CoreCoverageScope("repository", (repository, "git-object-inventory")),
+                RepositoryCoverageScope(
+                    "repository", (repository, "git-object-inventory")
+                ),
                 1,
                 "unknown",
             )
             entered = False
-            with pytest.raises(CoreFailure) as error:
-                with GitCore.for_transaction(db) as unit:
+            with pytest.raises(RepositoryFailure) as error:
+                with GitRepositoryStore.for_transaction(db) as unit:
                     entered = True
                     unit.admit_coverage(claim)
             assert error.value.code == "STORE_ROLE"
@@ -575,16 +599,18 @@ def test_core_transaction_binding_refuses_context_even_for_shared_coverage_table
         db.close()
 
 
-def test_production_core_transaction_binding_preserves_savepoint_and_expiry(core):
-    c, path, _ = core
-    db = connect(path, "core")
+def test_production_repository_transaction_binding_preserves_savepoint_and_expiry(
+    repository_store,
+):
+    c, path, _ = repository_store
+    db = connect(path, "repository")
     db.execute("BEGIN IMMEDIATE")
     try:
-        with GitCore.for_transaction(db) as unit:
-            assert isinstance(unit, GitCore)
+        with GitRepositoryStore.for_transaction(db) as unit:
+            assert isinstance(unit, GitRepositoryStore)
             unit.admit_claim(ScalarClaim(oid(), "type", "commit", provenance()))
             assert db.in_transaction
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             unit.admit_object(oid("b"))
         assert error.value.code == "CAPABILITY_EXPIRED"
         db.rollback()
@@ -604,9 +630,9 @@ def test_production_core_transaction_binding_preserves_savepoint_and_expiry(core
     ],
 )
 def test_typed_scalar_read_stops_on_stored_utf8_json_or_semantic_corruption(
-    core, replacement
+    repository_store, replacement
 ):
-    c, path, _ = core
+    c, path, _ = repository_store
     c.admit_claim(ScalarClaim(oid(), "type", "commit", provenance()))
     db = sqlite3.connect(path)
     db.execute("PRAGMA ignore_check_constraints=ON")
@@ -614,17 +640,19 @@ def test_typed_scalar_read_stops_on_stored_utf8_json_or_semantic_corruption(
     db.execute("UPDATE scalar_claims SET value=" + replacement)
     db.commit()
     db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.scalar(oid(), "type")
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
 @pytest.mark.parametrize("membership", ["{broken", "{}", '[[0,"sha1","invalid"]]'])
-def test_typed_relation_read_stops_on_stored_semantic_corruption(core, membership):
-    from repo_catalog.domain.p1_core import RelationGroup
+def test_typed_relation_read_stops_on_stored_semantic_corruption(
+    repository_store, membership
+):
+    from repo_catalog.domain.p1_repository import RelationGroup
 
-    c, path, _ = core
+    c, path, _ = repository_store
     c.admit_group(
         RelationGroup(oid(), "commit_parents", "reported", "unknown", (), provenance())
     )
@@ -634,14 +662,16 @@ def test_typed_relation_read_stops_on_stored_semantic_corruption(core, membershi
     db.execute("UPDATE relation_groups SET membership=?", (membership,))
     db.commit()
     db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.relations(oid(), "commit_parents")
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_generic_sql_expression_error_does_not_diagnose_catalog_corruption(core):
-    c, path, _ = core
+def test_generic_sql_expression_error_does_not_diagnose_catalog_corruption(
+    repository_store,
+):
+    c, path, _ = repository_store
     for query in ("SELECT json('{broken')", "SELECT CAST(x'ff' AS TEXT)"):
         with pytest.raises(sqlite3.OperationalError):
             c.sql(query)
@@ -659,7 +689,7 @@ def test_raw_coordinator_callback_rejects_hash_matching_malformed_native_metadat
     from repo_catalog.domain.p1_coordination import AdmissionFailure, PairAdmission
 
     repository, instance = str(uuid4()), str(uuid4())
-    for store in ("core", "context"):
+    for store in ("repository", "context"):
         initialize(tmp_path / (store + ".sqlite3"), store, repository, instance)
     incoming = native(kind, b"not a native metadata structure", fmt)
     incoming.validate()  # Intentionally passes digest/OID to reach grammar CHECK.
@@ -682,7 +712,7 @@ def test_raw_coordinator_callback_rejects_hash_matching_malformed_native_metadat
         PairCoordinator(tmp_path).admit(admit, lambda tx: None)
     assert error.value.outcome == PairAdmission(False, False)
     assert not (tmp_path / "p1-recovery-stop.json").exists()
-    c = GitCore(tmp_path / "core.sqlite3")
+    c = GitRepositoryStore(tmp_path / "repository.sqlite3")
     try:
         assert c.sql("SELECT * FROM git_objects") == []
     finally:
@@ -691,12 +721,12 @@ def test_raw_coordinator_callback_rejects_hash_matching_malformed_native_metadat
 
 @pytest.mark.parametrize("kind", ["commit", "tree", "tag"])
 def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_syntax(
-    core, kind
+    repository_store, kind
 ):
-    c, path, _ = core
+    c, path, _ = repository_store
     incoming = native(kind, b"invalid native syntax")
     c.admit_object(incoming.object_oid)
-    db = connect(path, "core")
+    db = connect(path, "repository")
     db.execute("PRAGMA ignore_check_constraints=ON")
     db.execute(
         "INSERT INTO retained_metadata VALUES(?,?,?,?,?,?,?)",
@@ -710,14 +740,14 @@ def test_metadata_byte_read_stops_on_hash_valid_but_invalid_retained_native_synt
         ),
     )
     db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.read_metadata(incoming.object_oid)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_caller_text_encoding_error_is_not_stored_corruption(core):
-    c, path, _ = core
+def test_caller_text_encoding_error_is_not_stored_corruption(repository_store):
+    c, path, _ = repository_store
     with pytest.raises(UnicodeEncodeError):
         c.scalar(oid(), "unsupported-\udcff")
     assert not (path.parent / "p1-recovery-stop.json").exists()
@@ -728,10 +758,10 @@ def test_caller_text_encoding_error_is_not_stored_corruption(core):
     "code", [sqlite3.SQLITE_CORRUPT_INDEX, sqlite3.SQLITE_CORRUPT_VTAB]
 )
 @pytest.mark.parametrize("boundary", ["open", "read"])
-def test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries(
-    core, monkeypatch, code, boundary
+def test_extended_sqlite_corruption_codes_stop_at_actual_repository_boundaries(
+    repository_store, monkeypatch, code, boundary
 ):
-    c, path, _ = core
+    c, path, _ = repository_store
     error = sqlite3.DatabaseError("injected extended SQLite corruption")
     error.sqlite_errorcode = code
     if boundary == "open":
@@ -742,7 +772,7 @@ def test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries(
 
         monkeypatch.setattr(p1_schema, "connect", fail)
         with pytest.raises(sqlite3.DatabaseError) as raised:
-            GitCore(path)
+            GitRepositoryStore(path)
         assert raised.value.sqlite_errorcode == code
     else:
         original = c._db
@@ -753,13 +783,13 @@ def test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries(
 
         c._db = FailingRead()
         try:
-            with pytest.raises(CoreFailure) as raised:
+            with pytest.raises(RepositoryFailure) as raised:
                 c.sql("SELECT object_oid FROM git_objects")
             assert raised.value.code == "AUTHORITATIVE_CORRUPTION"
         finally:
             c._db = original
     assert (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         c.admit_object(oid())
     assert stopped.value.code == "RECOVERY_STOP"
 
@@ -769,10 +799,10 @@ def test_extended_sqlite_corruption_codes_stop_at_actual_core_boundaries(
     [sqlite3.SQLITE_CORRUPT_INDEX, sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_IOERR_WRITE],
 )
 @pytest.mark.parametrize("failure_at", ["BEGIN", "INSERT", "COMMIT"])
-def test_standalone_core_engine_failure_stops_before_transaction_cleanup(
-    core, code, failure_at
+def test_standalone_repository_engine_failure_stops_before_transaction_cleanup(
+    repository_store, code, failure_at
 ):
-    c, path, _ = core
+    c, path, _ = repository_store
     original = c._db
     error = sqlite3.DatabaseError("injected authoritative engine failure")
     error.sqlite_errorcode = code
@@ -793,7 +823,7 @@ def test_standalone_core_engine_failure_stops_before_transaction_cleanup(
 
     c._db = FailingEngine()
     try:
-        with pytest.raises(CoreFailure) as raised:
+        with pytest.raises(RepositoryFailure) as raised:
             c.admit_object(oid())
         assert raised.value.code == "AUTHORITATIVE_CORRUPTION"
     finally:
@@ -806,9 +836,9 @@ def test_standalone_core_engine_failure_stops_before_transaction_cleanup(
 
 @pytest.mark.parametrize("seconds", [-1, 0])
 def test_native_author_committer_tagger_signed_times_preserve_bytes(
-    core, repository, seconds
+    repository_store, repository, seconds
 ):
-    store, _, _ = core
+    store, _, _ = repository_store
     path, fmt = repository
     tree = write(path, fmt, "tree", b"")
     encoded = str(seconds).encode("ascii")

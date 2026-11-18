@@ -25,7 +25,7 @@ from scripts.schema_catalog import build_catalog, validate_catalog  # noqa: E402
 
 MODEL = ROOT / "docs/architecture/persistence-model.json"
 TARGET_FORMATS = {
-    "core": "p1.core",
+    "repository": "p1.repository",
     "context": "p1.context",
     "access": "access",
     "operational": "p1.operational",

@@ -4,20 +4,20 @@ import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
 from repo_catalog.adapters.sqlite.p1_schema import (
     expected_schema,
     register_functions,
     schema_rows,
 )
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.adapters.sqlite.repository_recovery import RecoveryWorkBudget
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.recovery import CorruptionDetectedError, RecoveryBudget
 from tests.integration.p7.test_exact_replay import _authority, _candidate, _merge
 
 
 def _damage(catalog, table, column, value):
-    with sqlite3.connect(catalog / "core.sqlite3") as db:
+    with sqlite3.connect(catalog / "repository.sqlite3") as db:
         register_functions(db)
         trigger = f"p1_immutable_{table}_update"
         sql = db.execute(
@@ -28,7 +28,7 @@ def _damage(catalog, table, column, value):
         db.execute(f"UPDATE {table} SET {column}=?", (value,))
         db.execute(sql)
         db.commit()
-        assert schema_rows(db) == expected_schema("core")
+        assert schema_rows(db) == expected_schema("repository")
 
 
 @pytest.mark.parametrize(
@@ -45,7 +45,9 @@ def test_invalid_existing_physical_copy_stops_without_repair(
     candidate = _candidate(restored_catalog, table)
     _damage(restored_catalog, table, column, value)
     before = _authority(restored_catalog)
-    with pytest.raises(CorruptionDetectedError, match="destination Core corruption"):
+    with pytest.raises(
+        CorruptionDetectedError, match="destination Repository corruption"
+    ):
         _merge(restored_catalog, tmp_path, candidate)
     assert (restored_catalog / "p1-recovery-stop.json").exists()
     assert _authority(restored_catalog) == before
@@ -67,7 +69,7 @@ def test_existing_copy_resource_refusal_never_claims_corruption(
         if refusal == "payload"
         else RecoveryBudget()
     )
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         SQLiteRecoveryAdapter()._verify_existing_retained_copy(
             restored_catalog,
             table,

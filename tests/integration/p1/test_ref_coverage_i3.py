@@ -6,8 +6,12 @@ from dataclasses import replace
 import pytest
 
 from repo_catalog.adapters.sqlite.p1_schema import connect
-from repo_catalog.domain.p1_core import CoreCoverageScope, CoreFailure, Provenance
 from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
+    Provenance,
+    RepositoryCoverageScope,
+    RepositoryFailure,
+)
 from repo_catalog.domain.ref_coverage import (
     REF_NOTES_INVENTORY,
     RefNotesInventoryCoverageProof,
@@ -17,14 +21,14 @@ from repo_catalog.domain.ref_observation import (
     RefObservationClaim,
     RefObservationKey,
 )
-from tests.integration.p1.test_core import Budget, native, provenance
-from tests.integration.p1.test_core import core as core
 from tests.integration.p1.test_notes import mapping, tree
 from tests.integration.p1.test_ref_observation_i1 import subject
+from tests.integration.p1.test_repository import Budget, native, provenance
+from tests.integration.p1.test_repository import repository_store as repository_store
 
 
-def proof_fixture(core, *, fmt="sha1", empty=False, source="source"):
-    c, _path, repository = core
+def proof_fixture(repository_store, *, fmt="sha1", empty=False, source="source"):
+    c, _path, repository = repository_store
     original, _body = mapping(repository, fmt=fmt)
     structure = tree([], fmt) if empty else original.structures[0]
     observation = replace(subject(repository), source_attribution=source)
@@ -49,7 +53,7 @@ def proof_fixture(core, *, fmt="sha1", empty=False, source="source"):
         provenance("inventory-report"),
     )
     c.admit_notes_mapping_group(group, Budget())
-    scope = CoreCoverageScope(
+    scope = RepositoryCoverageScope(
         "ref_observation", (*observation.ref_observation_key.key, REF_NOTES_INVENTORY)
     )
     c.admit_coverage_scope(scope)
@@ -68,18 +72,20 @@ def proof_fixture(core, *, fmt="sha1", empty=False, source="source"):
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("empty", [False, True])
-def test_complete_inventory_requires_and_rechecks_exact_structures(core, fmt, empty):
-    c, path, _repository = core
-    proof = proof_fixture(core, fmt=fmt, empty=empty)
+def test_complete_inventory_requires_and_rechecks_exact_structures(
+    repository_store, fmt, empty
+):
+    c, path, _repository = repository_store
+    proof = proof_fixture(repository_store, fmt=fmt, empty=empty)
     assert c.coverage(proof.coverage_claim.scope).state == "unknown"
-    with pytest.raises(CoreFailure, match="typed evidence"):
+    with pytest.raises(RepositoryFailure, match="typed evidence"):
         c.admit_coverage_proof(proof.coverage_claim, (), provenance("fake"))
     work = Budget()
     c.admit_ref_coverage_proof(proof, work)
     c.admit_ref_coverage_proof(proof, work)
     assert work.counts["proof_steps"] > 0
     assert work.counts["verification_bytes"] > 0 or empty
-    with pytest.raises(CoreFailure) as missing_budget:
+    with pytest.raises(RepositoryFailure) as missing_budget:
         c.coverage(proof.coverage_claim.scope)
     assert missing_budget.value.code == "QUERY_BUDGET"
     projection = c.coverage(proof.coverage_claim.scope, Budget())
@@ -87,24 +93,24 @@ def test_complete_inventory_requires_and_rechecks_exact_structures(core, fmt, em
     assert projection.known_empty is empty
     assert c.ref_coverage_proofs(proof.coverage_claim, Budget()) == (proof,)
     assert not c.sql("SELECT 1 FROM ref_retained_notes")
-    with connect(path, "core") as db:
+    with connect(path, "repository") as db:
         assert len(db.execute("PRAGMA table_xinfo(coverage_claims)").fetchall()) == 5
         assert db.execute("SELECT count(*) FROM ref_coverage_proofs").fetchone()[0] == 1
 
 
-def test_inventory_must_match_whole_checked_group_not_sender_status(core):
-    c, path, _ = core
-    proof = proof_fixture(core)
+def test_inventory_must_match_whole_checked_group_not_sender_status(repository_store):
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store)
     forged = replace(proof, structures=(tree([]),))
-    with pytest.raises(CoreFailure) as invalid:
+    with pytest.raises(RepositoryFailure) as invalid:
         c.admit_ref_coverage_proof(forged, Budget())
     assert invalid.value.code == "REF_COVERAGE_PROOF"
     assert c.coverage(proof.coverage_claim.scope).state == "unknown"
     assert not c.sql("SELECT 1 FROM ref_coverage_proofs")
     assert not (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         replace(proof, group=replace(proof.group, status="partial"))
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         replace(proof, group=replace(proof.group, interpretation_scope="different"))
     partial = replace(
         proof.group, status="partial", provenance=provenance("partial-one")
@@ -112,9 +118,9 @@ def test_inventory_must_match_whole_checked_group_not_sender_status(core):
     second_partial = replace(partial, provenance=provenance("partial-two"))
     c.admit_notes_mapping_group(partial, Budget())
     c.admit_notes_mapping_group(second_partial, Budget())
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         replace(proof, group=partial)
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         replace(proof, group=second_partial)
     assert c.coverage(proof.coverage_claim.scope).state == "unknown"
     fake_group = replace(
@@ -123,15 +129,17 @@ def test_inventory_must_match_whole_checked_group_not_sender_status(core):
         provenance=provenance("fabricated-complete"),
     )
     c.admit_notes_mapping_group(fake_group, Budget())
-    with pytest.raises(CoreFailure) as false_complete:
+    with pytest.raises(RepositoryFailure) as false_complete:
         c.admit_ref_coverage_proof(replace(proof, group=fake_group), Budget())
     assert false_complete.value.code == "REF_COVERAGE_PROOF"
     c.admit_ref_coverage_proof(proof, Budget())
 
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
-def test_commit_and_fanout_inventory_requires_complete_ordered_closure(core, fmt):
-    c, _, repository = core
+def test_commit_and_fanout_inventory_requires_complete_ordered_closure(
+    repository_store, fmt
+):
+    c, _, repository = repository_store
     old, _note = mapping(repository, fmt=fmt)
     target = old.target.object_oid
     inner = tree([("100644", target[2:], old.note)], fmt)
@@ -161,7 +169,7 @@ def test_commit_and_fanout_inventory_requires_complete_ordered_closure(core, fmt
         provenance("fanout-report"),
     )
     c.admit_notes_mapping_group(group, Budget())
-    scope = CoreCoverageScope(
+    scope = RepositoryCoverageScope(
         "ref_observation", (*observation.ref_observation_key.key, REF_NOTES_INVENTORY)
     )
     c.admit_coverage_scope(scope)
@@ -183,23 +191,23 @@ def test_commit_and_fanout_inventory_requires_complete_ordered_closure(core, fmt
         (root_tree, commit, inner),
         (commit, root_tree, inner, inner),
     ):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             c.admit_ref_coverage_proof(replace(proof, structures=supplied), Budget())
         assert error.value.code == "REF_COVERAGE_PROOF"
         assert not c.sql("SELECT 1 FROM ref_coverage_proofs")
     c.admit_ref_coverage_proof(proof, Budget())
     assert c.coverage(scope, Budget()).state == "complete"
-    with pytest.raises(CoreFailure) as limited:
+    with pytest.raises(RepositoryFailure) as limited:
         c.ref_coverage_proofs(coverage, Budget(), max_structures=2)
     assert limited.value.code == "QUERY_BUDGET"
     assert c.coverage(scope, Budget()).state == "complete"
 
 
-def test_lost_stored_report_group_stops_instead_of_rebinding(core):
-    c, path, _ = core
-    proof = proof_fixture(core)
+def test_lost_stored_report_group_stops_instead_of_rebinding(repository_store):
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store)
     c.admit_ref_coverage_proof(proof, Budget())
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_notes_mapping_groups_delete'"
@@ -211,15 +219,15 @@ def test_lost_stored_report_group_stops_instead_of_rebinding(core):
         db.commit()
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_ref_coverage_proof(proof, Budget())
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_coverage_latest_stale_and_equal_time_conflict_survive(core):
-    c, _, _ = core
-    proof = proof_fixture(core, empty=True)
+def test_coverage_latest_stale_and_equal_time_conflict_survive(repository_store):
+    c, _, _ = repository_store
+    proof = proof_fixture(repository_store, empty=True)
     c.admit_ref_coverage_proof(proof, Budget())
     scope = proof.coverage_claim.scope
     assert c.coverage(scope, Budget()).known_empty
@@ -230,9 +238,11 @@ def test_coverage_latest_stale_and_equal_time_conflict_survive(core):
     assert c.coverage(scope, Budget()).state == "unknown"
 
 
-def test_conflicting_ref_result_is_not_hidden_by_one_complete_inventory(core):
-    c, _, _ = core
-    proof = proof_fixture(core, empty=True)
+def test_conflicting_ref_result_is_not_hidden_by_one_complete_inventory(
+    repository_store,
+):
+    c, _, _ = repository_store
+    proof = proof_fixture(repository_store, empty=True)
     c.admit_ref_coverage_proof(proof, Budget())
     other_root = tree([("100644", "a" * 40, proof.group.ref_claim.root_object_oid)])
     other = replace(
@@ -246,22 +256,22 @@ def test_conflicting_ref_result_is_not_hidden_by_one_complete_inventory(core):
     assert not result.known_empty
 
 
-def test_evidence_coordinate_cannot_rebind_to_later_coverage_time(core):
-    c, path, _ = core
-    proof = proof_fixture(core)
+def test_evidence_coordinate_cannot_rebind_to_later_coverage_time(repository_store):
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store)
     c.admit_ref_coverage_proof(proof, Budget())
     later = CoverageClaim(proof.coverage_claim.scope, 21, "complete")
     c.admit_coverage(later)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_ref_coverage_proof(replace(proof, coverage_claim=later), Budget())
     assert error.value.code == "INCOMPATIBLE_REPLAY"
     assert c.coverage(later.scope).state == "unknown"
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_distinct_receiver_checks_remain_distinct_under_bounded_reads(core):
-    c, path, _ = core
-    proof = proof_fixture(core)
+def test_distinct_receiver_checks_remain_distinct_under_bounded_reads(repository_store):
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store)
     second = replace(
         proof,
         verification_provenance=replace(
@@ -270,7 +280,7 @@ def test_distinct_receiver_checks_remain_distinct_under_bounded_reads(core):
     )
     c.admit_ref_coverage_proof(proof, Budget())
     c.admit_ref_coverage_proof(second, Budget())
-    with pytest.raises(CoreFailure) as limited:
+    with pytest.raises(RepositoryFailure) as limited:
         c.ref_coverage_proofs(proof.coverage_claim, Budget(), max_proofs=1)
     assert limited.value.code == "QUERY_BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
@@ -280,11 +290,13 @@ def test_distinct_receiver_checks_remain_distinct_under_bounded_reads(core):
 
 
 @pytest.mark.parametrize("via_replay", [False, True])
-def test_stored_structural_corruption_causes_persistent_stop(core, via_replay):
-    c, path, _ = core
-    proof = proof_fixture(core)
+def test_stored_structural_corruption_causes_persistent_stop(
+    repository_store, via_replay
+):
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store)
     c.admit_ref_coverage_proof(proof, Budget())
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_coverage_proofs_update'"
@@ -301,63 +313,63 @@ def test_stored_structural_corruption_causes_persistent_stop(core, via_replay):
         db.commit()
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         if via_replay:
             c.admit_ref_coverage_proof(proof, Budget())
         else:
             c.coverage(proof.coverage_claim.scope, Budget())
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
     assert (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
+    with pytest.raises(RepositoryFailure) as stopped:
         c.ref_observation(
             RefObservationKey(*proof.coverage_claim.scope.coordinates[:2]), Budget()
         )
     assert stopped.value.code == "RECOVERY_STOP"
     blocked_work = Budget()
-    with pytest.raises(CoreFailure) as stopped_admission:
+    with pytest.raises(RepositoryFailure) as stopped_admission:
         c.admit_ref_coverage_proof(proof, blocked_work)
     assert stopped_admission.value.code == "RECOVERY_STOP"
     assert blocked_work.counts == {}
 
 
-def test_budget_refusal_preserves_unfinished_proof_without_corruption(core):
-    c, path, _ = core
-    proof = proof_fixture(core)
-    with pytest.raises(CoreFailure) as error:
+def test_budget_refusal_preserves_unfinished_proof_without_corruption(repository_store):
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store)
+    with pytest.raises(RepositoryFailure) as error:
         c.admit_ref_coverage_proof(proof, Budget(), max_bytes=32)
     assert error.value.code == "BUDGET"
     assert not c.sql("SELECT 1 FROM ref_coverage_proofs")
     assert not (path.parent / "p1-recovery-stop.json").exists()
     c.admit_ref_coverage_proof(proof, Budget())
-    with pytest.raises(CoreFailure) as read_error:
+    with pytest.raises(RepositoryFailure) as read_error:
         c.ref_coverage_proofs(proof.coverage_claim, Budget(), max_bytes=32)
     assert read_error.value.code == "QUERY_BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert c.coverage(proof.coverage_claim.scope, Budget()).state == "complete"
 
 
-def test_scope_byte_limit_applies_to_dependent_ref_subject(core):
-    c, path, _ = core
-    proof = proof_fixture(core, empty=True, source="s" * 8192)
+def test_scope_byte_limit_applies_to_dependent_ref_subject(repository_store):
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store, empty=True, source="s" * 8192)
     c.admit_ref_coverage_proof(proof, Budget())
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         c.coverage(proof.coverage_claim.scope, Budget(), max_bytes=2048)
     assert error.value.code == "QUERY_BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
     assert c.coverage(proof.coverage_claim.scope, Budget()).known_empty
 
 
-def test_large_latest_details_are_reserved_before_fetch(core):
+def test_large_latest_details_are_reserved_before_fetch(repository_store):
     class Tight(Budget):
         def require(self, unit, amount=1):
             super().require(unit, amount)
             if unit == "input_bytes" and self.counts.get(unit, 0) + amount > 1024:
-                raise CoreFailure("BUDGET", unit, "finite request bytes")
+                raise RepositoryFailure("BUDGET", unit, "finite request bytes")
 
-    c, path, repository = core
+    c, path, repository = repository_store
     observation = subject(repository)
     c.admit_ref_observation(observation)
-    scope = CoreCoverageScope(
+    scope = RepositoryCoverageScope(
         "ref_observation", (*observation.ref_observation_key.key, "reported-scope")
     )
     c.admit_coverage_scope(scope)
@@ -366,7 +378,7 @@ def test_large_latest_details_are_reserved_before_fetch(core):
     statements = []
     c._db.set_trace_callback(statements.append)
     try:
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             c.coverage(scope, Tight())
         assert error.value.code == "BUDGET"
     finally:
@@ -378,7 +390,7 @@ def test_large_latest_details_are_reserved_before_fetch(core):
         for statement in statements
     )
     assert not (path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as local_limit:
+    with pytest.raises(RepositoryFailure) as local_limit:
         c.coverage(scope, max_bytes=1024)
     assert local_limit.value.code == "QUERY_BUDGET"
     work = Budget()
@@ -386,23 +398,23 @@ def test_large_latest_details_are_reserved_before_fetch(core):
     assert work.counts["input_bytes"] >= len(details)
 
 
-def test_large_requested_scope_is_bounded_before_encoding(core):
+def test_large_requested_scope_is_bounded_before_encoding(repository_store):
     class Tight(Budget):
         def require(self, unit, amount=1):
             super().require(unit, amount)
             if unit == "input_bytes" and self.counts.get(unit, 0) + amount > 1024:
-                raise CoreFailure("BUDGET", unit, "finite request bytes")
+                raise RepositoryFailure("BUDGET", unit, "finite request bytes")
 
-    c, path, repository = core
+    c, path, repository = repository_store
     observation = subject(repository)
     c.admit_ref_observation(observation)
-    scope = CoreCoverageScope(
+    scope = RepositoryCoverageScope(
         "ref_observation", (*observation.ref_observation_key.key, "x" * 65536)
     )
     statements = []
     c._db.set_trace_callback(statements.append)
     try:
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             c.coverage(scope, Tight())
         assert error.value.code == "BUDGET"
     finally:
@@ -411,18 +423,18 @@ def test_large_requested_scope_is_bounded_before_encoding(core):
     assert not (path.parent / "p1-recovery-stop.json").exists()
 
 
-def test_proof_steps_are_cumulative_on_failed_retries(core):
+def test_proof_steps_are_cumulative_on_failed_retries(repository_store):
     class Limited(Budget):
         def require(self, unit, amount=1):
             super().require(unit, amount)
             if unit == "proof_steps" and self.counts.get(unit, 0) + amount > 1:
-                raise CoreFailure("BUDGET", unit, "finite cumulative work")
+                raise RepositoryFailure("BUDGET", unit, "finite cumulative work")
 
-    c, path, _ = core
-    proof = proof_fixture(core)
+    c, path, _ = repository_store
+    proof = proof_fixture(repository_store)
     work = Limited()
     for _ in range(2):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             c.admit_ref_coverage_proof(proof, work)
         assert error.value.code == "BUDGET"
         assert work.counts["proof_steps"] == 1

@@ -71,7 +71,7 @@ class PairCoordinator(PairSnapshotCoordinator):
 
     def admit(
         self,
-        core_unit: Callable[[AdmissionTransaction], None],
+        repository_unit: Callable[[AdmissionTransaction], None],
         context_unit: Callable[[AdmissionTransaction], None],
         *,
         cut: Callable[[str], None] = lambda point: None,
@@ -106,7 +106,7 @@ class PairCoordinator(PairSnapshotCoordinator):
                         authorization, admission, leases, [lease]
                     )
                 outcome = self._admit(
-                    core_unit, context_unit, cut=cut, context_admission=binding
+                    repository_unit, context_unit, cut=cut, context_admission=binding
                 )
             with catalog_completion(self.directory):
                 self._check_running()
@@ -125,31 +125,33 @@ class PairCoordinator(PairSnapshotCoordinator):
             raise
 
     def _admit(
-        self, core_unit, context_unit, *, cut, context_admission=None
+        self, repository_unit, context_unit, *, cut, context_admission=None
     ) -> PairAdmission:
         with catalog_gate(self.directory, exclusive=True), ExitStack() as stack:
             self._check_running()
-            core = stack.enter_context(closing(self._open("core")))
+            repository_store = stack.enter_context(closing(self._open("repository")))
             context = stack.enter_context(closing(self._open("context")))
             try:
-                if _identity(core, "core") != _identity(context, "context"):
-                    raise CoordinationError("PAIR_IDENTITY", "core+context")
+                if _identity(repository_store, "repository") != _identity(
+                    context, "context"
+                ):
+                    raise CoordinationError("PAIR_IDENTITY", "repository+context")
             except Exception as error:
                 self._record_corruption(error)
                 raise
-            core_committed, context_committed = False, False
-            core_capability = context_capability = None
+            repository_committed, context_committed = False, False
+            repository_capability = context_capability = None
             try:
-                core.execute("BEGIN IMMEDIATE")
-                core_capability = AdmissionTransaction(core)
-                core_unit(core_capability)
-                core.set_authorizer(None)
-                cut("before_core_commit")
+                repository_store.execute("BEGIN IMMEDIATE")
+                repository_capability = AdmissionTransaction(repository_store)
+                repository_unit(repository_capability)
+                repository_store.set_authorizer(None)
+                cut("before_repository_commit")
                 with catalog_completion(self.directory):
-                    core.commit()
-                core_committed = True
-                core_capability._expire()
-                cut("after_core_commit")
+                    repository_store.commit()
+                repository_committed = True
+                repository_capability._expire()
+                cut("after_repository_commit")
                 context.execute("BEGIN IMMEDIATE")
                 context_capability = AdmissionTransaction(
                     context, _context_admission=context_admission
@@ -158,7 +160,7 @@ class PairCoordinator(PairSnapshotCoordinator):
                 context_capability._check_active()
                 context.set_authorizer(None)
                 cut("during_context")
-                validate_dependencies(core, context)
+                validate_dependencies(repository_store, context)
                 with catalog_completion(self.directory):
                     if context_admission is not None:
                         context_admission.check_current()
@@ -169,17 +171,17 @@ class PairCoordinator(PairSnapshotCoordinator):
                 self._check_running()
             except Exception as error:
                 self._record_corruption(error, existing=False)
-                rollback_after_failure(core, error)
+                rollback_after_failure(repository_store, error)
                 rollback_after_failure(context, error)
                 raise AdmissionFailure(
-                    PairAdmission(core_committed, context_committed), error
+                    PairAdmission(repository_committed, context_committed), error
                 ) from error
             except BaseException as error:
-                rollback_after_failure(core, error)
+                rollback_after_failure(repository_store, error)
                 rollback_after_failure(context, error)
                 raise
             finally:
-                for capability in (core_capability, context_capability):
+                for capability in (repository_capability, context_capability):
                     if capability is not None:
                         capability._expire()
         with catalog_completion(self.directory):
@@ -206,7 +208,7 @@ class PairCoordinator(PairSnapshotCoordinator):
             if getattr(error, "code", None) in (
                 "CORRUPTION",
                 "FOREIGN_KEY",
-                "MISSING_CORE_REFERENCE",
+                "MISSING_REPOSITORY_REFERENCE",
             ) or _sqlite_corruption(error):
                 self._record_corruption(error)
             raise
@@ -221,7 +223,7 @@ class PairCoordinator(PairSnapshotCoordinator):
         destination.mkdir()  # Never bless an interrupted/existing destination.
         with catalog_gate(self.directory, exclusive=False):
             self._check_running()
-            for role in ("core", "context"):
+            for role in ("repository", "context"):
                 with (
                     closing(self._open(role)) as source,
                     closing(sqlite3.connect(destination / f"{role}.sqlite3")) as target,
@@ -239,13 +241,13 @@ class PairCoordinator(PairSnapshotCoordinator):
                 self._record_corruption(error)
                 raise
             certificate = {
-                "scope": "core+context",
+                "scope": "repository+context",
                 "token": token.__dict__,
                 "files": {
                     f"{role}.sqlite3": hashlib.sha256(
                         (destination / f"{role}.sqlite3").read_bytes()
                     ).hexdigest()
-                    for role in ("core", "context")
+                    for role in ("repository", "context")
                 },
                 "power_loss_safe": False,
             }
@@ -257,8 +259,11 @@ class PairCoordinator(PairSnapshotCoordinator):
     @staticmethod
     def validate_backup(destination: Path) -> SnapshotToken:
         candidate = json.loads((destination / "p1-pair-candidate.json").read_text())
-        expected = {"core.sqlite3", "context.sqlite3"}
-        if candidate["scope"] != "core+context" or set(candidate["files"]) != expected:
+        expected = {"repository.sqlite3", "context.sqlite3"}
+        if (
+            candidate["scope"] != "repository+context"
+            or set(candidate["files"]) != expected
+        ):
             raise CoordinationError("PAIR_CERTIFICATE", "backup")
         for name, digest in candidate["files"].items():
             if hashlib.sha256((destination / name).read_bytes()).hexdigest() != digest:

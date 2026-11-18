@@ -12,7 +12,7 @@ from repo_catalog.domain.p1_context import CoverageScope, ResourceKey
 from repo_catalog.domain.p1_coverage import CoverageClaim
 from repo_catalog.domain.production_context import SourceInventory
 from repo_catalog.domain.resource_identification import ResourceIdentification
-from repo_catalog.domain.shared_values import CoreFailure, encode
+from repo_catalog.domain.shared_values import RepositoryFailure, encode
 from repo_catalog.domain.source_inventory_scope import validate_source_inventory_scope
 
 SOURCE_CANDIDATES = {
@@ -256,7 +256,7 @@ def source_candidate(conn, table, row, work, *, max_bytes, max_members):
         if len(encode(packet)) > max_bytes:
             raise ValueError("finite Source unit payload limit")
         return kind, ident, packet, None
-    except CoreFailure as error:
+    except RepositoryFailure as error:
         if error.code in ("BUDGET", "QUERY_BUDGET"):
             raise
         return kind, ident, {"unadmitted_original": row}, str(error)
@@ -526,11 +526,11 @@ def validate_stored_source_authority(connection, work, budget):
     domain membership/provenance/owner coordinates, never replays temporal
     admission checks or treats a stored terminal flag as its own proof.
     """
-    from repo_catalog.adapters.sqlite.core_recovery_validation import (
-        RefValidationBudgetError,
-    )
     from repo_catalog.adapters.sqlite.recovery_validation import (
         StoredContextInvariantError,
+    )
+    from repo_catalog.adapters.sqlite.repository_recovery_validation import (
+        RefValidationBudgetError,
     )
 
     remaining = budget.max_input_records
@@ -584,7 +584,7 @@ def validate_stored_source_authority(connection, work, budget):
                         f"Invalid stored Source authority: {result[3]}"
                     )
                 decode_source_candidate(kind, result[2], work)
-        except CoreFailure as error:
+        except RepositoryFailure as error:
             if error.code in ("BUDGET", "QUERY_BUDGET"):
                 raise RefValidationBudgetError(
                     "Finite stored Source validation work limit"

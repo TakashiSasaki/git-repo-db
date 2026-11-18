@@ -17,7 +17,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import CoreFailure, ScalarClaim
+from repo_catalog.domain.p1_repository import RepositoryFailure, ScalarClaim
 from repo_catalog.domain.resource_identification import ResourceIdentification
 from tests.integration.p1.test_context import (
     KEY,
@@ -27,10 +27,16 @@ from tests.integration.p1.test_context import (
     SOURCE,
     p1_grants,
 )
-from tests.integration.p1.test_core import Budget, core, native, oid, provenance
+from tests.integration.p1.test_repository import (
+    Budget,
+    native,
+    oid,
+    provenance,
+    repository_store,
+)
 from tests.support.authorized_context import FixtureContextStore
 
-__all__ = ["core"]
+__all__ = ["repository_store"]
 
 
 @pytest.fixture
@@ -98,7 +104,7 @@ def test_actual_separated_role_has_no_retired_transport_or_publication_tables(
             "document_state",
             "review_thread_state",
         }
-        if role in {"core", "context"}:
+        if role in {"repository", "context"}:
             assert not tables & {
                 "jobs",
                 "job_attempts",
@@ -150,10 +156,10 @@ def test_actual_separated_role_has_no_retired_transport_or_publication_tables(
         "untrusted-verified",
     ],
 )
-def test_typed_core_identity_and_native_admission_reject_original_primitive_adversaries(
-    core, case
+def test_typed_repository_identity_and_native_admission_reject_original_primitive_adversaries(
+    repository_store, case
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     expected = {
         "sha1-width": "IDENTITY",
         "sha256-width": "IDENTITY",
@@ -163,7 +169,7 @@ def test_typed_core_identity_and_native_admission_reject_original_primitive_adve
         "boolean-size-native": "NATIVE_INTEGRITY",
         "untrusted-verified": "UNTRUSTED_VERIFICATION",
     }[case]
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         if case == "sha1-width":
             type(oid())("sha1", "a" * 38)
         elif case == "sha256-width":

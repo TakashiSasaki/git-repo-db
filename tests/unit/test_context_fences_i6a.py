@@ -201,7 +201,7 @@ def test_t20_facade_refuses_wrong_udf_flags(product_db, tmp_path, function):
 
 
 def test_t19_trusted_coordinator_capabilities_keep_their_restricted_profile(tmp_path):
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         p1_schema.initialize(tmp_path / f"{role}.sqlite3", role, REPOSITORY, INSTANCE)
     with PairCoordinator(tmp_path).snapshots() as pair:
         with Context.for_snapshot(pair.context, tmp_path) as facade:

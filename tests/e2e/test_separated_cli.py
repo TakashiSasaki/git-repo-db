@@ -43,7 +43,7 @@ def run(capsys, *args, expected=0):
     return json.loads(captured.out if result == 0 else captured.err)
 
 
-def init(capsys, catalog, scope="core", repository=None):
+def init(capsys, catalog, scope="repository", repository=None):
     options = [] if repository is None else ["--repository", repository]
     return run(capsys, "init", "--scope", scope, "--catalog", catalog, *options)
 
@@ -56,11 +56,13 @@ def test_init_requires_explicit_role_and_does_not_create_defaults(tmp_path, caps
     assert not catalog.exists()
     capsys.readouterr()
     result = init(capsys, catalog)
-    assert result["created"] == ["core"]
-    assert sorted(path.name for path in catalog.glob("*.sqlite3")) == ["core.sqlite3"]
-    before = (catalog / "core.sqlite3").read_bytes()
-    assert init(capsys, catalog)["reused"] == ["core"]
-    assert (catalog / "core.sqlite3").read_bytes() == before
+    assert result["created"] == ["repository"]
+    assert sorted(path.name for path in catalog.glob("*.sqlite3")) == [
+        "repository.sqlite3"
+    ]
+    before = (catalog / "repository.sqlite3").read_bytes()
+    assert init(capsys, catalog)["reused"] == ["repository"]
+    assert (catalog / "repository.sqlite3").read_bytes() == before
     assert init(capsys, catalog, "paired")["created"] == ["context"]
     assert not (catalog / "operational.sqlite3").exists()
     assert not (catalog / "search.sqlite3").exists()
@@ -72,7 +74,7 @@ def test_init_rejects_existing_legacy_or_mismatched_identity_unchanged(
 ):
     catalog = tmp_path / "catalog"
     catalog.mkdir()
-    path = catalog / "core.sqlite3"
+    path = catalog / "repository.sqlite3"
     if old_format == "not_sqlite":
         path.write_bytes(b"not a separated SQLite database")
     else:
@@ -94,7 +96,7 @@ def test_init_rejects_existing_legacy_or_mismatched_identity_unchanged(
 
 def seed_metadata(tmp_path, capsys):
     from repo_catalog.domain.git_acquisition import GitMetadataInput
-    from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+    from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
 
     catalog = tmp_path / "catalog"
     identity = init(capsys, catalog)
@@ -321,7 +323,7 @@ def test_context_registration_requires_finite_authority_and_access_is_separate(
     assert not (access / "context.sqlite3").exists()
 
 
-def test_exchange_core_roundtrip_has_explicit_selection(tmp_path, capsys):
+def test_exchange_repository_roundtrip_has_explicit_selection(tmp_path, capsys):
     from repo_catalog.domain.exchange import ExchangeSelectionScope
 
     catalog, identity, _, commit, _ = seed_metadata(tmp_path, capsys)
@@ -674,7 +676,7 @@ def test_metadata_only_paths_remain_attributed_and_do_not_invent_byte_verificati
     tmp_path, capsys
 ):
     from repo_catalog.domain.git_acquisition import GitMetadataInput
-    from repo_catalog.domain.p1_core import (
+    from repo_catalog.domain.p1_repository import (
         OID,
         Provenance,
         RelationGroup,
@@ -749,8 +751,8 @@ def test_notes_reparse_requires_current_receiver_role_proof(tmp_path, capsys):
     from dataclasses import replace
 
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-    from repo_catalog.adapters.sqlite.git_core import GitCore
-    from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
+    from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
     from tests.support.ref_notes import admit_fixture_note
 
     catalog, identity, _, commit, unit = seed_metadata(tmp_path, capsys)
@@ -775,10 +777,10 @@ def test_notes_reparse_requires_current_receiver_role_proof(tmp_path, capsys):
         len(tree_body),
         hashlib.sha256(tree_body).hexdigest(),
     )
-    core = GitCore(catalog / "core.sqlite3")
+    repository_store = GitRepositoryStore(catalog / "repository.sqlite3")
     try:
         claim, mapping = admit_fixture_note(
-            core,
+            repository_store,
             identity["repository_uuidv4"],
             tree,
             commit,
@@ -786,7 +788,7 @@ def test_notes_reparse_requires_current_receiver_role_proof(tmp_path, capsys):
             UnlimitedWorkBudget(),
         )
     finally:
-        core.close()
+        repository_store.close()
     payload = document(
         tmp_path,
         "note-reparse.json",
@@ -944,7 +946,7 @@ def test_access_route_configuration_remains_unapproved_and_backup_is_scoped(
     run(capsys, "access", "backup", "--access-db", database, "--destination", bundle)
     result = run(capsys, "access", "inspect", "--bundle", bundle)
     assert result["status"] == "ok"
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()
 
 
 def test_context_browse_cursor_binds_extra_filters_and_snapshot(tmp_path, capsys):
@@ -1054,7 +1056,7 @@ def test_init_refuses_mismatched_identities_before_creating_any_role(tmp_path, c
 
     catalog = tmp_path / "catalog"
     init(capsys, catalog)
-    before = (catalog / "core.sqlite3").read_bytes()
+    before = (catalog / "repository.sqlite3").read_bytes()
     run(
         capsys,
         "init",
@@ -1070,7 +1072,7 @@ def test_init_refuses_mismatched_identities_before_creating_any_role(tmp_path, c
     initialize(catalog / "context.sqlite3", "context", str(uuid4()), str(uuid4()))
     context_before = (catalog / "context.sqlite3").read_bytes()
     run(capsys, "init", "--scope", "paired", "--catalog", catalog, expected=2)
-    assert (catalog / "core.sqlite3").read_bytes() == before
+    assert (catalog / "repository.sqlite3").read_bytes() == before
     assert (catalog / "context.sqlite3").read_bytes() == context_before
     assert not (catalog / "search.sqlite3").exists()
 
@@ -1123,3 +1125,107 @@ def test_query_budgets_and_cursor_errors_do_not_enter_recovery(tmp_path, capsys)
     )
     assert not (catalog / "p1-recovery-stop.json").exists()
     assert not (catalog / "search.sqlite3").exists()
+
+
+@pytest.mark.parametrize(
+    "scope", ["repository", "paired", "context", "access", "filesystem", "worktrees"]
+)
+def test_repository_cutover_rejects_legacy_filename_without_writes(
+    tmp_path, capsys, scope
+):
+    import sqlite3
+
+    catalog = tmp_path / "legacy"
+    catalog.mkdir()
+    legacy = catalog / "core.sqlite3"
+    with sqlite3.connect(legacy) as connection:
+        connection.execute("CREATE TABLE legacy_evidence(value TEXT)")
+        connection.execute("INSERT INTO legacy_evidence VALUES ('retain')")
+    connection.close()
+
+    before = legacy.read_bytes()
+    result = run(capsys, "init", "--scope", scope, "--catalog", catalog, expected=2)
+    assert result["code"] == "UNSUPPORTED_SCHEMA_VERSION"
+    assert "new empty directory" in result["message"]
+    assert (
+        run(capsys, "doctor", "--catalog", catalog, expected=2)["code"]
+        == "UNSUPPORTED_SCHEMA_VERSION"
+    )
+    assert list(catalog.iterdir()) == [legacy]
+    assert legacy.read_bytes() == before
+
+
+def test_p1_requires_current_version_on_an_independent_role(tmp_path, capsys):
+    import sqlite3
+
+    catalog = tmp_path / "catalog"
+    init(capsys, catalog, "context")
+    path = catalog / "context.sqlite3"
+    with sqlite3.connect(path) as db:
+        assert db.execute("PRAGMA user_version").fetchone() == (5,)
+        db.execute("PRAGMA user_version = 0")
+    db.close()
+
+    before = path.read_bytes()
+    result = run(capsys, "init", "--catalog", catalog, "--scope", "paired", expected=2)
+    assert result["code"] == "UNSUPPORTED_SCHEMA_VERSION"
+    assert not (catalog / "repository.sqlite3").exists()
+    assert path.read_bytes() == before
+
+
+def test_legacy_backup_is_rejected_before_creating_restore_destination(
+    tmp_path, capsys
+):
+    catalog = tmp_path / "catalog"
+    identity = init(capsys, catalog)
+    backup = tmp_path / "backup"
+    run(
+        capsys,
+        "recovery",
+        "backup",
+        "--scope",
+        "git_only",
+        "--catalog",
+        catalog,
+        "--output",
+        backup,
+    )
+    manifest_path = backup / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    assert manifest["manifest_version"] == 4
+    assert set(manifest["stores"]) == {"repository"}
+    assert (backup / "stores" / "repository.sqlite3").is_file()
+    manifest["manifest_version"] = 3
+    legacy_bytes = json.dumps(manifest).encode()
+    manifest_path.write_bytes(legacy_bytes)
+    digest_path = backup / "manifest.json.sha256"
+    digest_path.write_text(
+        hashlib.sha256(legacy_bytes).hexdigest() + "  manifest.json\n"
+    )
+
+    fresh = tmp_path / "fresh"
+    result = run(
+        capsys,
+        "recovery",
+        "restore",
+        "--scope",
+        "git_only",
+        "--catalog",
+        fresh,
+        "--input",
+        backup,
+        "--repository",
+        identity["repository_uuidv4"],
+        expected=2,
+    )
+    assert "Unsupported manifest version: 3" in result["message"]
+    assert not fresh.exists()
+    assert manifest_path.read_bytes() == legacy_bytes
+
+
+def test_exchange_v8_is_rejected_at_the_format_boundary():
+    from repo_catalog.domain.exchange import ExchangeError, decode_package
+
+    with pytest.raises(ExchangeError) as failure:
+        decode_package('{"format":"git-repo-db/adr0036-exchange-v8","core":null}')
+    assert failure.value.code == "UNSUPPORTED_WIRE_VERSION"

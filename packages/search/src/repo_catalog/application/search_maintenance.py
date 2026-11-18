@@ -6,7 +6,7 @@ import time
 from repo_catalog.domain.p1_coordination import CoordinationError
 from repo_catalog.domain.query_contracts import SnapshotFenceToken
 from repo_catalog.domain.search_query import SEARCH_PROJECTION_KINDS
-from repo_catalog.domain.shared_values import CoreFailure
+from repo_catalog.domain.shared_values import RepositoryFailure
 
 _NO_ESTIMATE = {"runs": 0, "average_duration_ns": None, "estimated_duration_ns": None}
 _OPTIONAL_ERRORS = (
@@ -15,7 +15,7 @@ _OPTIONAL_ERRORS = (
     ValueError,
     sqlite3.Error,
     CoordinationError,
-    CoreFailure,
+    RepositoryFailure,
 )
 
 

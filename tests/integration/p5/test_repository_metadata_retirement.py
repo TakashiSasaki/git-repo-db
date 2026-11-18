@@ -106,5 +106,5 @@ def test_repository_null_omission_empty_object_and_new_name_retain_each_exact_pr
         ContextQueryService(directory, mode="context_only").get_context_resource(key)
         == current
     )
-    assert not (directory / "core.sqlite3").exists()
+    assert not (directory / "repository.sqlite3").exists()
     assert not (directory / "p1-recovery-stop.json").exists()

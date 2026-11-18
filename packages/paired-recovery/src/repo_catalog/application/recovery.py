@@ -1,11 +1,11 @@
-"""Explicit paired Recovery composition over the Core lifecycle."""
+"""Explicit paired Recovery composition over the Repository lifecycle."""
 
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
-from repo_catalog.application.core_recovery import CoreRecoveryService
+from repo_catalog.application.repository_recovery import RepositoryRecoveryService
 
 
-class RecoveryService(CoreRecoveryService):
-    """Core and Context Recovery; paired backup remains the default."""
+class RecoveryService(RepositoryRecoveryService):
+    """Repository and Context Recovery; paired backup remains the default."""
 
     def __init__(self, adapter: SQLiteRecoveryAdapter | None = None) -> None:
         super().__init__(adapter or SQLiteRecoveryAdapter())

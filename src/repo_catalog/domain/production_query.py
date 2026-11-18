@@ -15,13 +15,8 @@ from repo_catalog.domain.context_query import (
 from repo_catalog.domain.context_query import (
     repository_relation_summary as repository_relation_summary,
 )
-from repo_catalog.domain.core_query import GitObjectView as GitObjectView
-from repo_catalog.domain.core_query import GitObservationView as GitObservationView
-from repo_catalog.domain.core_query import GitRepositoryView as GitRepositoryView
-from repo_catalog.domain.core_query import RefNotesTargetView as RefNotesTargetView
-from repo_catalog.domain.core_query import ref_projection_json as ref_projection_json
 from repo_catalog.domain.paired_query import (
-    PairedCoreResolution as PairedCoreResolution,
+    PairedRepositoryResolution as PairedRepositoryResolution,
 )
 from repo_catalog.domain.paired_query import PairedResourceView as PairedResourceView
 from repo_catalog.domain.query_contracts import ByteReadResult as ByteReadResult
@@ -34,6 +29,17 @@ from repo_catalog.domain.query_contracts import QueryError as QueryError
 from repo_catalog.domain.query_contracts import SnapshotFenceToken as SnapshotFenceToken
 from repo_catalog.domain.query_contracts import canonical_json as canonical_json
 from repo_catalog.domain.query_contracts import filter_digest as filter_digest
+from repo_catalog.domain.repository_query import GitObjectView as GitObjectView
+from repo_catalog.domain.repository_query import (
+    GitObservationView as GitObservationView,
+)
+from repo_catalog.domain.repository_query import GitRepositoryView as GitRepositoryView
+from repo_catalog.domain.repository_query import (
+    RefNotesTargetView as RefNotesTargetView,
+)
+from repo_catalog.domain.repository_query import (
+    ref_projection_json as ref_projection_json,
+)
 
 if TYPE_CHECKING:
     pass

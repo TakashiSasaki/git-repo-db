@@ -60,12 +60,12 @@ def test_safe_activation_reconstructs_operational_and_search(
     assert search_tables > 0
 
 
-def test_activation_fails_on_missing_core(tmp_path):
+def test_activation_fails_on_missing_repository(tmp_path):
     service = RecoveryService()
     empty_dir = tmp_path / "empty_dir"
     empty_dir.mkdir()
 
-    with pytest.raises(ActivationError, match="missing core.sqlite3"):
+    with pytest.raises(ActivationError, match="missing repository.sqlite3"):
         service.activate_catalog(empty_dir, tmp_path / "active_loc")
 
 
@@ -73,7 +73,10 @@ def test_activation_fails_on_missing_core(tmp_path):
     "stage,error_match",
     [
         ("before_validation", "Injected failure before validation"),
-        ("between_core_and_context", "Injected failure between core and context"),
+        (
+            "between_repository_and_context",
+            "Injected failure between repository and context",
+        ),
         ("after_operational_init", "Injected failure after operational initialization"),
         ("during_locator_replacement", "Injected failure during locator replacement"),
     ],

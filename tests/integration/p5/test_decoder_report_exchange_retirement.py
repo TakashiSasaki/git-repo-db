@@ -7,15 +7,15 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.p1_core import Core
+from repo_catalog.adapters.sqlite.p1_repository import RepositoryStore
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import (
     ExchangeSelectionScope,
     decode_package,
     encode_package,
 )
-from repo_catalog.domain.p1_core import Provenance, ScalarClaim
-from tests.integration.p1.test_core import Budget, native, oid
+from repo_catalog.domain.p1_repository import Provenance, ScalarClaim
+from tests.integration.p1.test_repository import Budget, native, oid
 from tests.integration.p2.test_native import entry
 from tests.integration.p5.conftest import init_catalog_stores
 
@@ -27,7 +27,7 @@ def test_uninstalled_sender_decoder_and_exact_settings_survive_reverse_repeat_an
     source, middle, target = (
         tmp_path / name for name in ("source", "middle", "target")
     )
-    repository, _ = init_catalog_stores(source, stores=("core", "operational"))
+    repository, _ = init_catalog_stores(source, stores=("repository", "operational"))
     raw = (
         b"genuine caf\xc3\xa9"
         if family == "name"
@@ -60,10 +60,12 @@ def test_uninstalled_sender_decoder_and_exact_settings_survive_reverse_repeat_an
     )
     field = "decoded_name" if family == "name" else "author"
     reported = raw.decode("latin-1")
-    with closing(Core(source / "core.sqlite3")) as core:
-        core.admit_metadata(incoming, str(uuid4()), Budget())
-        core.admit_claim(ScalarClaim(incoming.object_oid, field, reported, producer))
-        core.admit_claim(
+    with closing(RepositoryStore(source / "repository.sqlite3")) as repository_store:
+        repository_store.admit_metadata(incoming, str(uuid4()), Budget())
+        repository_store.admit_claim(
+            ScalarClaim(incoming.object_oid, field, reported, producer)
+        )
+        repository_store.admit_claim(
             ScalarClaim(incoming.object_oid, "decoder_settings", settings, producer)
         )
         # A receiver may verify rich scalar fields from actual bytes; an
@@ -73,13 +75,17 @@ def test_uninstalled_sender_decoder_and_exact_settings_survive_reverse_repeat_an
     package = replace(
         package,
         package_id=str(uuid4()),
-        core={key: list(reversed(rows)) for key, rows in package.core.items()},
+        repository_store={
+            key: list(reversed(rows)) for key, rows in package.repository_store.items()
+        },
         digest_sha256=None,
     )
     package = decode_package(encode_package(package))
     for directory in (middle, target):
         init_catalog_stores(
-            directory, repository_uuidv4=repository, stores=("core", "operational")
+            directory,
+            repository_uuidv4=repository,
+            stores=("repository", "operational"),
         )
         exchange = ExchangeService(directory)
         exchange.import_package(
@@ -88,17 +94,21 @@ def test_uninstalled_sender_decoder_and_exact_settings_survive_reverse_repeat_an
         assert exchange.import_package(
             package, permitted_repository_uuidv4s=(repository,)
         ).idempotent_replay
-        with closing(Core(directory / "core.sqlite3")) as core:
+        with closing(
+            RepositoryStore(directory / "repository.sqlite3")
+        ) as repository_store:
             candidates = [
                 c
-                for c in core.scalar(incoming.object_oid, field).alternatives
+                for c in repository_store.scalar(
+                    incoming.object_oid, field
+                ).alternatives
                 if c["provenance"] == list(producer.key)
             ]
             assert len(candidates) == 1 and candidates[0]["checked"] is False
             assert candidates[0]["value"] == ["known", reported]
             settings_candidates = [
                 c
-                for c in core.scalar(
+                for c in repository_store.scalar(
                     incoming.object_oid, "decoder_settings"
                 ).alternatives
                 if c["provenance"] == list(producer.key)
@@ -110,14 +120,17 @@ def test_uninstalled_sender_decoder_and_exact_settings_survive_reverse_repeat_an
                 None if family == "name" else ["known", raw.decode("utf-8")]
             )
             assert (
-                core.scalar(incoming.object_oid, field).canonical == expected_canonical
+                repository_store.scalar(incoming.object_oid, field).canonical
+                == expected_canonical
             )
             if family == "author":
                 assert any(
                     c["checked"] and c["value"] == expected_canonical
-                    for c in core.scalar(incoming.object_oid, field).alternatives
+                    for c in repository_store.scalar(
+                        incoming.object_oid, field
+                    ).alternatives
                 )
-            assert core.read_metadata(incoming.object_oid) == body
+            assert repository_store.read_metadata(incoming.object_oid) == body
         package = decode_package(
             encode_package(exchange.export_package(selection=selection))
         )

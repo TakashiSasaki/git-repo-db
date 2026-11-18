@@ -692,7 +692,7 @@ def probe(output, reference=None):
     # Probe the actual checkout factories before editable dependencies exist.
     for source in (
         ROOT / "src",
-        ROOT / "packages/core/src",
+        ROOT / "packages/repository/src",
         ROOT / "packages/contracts/src",
         ROOT / "packages/runtime/src",
         ROOT / "packages/context/src",

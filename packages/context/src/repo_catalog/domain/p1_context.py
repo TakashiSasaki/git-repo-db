@@ -1044,7 +1044,7 @@ class MappingClaimKey(RelationClaimKey):
 
 @dataclass(frozen=True)
 class MappingSupport:
-    """Finite original dependency evidence linking a resolved Core-target relation
+    """Finite original dependency evidence linking a resolved Repository-target relation
     to the exact Provider Repository and MappingClaimKey(s) used for resolution.
     """
 
@@ -1691,7 +1691,7 @@ class ResolvedRepositoryRelation:
         )
 
     @property
-    def is_core_resolved_active(self) -> bool:
+    def is_repository_resolved_active(self) -> bool:
         return (
             self.support_status in ("self_binding", "active")
             and self.relation.target_repository_uuidv4 is not None

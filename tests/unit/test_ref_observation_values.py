@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.domain.p1_core import OID, CoreFailure, Provenance
+from repo_catalog.domain.p1_repository import OID, Provenance, RepositoryFailure
 from repo_catalog.domain.ref_observation import (
     RefAbsenceEvidence,
     RefObservation,
@@ -21,13 +21,13 @@ def test_observation_identity_and_lossless_ref():
     key = RefObservationKey(str(uuid4()), V7)
     ref = RefObservation(key, str(uuid4()), b"refs/heads/\xff", "source", "visible")
     assert ref.ref_name_bytes == b"refs/heads/\xff"
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefObservationKey(key.observation_origin_uuidv4, str(uuid4()))
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefObservationKey(
             key.observation_origin_uuidv4, "01890f47-0000-7000-0000-000000000001"
         )
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefObservation(
             key, ref.repository_uuidv4, ref.ref_name_bytes, "source", "visible", True
         )
@@ -44,9 +44,9 @@ def test_unknown_target_and_scoped_absence_are_distinct_results():
     )
     assert unknown != absent
     assert RefAbsenceEvidence.decode(evidence.encoded) == evidence
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefObservationClaim(key, report("three"), "absent")
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefObservationClaim(
             key,
             report("three"),
@@ -54,7 +54,7 @@ def test_unknown_target_and_scoped_absence_are_distinct_results():
             root_object_oid=OID("sha1", "a" * 40),
             absence_evidence=evidence,
         )
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefAbsenceEvidence(
             "source",
             "visible",
@@ -76,7 +76,7 @@ def test_absence_requires_completed_enumeration_that_covers_the_ref():
         "complete",
     )
     assert RefAbsenceEvidence.decode(evidence.encoded) == evidence
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefAbsenceEvidence(
             "source",
             "scope",
@@ -85,7 +85,7 @@ def test_absence_requires_completed_enumeration_that_covers_the_ref():
             "partial",
             b"refs/heads/",
         )
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefAbsenceEvidence(
             "source",
             "scope",
@@ -101,6 +101,6 @@ def test_deeply_nested_absence_input_is_rejected_as_invalid():
     from repo_catalog.domain.ref_observation import valid_ref_absence
 
     malformed = "[" * 2_000 + "]" * 2_000
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         RefAbsenceEvidence.decode(malformed)
     assert not valid_ref_absence(malformed)

@@ -18,7 +18,7 @@ from repo_catalog.domain.p1_coordination import (
     WorkMeasurement,
     WorkPermit,
 )
-from repo_catalog.domain.shared_values import CoreFailure
+from repo_catalog.domain.shared_values import RepositoryFailure
 
 from .operational_row_bindings import insert_values
 
@@ -29,7 +29,7 @@ class WorkLedger:
     Every mutation and its checkpoint commit together. A new connection, or any
     unknown same/other-connection write, verifies the actual accounting inventory
     before continuation. Normal steps update fixed-size counters/checksums in O(1)
-    work; no Core ledger or authoritative success state is introduced.
+    work; no Repository ledger or authoritative success state is introduced.
 
     Acquisition units meter actual source/native/admission work. Operational
     durability bookkeeping is internal and does not recursively meter itself.
@@ -549,7 +549,7 @@ class WorkLedger:
         across requests and connections. Request issuance remains independent.
         """
         from repo_catalog.domain.exchange import ExchangeError
-        from repo_catalog.domain.p1_core import uuid4_value
+        from repo_catalog.domain.p1_repository import uuid4_value
 
         uuid4_value(sender)
         uuid4_value(package_id)
@@ -588,7 +588,7 @@ class WorkLedger:
 
 
 class NotesWorkBudget:
-    """P4-facing require/charge bridge, separate from Core transaction ownership.
+    """P4-facing require/charge bridge, separate from Repository transaction ownership.
 
     Coordinates are actual ordered processing steps in this genuine attempt,
     rather than new per-fact identities. New attempts retain the same request.
@@ -617,7 +617,9 @@ class NotesWorkBudget:
         except sqlite3.IntegrityError as error:
             if str(error) != "finite cumulative request budget":
                 raise
-            raise CoreFailure("BUDGET", (self.request, unit), str(error)) from error
+            raise RepositoryFailure(
+                "BUDGET", (self.request, unit), str(error)
+            ) from error
         self.pending[unit] = permit
 
     def abandon(self, unit: str):

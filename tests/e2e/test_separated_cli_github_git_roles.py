@@ -25,7 +25,7 @@ from tests.integration.p5.conftest import build_sample_git_repo, git
 
 
 def setup(case, tmp_path, capsys):
-    identity = init(capsys, case.directory, "core")
+    identity = init(capsys, case.directory, "repository")
     native = tmp_path / "native.git"
     objects = build_sample_git_repo(native, "sha1")
     git(native, "update-ref", "refs/heads/main", objects["commit1"].object_oid)
@@ -99,7 +99,7 @@ def setup(case, tmp_path, capsys):
     return native, objects, request, handle, calls
 
 
-def test_normal_cli_git_role_request_never_initializes_missing_core_or_calls_http(
+def test_normal_cli_git_role_request_never_initializes_missing_repository_or_calls_http(
     provider_case, tmp_path, capsys, monkeypatch
 ):
     from tests.e2e.test_separated_cli import run
@@ -126,7 +126,7 @@ def test_normal_cli_git_role_request_never_initializes_missing_core_or_calls_htt
     }
 
     def forbidden(*args, **kwargs):
-        pytest.fail("Missing explicit Core must be refused before HTTP")
+        pytest.fail("Missing explicit Repository must be refused before HTTP")
 
     monkeypatch.setattr(httpx.Client, "request", forbidden)
     error = run(
@@ -136,14 +136,14 @@ def test_normal_cli_git_role_request_never_initializes_missing_core_or_calls_htt
         "--catalog",
         case.directory,
         "--input",
-        document(tmp_path, "missing-core-role.json", request),
+        document(tmp_path, "missing-repository-role.json", request),
         "--authority",
         case.authority,
         expected=2,
     )
     assert error["code"] == "STORE_UNAVAILABLE"
     assert (case.directory / "context.sqlite3").read_bytes() == before
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "operational.sqlite3").exists()
 
 
@@ -154,7 +154,7 @@ def test_normal_cli_live_git_ref_race_stays_partial_even_with_retained_expected_
     import json
     from contextlib import closing
 
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 
     case = provider_case
     native, objects, request, handle, calls = setup(case, tmp_path, capsys)
@@ -196,8 +196,10 @@ def test_normal_cli_live_git_ref_race_stays_partial_even_with_retained_expected_
             result["state"] != "complete"
             and not result["coverage"]["complete_for_requested_scope"]
         )
-        with closing(GitCore(case.directory / "core.sqlite3")) as core:
-            present = core.sql(
+        with closing(
+            GitRepositoryStore(case.directory / "repository.sqlite3")
+        ) as repository_store:
+            present = repository_store.sql(
                 "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                 objects["commit2"].key,
             )
@@ -227,7 +229,7 @@ def test_normal_cli_interrupted_git_role_walk_keeps_actual_prefix_and_resumes_pa
 
     import repo_catalog.application.provider_fetch as module
     from repo_catalog.adapters.git.native import GitNativeSource
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.cli.main import main
     from repo_catalog.cli.separated_io import decode, read_document
     from tests.integration.p5.conftest import write_git_object
@@ -324,8 +326,12 @@ def test_normal_cli_interrupted_git_role_walk_keeps_actual_prefix_and_resumes_pa
         assert result == 130 and captured.out == ""
         assert json.loads(captured.err)["code"] == "CANCELLED"
         assert interrupted[0]
-        with closing(GitCore(case.directory / "core.sqlite3")) as core:
-            prefix = core.sql("SELECT object_oid,digest_sha256 FROM retained_metadata")
+        with closing(
+            GitRepositoryStore(case.directory / "repository.sqlite3")
+        ) as repository_store:
+            prefix = repository_store.sql(
+                "SELECT object_oid,digest_sha256 FROM retained_metadata"
+            )
         assert any(row[0] == objects["commit2"].object_oid for row in prefix)
         interrupted_view = query(capsys, case, "pr-code")
         assert interrupted_view["state"] != "complete"
@@ -338,8 +344,12 @@ def test_normal_cli_interrupted_git_role_walk_keeps_actual_prefix_and_resumes_pa
         and resumed["request_identity"]["request_uuidv4"]
         == request["request_identity"][1]
     )
-    with closing(GitCore(case.directory / "core.sqlite3")) as core:
-        retained = core.sql("SELECT object_oid,digest_sha256 FROM retained_metadata")
+    with closing(
+        GitRepositoryStore(case.directory / "repository.sqlite3")
+    ) as repository_store:
+        retained = repository_store.sql(
+            "SELECT object_oid,digest_sha256 FROM retained_metadata"
+        )
     assert all(row in retained for row in prefix)
     assert query(capsys, case, "pr-code")["state"] == "complete"
     assert not (case.directory / "p1-recovery-stop.json").exists()
@@ -352,7 +362,7 @@ def test_normal_cli_captured_review_target_is_actually_retried_under_original_bu
 
     from repo_catalog.adapters.git.native import GitNativeSource
     from repo_catalog.cli.separated_io import decode, read_document
-    from repo_catalog.domain.p1_core import CoreFailure
+    from repo_catalog.domain.p1_repository import RepositoryFailure
     from tests.integration.p5.conftest import write_git_object
 
     case = provider_case
@@ -379,7 +389,7 @@ def test_normal_cli_captured_review_target_is_actually_retried_under_original_bu
         if oid == target:
             attempts.append(oid)
             if len(attempts) == 1:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "OBJECT_UNAVAILABLE", oid, "Actual selected target read unavailable"
                 )
         return original(source, oid, work)
@@ -549,9 +559,9 @@ def test_normal_cli_unobserved_git_refresh_reuses_only_matching_retained_roles(
     from dataclasses import replace
 
     from repo_catalog.adapters.git.native import GitNativeSource
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.cli.separated_io import decode, read_document
-    from repo_catalog.domain.p1_core import CoreFailure
+    from repo_catalog.domain.p1_repository import RepositoryFailure
     from tests.integration.p5.conftest import write_git_object
 
     case = provider_case
@@ -600,7 +610,7 @@ def test_normal_cli_unobserved_git_refresh_reuses_only_matching_retained_roles(
         return handle(http)
 
     def unavailable(*args, **kwargs):
-        raise CoreFailure(
+        raise RepositoryFailure(
             "GIT_INPUT", "explicit-source", "No fresh Git ref was observed"
         )
 
@@ -617,8 +627,10 @@ def test_normal_cli_unobserved_git_refresh_reuses_only_matching_retained_roles(
             for item in case.view(capsys, case.keys["pull"])["collections"]
             if item["collection_kind"] == "git_role_checks"
         ]
-        with closing(GitCore(case.directory / "core.sqlite3")) as core:
-            retained = core.sql(
+        with closing(
+            GitRepositoryStore(case.directory / "repository.sqlite3")
+        ) as repository_store:
+            retained = repository_store.sql(
                 "SELECT object_oid,digest_sha256 FROM retained_metadata ORDER BY object_oid"
             )
         failed[0] = True
@@ -638,9 +650,11 @@ def test_normal_cli_unobserved_git_refresh_reuses_only_matching_retained_roles(
         for item in case.view(capsys, case.keys["pull"])["collections"]
         if item["collection_kind"] == "git_role_checks"
     ] == previous
-    with closing(GitCore(case.directory / "core.sqlite3")) as core:
+    with closing(
+        GitRepositoryStore(case.directory / "repository.sqlite3")
+    ) as repository_store:
         assert (
-            core.sql(
+            repository_store.sql(
                 "SELECT object_oid,digest_sha256 FROM retained_metadata ORDER BY object_oid"
             )
             == retained
@@ -660,9 +674,9 @@ def test_normal_cli_final_provider_check_cannot_borrow_another_captured_head_lis
     from dataclasses import replace
 
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.cli.separated_io import decode, read_document
-    from repo_catalog.domain.p1_core import NativeObject
+    from repo_catalog.domain.p1_repository import NativeObject
     from tests.integration.p5.conftest import write_git_object
 
     case = provider_case
@@ -672,8 +686,10 @@ def test_normal_cli_final_provider_check_cannot_borrow_another_captured_head_lis
         "author New <new@example.test> 1700000400 +0000\ncommitter New <new@example.test> 1700000400 +0000\n\npreexisting other head\n"
     ).encode()
     other = write_git_object(native, "sha1", "commit", body)
-    with closing(GitCore(case.directory / "core.sqlite3")) as core:
-        core.admit_metadata(
+    with closing(
+        GitRepositoryStore(case.directory / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_metadata(
             NativeObject(
                 other, "commit", body, len(body), hashlib.sha256(body).hexdigest()
             ),

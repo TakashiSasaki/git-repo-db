@@ -4,9 +4,9 @@ from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.recovery import BackupScope
 
 
-def test_core_only_backup_and_restore(synthetic_catalog, tmp_path, repo_uuid):
+def test_repository_only_backup_and_restore(synthetic_catalog, tmp_path, repo_uuid):
     service = RecoveryService()
-    backup_path = tmp_path / "backups" / "core_backup"
+    backup_path = tmp_path / "backups" / "repository_backup"
 
     receipt = service.create_consistent_backup(
         synthetic_catalog, backup_path, scope=BackupScope.GIT_ONLY
@@ -16,17 +16,17 @@ def test_core_only_backup_and_restore(synthetic_catalog, tmp_path, repo_uuid):
     assert receipt.scope == BackupScope.GIT_ONLY
     assert (backup_path / "manifest.json").exists()
     assert (backup_path / "manifest.json.sha256").exists()
-    assert (backup_path / "stores" / "core.sqlite3").exists()
+    assert (backup_path / "stores" / "repository.sqlite3").exists()
     assert not (backup_path / "stores" / "context.sqlite3").exists()
 
     # Restore into fresh destination
-    restore_dest = tmp_path / "restored_core"
+    restore_dest = tmp_path / "restored_repository"
     restore_receipt = service.restore_backup(backup_path, restore_dest, repo_uuid)
 
     assert restore_receipt.revalidated_clean
-    assert "core" in restore_receipt.revalidated_stores
+    assert "repository" in restore_receipt.revalidated_stores
     assert "context" not in restore_receipt.revalidated_stores
-    assert (restore_dest / "core.sqlite3").exists()
+    assert (restore_dest / "repository.sqlite3").exists()
 
 
 # Note: test_paired_consistent_backup, test_backup_refuses_stopped_catalog,

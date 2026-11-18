@@ -20,7 +20,7 @@ def main(argv=None):
     )
     parser.add_argument(
         "--mode",
-        choices=("auto", "core_only", "context_only", "paired"),
+        choices=("auto", "repository_only", "context_only", "paired"),
         default="auto",
     )
     parser.add_argument("--limit", type=int, default=50)

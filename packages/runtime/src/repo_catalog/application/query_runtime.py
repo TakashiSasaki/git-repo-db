@@ -21,7 +21,7 @@ from repo_catalog.domain.query_contracts import (
     QueryError,
     SnapshotFenceToken,
 )
-from repo_catalog.domain.shared_values import CoreFailure
+from repo_catalog.domain.shared_values import RepositoryFailure
 
 
 def _stored_view(method):
@@ -46,7 +46,7 @@ def _stored_view(method):
             persist_catalog_stop(
                 self.directory, "invalid stored projection: " + str(error)
             )
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "AUTHORITATIVE_CORRUPTION", method.__name__, str(error)
             ) from error
 
@@ -109,7 +109,7 @@ class QueryReader:
             raise QueryError(
                 "INVALID_LIMIT", "query", "finite SnapshotReadLimits required"
             )
-        if mode not in ("auto", "core_only", "context_only", "paired"):
+        if mode not in ("auto", "repository_only", "context_only", "paired"):
             raise QueryError("INVALID_MODE", "query", str(mode))
         self.read_limits = read_limits
         self.last_costs_ns: dict[str, int] = {}
@@ -117,7 +117,7 @@ class QueryReader:
 
     def _check_stop(self) -> None:
         if (self.directory / "p1-recovery-stop.json").exists():
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "RECOVERY_STOP", "catalog", "normal catalog operation stopped"
             )
 
@@ -135,13 +135,13 @@ class QueryReader:
             persist_catalog_stop(
                 self.directory, "stored typed data decoding: " + str(error)
             )
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "AUTHORITATIVE_CORRUPTION", "query", str(error)
             ) from error
         except sqlite3.OperationalError as error:
             if str(error).startswith("Could not decode to UTF-8 column"):
                 persist_catalog_stop(self.directory, str(error))
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "AUTHORITATIVE_CORRUPTION", "query", str(error)
                 ) from error
             if getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_INTERRUPT:
@@ -163,7 +163,7 @@ class QueryReader:
                 self.directory,
                 "invalid stored " + constructor.__name__ + ": " + str(error),
             )
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "AUTHORITATIVE_CORRUPTION", constructor.__name__, str(error)
             ) from error
 

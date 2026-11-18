@@ -52,7 +52,7 @@ def test_rechecksummed_resource_cursor_still_requires_canonical_identity(
         mode="paired",
         repository_uuidv4=REPOSITORY,
         catalog_instance_uuidv4=PACKAGE,
-        core_sha256="a" * 64,
+        repository_sha256="a" * 64,
         context_sha256="b" * 64,
     ).encode()
     payload = {

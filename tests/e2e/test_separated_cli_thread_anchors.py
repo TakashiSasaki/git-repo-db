@@ -5,7 +5,7 @@ import json
 import httpx
 
 from repo_catalog.domain.context_admission import AdmissionSelection, DependencySet
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from tests.e2e.test_separated_cli import document
 from tests.e2e.test_separated_cli_pr_assessment import query
 from tests.e2e.test_separated_cli_provider_regressions import (
@@ -112,4 +112,4 @@ def test_live_thread_root_and_child_keep_actual_captured_head_when_later_detail_
         item["value"]
         for item in case.view(capsys, case.keys["pull"])["fields"]["head_object_oid"]
     } == {new_head}
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()

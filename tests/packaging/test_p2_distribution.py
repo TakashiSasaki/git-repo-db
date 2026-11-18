@@ -36,26 +36,26 @@ import subprocess
 from pathlib import Path
 from uuid import uuid4
 from repo_catalog.adapters.git.native import GitNativeSource
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepository
 from repo_catalog.adapters.sqlite.p1_schema import initialize
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 assert "site-packages" in str(Path(__import__("repo_catalog.domain.git_native", fromlist=["x"]).__file__))
 class Work:
     def require(self, unit, amount): pass
     def charge(self, unit, amount): pass
 repo, instance = str(uuid4()), str(uuid4())
-initialize(Path("core.sqlite3"), "core", repo, instance)
+initialize(Path("repository.sqlite3"), "repository", repo, instance)
 subprocess.run(["git", "init", "--bare", "--object-format=FORMAT", "git"], check=True, capture_output=True)
 body = b""
 result = subprocess.run(["git", "-C", "git", "hash-object", "-w", "-t", "tree", "--stdin"], input=body, check=True, capture_output=True)
 oid = OID("FORMAT", result.stdout.strip().decode())
 source = GitNativeSource(Path("git"))
 native = source.metadata(oid)
-core = GitCore(Path("core.sqlite3"))
-core.admit_metadata(native, str(uuid4()), Work())
-assert core.read_metadata(oid) == body
-assert core.relations(oid, "tree_entries").canonical == ["known_empty", []]
+repository = GitRepository(Path("repository.sqlite3"))
+repository.admit_metadata(native, str(uuid4()), Work())
+assert repository.read_metadata(oid) == body
+assert repository.relations(oid, "tree_entries").canonical == ["known_empty", []]
 assert not Path("context.sqlite3").exists()
-core.close()
+repository.close()
 """.replace("FORMAT", fmt)
     run([python, "-c", script], outside, env)

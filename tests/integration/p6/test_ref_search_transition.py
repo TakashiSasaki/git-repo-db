@@ -7,7 +7,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.application.production_query import ProductionQueryService
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.production_query import SearchQuery
 from tests.integration.p4 import conftest as fixtures
 from tests.integration.p5.test_ref_inventory_wiring import enable_context, run_request
@@ -54,10 +54,10 @@ def test_group_only_reports_keys_body_and_fallback(acquisition, paired):
     assert all(
         not hit.authoritative_summary["note_retained"] for hit in report_only.hits
     )
-    assert not app.core.sql(
+    assert not app.repository_store.sql(
         "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
     )
-    assert not app.core.sql("SELECT 1 FROM notes_mappings")
+    assert not app.repository_store.sql("SELECT 1 FROM notes_mappings")
     # Acquire only the first Claim's body using the existing root-bound reader.
     first = replace(
         value, claims=(value.claims[0],), mapping_groups=(value.mapping_groups[0],)
@@ -147,7 +147,7 @@ def test_bad_eligible_copy_stops_before_search_output(acquisition):
         acquisition, with_input(acquisition, first, target_object_oids=(target,))
     )
     _mutate(path, "ref_retained_notes", "body=zeroblob(length(body))")
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         ProductionQueryService(path.parent).search(
             SearchQuery(query_text="needle", projection_kinds=("notes",))
         )
@@ -170,7 +170,7 @@ def test_later_partial_coverage_does_not_reuse_old_complete(acquisition):
     original = result.ref_inventory_verifications[0].coverage_claim
     from repo_catalog.domain.p1_coverage import CoverageClaim
 
-    app.core.admit_coverage(
+    app.repository_store.admit_coverage(
         CoverageClaim(original.scope, original.observed_at_us + 1, "partial")
     )
     service = ProductionQueryService(path.parent)
@@ -184,7 +184,7 @@ def test_later_partial_coverage_does_not_reuse_old_complete(acquisition):
     assert any(s[0] == "group" and s[-1] == "complete" for s in summary["sources"])
     budget = UnlimitedWorkBudget(work_limits={"input_bytes": 1})
     for _ in range(2):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             service.search(
                 SearchQuery(query_text="needle", projection_kinds=("notes",)),
                 work=budget,

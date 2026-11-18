@@ -157,12 +157,12 @@ def test_cli_all_subcommands_pagination_and_error_handling(
             "pull_request",
             "--id",
             encode_identity("42"),
-            "--include-core-bytes",
+            "--include-repository-bytes",
         ],
         capsys,
     )
     assert code == 0
-    assert len(pres_data["core_resolutions"]) == 2
+    assert len(pres_data["repository_resolutions"]) == 2
 
     # 9. paired-resources
     code, press_data = _run_cli(
@@ -200,7 +200,7 @@ def test_cli_all_subcommands_pagination_and_error_handling(
         + status_data["catalog_instance_uuidv4"]
         + '","context_sha256":"'
         + ("0" * 64)
-        + '","core_sha256":"'
+        + '","repository_sha256":"'
         + ("0" * 64)
         + '","repository_uuidv4":"'
         + REPOSITORY
@@ -229,7 +229,7 @@ def test_cli_all_subcommands_pagination_and_error_handling(
 def test_cli_module_execution_and_schema21_cli_isolation(tmp_path: Path) -> None:
     catalog_dir = tmp_path / "subproc_catalog"
     populate_rich_catalog(
-        catalog_dir, fmt="sha256", include_core=True, include_context=False
+        catalog_dir, fmt="sha256", include_repository=True, include_context=False
     )
 
     proc = subprocess.run(
@@ -246,7 +246,7 @@ def test_cli_module_execution_and_schema21_cli_isolation(tmp_path: Path) -> None
         text=True,
     )
     parsed = json.loads(proc.stdout.strip())
-    assert parsed["mode"] == "core_only"
+    assert parsed["mode"] == "repository_only"
 
     # Verify default Schema 21 CLI (`repo_catalog.cli.main`) still works and is untouched
     main_proc = subprocess.run(

@@ -161,7 +161,7 @@ def test_provider_database_id_is_checked_before_cli_admission(
 
 
 @pytest.mark.parametrize("field", ["commit_id", "original_commit_id"])
-def test_review_oid_nul_suffix_cannot_create_nominal_core_dependency(
+def test_review_oid_nul_suffix_cannot_create_nominal_repository_dependency(
     provider_case, tmp_path, capsys, field
 ):
     case = provider_case
@@ -189,7 +189,7 @@ def test_review_oid_nul_suffix_cannot_create_nominal_core_dependency(
         run(capsys, "query", "context-resources", "--catalog", case.directory)["items"]
         == []
     )
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
 
 
 def test_sparse_projection_preserves_omitted_exact_text_and_known_fields(
@@ -581,7 +581,7 @@ def test_operational_completion_cannot_manufacture_context_collection_coverage(
         )
     view = case.view(capsys, case.keys["issue"])
     assert view["collections"] == []
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
 
 
 def _http_response(request, value):
@@ -772,7 +772,7 @@ def test_cli_nested_graphql_pagination_preserves_documents_and_exact_scopes(
         complete[0]["provenance"]["evidence"]["request_identity"]
         == request["request_identity"]
     )
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "transport-archive").exists()
 
 
@@ -1351,7 +1351,7 @@ def test_exchange_import_never_promotes_receiver_observation_time_to_provider_cl
     selection = document(
         tmp_path,
         "context-selection.json",
-        ExchangeSelectionScope(all_selected=True, include_core=False),
+        ExchangeSelectionScope(all_selected=True, include_repository=False),
     )
     package = tmp_path / "peer-package.json"
     run(

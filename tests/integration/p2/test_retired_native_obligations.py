@@ -8,15 +8,15 @@ import pytest
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.git_native import parse_metadata, parse_tree
-from repo_catalog.domain.p1_core import (
-    CoreFailure,
+from repo_catalog.domain.p1_repository import (
     GitObservation,
     Provenance,
     RelationGroup,
     RelationMember,
+    RepositoryFailure,
     ScalarClaim,
 )
-from tests.integration.p1.test_core import Budget, native, oid, provenance
+from tests.integration.p1.test_repository import Budget, native, oid, provenance
 from tests.integration.p2.test_native import commit_body, entry, git, repository, write
 
 __all__ = ["repository"]
@@ -28,15 +28,15 @@ __all__ = ["repository"]
     ids=["nul", "non-utf8", "oversize", "empty"],
 )
 def test_ordinary_file_decoder_shapes_are_excluded_without_archiving_any_body(
-    core, repository, raw
+    repository_store, repository, raw
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     git_path, fmt = repository
     incoming = write(git_path, fmt, "blob", raw)
-    with pytest.raises(CoreFailure) as source_error:
+    with pytest.raises(RepositoryFailure) as source_error:
         GitNativeSource(git_path).metadata(incoming.object_oid)
     assert source_error.value.code == "RETENTION_PURPOSE"
-    with pytest.raises(CoreFailure) as admission_error:
+    with pytest.raises(RepositoryFailure) as admission_error:
         store.admit_metadata(incoming, str(uuid4()), Budget())
     assert admission_error.value.code == "RETENTION_PURPOSE"
     assert store.sql("SELECT physical_copy_uuidv4 FROM retained_metadata") == []
@@ -54,9 +54,9 @@ def test_ordinary_file_decoder_shapes_are_excluded_without_archiving_any_body(
     ids=["regular", "executable", "symlink", "gitlink", "directory"],
 )
 def test_real_git_leading_zero_tree_mode_preserves_oid_bytes_and_semantic_mode(
-    core, repository, semantic
+    repository_store, repository, semantic
 ):
-    store, _, _ = core
+    store, _, _ = repository_store
     path, fmt = repository
     target = oid("a", fmt)
     name = b"a\n\xff\t"
@@ -127,12 +127,12 @@ def test_real_git_leading_zero_tree_mode_preserves_oid_bytes_and_semantic_mode(
 )
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 def test_unsupported_or_non_octal_tree_modes_are_rejected_without_partial_admission(
-    core, mode, fmt
+    repository_store, mode, fmt
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     incoming = native("tree", entry(mode, b"name", oid("a", fmt)), fmt)
     incoming.validate()  # Hash matching is insufficient to prove native grammar.
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         store.admit_metadata(incoming, str(uuid4()), Budget())
     assert error.value.code == "NATIVE_SYNTAX"
     assert store.sql("SELECT * FROM git_objects") == []
@@ -141,8 +141,10 @@ def test_unsupported_or_non_octal_tree_modes_are_rejected_without_partial_admiss
 
 
 @pytest.mark.parametrize("mode", ["autocommit", "transaction", "savepoint"])
-def test_original_capture_snapshot_coordinates_and_facts_cannot_be_rebound(core, mode):
-    store, path, repository = core
+def test_original_capture_snapshot_coordinates_and_facts_cannot_be_rebound(
+    repository_store, mode
+):
+    store, path, repository = repository_store
     store.admit_repository(repository)
     observation = GitObservation(
         str(uuid4()),
@@ -154,7 +156,7 @@ def test_original_capture_snapshot_coordinates_and_facts_cannot_be_rebound(core,
         provenance(),
     )
     store.admit_observation(observation)
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         original = [tuple(row) for row in db.execute("SELECT * FROM git_observations")]
         if mode == "transaction":
@@ -170,11 +172,13 @@ def test_original_capture_snapshot_coordinates_and_facts_cannot_be_rebound(core,
             "value",
             "provenance",
         ):
-            with pytest.raises(sqlite3.IntegrityError, match="immutable core fact"):
+            with pytest.raises(
+                sqlite3.IntegrityError, match="immutable repository fact"
+            ):
                 db.execute(f'UPDATE git_observations SET "{column}"=?', ("forged",))
-        with pytest.raises(sqlite3.IntegrityError, match="immutable core fact"):
+        with pytest.raises(sqlite3.IntegrityError, match="immutable repository fact"):
             db.execute("DELETE FROM git_observations")
-        with pytest.raises(sqlite3.IntegrityError, match="immutable core fact"):
+        with pytest.raises(sqlite3.IntegrityError, match="immutable repository fact"):
             db.execute(
                 "INSERT OR REPLACE INTO git_observations SELECT * FROM git_observations"
             )
@@ -209,9 +213,9 @@ def test_long_zero_prefix_is_normalized_without_an_unbounded_integer_conversion(
     "false_first", [True, False], ids=["false-first", "real-first"]
 )
 def test_actual_ddl_refuses_fabricated_checked_values_in_both_arrival_orders(
-    core, fmt, family, false_first
+    repository_store, fmt, family, false_first
 ):
-    store, path, _ = core
+    store, path, _ = repository_store
     target = oid("a", fmt)
     name = b"caf\xc3\xa9.txt"
     incoming = (
@@ -252,7 +256,7 @@ def test_actual_ddl_refuses_fabricated_checked_values_in_both_arrival_orders(
             receiver_claim,
         )
         source_table, checked_table = "scalar_claims", "intrinsic_claims"
-    db = connect(path, "core")
+    db = connect(path, "repository")
     try:
         db.execute("BEGIN")
         if false_first:

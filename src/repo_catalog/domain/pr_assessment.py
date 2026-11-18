@@ -1,7 +1,7 @@
 """Exact PR listing acquisition scope; source data, never execution settings."""
 
 from repo_catalog.domain.p1_context import canonical
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.production_context import json_value
 from repo_catalog.domain.ref_observation import RefObservationKey
 
@@ -46,7 +46,7 @@ def anchored_code_scope(
 
 
 def decode_git_role_checks(scope):
-    """Validate finite reported native checks; this does not verify Core facts."""
+    """Validate finite reported native checks; this does not verify Repository facts."""
     checks = scope.get("role_checks") if type(scope) is dict else None
     if type(checks) is not list or not 0 < len(checks) <= 10000:
         raise ValueError("finite nonempty actual role checks required")

@@ -109,15 +109,15 @@ with tempfile.TemporaryDirectory() as directory:
     # Installed read-only CLI needs no TTY. Mutating CLI paths are PTY-tested separately.
     output = subprocess.check_output([sys.executable, "-I", "-m", "repo_catalog.cli.access_workflow", "review", "--access-db", str(path), "--repository", repo, "--scope", s, "--locator", str(repository), "--profile", "local"], text=True)
     assert json.loads(output)["status"] == "review-only"
-    assert not (Path(directory) / "core.sqlite3").exists()
+    assert not (Path(directory) / "repository.sqlite3").exists()
     # Installed A4 acquires actual Git metadata into a non-seed Repository UUID.
     # This is fixture creation; product acquisition never writes the source repo.
     from contextlib import closing
     from repo_catalog.adapters.sqlite import p1_schema
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepository
     from repo_catalog.application.access_acquisition import AccessGitAcquisition
     from repo_catalog.domain.acquisition import GitNativeAcquisitionRequest
-    from repo_catalog.domain.p1_core import OID
+    from repo_catalog.domain.p1_repository import OID
     subprocess.run(["git", "init", "--bare", "--object-format=sha1", str(repository)], check=True, capture_output=True)
     tree = subprocess.check_output(["git", "-C", str(repository), "hash-object", "-w", "-t", "tree", "--stdin"], input=b"").strip()
     body = b"tree " + tree + b"\nauthor Test <test@example.org> 1 +0000\ncommitter Test <test@example.org> 1 +0000\n\ninstalled fixture\n"
@@ -125,16 +125,16 @@ with tempfile.TemporaryDirectory() as directory:
     catalog = Path(directory) / "domain-catalog"
     catalog.mkdir()
     seed, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "operational"):
+    for role in ("repository", "operational"):
         p1_schema.initialize(catalog / f"{role}.sqlite3", role, seed, instance)
     request = GitNativeAcquisitionRequest(repo, str(uuid4()), str(uuid4()), "installed-local-source", 50, select_object_oids=(OID("sha1", commit),), include_refs=False)
     with AccessConnections(path) as store:
         report = AccessGitAcquisition(store, catalog).acquire(selected, request, object_format="sha1", reviewer=lambda shown: True, new_request=True)
         assert report.repository_uuidv4 == repo != seed
         assert OID("sha1", commit) in report.retained_objects
-    with closing(GitCore(catalog / "core.sqlite3")) as core:
-        assert core.catalog_identity() == (seed, instance)
-        assert core.read_metadata(OID("sha1", commit)) == body
+    with closing(GitRepository(catalog / "repository.sqlite3")) as repository:
+        assert repository.catalog_identity() == (seed, instance)
+        assert repository.read_metadata(OID("sha1", commit)) == body
     subprocess.run([sys.executable, "-I", "-m", "repo_catalog.cli.access_acquisition", "--help"], check=True, capture_output=True)
     # Installed A5 preserves all Scope history and removes transferable consent.
     from repo_catalog.adapters.sqlite.access_backup import AccessBackup
@@ -171,11 +171,11 @@ from contextlib import closing
 from repo_catalog.domain.context_registration import registration_json, RegistrationError
 from repo_catalog.adapters.sqlite import p1_schema
 from repo_catalog.adapters.sqlite.production_context import Context
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepository
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
 from repo_catalog.application.exchange import ExchangeService
 from repo_catalog.domain.exchange import FORMAT as EXCHANGE_FORMAT, ExchangeSelectionScope
-from repo_catalog.domain.p1_core import RepositoryClaim, Provenance
+from repo_catalog.domain.p1_repository import RepositoryClaim, Provenance
 from repo_catalog.domain.context_admission import DependencySet
 # This exact external file is test harness code. Product modules still resolve
 # solely from the installed wheel, including under Python's isolated mode.
@@ -197,7 +197,7 @@ with tempfile.TemporaryDirectory() as directory:
     repository_id, service = str(uuid4()), str(uuid4())
     for destination in (producer, receiver):
         instance = str(uuid4())
-        for role in ("core", "context", "operational"):
+        for role in ("repository", "context", "operational"):
             p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
     admission_service, _ = authority.fixture_service(DependencySet(
         provider_registrations=frozenset({service}), repositories=frozenset({repository_id})))
@@ -213,10 +213,10 @@ with tempfile.TemporaryDirectory() as directory:
             raise AssertionError("installed SQL boundary leak")
     historical_url = "https://historical.example/repository.git"
     evidence = Provenance("source", "observation", "coordinate", "decoder", "1")
-    with closing(GitCore(producer / "core.sqlite3")) as core:
-        core.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
+    with closing(GitRepository(producer / "repository.sqlite3")) as repository:
+        repository.admit_repository_claim(RepositoryClaim(repository_id, "endpoint", historical_url, evidence))
     package = ExchangeService(producer).export_package(selection=ExchangeSelectionScope(all_selected=True))
-    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0036-exchange-v8"
+    assert package.format == EXCHANGE_FORMAT == "git-repo-db/adr0036-exchange-v9"
     ExchangeService(receiver).import_package(
         package,
         new_request=True,
@@ -241,7 +241,7 @@ with tempfile.TemporaryDirectory() as directory:
     denied_receiver = base / "denied"
     denied_receiver.mkdir()
     denied_instance = str(uuid4())
-    for role in ("core", "context", "operational"):
+    for role in ("repository", "context", "operational"):
         p1_schema.initialize(denied_receiver / f"{role}.sqlite3", role, repository_id, denied_instance)
     from repo_catalog.domain.context_admission import AdmissionRefused
     try:
@@ -255,8 +255,8 @@ with tempfile.TemporaryDirectory() as directory:
         assert err.code == "PERMISSION_DENIED"
     else:
         raise AssertionError("unauthorized exchange import must fail closed with PERMISSION_DENIED")
-    with closing(GitCore(receiver / "core.sqlite3")) as core:
-        rows = core.sql("SELECT value FROM repository_claims WHERE field='endpoint'")
+    with closing(GitRepository(receiver / "repository.sqlite3")) as repository:
+        rows = repository.sql("SELECT value FROM repository_claims WHERE field='endpoint'")
         assert json.loads(rows[0][0]) == historical_url
     with Context.snapshot(receiver) as ctx:
         assert ctx.db.execute("SELECT configuration_json FROM providers").fetchone()[0] == '{"name":"Original provider"}'
@@ -277,7 +277,7 @@ from repo_catalog.domain.resource_stage import UnsupportedResourceStage
 with tempfile.TemporaryDirectory() as directory:
     destination = Path(directory)
     repository_id, instance, service = str(uuid4()), str(uuid4()), str(uuid4())
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         p1_schema.initialize(destination / f"{role}.sqlite3", role, repository_id, instance)
     node = {"id": "R_installed", "databaseId": 1}
     node_identifier = github_repository_id(node, graphql=True)
@@ -314,7 +314,7 @@ with tempfile.TemporaryDirectory() as directory:
     target = destination / "receiver"
     target.mkdir()
     target_seed, target_instance = str(uuid4()), str(uuid4())
-    for role in ("core", "context", "operational"):
+    for role in ("repository", "context", "operational"):
         p1_schema.initialize(target / f"{role}.sqlite3", role, target_seed, target_instance)
     package = ExchangeService(destination).export_package(selection=ExchangeSelectionScope(
         repository_uuidv4s=(repository_id,), object_oids=(),
@@ -332,9 +332,9 @@ with tempfile.TemporaryDirectory() as directory:
     )
     with Context.snapshot(target) as ctx:
         assert ctx.provider_repository_roles(qualified.resource) == (qualified,)
-    with closing(GitCore(target / "core.sqlite3")) as core:
-        assert core.catalog_identity() == (target_seed, target_instance)
-        assert {r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")} == {target_seed, repository_id}
+    with closing(GitRepository(target / "repository.sqlite3")) as repository:
+        assert repository.catalog_identity() == (target_seed, target_instance)
+        assert {r[0] for r in repository.sql("SELECT repository_uuidv4 FROM repositories")} == {target_seed, repository_id}
     assert not (target / "access.sqlite3").exists()
     # Installed I4: Query/Search and fresh paired restore consume the I2/I3 facts.
     from repo_catalog.application.production_query import ProductionQueryService

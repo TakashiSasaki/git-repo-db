@@ -28,7 +28,7 @@ from tests.support.context_admission import fixture_context, fixture_service
 
 class Parents(Fixture):
     def __init__(self, path):
-        super().__init__(path, core=False)
+        super().__init__(path, repository_store=False)
         self.provider_repository = ResourceKey.from_native(
             self.service, "repository", "10"
         )

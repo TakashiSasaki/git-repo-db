@@ -35,7 +35,10 @@ def test_exact_pr_listing_cannot_borrow_valid_other_pr_document_with_identical_n
     fixture.auth, _ = fixture_service(fixture.grants)
     fixture.admission = fixture_context(fixture.auth)
     fixture.api = ProviderAcquisition(
-        tmp_path, core=tmp_path, authorization=fixture.auth, admission=fixture.admission
+        tmp_path,
+        repository_store=tmp_path,
+        authorization=fixture.auth,
+        admission=fixture.admission,
     )
     original = make_provenance("actual-other-pr", {"read": kind})
     fixture.admit(

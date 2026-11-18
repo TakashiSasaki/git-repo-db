@@ -10,11 +10,11 @@ from repo_catalog.domain.acquisition import (
     NotesAcquisitionSpec,
 )
 from repo_catalog.domain.native_acquisition import native_request_intent
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreFailure,
     Provenance,
     RepositoryClaim,
+    RepositoryFailure,
     ScalarClaim,
     encode,
 )
@@ -49,7 +49,7 @@ def request_value():
 )
 def test_invalid_native_intent_rejected(request_value, field, bad):
     value = replace(request_value, **{field: bad})
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         native_request_intent(value)
 
 
@@ -66,7 +66,7 @@ def test_invalid_native_intent_rejected(request_value, field, bad):
 )
 def test_invalid_notes_intent_rejected(request_value, field, bad):
     value = replace(request_value, notes=NotesAcquisitionSpec(**{field: bad}))
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         native_request_intent(value)
 
 
@@ -106,5 +106,5 @@ def test_mutated_nested_claim_is_revalidated(request_value):
         Provenance("s", "o", "c", "d", "1"),
     )
     object.__setattr__(value, "field", "unsupported")
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         native_request_intent(replace(request_value, repository_claims=(value,)))

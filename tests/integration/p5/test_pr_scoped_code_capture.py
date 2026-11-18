@@ -130,7 +130,7 @@ def test_capture_exposes_only_attributes_from_actual_original_member_reads(tmp_p
         for candidates in item.fields.values()
         for candidate in candidates
     )
-    assert item.relations == item.collections == item.core_dependencies == ()
+    assert item.relations == item.collections == item.repository_dependencies == ()
     assert result.coverage["current_provider_state_asserted"] is False
 
 

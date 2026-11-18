@@ -12,7 +12,7 @@ from repo_catalog.adapters.sqlite.catalog_runtime import catalog_completion
 from repo_catalog.application.frozen_acquisition_plan import FrozenAcquisitionPlan
 from repo_catalog.domain.models import CatalogError
 from repo_catalog.domain.p1_coordination import NotesLimits, RequestIdentity
-from repo_catalog.domain.shared_values import OID, CoreFailure, uuid4_value
+from repo_catalog.domain.shared_values import OID, RepositoryFailure, uuid4_value
 
 _SCOPE = ["frozen-source-batch", 1]
 _GITHUB = {"github_inventory", "github"}
@@ -440,7 +440,7 @@ def acquire_batch(
                         if outcome.status in {"complete", "known_empty"}
                         else "partial"
                     )
-                except (CoreFailure, CatalogError) as error:
+                except (RepositoryFailure, CatalogError) as error:
                     if error.code in {
                         "AUTHORITATIVE_CORRUPTION",
                         "RECOVERY_STOP",

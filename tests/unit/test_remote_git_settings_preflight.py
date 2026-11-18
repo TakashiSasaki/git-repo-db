@@ -3,7 +3,7 @@
 import pytest
 
 from repo_catalog.application import remote_git_acquisition as owner
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 
 
 def test_remote_settings_preflight_is_pure_and_retains_only_injected_reference_inputs(
@@ -51,7 +51,7 @@ def test_invalid_remote_execution_settings_refuse_before_transport_or_accounting
         raise AssertionError("invalid settings cannot perform a fetch")
 
     monkeypatch.setattr(owner, "fetch_remote", forbidden)
-    with pytest.raises(CoreFailure):
+    with pytest.raises(RepositoryFailure):
         owner.validate_remote_git_settings(
             {
                 "locator": "https://example.test/repo.git",

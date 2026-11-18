@@ -398,7 +398,7 @@ def test_cancelled_actual_rest_prefix_survives_operational_loss_and_fresh_root(
         case.keys["pull"], kinds=("reviews",)
     )
     assert result.state == "complete" and len(result.page.items) == 1
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()
     assert not (case.directory / "p1-recovery-stop.json").exists()
 
 

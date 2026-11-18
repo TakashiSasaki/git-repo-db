@@ -119,7 +119,7 @@ def test_review_requires_explicit_local_approval(path):
         store.revoke_local_approval(KEY)
         with pytest.raises(AccessRegistryError, match="APPROVAL_REQUIRED"):
             store.current_grant(R1, S1)
-    assert not (path.parent / "core.sqlite3").exists()
+    assert not (path.parent / "repository.sqlite3").exists()
     assert not (path.parent / "context.sqlite3").exists()
 
 

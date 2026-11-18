@@ -8,10 +8,10 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import initialize, register_functions
-from repo_catalog.application.core_recovery import CoreRecoveryService
 from repo_catalog.application.recovery import RecoveryService
+from repo_catalog.application.repository_recovery import RepositoryRecoveryService
 from repo_catalog.domain.recovery import BackupScope, RecoveryBudget, RecoveryError
 from repo_catalog.domain.ref_observation import (
     RefObservation,
@@ -28,7 +28,7 @@ from tests.integration.p7.conftest import (
 
 def _authority(directory):
     result = {}
-    for role in ("core", "context"):
+    for role in ("repository", "context"):
         database = directory / (role + ".sqlite3")
         if database.exists():
             with closing(sqlite3.connect(database)) as db:
@@ -47,12 +47,16 @@ def _authority(directory):
 def restored_target(tmp_path, request):
     scope = request.param
     service = (
-        CoreRecoveryService() if scope == BackupScope.GIT_ONLY else RecoveryService()
+        RepositoryRecoveryService()
+        if scope == BackupScope.GIT_ONLY
+        else RecoveryService()
     )
     source = tmp_path / "source"
     source.mkdir()
     repository, instance = str(uuid4()), str(uuid4())
-    for role in ("core", "context") if scope == BackupScope.PAIRED else ("core",):
+    for role in (
+        ("repository", "context") if scope == BackupScope.PAIRED else ("repository",)
+    ):
         initialize(source / (role + ".sqlite3"), role, repository, instance)
     backup, target = tmp_path / "backup", tmp_path / "target"
     service.create_consistent_backup(source, backup, scope)
@@ -116,10 +120,14 @@ def _stream(tmp_path, family, repository):
         # A real extracted Ref unit follows a generic candidate that used to commit first.
         source = tmp_path / "ref-source"
         source.mkdir()
-        initialize(source / "core.sqlite3", "core", repository, str(uuid4()))
-        with closing(GitCore(source / "core.sqlite3")) as core:
-            core.admit_repository(repository)
-            core.admit_ref_observation(
+        initialize(
+            source / "repository.sqlite3", "repository", repository, str(uuid4())
+        )
+        with closing(
+            GitRepositoryStore(source / "repository.sqlite3")
+        ) as repository_store:
+            repository_store.admit_repository(repository)
+            repository_store.admit_ref_observation(
                 RefObservation(
                     RefObservationKey(str(uuid4()), new_uuid7()),
                     repository,
@@ -129,7 +137,7 @@ def _stream(tmp_path, family, repository):
                 )
             )
         extracted = tmp_path / "refs.jsonl"
-        CoreRecoveryService().extract_salvage(
+        RepositoryRecoveryService().extract_salvage(
             source, extracted, scope=BackupScope.GIT_ONLY
         )
         rows.append(

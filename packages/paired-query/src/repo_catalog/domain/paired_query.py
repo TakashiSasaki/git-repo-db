@@ -12,25 +12,25 @@ from repo_catalog.domain.context_query import (
 )
 
 if TYPE_CHECKING:
-    from repo_catalog.domain.core_query import GitObjectView, RefNotesTargetView
     from repo_catalog.domain.p1_context import ResourceKey
-    from repo_catalog.domain.production_context import CoreReference
+    from repo_catalog.domain.production_context import RepositoryReference
+    from repo_catalog.domain.repository_query import GitObjectView, RefNotesTargetView
 
 
 @dataclass(frozen=True)
-class PairedCoreResolution:
-    """Resolution of a Context CoreReference against pinned Git Core authority."""
+class PairedRepositoryResolution:
+    """Resolution of a Context RepositoryReference against pinned Git Repository authority."""
 
-    reference: CoreReference
-    available_in_core: bool
-    core_required: bool
+    reference: RepositoryReference
+    available_in_repository: bool
+    repository_required: bool
     object_view: GitObjectView | None = None
     ref_notes_targets: tuple[RefNotesTargetView, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "available_in_core": self.available_in_core,
-            "core_required": self.core_required,
+            "available_in_repository": self.available_in_repository,
+            "repository_required": self.repository_required,
             "ref_notes_targets": [n.to_dict() for n in self.ref_notes_targets],
             "object_view": (
                 self.object_view.to_dict() if self.object_view is not None else None
@@ -43,10 +43,10 @@ class PairedCoreResolution:
 
 @dataclass(frozen=True)
 class PairedResourceView:
-    """Paired Context + Core view joining a ContextResourceView with pinned Core objects/notes."""
+    """Paired Context + Repository view joining a ContextResourceView with pinned Repository objects/notes."""
 
     context_resource: ContextResourceView
-    core_resolutions: tuple[PairedCoreResolution, ...]
+    repository_resolutions: tuple[PairedRepositoryResolution, ...]
     snapshot_token: str
 
     @property
@@ -56,7 +56,9 @@ class PairedResourceView:
     def to_dict(self) -> dict[str, object]:
         return {
             "context_resource": self.context_resource.to_dict(),
-            "core_resolutions": [res.to_dict() for res in self.core_resolutions],
+            "repository_resolutions": [
+                res.to_dict() for res in self.repository_resolutions
+            ],
             "snapshot_token": self.snapshot_token,
         }
 

@@ -98,4 +98,4 @@ def test_cli_coverage_renders_conflicting_original_claims_and_newer_unknown(
         {"reason": "new original uncertainty"}
     )
     assert invoke(other)["latest_observed_at_us"] == 30
-    assert not (case.directory / "core.sqlite3").exists()
+    assert not (case.directory / "repository.sqlite3").exists()

@@ -1,4 +1,4 @@
-"""Core + Context Query integration, without Search/acquisition/Exchange."""
+"""Repository + Context Query integration, without Search/acquisition/Exchange."""
 
 from __future__ import annotations
 
@@ -12,20 +12,22 @@ from repo_catalog.adapters.sqlite.catalog_runtime import (
     SnapshotReadLimits,
     catalog_completion,
 )
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.paired_coordination import (
     PairedSnapshot,
     PairSnapshotCoordinator,
 )
 from repo_catalog.application.context_query import ContextQueryService, ContextReader
-from repo_catalog.application.core_query import CoreQueryService, PinnedCoreSnapshot
 from repo_catalog.application.query_pagination import (
     _paginate_items,
     validate_page_request,
 )
-from repo_catalog.domain.core_query import GitObjectView
+from repo_catalog.application.repository_query import (
+    PinnedRepositorySnapshot,
+    RepositoryQueryService,
+)
 from repo_catalog.domain.paired_query import (
-    PairedCoreResolution,
+    PairedRepositoryResolution,
     PairedResourceView,
     validate_cursor_key,
 )
@@ -37,6 +39,7 @@ from repo_catalog.domain.query_contracts import (
     SnapshotFenceToken,
 )
 from repo_catalog.domain.query_work import UnlimitedWorkBudget
+from repo_catalog.domain.repository_query import GitObjectView
 from repo_catalog.domain.shared_values import uuid4_value
 
 if TYPE_CHECKING:
@@ -45,24 +48,24 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class PinnedCatalogSnapshot(PinnedCoreSnapshot):
+class PinnedCatalogSnapshot(PinnedRepositorySnapshot):
     """An open, consistent read-only snapshot across the active catalog topology."""
 
     context: Context | None = None
     pair: PairedSnapshot | None = None
 
 
-class PairedQueryService(ContextReader, CoreQueryService):
+class PairedQueryService(ContextReader, RepositoryQueryService):
     """Explicit paired and single-authority Query composition."""
 
-    def _context_core_resolver(self, snapshot):
-        """Core schema access belongs to explicit paired composition."""
-        if snapshot.core is None:
+    def _context_repository_resolver(self, snapshot):
+        """Repository schema access belongs to explicit paired composition."""
+        if snapshot.repository_store is None:
             return None
 
         def resolve(object_format, object_oid):
             return bool(
-                snapshot.core.sql(
+                snapshot.repository_store.sql(
                     "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (object_format, object_oid),
                 )
@@ -93,20 +96,22 @@ class PairedQueryService(ContextReader, CoreQueryService):
 
     def detect_mode(self) -> CatalogReadMode:
         self._check_stop()
-        has_core = (self.directory / "core.sqlite3").is_file()
+        has_repository = (self.directory / "repository.sqlite3").is_file()
         has_context = (self.directory / "context.sqlite3").is_file()
         if self._requested_mode != "auto":
-            if self._requested_mode == "paired" and not (has_core and has_context):
+            if self._requested_mode == "paired" and not (
+                has_repository and has_context
+            ):
                 raise QueryError(
                     "STORE_UNAVAILABLE",
                     "paired",
-                    "paired mode requires both core.sqlite3 and context.sqlite3",
+                    "paired mode requires both repository.sqlite3 and context.sqlite3",
                 )
-            if self._requested_mode == "core_only" and not has_core:
+            if self._requested_mode == "repository_only" and not has_repository:
                 raise QueryError(
                     "STORE_UNAVAILABLE",
-                    "core_only",
-                    "core_only mode requires core.sqlite3",
+                    "repository_only",
+                    "repository_only mode requires repository.sqlite3",
                 )
             if self._requested_mode == "context_only" and not has_context:
                 raise QueryError(
@@ -115,10 +120,10 @@ class PairedQueryService(ContextReader, CoreQueryService):
                     "context_only mode requires context.sqlite3",
                 )
             return self._requested_mode
-        if has_core and has_context:
+        if has_repository and has_context:
             return "paired"
-        if has_core:
-            return "core_only"
+        if has_repository:
+            return "repository_only"
         if has_context:
             return "context_only"
         raise QueryError(
@@ -131,7 +136,7 @@ class PairedQueryService(ContextReader, CoreQueryService):
     def _open_snapshot(
         self,
         *,
-        required_store: Literal["core", "context", "paired", "any"] = "any",
+        required_store: Literal["repository", "context", "paired", "any"] = "any",
     ) -> Iterator[PinnedCatalogSnapshot]:
         """Pin a read-only snapshot across the active catalog stores."""
         self._check_stop()
@@ -142,13 +147,13 @@ class PairedQueryService(ContextReader, CoreQueryService):
                 "paired",
                 f"paired query requires paired catalog mode (current: {mode})",
             )
-        if required_store == "core" and mode == "context_only":
+        if required_store == "repository" and mode == "context_only":
             raise QueryError(
                 "STORE_UNAVAILABLE",
-                "core",
-                "Core query requires core.sqlite3",
+                "repository",
+                "Repository query requires repository.sqlite3",
             )
-        if required_store == "context" and mode == "core_only":
+        if required_store == "context" and mode == "repository_only":
             raise QueryError(
                 "STORE_UNAVAILABLE",
                 "context",
@@ -165,22 +170,26 @@ class PairedQueryService(ContextReader, CoreQueryService):
                 self.last_costs_ns.update(coordinator.last_read_costs_ns)
                 token = SnapshotFenceToken.from_pair_token(pair.token)
                 with (
-                    GitCore.for_snapshot(pair.core, self.directory) as core,
+                    GitRepositoryStore.for_snapshot(
+                        pair.repository_store, self.directory
+                    ) as repository_store,
                     Context.for_snapshot(pair.context, self.directory) as context,
                 ):
                     yield PinnedCatalogSnapshot(
                         mode="paired",
                         token=token,
-                        core=core,
+                        repository_store=repository_store,
                         context=context,
                         pair=pair,
                     )
                 with catalog_completion(self.directory):
                     self._check_stop()
-        elif mode == "core_only":
+        elif mode == "repository_only":
             with super()._open_snapshot(required_store=required_store) as snapshot:
                 yield PinnedCatalogSnapshot(
-                    mode=snapshot.mode, token=snapshot.token, core=snapshot.core
+                    mode=snapshot.mode,
+                    token=snapshot.token,
+                    repository_store=snapshot.repository_store,
                 )
         else:
             with ContextQueryService._open_snapshot(
@@ -195,40 +204,40 @@ class PairedQueryService(ContextReader, CoreQueryService):
         resource_key: ResourceKey,
         *,
         include_text: bool = True,
-        include_core_bytes: bool = False,
+        include_repository_bytes: bool = False,
     ) -> PairedResourceView:
-        if type(include_text) is not bool or type(include_core_bytes) is not bool:
+        if type(include_text) is not bool or type(include_repository_bytes) is not bool:
             raise QueryError(
                 "INVALID_INPUT", "paired-resource", "bool options required"
             )
         resource_key = self._checked_resource_key(resource_key, "paired-resource")
         with self.open_snapshot(required_store="paired") as snap:
-            assert snap.core is not None and snap.context is not None
+            assert snap.repository_store is not None and snap.context is not None
             return self._paired_resource_in_snapshot(
-                snap.core,
+                snap.repository_store,
                 snap.context,
                 snap.token.encode(),
                 resource_key,
                 include_text=include_text,
-                include_core_bytes=include_core_bytes,
+                include_repository_bytes=include_repository_bytes,
             )
 
     def _paired_resource_in_snapshot(
         self,
-        core: GitCore,
+        repository_store: GitRepositoryStore,
         context: Context,
         token_str: str,
         resource_key: ResourceKey,
         *,
         include_text: bool = True,
-        include_core_bytes: bool = False,
+        include_repository_bytes: bool = False,
         ref_work=None,
     ) -> PairedResourceView:
         ref_work = ref_work if ref_work is not None else UnlimitedWorkBudget()
 
-        def check_in_core(fmt: str, object_oid: str) -> bool:
+        def check_in_repository(fmt: str, object_oid: str) -> bool:
             return bool(
-                core.sql(
+                repository_store.sql(
                     "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
                     (fmt, object_oid),
                 )
@@ -238,25 +247,25 @@ class PairedQueryService(ContextReader, CoreQueryService):
             context,
             resource_key,
             include_text=include_text,
-            validate_core=check_in_core,
+            validate_repository=check_in_repository,
         )
 
-        resolutions: list[PairedCoreResolution] = []
-        for dep in ctx_view.core_dependencies:
+        resolutions: list[PairedRepositoryResolution] = []
+        for dep in ctx_view.repository_dependencies:
             object_oid = dep.reference.object_oid
             obj_view: GitObjectView | None = None
             if dep.available:
                 obj_view = self._git_object_in_snapshot(
-                    core,
+                    repository_store,
                     object_oid,
-                    include_bytes=include_core_bytes,
+                    include_bytes=include_repository_bytes,
                     ref_work=ref_work,
                 )
             resolutions.append(
-                PairedCoreResolution(
+                PairedRepositoryResolution(
                     reference=dep.reference,
-                    available_in_core=dep.available,
-                    core_required=dep.required,
+                    available_in_repository=dep.available,
+                    repository_required=dep.required,
                     object_view=obj_view,
                     ref_notes_targets=obj_view.ref_notes_targets
                     if obj_view is not None
@@ -266,7 +275,7 @@ class PairedQueryService(ContextReader, CoreQueryService):
 
         return PairedResourceView(
             context_resource=ctx_view,
-            core_resolutions=tuple(resolutions),
+            repository_resolutions=tuple(resolutions),
             snapshot_token=token_str,
         )
 
@@ -300,7 +309,7 @@ class PairedQueryService(ContextReader, CoreQueryService):
             cursor_validator=validate_cursor_key,
         )
         with self.open_snapshot(required_store="paired") as snap:
-            assert snap.core is not None and snap.context is not None
+            assert snap.repository_store is not None and snap.context is not None
             token_str = snap.token.encode()
 
             ref_work = UnlimitedWorkBudget()
@@ -308,7 +317,7 @@ class PairedQueryService(ContextReader, CoreQueryService):
             def views():
                 for key in snap.context.resources(kind=resource_kind):
                     paired_view = self._paired_resource_in_snapshot(
-                        snap.core,
+                        snap.repository_store,
                         snap.context,
                         token_str,
                         key,
@@ -338,7 +347,7 @@ class PairedQueryService(ContextReader, CoreQueryService):
                 selected,
                 items=tuple(
                     self._paired_resource_in_snapshot(
-                        snap.core,
+                        snap.repository_store,
                         snap.context,
                         token_str,
                         view.resource,

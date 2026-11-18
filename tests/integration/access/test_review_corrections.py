@@ -18,7 +18,7 @@ from repo_catalog.adapters.sqlite.acquisition import (
     InMemoryNotesProgress,
     UnlimitedWorkBudget,
 )
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.application.access_workflow import AccessWorkflow
 from repo_catalog.application.acquisition import (
@@ -30,15 +30,15 @@ from repo_catalog.domain.access_registry import AccessRegistryError
 from repo_catalog.domain.acquisition import GitMetadataInput, NotesAcquisitionSpec
 from repo_catalog.domain.exchange import ExchangeSelectionScope
 from repo_catalog.domain.p1_coordination import CoordinationError, RequestIdentity
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_coverage import CoverageClaim
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreCoverageScope,
-    CoreFailure,
     GitObservation,
     Provenance,
     RepositoryClaim,
+    RepositoryCoverageScope,
+    RepositoryFailure,
 )
-from repo_catalog.domain.p1_coverage import CoverageClaim
 from tests.integration.access.test_workflow import allow, approve, selection
 from tests.integration.access.test_workflow import fixture as fixture
 from tests.integration.p5.conftest import build_sample_git_repo, init_catalog_stores
@@ -53,7 +53,9 @@ def test_indirect_git_config_is_rejected_before_any_command(
     repo = tmp_path / "repo.git"
     subprocess.run(["git", "init", "--bare", "-q", str(repo)], check=True)
     outside = tmp_path / "outside.cfg"
-    outside.write_bytes(b"[core]\n bare = true\n" if valid else b"INVALID CONFIG\n")
+    outside.write_bytes(
+        b"[repository]\n bare = true\n" if valid else b"INVALID CONFIG\n"
+    )
     original = (repo / "config").read_bytes()
     (repo / "config").write_bytes(
         bom + section + b"\n path = " + os.fsencode(outside) + b"\n" + original
@@ -68,7 +70,7 @@ def test_indirect_git_config_is_rejected_before_any_command(
     monkeypatch.setattr(subprocess, "Popen", record)
     descriptor = os.open(repo, os.O_RDONLY | os.O_DIRECTORY)
     try:
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             AccessGitSource(
                 descriptor,
                 str(repo),
@@ -119,7 +121,7 @@ def test_git_command_rechecks_guard_after_final_filesystem_preparation(
 
     def guard():
         if stopped[0]:
-            raise CoreFailure("CANCELLED", "review", "synthetic cancellation")
+            raise RepositoryFailure("CANCELLED", "review", "synthetic cancellation")
 
     def options(self):
         active[0] = True
@@ -154,7 +156,7 @@ def test_git_command_rechecks_guard_after_final_filesystem_preparation(
         monkeypatch.setattr(AccessGitSource, "_process_options", options)
         monkeypatch.setattr(os, "stat", stat)
         monkeypatch.setattr(subprocess, "Popen", popen)
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             if source is None:
                 source = AccessGitSource(
                     descriptor,
@@ -253,7 +255,7 @@ def metadata_unit(repository, fmt="sha1"):
 
 
 def authoritative_rows(directory):
-    with closing(connect(directory / "core.sqlite3", "core")) as db:
+    with closing(connect(directory / "repository.sqlite3", "repository")) as db:
         return {
             name: db.execute(f'SELECT * FROM "{name}"').fetchall()
             for (name,) in db.execute(
@@ -286,8 +288,8 @@ def test_nonseed_external_metadata_preserves_pairing_and_replay(tmp_path, fmt, p
     assert report.ref_observations == unit.observations
     assert acquire(False).admitted_objects == unit.nominal_objects
     assert authoritative_rows(cat) == original
-    with closing(GitCore(cat / "core.sqlite3")) as core:
-        assert core.catalog_identity() == (seed, instance)
+    with closing(GitRepositoryStore(cat / "repository.sqlite3")) as repository_store:
+        assert repository_store.catalog_identity() == (seed, instance)
     same_seed = tmp_path / "same-seed"
     init_catalog_stores(same_seed, repository_uuidv4=seed)
     package = ExchangeService(cat).export_package(
@@ -299,16 +301,23 @@ def test_nonseed_external_metadata_preserves_pairing_and_replay(tmp_path, fmt, p
     forwarded = ExchangeService(same_seed).export_package(
         selection=ExchangeSelectionScope(all_selected=True)
     )
-    assert forwarded.core["repository_claims"] == package.core["repository_claims"]
-    assert forwarded.core["git_observations"] == package.core["git_observations"]
+    assert (
+        forwarded.repository_store["repository_claims"]
+        == package.repository_store["repository_claims"]
+    )
+    assert (
+        forwarded.repository_store["git_observations"]
+        == package.repository_store["git_observations"]
+    )
     other = tmp_path / "different-seed"
     init_catalog_stores(other)
     ExchangeService(other).import_package(
         package, new_request=True, permitted_repository_uuidv4s=(seed, target)
     )
-    with closing(GitCore(other / "core.sqlite3")) as core:
+    with closing(GitRepositoryStore(other / "repository.sqlite3")) as repository_store:
         assert target in {
-            r[0] for r in core.sql("SELECT repository_uuidv4 FROM repositories")
+            r[0]
+            for r in repository_store.sql("SELECT repository_uuidv4 FROM repositories")
         }
     assert authoritative_rows(other) != authoritative_rows(cat)
 
@@ -334,7 +343,7 @@ def test_foreign_metadata_repository_is_rejected_before_any_admission(
     target, _ = init_catalog_stores(cat)
     foreign = str(uuid4())
     unit = metadata_unit(target)
-    scope = CoreCoverageScope("repository", (foreign, "git_metadata"))
+    scope = RepositoryCoverageScope("repository", (foreign, "git_metadata"))
     claim = CoverageClaim(scope, 100, "partial")
     if kind == "claim":
         unit = replace(unit, repository_claims=metadata_unit(foreign).repository_claims)
@@ -398,7 +407,7 @@ def test_foreign_metadata_repository_is_rejected_before_any_admission(
             unit, coverage_proofs=((claim, (), unit.repository_claims[0].provenance),)
         )
     before = authoritative_rows(cat)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         if paired:
             PairedAcquisitionCoordinator(cat).admit_paired(
                 git_input=unit, new_request=True
@@ -439,7 +448,7 @@ def test_metadata_intent_with_explicit_cumulative_progress_contains_no_body(tmp_
     assert work.usage["input_bytes"] > spent["input_bytes"]
     assert authoritative_rows(cat) == before
     assert native.body.decode() not in str(progress._store)
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         service.acquire_metadata_only(
             replace(unit, source_attribution="changed"), work=work, progress=progress
         )
@@ -485,7 +494,7 @@ def test_metadata_retry_cannot_change_original_intent(tmp_path, field):
     if field == "repository_uuidv4":
         changed = replace(changed, repository_claims=(), observations=())
     before = authoritative_rows(cat)
-    with pytest.raises((CoreFailure, CoordinationError)) as error:
+    with pytest.raises((RepositoryFailure, CoordinationError)) as error:
         service.acquire_metadata_only(changed)
     assert error.value.code in ("INCOMPATIBLE_REPLAY", "REQUEST_SCOPE")
     assert authoritative_rows(cat) == before
@@ -555,12 +564,12 @@ def test_external_metadata_live_notes_keeps_source_capture_and_budget(
         .observation.repository_uuidv4
         == target
     )
-    with closing(GitCore(cat / "core.sqlite3")) as core:
-        assert core.catalog_identity() == (seed, instance)
+    with closing(GitRepositoryStore(cat / "repository.sqlite3")) as repository_store:
+        assert repository_store.catalog_identity() == (seed, instance)
         assert (
-            core.read_ref_note(
+            repository_store.read_ref_note(
                 claim,
-                core.notes_mapping_projection(
+                repository_store.notes_mapping_projection(
                     claim,
                     objects["commit2"],
                     "git-notes",
@@ -599,7 +608,7 @@ def test_external_metadata_cannot_switch_notes_source_with_explicit_progress(
         "discover",
         lambda *args, **kwargs: pytest.fail("changed source was read"),
     )
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         service.acquire_metadata_only(
             unit, notes_source=sources[1], work=work, progress=progress
         )

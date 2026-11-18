@@ -8,7 +8,7 @@ import pytest
 
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.domain.git_acquisition import GitMetadataInput
-from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
 from tests.e2e.test_separated_cli import document, init, run
 
 
@@ -103,14 +103,14 @@ def test_normal_cli_ordered_merge_graph_compare_empty_tree_and_exact_repeat(
     for name in ("M", "N"):
         empty = query("tree", "--object-oid", commits[name].object_oid)
         assert empty["status"] == "complete" and empty["items"] == []
-    with closing(connect(catalog / "core.sqlite3", "core")) as db:
+    with closing(connect(catalog / "repository.sqlite3", "repository")) as db:
         tables = ("git_objects", "retained_metadata")
         before = [
             db.execute(f'SELECT count(*) FROM "{table}"').fetchone()[0]
             for table in tables
         ]
     run(capsys, *args)
-    with closing(connect(catalog / "core.sqlite3", "core")) as db:
+    with closing(connect(catalog / "repository.sqlite3", "repository")) as db:
         assert before == [
             db.execute(f'SELECT count(*) FROM "{table}"').fetchone()[0]
             for table in tables

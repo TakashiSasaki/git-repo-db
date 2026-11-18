@@ -1,4 +1,4 @@
-"""Context and paired Recovery integration over the canonical Core lifecycle."""
+"""Context and paired Recovery integration over the canonical Repository lifecycle."""
 
 from __future__ import annotations
 
@@ -7,20 +7,6 @@ import sqlite3
 from pathlib import Path
 
 from repo_catalog.adapters.sqlite.context_rows import ROW_TYPES
-from repo_catalog.adapters.sqlite.core_recovery import (
-    CoreRecoveryAdapter,
-    _bounded_utf8,
-    _confirmed_integrity_failure,
-    _fsync_file,
-    _hash_recovery_bytes,
-    assert_catalog_not_stopped,
-    stop_catalog,
-)
-from repo_catalog.adapters.sqlite.core_recovery_validation import (
-    validate_stored_checks,
-    validate_stored_identity_authority,
-    validate_stored_text_encoding,
-)
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import (
     SchemaError,
@@ -43,6 +29,20 @@ from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_admission_guards,
     verify_existing_context_text,
 )
+from repo_catalog.adapters.sqlite.repository_recovery import (
+    RepositoryRecoveryAdapter,
+    _bounded_utf8,
+    _confirmed_integrity_failure,
+    _fsync_file,
+    _hash_recovery_bytes,
+    assert_catalog_not_stopped,
+    stop_catalog,
+)
+from repo_catalog.adapters.sqlite.repository_recovery_validation import (
+    validate_stored_checks,
+    validate_stored_identity_authority,
+    validate_stored_text_encoding,
+)
 from repo_catalog.domain.recovery import (
     ActivationError,
     BackupScope,
@@ -55,7 +55,7 @@ from repo_catalog.domain.recovery import (
 )
 
 
-def _context_identity_for_salvage(conn, core, work):
+def _context_identity_for_salvage(conn, repository_store, work):
     """Read only fixed-size Context identity fields before using that store."""
     work.require("identity_read_rows", 2)
     try:
@@ -91,17 +91,17 @@ def _context_identity_for_salvage(conn, core, work):
             raise ValueError("canonical Context identity is required")
         return identity
     except (ValueError, TypeError, AttributeError, UnicodeDecodeError) as error:
-        core._integrity_stop(("Context identity", str(error)))
+        repository_store._integrity_stop(("Context identity", str(error)))
 
 
-class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
+class SQLiteRecoveryAdapter(RepositoryRecoveryAdapter):
     """Paired validation/admission is explicitly installed with composed features."""
 
     def _require_scope(self, scope):
         if not isinstance(scope, BackupScope):
             raise RecoveryError("A supported Recovery scope is required")
         if scope == BackupScope.PAIRED:
-            for role in ("core", "context", "operational", "search"):
+            for role in ("repository", "context", "operational", "search"):
                 try:
                     compose(role)
                 except (FileNotFoundError, ModuleNotFoundError) as error:
@@ -149,7 +149,16 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
         return None
 
     def _merge_identity_candidate(
-        self, kind, payload, directory, core, store, connection, admission, budget, work
+        self,
+        kind,
+        payload,
+        directory,
+        repository_store,
+        store,
+        connection,
+        admission,
+        budget,
+        work,
     ):
         from repo_catalog.adapters.sqlite.identity_salvage import (
             IDENTITY_CANDIDATES,
@@ -162,7 +171,7 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
                 kind,
                 payload,
                 directory,
-                core,
+                repository_store,
                 store,
                 connection,
                 admission,
@@ -294,7 +303,7 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
     def _open_context_merge(
         self,
         fresh_destination_dir,
-        core,
+        repository_store,
         work,
         budget,
         exhausted,
@@ -310,10 +319,12 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
         if ctx_db.exists() and not exhausted:
             ctx_conn = p1_connect(ctx_db, "context")
             try:
-                ctx_identity = _context_identity_for_salvage(ctx_conn, core, work)
+                ctx_identity = _context_identity_for_salvage(
+                    ctx_conn, repository_store, work
+                )
             except BaseException:
                 ctx_conn.close()
-                core.close()
+                repository_store.close()
                 raise
             if ctx_auth is None or ctx_admission is None:
                 repo_id = ctx_identity[0]
@@ -452,14 +463,14 @@ class SQLiteRecoveryAdapter(CoreRecoveryAdapter):
         if repo_uuid != ctx_repo_uuid or inst_uuid != ctx_inst_uuid:
             stop_catalog(
                 fresh_catalog_dir,
-                "Core and Context identities differ",
+                "Repository and Context identities differ",
                 details={
-                    "store": "core+context",
+                    "store": "repository+context",
                     "classification": "authoritative_data",
                 },
             )
             raise ActivationError(
-                f"Catalog activation identity mismatch: Core ({repo_uuid}, {inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
+                f"Catalog activation identity mismatch: Repository ({repo_uuid}, {inst_uuid}) vs Context ({ctx_repo_uuid}, {ctx_inst_uuid})"
             )
 
     def _reconstruct_optional_stores(self, fresh_catalog_dir, repo_uuid, inst_uuid):

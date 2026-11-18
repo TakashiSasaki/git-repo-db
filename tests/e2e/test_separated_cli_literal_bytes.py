@@ -8,13 +8,13 @@ from uuid import uuid4
 import pytest
 
 from repo_catalog.domain.git_acquisition import GitMetadataInput
-from repo_catalog.domain.p1_core import OID, NativeObject, native_object_oid
+from repo_catalog.domain.p1_repository import OID, NativeObject, native_object_oid
 from tests.e2e.test_separated_cli import document, init, run
 
 
 def setup(tmp_path, capsys, fmt):
     catalog = tmp_path / "catalog"
-    identity = init(capsys, catalog, "core")
+    identity = init(capsys, catalog, "repository")
     init(capsys, catalog, "operational")
     blob = "1" * (40 if fmt == "sha1" else 64)
     tree_body = b"".join(
@@ -200,7 +200,7 @@ def test_normal_cli_note_search_uses_checked_note_bytes_instead_of_display_escap
     )
 
     catalog, native = tmp_path / "catalog", tmp_path / "native"
-    identity = init(capsys, catalog, "core")
+    identity = init(capsys, catalog, "repository")
     init(capsys, catalog, "operational")
     objects = build_sample_git_repo(native, "sha1")
     raw = b"\xff" + "日本語".encode() + b"\n\\xff actual\n"

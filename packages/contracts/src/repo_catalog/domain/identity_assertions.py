@@ -10,8 +10,8 @@ import json
 from collections import defaultdict
 
 from repo_catalog.domain.shared_values import (
-    CoreFailure,
     Provenance,
+    RepositoryFailure,
     encode,
     uuid4_value,
 )
@@ -46,23 +46,31 @@ def _reject_constant(value):
 def identity_record(kind, record):
     """Validate the original typed record, preserving its supplied evidence text."""
     if kind not in ("relation", "cancellation"):
-        raise CoreFailure("IDENTITY_RECORD", kind, "unknown identity evidence kind")
+        raise RepositoryFailure(
+            "IDENTITY_RECORD", kind, "unknown identity evidence kind"
+        )
     expected = _RELATION_FIELDS if kind == "relation" else _CANCELLATION_FIELDS
     if type(record) is not dict or set(record) != expected:
-        raise CoreFailure("IDENTITY_RECORD", kind, "identity evidence fields differ")
+        raise RepositoryFailure(
+            "IDENTITY_RECORD", kind, "identity evidence fields differ"
+        )
     uuid4_value(record["relation_uuidv4"])
     validate_observation_us(record["asserted_at_us"])
     evidence = record["evidence_json"]
     if type(evidence) is not str or not isinstance(
         json.loads(evidence, parse_constant=_reject_constant), dict
     ):
-        raise CoreFailure("IDENTITY_RECORD", kind, "evidence must be a JSON object")
+        raise RepositoryFailure(
+            "IDENTITY_RECORD", kind, "evidence must be a JSON object"
+        )
     if kind == "cancellation":
         uuid4_value(record["cancellation_uuidv4"])
     else:
         entity_kind = record["entity_kind"]
         if entity_kind not in ("repository", "service"):
-            raise CoreFailure("IDENTITY_RECORD", entity_kind, "unknown endpoint kind")
+            raise RepositoryFailure(
+                "IDENTITY_RECORD", entity_kind, "unknown endpoint kind"
+            )
         suffix = (
             "repository_uuidv4"
             if entity_kind == "repository"
@@ -79,7 +87,7 @@ def identity_record(kind, record):
         if left == right or any(
             record[f"{side}_{absent}"] is not None for side in ("left", "right")
         ):
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "IDENTITY_RECORD", kind, "distinct same-kind endpoints required"
             )
     return encode(record)
@@ -91,16 +99,16 @@ def _reports(kind, rows, maximum):
     identity = "relation_uuidv4" if kind == "relation" else "cancellation_uuidv4"
     for index, row in enumerate(rows):
         if index >= maximum:
-            raise CoreFailure("IDENTITY_BUDGET", kind, "finite evidence limit")
+            raise RepositoryFailure("IDENTITY_BUDGET", kind, "finite evidence limit")
         raw, original = row["record_json"], row["provenance"]
         record = json.loads(raw)
         if identity_record(kind, record) != raw:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "IDENTITY_RECORD", kind, "noncanonical stored identity record"
             )
         provenance = Provenance(*json.loads(original))
         if provenance.qualification != "reported" or provenance.encoded != original:
-            raise CoreFailure(
+            raise RepositoryFailure(
                 "UNTRUSTED_VERIFICATION",
                 kind,
                 "identity is attributed reported evidence",
@@ -130,7 +138,9 @@ def _closure(edges, kind, maximum):
                 pending.append(neighbor)
         for target in sorted(seen - {start}):
             if len(pairs) >= maximum:
-                raise CoreFailure("IDENTITY_BUDGET", kind, "finite closure pair limit")
+                raise RepositoryFailure(
+                    "IDENTITY_BUDGET", kind, "finite closure pair limit"
+                )
             suffix = (
                 "repository_uuidv4"
                 if kind == "repository"
@@ -151,7 +161,7 @@ def identity_status(
 ):
     """Derive conflicts, unresolved dependencies and two separate equivalence graphs.
 
-    Context service identities are optional input, never an inferred Core FK.
+    Context service identities are optional input, never an inferred Repository FK.
     Supplying no Context snapshot leaves service assertions explicitly unresolved.
     Conflicting payloads never select a winner. Every reported cancellation
     suppresses its target, including cancellations whose own IDs conflict.
@@ -244,14 +254,18 @@ def identity_status(
 def identity_values(kind, entity_kind, record_json, provenance):
     """Validate one authority-owned unit and expose its complete semantic row."""
     if entity_kind not in ("repository", "service"):
-        raise CoreFailure("IDENTITY_RECORD", entity_kind, "unknown identity authority")
+        raise RepositoryFailure(
+            "IDENTITY_RECORD", entity_kind, "unknown identity authority"
+        )
     record = json.loads(record_json)
     if identity_record(kind, record) != record_json:
-        raise CoreFailure("IDENTITY_RECORD", kind, "canonical original record required")
+        raise RepositoryFailure(
+            "IDENTITY_RECORD", kind, "canonical original record required"
+        )
     if kind == "relation" and record["entity_kind"] != entity_kind:
-        raise CoreFailure("IDENTITY_RECORD", kind, "wrong identity authority")
+        raise RepositoryFailure("IDENTITY_RECORD", kind, "wrong identity authority")
     if not isinstance(provenance, Provenance) or provenance.qualification != "reported":
-        raise CoreFailure(
+        raise RepositoryFailure(
             "UNTRUSTED_VERIFICATION", kind, "reported provenance required"
         )
     values = (record["relation_uuidv4"], record_json, provenance.encoded)

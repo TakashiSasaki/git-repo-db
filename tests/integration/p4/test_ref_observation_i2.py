@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from tests.integration.p4.conftest import fixture_note, git
 
 
@@ -19,8 +19,12 @@ def test_two_real_scans_have_distinct_keys_and_replay_exactly(acquisition):
     first = discover(app, repository, origin, request)
     assert len(first.enumerations) == 2
     event1, event2 = first.enumerations
-    assert app.core.ref_enumeration(*event1.event.identity, app.work) == event1
-    assert app.core.ref_enumeration(*event2.event.identity, app.work) == event2
+    assert (
+        app.repository_store.ref_enumeration(*event1.event.identity, app.work) == event1
+    )
+    assert (
+        app.repository_store.ref_enumeration(*event2.event.identity, app.work) == event2
+    )
     assert event1.event.identity != event2.event.identity
     assert len(event1.links) == len(event2.links) == 1
     first_link, second_link = event1.links[0], event2.links[0]
@@ -65,7 +69,7 @@ def test_named_absence_is_qualified_and_failed_enumeration_never_infers_absence(
     )
 
     def fail(*args):
-        raise CoreFailure("GIT_INPUT", "scan", "failed")
+        raise RepositoryFailure("GIT_INPUT", "scan", "failed")
 
     monkeypatch.setattr(app.source, "_scan", fail)
     failed = discover(app, repository, origin, str(uuid4()), (missing,))
@@ -100,19 +104,23 @@ def test_ref_note_evidence_is_bound_to_exact_scan_claim(acquisition):
     acquired = app.acquire_ref_note(c1, target)
     assert acquired.role_verified and acquired.body_retained and acquired.note == note
     mapping = (
-        app.core.notes_mapping_projection(
+        app.repository_store.notes_mapping_projection(
             c1, target, "git-notes", "1", "native-notes-tree", app.work
         )
         .evidence[0]
         .mapping
     )
-    assert app.core.read_ref_note(c1, mapping, app.work) == b"\0\xffbinary\r\n"
-    with pytest.raises(CoreFailure) as error:
-        app.core.read_ref_note(c2, mapping, app.work)
+    assert (
+        app.repository_store.read_ref_note(c1, mapping, app.work) == b"\0\xffbinary\r\n"
+    )
+    with pytest.raises(RepositoryFailure) as error:
+        app.repository_store.read_ref_note(c2, mapping, app.work)
     assert error.value.code == "NOTES_ROLE_UNAVAILABLE"
     second = app.acquire_ref_note(c2, target, retain_body=False)
     assert second.role_verified and not second.body_retained
-    assert app.core.read_ref_note(c1, mapping, app.work) == b"\0\xffbinary\r\n"
+    assert (
+        app.repository_store.read_ref_note(c1, mapping, app.work) == b"\0\xffbinary\r\n"
+    )
 
 
 def test_pinned_scan_survives_failed_admission_without_a_reread(
@@ -129,14 +137,16 @@ def test_pinned_scan_survives_failed_admission_without_a_reread(
         return original_discover(*args, **kwargs)
 
     monkeypatch.setattr(app.source, "discover", counted)
-    original_admit = app.core.admit_ref_enumeration
+    original_admit = app.repository_store.admit_ref_enumeration
 
     def fail_once(*args, **kwargs):
-        monkeypatch.setattr(app.core, "admit_ref_enumeration", original_admit)
-        raise CoreFailure("INJECTED", "core", "before event admission")
+        monkeypatch.setattr(
+            app.repository_store, "admit_ref_enumeration", original_admit
+        )
+        raise RepositoryFailure("INJECTED", "repository", "before event admission")
 
-    monkeypatch.setattr(app.core, "admit_ref_enumeration", fail_once)
-    with pytest.raises(CoreFailure, match="before event admission"):
+    monkeypatch.setattr(app.repository_store, "admit_ref_enumeration", fail_once)
+    with pytest.raises(RepositoryFailure, match="before event admission"):
         discover(app, repository, origin, request)
     resumed = discover(app, repository, origin, request)
     assert len(calls) == 1 and len(resumed.enumerations) == 2
@@ -162,10 +172,10 @@ def test_event_rebind_rolls_back_and_small_progress_limit_does_not_stop_catalog(
         link.observation, observed_at_us=link.observation.observed_at_us + 1
     )
     changed = replace(link, event=event, observation=subject)
-    with pytest.raises(CoreFailure) as error:
-        app.core.admit_ref_enumeration(event, (changed,), app.work)
+    with pytest.raises(RepositoryFailure) as error:
+        app.repository_store.admit_ref_enumeration(event, (changed,), app.work)
     assert error.value.code == "INCOMPATIBLE_REPLAY"
-    assert not app.core.sql(
+    assert not app.repository_store.sql(
         "SELECT 1 FROM ref_enumeration_observations WHERE enumeration_uuidv7=?",
         (event.enumeration_uuidv7,),
     )
@@ -176,14 +186,19 @@ def test_event_rebind_rolls_back_and_small_progress_limit_does_not_stop_catalog(
         )
         if "p4-enumeration" in scope[0]
     )[0]
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         app.progress.load_bounded(scope, 1)
     assert error.value.code == "BUDGET"
-    with pytest.raises(CoreFailure) as error:
-        app.core.ref_enumeration(*original.event.identity, app.work, max_bytes=8)
+    with pytest.raises(RepositoryFailure) as error:
+        app.repository_store.ref_enumeration(
+            *original.event.identity, app.work, max_bytes=8
+        )
     assert error.value.code == "QUERY_BUDGET"
     assert not (path.parent / "p1-recovery-stop.json").exists()
-    assert app.core.ref_enumeration(*original.event.identity, app.work) == original
+    assert (
+        app.repository_store.ref_enumeration(*original.event.identity, app.work)
+        == original
+    )
 
 
 def test_two_changed_scans_are_separate_events_not_atomic_snapshot(
@@ -221,10 +236,10 @@ def test_two_changed_scans_are_separate_events_not_atomic_snapshot(
 def test_stored_enumeration_corruption_stops_catalog(acquisition):
     from repo_catalog.adapters.sqlite.p1_schema import connect
 
-    app, path, fmt, repository, origin, core_path, _ = acquisition
+    app, path, fmt, repository, origin, repository_path, _ = acquisition
     fixture_note(acquisition)
     event = discover(app, repository, origin, str(uuid4())).enumerations[0].event
-    db = connect(core_path, "core")
+    db = connect(repository_path, "repository")
     db.execute("DROP TRIGGER p1_immutable_ref_enumeration_observations_update")
     db.execute(
         "UPDATE ref_enumeration_observations SET enumeration_scope_json='[[],[]]' WHERE enumeration_uuidv7=?",
@@ -232,12 +247,12 @@ def test_stored_enumeration_corruption_stops_catalog(acquisition):
     )
     db.commit()
     db.close()
-    with pytest.raises(CoreFailure) as error:
-        app.core.ref_enumeration(*event.identity, app.work)
+    with pytest.raises(RepositoryFailure) as error:
+        app.repository_store.ref_enumeration(*event.identity, app.work)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (core_path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
-        app.core.ensure_available()
+    assert (repository_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(RepositoryFailure) as stopped:
+        app.repository_store.ensure_available()
     assert stopped.value.code == "RECOVERY_STOP"
 
 
@@ -255,23 +270,23 @@ def test_ack_loss_replays_pinned_event_after_commit(acquisition, monkeypatch):
     app, _, _, repository, origin, *_ = acquisition
     fixture_note(acquisition)
     request = str(uuid4())
-    original = app.core.admit_ref_enumeration
+    original = app.repository_store.admit_ref_enumeration
     admitted = []
 
     def lose_ack(event, links, work):
         original(event, links, work)
         admitted.append(event.identity)
-        monkeypatch.setattr(app.core, "admit_ref_enumeration", original)
-        raise CoreFailure("INJECTED", event.identity, "ack lost")
+        monkeypatch.setattr(app.repository_store, "admit_ref_enumeration", original)
+        raise RepositoryFailure("INJECTED", event.identity, "ack lost")
 
-    monkeypatch.setattr(app.core, "admit_ref_enumeration", lose_ack)
-    with pytest.raises(CoreFailure, match="ack lost"):
+    monkeypatch.setattr(app.repository_store, "admit_ref_enumeration", lose_ack)
+    with pytest.raises(RepositoryFailure, match="ack lost"):
         discover(app, repository, origin, request)
     result = discover(app, repository, origin, request)
     assert result.enumerations[0].event.identity == admitted[0]
     assert (
         len(
-            app.core.sql(
+            app.repository_store.sql(
                 "SELECT 1 FROM ref_enumeration_observations WHERE enumeration_uuidv7=?",
                 (admitted[0][1],),
             )
@@ -284,7 +299,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
     from concurrent.futures import ThreadPoolExecutor
     from threading import Event
 
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.notes import NotesProgress
     from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
     from repo_catalog.adapters.sqlite.p1_schema import connect
@@ -294,9 +309,9 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
         pin_scan,
     )
     from repo_catalog.domain.p1_coordination import NotesLimits
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.domain.p1_repository import encode
 
-    app, path, fmt, repository, origin, core_path, op_path = acquisition
+    app, path, fmt, repository, origin, repository_path, op_path = acquisition
     initial, _, _ = fixture_note(acquisition)
     updated, _, _ = fixture_note(acquisition, body=b"changed root")
     git(path, "update-ref", initial.ref, initial.root.object_oid)
@@ -309,7 +324,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
 
     def run(attempt, selected_slot, hold=False):
         db = connect(op_path, "operational")
-        core = GitCore(core_path)
+        repository_store = GitRepositoryStore(repository_path)
         try:
             ledger = WorkLedger(db)
             work = NotesWorkBudget(ledger, app.work.request, attempt, NotesLimits())
@@ -329,7 +344,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
                 return RefScan(values, "complete", "git-for-each-ref:exit-0")
 
             return pin_scan(
-                core,
+                repository_store,
                 progress,
                 work,
                 slot=selected_slot,
@@ -346,7 +361,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
                 scan=scan,
             )
         finally:
-            core.close()
+            repository_store.close()
             db.close()
 
     with ThreadPoolExecutor(max_workers=2) as executor:
@@ -355,7 +370,7 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
         git(path, "update-ref", initial.ref, updated.root.object_oid)
         second = executor.submit(run, attempts[1], slot)
         try:
-            with pytest.raises(CoreFailure) as busy:
+            with pytest.raises(RepositoryFailure) as busy:
                 second.result(timeout=15)
             assert busy.value.code == "ACQUISITION_BUSY"
         finally:
@@ -376,23 +391,23 @@ def test_concurrent_redeliveries_do_not_discard_actual_distinct_scans(acquisitio
 
 def test_empty_enumerations_survive_git_only_backup_and_restore(acquisition):
     from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
     from repo_catalog.domain.recovery import BackupScope
 
-    app, path, fmt, repository, origin, core_path, _ = acquisition
+    app, path, fmt, repository, origin, repository_path, _ = acquisition
     result = discover(app, repository, origin, str(uuid4()))
     assert len(result.enumerations) == 2
     assert all(not event.links for event in result.enumerations)
-    assert not app.core.sql("SELECT 1 FROM ref_observations")
+    assert not app.repository_store.sql("SELECT 1 FROM ref_observations")
     destination = path.parent / "backup-ref-i2"
     adapter = SQLiteRecoveryAdapter()
     assert adapter.create_consistent_backup(
-        core_path.parent, destination, BackupScope.GIT_ONLY
+        repository_path.parent, destination, BackupScope.GIT_ONLY
     ).verified_clean
     restored = path.parent / "restored-ref-i2"
     assert adapter.restore_backup(destination, restored, repository).revalidated_clean
-    copy = GitCore(restored / "core.sqlite3")
+    copy = GitRepositoryStore(restored / "repository.sqlite3")
     try:
         for original in result.enumerations:
             assert (
@@ -401,7 +416,7 @@ def test_empty_enumerations_survive_git_only_backup_and_restore(acquisition):
             )
     finally:
         copy.close()
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_inventory_is_pinned_as_distinct_claim_specific_whole_groups(
@@ -420,12 +435,12 @@ def test_inventory_is_pinned_as_distinct_claim_specific_whole_groups(
         app.source, "metadata", lambda *_: pytest.fail("pinned group reread source")
     )
     assert app.inventory_ref(c1) == first
-    projection = app.core.notes_mapping_projection(
+    projection = app.repository_store.notes_mapping_projection(
         c1, target, "git-notes", "1", "native-notes-tree", app.work
     )
     assert projection.groups == (first.group,)
     assert (
-        app.core.notes_mapping_projection(
+        app.repository_store.notes_mapping_projection(
             c2, target, "git-notes", "1", "native-notes-tree", app.work
         ).groups
         == ()
@@ -435,10 +450,10 @@ def test_inventory_is_pinned_as_distinct_claim_specific_whole_groups(
 def test_missing_stored_enumeration_link_is_corruption(acquisition):
     from repo_catalog.adapters.sqlite.p1_schema import connect
 
-    app, path, fmt, repository, origin, core_path, _ = acquisition
+    app, path, fmt, repository, origin, repository_path, _ = acquisition
     fixture_note(acquisition)
     event = discover(app, repository, origin, str(uuid4())).enumerations[0].event
-    db = connect(core_path, "core")
+    db = connect(repository_path, "repository")
     db.execute("DROP TRIGGER p1_immutable_ref_enumeration_links_delete")
     db.execute(
         "DELETE FROM ref_enumeration_links WHERE enumeration_uuidv7=?",
@@ -446,10 +461,10 @@ def test_missing_stored_enumeration_link_is_corruption(acquisition):
     )
     db.commit()
     db.close()
-    with pytest.raises(CoreFailure) as error:
-        app.core.ref_enumeration(*event.identity, app.work)
+    with pytest.raises(RepositoryFailure) as error:
+        app.repository_store.ref_enumeration(*event.identity, app.work)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (core_path.parent / "p1-recovery-stop.json").exists()
+    assert (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_partial_scan_cannot_pin_or_admit_absence(acquisition):
@@ -458,14 +473,14 @@ def test_partial_scan_cannot_pin_or_admit_absence(acquisition):
         RefScan,
         pin_scan,
     )
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.domain.p1_repository import encode
 
-    app, path, _, repository, origin, core_path, _ = acquisition
+    app, path, _, repository, origin, repository_path, _ = acquisition
     name = b"refs/notes/missing"
     slot = encode(["partial-negative-test", str(uuid4())])
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         pin_scan(
-            app.core,
+            app.repository_store,
             app.progress,
             app.work,
             slot=slot,
@@ -485,17 +500,17 @@ def test_partial_scan_cannot_pin_or_admit_absence(acquisition):
         )
     assert error.value.code == "ENUMERATION"
     assert app.progress.load_bounded(slot, 1_000_000) is None
-    assert not app.core.sql("SELECT 1 FROM ref_observation_claims")
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
+    assert not app.repository_store.sql("SELECT 1 FROM ref_observation_claims")
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
 
 
 def test_replay_validates_corrupt_stored_event_before_comparing_input(acquisition):
     from repo_catalog.adapters.sqlite.p1_schema import connect
 
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixture_note(acquisition)
     original = discover(app, repository, origin, str(uuid4())).enumerations[0]
-    db = connect(core_path, "core")
+    db = connect(repository_path, "repository")
     db.execute("DROP TRIGGER p1_immutable_ref_enumeration_observations_update")
     db.execute(
         "UPDATE ref_enumeration_observations SET enumeration_scope_json='[[],[]]' WHERE enumeration_uuidv7=?",
@@ -503,20 +518,22 @@ def test_replay_validates_corrupt_stored_event_before_comparing_input(acquisitio
     )
     db.commit()
     db.close()
-    with pytest.raises(CoreFailure) as error:
-        app.core.admit_ref_enumeration(original.event, original.links, app.work)
+    with pytest.raises(RepositoryFailure) as error:
+        app.repository_store.admit_ref_enumeration(
+            original.event, original.links, app.work
+        )
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (core_path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
-        app.core.ensure_available()
+    assert (repository_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(RepositoryFailure) as stopped:
+        app.repository_store.ensure_available()
     assert stopped.value.code == "RECOVERY_STOP"
 
 
 def _prepared_thousand_links(acquisition):
     from dataclasses import replace
 
-    from repo_catalog.application.acquisition import _PreparedCore
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.application.acquisition import _PreparedRepository
+    from repo_catalog.domain.p1_repository import encode
     from repo_catalog.domain.ref_observation import (
         RefEnumerationLink,
         RefObservationKey,
@@ -558,13 +575,13 @@ def _prepared_thousand_links(acquisition):
         )
         items.append(RefEnumerationLink(event, subject, claim, "item", position))
     links = CountedTuple(items)
-    prepared = _PreparedCore(app.core)
+    prepared = _PreparedRepository(app.repository_store)
     prepared.admit_ref_enumeration(event, links, app.work)
     return prepared, links
 
 
 def test_prepared_lookup_charges_every_inspected_link(acquisition):
-    from tests.integration.p1.test_core import Budget
+    from tests.integration.p1.test_repository import Budget
 
     prepared, links = _prepared_thousand_links(acquisition)
     work = Budget()
@@ -577,37 +594,42 @@ def test_prepared_lookup_charges_every_inspected_link(acquisition):
 def test_valid_event_rebinding_and_budget_exhaustion_are_not_corruption(acquisition):
     from dataclasses import replace
 
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixture_note(acquisition)
     original = discover(app, repository, origin, str(uuid4())).enumerations[0]
     changed_event = replace(original.event, byte_limit=original.event.byte_limit + 1)
     changed_links = tuple(replace(link, event=changed_event) for link in original.links)
-    with pytest.raises(CoreFailure) as rebound:
-        app.core.admit_ref_enumeration(changed_event, changed_links, app.work)
+    with pytest.raises(RepositoryFailure) as rebound:
+        app.repository_store.admit_ref_enumeration(
+            changed_event, changed_links, app.work
+        )
     assert rebound.value.code == "INCOMPATIBLE_REPLAY"
-    with pytest.raises(CoreFailure) as limited:
-        app.core.admit_ref_enumeration(
+    with pytest.raises(RepositoryFailure) as limited:
+        app.repository_store.admit_ref_enumeration(
             original.event, original.links, app.work, max_replay_bytes=8
         )
     assert limited.value.code in ("BUDGET", "QUERY_BUDGET")
-    assert not (core_path.parent / "p1-recovery-stop.json").exists()
-    app.core.admit_ref_enumeration(original.event, original.links, app.work)
-    assert app.core.ref_enumeration(*original.event.identity, app.work) == original
+    assert not (repository_path.parent / "p1-recovery-stop.json").exists()
+    app.repository_store.admit_ref_enumeration(original.event, original.links, app.work)
+    assert (
+        app.repository_store.ref_enumeration(*original.event.identity, app.work)
+        == original
+    )
 
 
 def test_prepared_lookup_stops_at_request_metadata_budget(acquisition):
-    from tests.integration.p1.test_core import Budget
+    from tests.integration.p1.test_repository import Budget
 
     prepared, links = _prepared_thousand_links(acquisition)
 
     class Limited(Budget):
         def require(self, unit, amount=1):
             if unit == "metadata_units" and self.counts.get(unit, 0) + amount > 20:
-                raise CoreFailure("BUDGET", unit, "finite work limit")
+                raise RepositoryFailure("BUDGET", unit, "finite work limit")
             super().require(unit, amount)
 
     work = Limited()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         prepared.ref_observation(links[-1].observation.ref_observation_key, work)
     assert error.value.code == "BUDGET"
     assert work.counts["metadata_units"] == 20
@@ -618,14 +640,14 @@ def test_concurrent_notes_discovery_scans_once_before_pin(acquisition, monkeypat
     from concurrent.futures import ThreadPoolExecutor
     from threading import Event
 
-    from repo_catalog.adapters.sqlite.git_core import GitCore
+    from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
     from repo_catalog.adapters.sqlite.notes import NotesProgress
     from repo_catalog.adapters.sqlite.p1_coordination import NotesWorkBudget, WorkLedger
     from repo_catalog.adapters.sqlite.p1_schema import connect
     from repo_catalog.application.notes import NotesAcquisition
     from repo_catalog.domain.p1_coordination import NotesLimits
 
-    app, path, _, repository, origin, core_path, op_path = acquisition
+    app, path, _, repository, origin, repository_path, op_path = acquisition
     first_root, _, _ = fixture_note(acquisition)
     next_root, _, _ = fixture_note(acquisition, body=b"second notes discovery")
     git(path, "update-ref", first_root.ref, first_root.root.object_oid)
@@ -648,13 +670,13 @@ def test_concurrent_notes_discovery_scans_once_before_pin(acquisition, monkeypat
 
     def run(attempt, request_id):
         db = connect(op_path, "operational")
-        core = GitCore(core_path)
+        repository_store = GitRepositoryStore(repository_path)
         try:
             work = NotesWorkBudget(
                 WorkLedger(db), app.work.request, attempt, NotesLimits()
             )
             owner = NotesAcquisition(
-                core,
+                repository_store,
                 app.source,
                 work,
                 NotesProgress(work),
@@ -662,7 +684,7 @@ def test_concurrent_notes_discovery_scans_once_before_pin(acquisition, monkeypat
             )
             return discover(owner, repository, origin, request_id)
         finally:
-            core.close()
+            repository_store.close()
             db.close()
 
     with ThreadPoolExecutor(max_workers=2) as executor:
@@ -671,7 +693,7 @@ def test_concurrent_notes_discovery_scans_once_before_pin(acquisition, monkeypat
         git(path, "update-ref", first_root.ref, next_root.root.object_oid)
         second = executor.submit(run, attempts[1], request)
         try:
-            with pytest.raises(CoreFailure) as busy:
+            with pytest.raises(RepositoryFailure) as busy:
                 second.result(timeout=15)
             assert busy.value.code == "ACQUISITION_BUSY"
         finally:
@@ -688,11 +710,11 @@ def test_concurrent_notes_discovery_scans_once_before_pin(acquisition, monkeypat
 def test_discovery_redelivery_stops_for_corrupt_pinned_event(acquisition):
     from repo_catalog.adapters.sqlite.p1_schema import connect
 
-    app, _, _, repository, origin, core_path, _ = acquisition
+    app, _, _, repository, origin, repository_path, _ = acquisition
     fixture_note(acquisition)
     request = str(uuid4())
     event = discover(app, repository, origin, request).enumerations[0].event
-    db = connect(core_path, "core")
+    db = connect(repository_path, "repository")
     try:
         trigger = db.execute(
             "SELECT sql FROM sqlite_schema WHERE name='p1_immutable_ref_enumeration_observations_update'"
@@ -706,12 +728,12 @@ def test_discovery_redelivery_stops_for_corrupt_pinned_event(acquisition):
         db.commit()
     finally:
         db.close()
-    with pytest.raises(CoreFailure) as error:
+    with pytest.raises(RepositoryFailure) as error:
         discover(app, repository, origin, request)
     assert error.value.code == "AUTHORITATIVE_CORRUPTION"
-    assert (core_path.parent / "p1-recovery-stop.json").exists()
-    with pytest.raises(CoreFailure) as stopped:
-        app.core.ensure_available()
+    assert (repository_path.parent / "p1-recovery-stop.json").exists()
+    with pytest.raises(RepositoryFailure) as stopped:
+        app.repository_store.ensure_available()
     assert stopped.value.code == "RECOVERY_STOP"
 
 
@@ -721,7 +743,7 @@ def test_failed_unpinned_read_releases_guard_and_retry_is_new_read(acquisition):
         RefScan,
         pin_scan,
     )
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.domain.p1_repository import encode
 
     app, path, _, repository, origin, *_ = acquisition
     first, _, _ = fixture_note(acquisition)
@@ -739,7 +761,7 @@ def test_failed_unpinned_read_releases_guard_and_retry_is_new_read(acquisition):
         )
         calls.append(result[0].target)
         if len(calls) == 1:
-            raise CoreFailure("INJECTED", "scan", "crash before pin")
+            raise RepositoryFailure("INJECTED", "scan", "crash before pin")
         return RefScan(result, "complete", "git-for-each-ref:exit-0")
 
     args = dict(
@@ -756,14 +778,16 @@ def test_failed_unpinned_read_releases_guard_and_retry_is_new_read(acquisition):
         ref_limit=100,
         scan=scan,
     )
-    with pytest.raises(CoreFailure, match="crash before pin"):
-        pin_scan(app.core, app.progress, app.work, **args)
+    with pytest.raises(RepositoryFailure, match="crash before pin"):
+        pin_scan(app.repository_store, app.progress, app.work, **args)
     assert app.progress.load_bounded(slot, 1_000_000) is None
     git(path, "update-ref", first.ref, second.root.object_oid)
-    result = pin_scan(app.core, app.progress, app.work, **args)
+    result = pin_scan(app.repository_store, app.progress, app.work, **args)
     assert calls == [first.root, second.root]
     assert result.links[0].claim.root_object_oid == second.root
-    assert len(app.core.sql("SELECT 1 FROM ref_enumeration_observations")) == 1
+    assert (
+        len(app.repository_store.sql("SELECT 1 FROM ref_enumeration_observations")) == 1
+    )
 
 
 def test_scan_guard_released_after_process_termination(acquisition):
@@ -771,7 +795,7 @@ def test_scan_guard_released_after_process_termination(acquisition):
     import subprocess
     import sys
 
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.domain.p1_repository import encode
 
     app, _, _, _, _, _, op_path = acquisition
     attempt = str(uuid4())
@@ -809,7 +833,7 @@ with NotesProgress(work).scan_guard(scope):
             selector.register(proc.stdout, selectors.EVENT_READ)
             assert selector.select(10), "child did not acquire scan guard"
             assert proc.stdout.readline().strip() == "READY"
-        with pytest.raises(CoreFailure) as busy:
+        with pytest.raises(RepositoryFailure) as busy:
             with app.progress.scan_guard(scope):
                 pytest.fail("another process still owns the guard")
         assert busy.value.code == "ACQUISITION_BUSY"
@@ -824,7 +848,7 @@ with NotesProgress(work).scan_guard(scope):
 def test_guard_scopes_are_canonical_and_independent(acquisition):
     import hashlib
 
-    from repo_catalog.domain.p1_core import encode
+    from repo_catalog.domain.p1_repository import encode
 
     app, *_ = acquisition
     left = encode(["slot-a", 1])
@@ -840,7 +864,7 @@ def test_guard_scopes_are_canonical_and_independent(acquisition):
         if stripe(encode(["slot-b", n])) != stripe(left)
     )
     with app.progress.scan_guard(left):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             with app.progress.scan_guard(same):
                 pytest.fail("equivalent slot was concurrently acquired")
         assert error.value.code == "ACQUISITION_BUSY"

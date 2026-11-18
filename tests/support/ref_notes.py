@@ -2,7 +2,7 @@
 
 from uuid import uuid4
 
-from repo_catalog.domain.p1_core import Provenance
+from repo_catalog.domain.p1_repository import Provenance
 from repo_catalog.domain.ref_observation import (
     NotesMapping,
     NotesMappingEvidence,
@@ -14,7 +14,7 @@ from repo_catalog.domain.ref_observation import (
 
 
 def admit_fixture_note(
-    core,
+    repository_store,
     repository,
     tree,
     target,
@@ -25,7 +25,7 @@ def admit_fixture_note(
     name=b"refs/notes/fixture",
 ):
     key = RefObservationKey(str(uuid4()), new_uuid7())
-    core.admit_ref_observation(
+    repository_store.admit_ref_observation(
         RefObservation(key, repository, name, "fixture", "visible")
     )
     claim = RefObservationClaim(
@@ -34,7 +34,7 @@ def admit_fixture_note(
         "present",
         root_object_oid=tree.object_oid,
     )
-    core.admit_ref_observation_claim(claim)
+    repository_store.admit_ref_observation_claim(claim)
     mapping = NotesMapping(
         tree.object_oid,
         "git-notes",
@@ -53,5 +53,5 @@ def admit_fixture_note(
         ),
         (tree,),
     )
-    core.admit_ref_note(evidence, note, copy_uuid or str(uuid4()), work)
+    repository_store.admit_ref_note(evidence, note, copy_uuid or str(uuid4()), work)
     return claim, mapping

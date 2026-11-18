@@ -14,7 +14,6 @@ import json
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import is_catalog_stopped
 from repo_catalog.adapters.sqlite.p1_schema import (
     connect as p1_connect,
 )
@@ -22,6 +21,7 @@ from repo_catalog.adapters.sqlite.production_context import Context, ContextErro
 from repo_catalog.adapters.sqlite.recovery_validation import (
     validate_stored_context_relations,
 )
+from repo_catalog.adapters.sqlite.repository_recovery import is_catalog_stopped
 from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.context_admission import (
     AdmissionBudget,

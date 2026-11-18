@@ -11,7 +11,7 @@ from repo_catalog.domain.provider_acquisition import ProviderAcquisitionReport
 
 @dataclass(frozen=True)
 class PairedAcquisitionResult:
-    """Result of coordinated Core-first + Context-second admission."""
+    """Result of coordinated Repository-first + Context-second admission."""
 
     admission: PairAdmission
     git_report: GitAcquisitionReport | None = None

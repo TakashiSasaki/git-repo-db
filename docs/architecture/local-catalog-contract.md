@@ -7,10 +7,10 @@ It describes independently usable authorities, not new mandatory P1 stores.
 
 | Operation | Required implementation/data | Absent implementations permitted |
 | --- | --- | --- |
-| Filesystem init/scan/query/EFU/verify/backup/restore | Filesystem package and selected DB; live root only for scan | Git, worktrees, Core, Context, Access, Operational, Search |
+| Filesystem init/scan/query/EFU/verify/backup/restore | Filesystem package and selected DB; live root only for scan | Git, worktrees, Repository, Context, Access, Operational, Search |
 | Git topology discovery/query/association/verify/backup/restore | Worktree package and selected DB; Git executable/source only for discovery | Filesystem and all existing catalog implementations |
 | Related-worktree file scan | Optional local composition, worktree and filesystem packages/explicit DBs | All existing catalog implementations |
-| Enriched EFU | Local composition and selected retained filesystem/topology observations | Live filesystem, Git, Core and other existing catalogs |
+| Enriched EFU | Local composition and selected retained filesystem/topology observations | Live filesystem, Git, Repository and other existing catalogs |
 
 Initialization is explicit. Read-only opens do not create, migrate or repair DBs.
 Each store owns schema validation and a verified standalone backup/restore to a
@@ -65,7 +65,7 @@ repair, fetch or submodule initialization occurs.
 After a filesystem scan, composition may append its qualified scan reference to
 the topology store. A crash before attaching it does not invalidate the filesystem
 scan. Explicit Repository UUID associations are claims about external identity,
-not evidence that Core is installed or has verified the current files.
+not evidence that Repository is installed or has verified the current files.
 
 ## EFU contract
 

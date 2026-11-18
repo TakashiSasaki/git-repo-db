@@ -7,8 +7,8 @@ from uuid import uuid4
 
 import pytest
 
-from tests.integration.p1.test_core import Budget, native, oid, provenance
-from tests.integration.p1.test_core import core as core
+from tests.integration.p1.test_repository import Budget, native, oid, provenance
+from tests.integration.p1.test_repository import repository_store as repository_store
 
 
 def tree(entries, fmt="sha1"):
@@ -43,8 +43,8 @@ def mapping(repository, body=b"note", fmt="sha1", ref="refs/notes/review"):
 
 @pytest.mark.parametrize("fmt", ["sha1", "sha256"])
 @pytest.mark.parametrize("body", [b"", b"simple\n", b"\x00\xffbinary\r\n"])
-def test_new_role_exact_binary_body_and_git_hash(core, fmt, body):
-    from repo_catalog.domain.p1_core import Provenance
+def test_new_role_exact_binary_body_and_git_hash(repository_store, fmt, body):
+    from repo_catalog.domain.p1_repository import Provenance
     from repo_catalog.domain.ref_observation import (
         NotesMapping,
         NotesMappingEvidence,
@@ -54,7 +54,7 @@ def test_new_role_exact_binary_body_and_git_hash(core, fmt, body):
         new_uuid7,
     )
 
-    c, _, repository = core
+    c, _, repository = repository_store
     fixture, note = mapping(repository, body, fmt)
     key = RefObservationKey(str(uuid4()), new_uuid7())
     c.admit_ref_observation(

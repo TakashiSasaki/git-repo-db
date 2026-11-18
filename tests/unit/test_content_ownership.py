@@ -19,11 +19,11 @@ def test_inventory_has_exact_roles_and_rejects_unreviewed_paths():
     assert len(paths) == len(set(paths))
     assert all(item["status"] and item["owner"] for item in items)
     for path, status in {
-        "docs/transport-independent-core-adr.md": "accepted-decision",
+        "docs/transport-independent-repository-adr.md": "accepted-decision",
         "docs/phase2/no-independent-publication-adr.md": "accepted-decision",
         "docs/implementation/p1-schema-contracts.md": "active-scoped-contract",
         "docs/adr/0036-ref-observations-and-shared-notes-mappings.md": "adr-source-or-governance",
-        "docs/implementation/adr0036-i1-core-contract.md": "active-scoped-contract",
+        "docs/implementation/adr0036-i1-repository-contract.md": "active-scoped-contract",
         "docs/implementation/adr0036-i2-acquisition-contract.md": "active-scoped-contract",
         "docs/implementation/adr0036-i3-exchange-query-backup-contract.md": "active-scoped-contract",
         "docs/implementation/adr0036-legacy-consumers-contract.md": "active-scoped-contract",
@@ -115,8 +115,8 @@ def test_current_guide_product_links_match_declared_revision():
             )
     assert {
         "src/repo_catalog/cli/main.py",
-        "packages/core/src/repo_catalog/adapters/sqlite/p1_schema.py",
-        "packages/core/src/repo_catalog/adapters/sqlite/core_recovery.py",
+        "packages/repository/src/repo_catalog/adapters/sqlite/p1_schema.py",
+        "packages/repository/src/repo_catalog/adapters/sqlite/repository_recovery.py",
         "pyproject.toml",
     } <= source_paths
 

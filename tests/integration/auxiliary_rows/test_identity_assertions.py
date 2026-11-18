@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect, initialize
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.identity_assertions import IdentityAssertions
@@ -15,7 +15,7 @@ from repo_catalog.domain.context_admission import (
     DependencySet,
     create_local_admission_service,
 )
-from repo_catalog.domain.shared_values import CoreFailure, Provenance
+from repo_catalog.domain.shared_values import Provenance, RepositoryFailure
 
 
 def assertion(kind, left, right, *, ident=None):
@@ -56,7 +56,7 @@ class Authority:
         self.directory = tmp_path
         self.kind = kind
         self.endpoints = endpoints
-        role = "core" if kind == "repository" else "context"
+        role = "repository" if kind == "repository" else "context"
         initialize(tmp_path / f"{role}.sqlite3", role, str(uuid4()), str(uuid4()))
         self.auth, self.admission, self.policy = create_local_admission_service(
             grants=DependencySet(
@@ -67,7 +67,7 @@ class Authority:
         with self.open(write=True) as service:
             if kind == "repository":
                 for endpoint in endpoints:
-                    service.core.admit_repository(endpoint)
+                    service.repository_store.admit_repository(endpoint)
             else:
                 for endpoint in endpoints:
                     service.context.provider(endpoint, "identity-test")
@@ -75,8 +75,10 @@ class Authority:
     @contextmanager
     def open(self, *, write=False):
         if self.kind == "repository":
-            with closing(GitCore(self.directory / "core.sqlite3")) as core:
-                yield IdentityAssertions(core=core)
+            with closing(
+                GitRepositoryStore(self.directory / "repository.sqlite3")
+            ) as repository_store:
+                yield IdentityAssertions(repository_store=repository_store)
         elif write:
             with Context.transaction(
                 self.directory, authorization=self.auth, admission=self.admission
@@ -97,7 +99,7 @@ def test_transitive_equivalence_cancellation_first_and_no_physical_merge(
     authority = Authority(
         tmp_path, kind, {a, b, c}, {first["relation_uuidv4"], second["relation_uuidv4"]}
     )
-    role = "core" if kind == "repository" else "context"
+    role = "repository" if kind == "repository" else "context"
     table = "repositories" if kind == "repository" else "providers"
     column = "repository_uuidv4" if kind == "repository" else "service_instance_uuidv4"
     with closing(connect(tmp_path / f"{role}.sqlite3", role)) as db:
@@ -130,7 +132,9 @@ def test_transitive_equivalence_cancellation_first_and_no_physical_merge(
             (b, c),
             (c, b),
         }
-        assert status["authorities"] == ["core" if kind == "repository" else "context"]
+        assert status["authorities"] == [
+            "repository" if kind == "repository" else "context"
+        ]
     # Reopen and add a fresh uncancelled A-B assertion: closure becomes transitive.
     fresh = assertion(kind, a, b)
     authority.policy.grants = authority.policy.grants | DependencySet(
@@ -147,7 +151,7 @@ def test_transitive_equivalence_cancellation_first_and_no_physical_merge(
             "SELECT 1 FROM sqlite_schema WHERE name LIKE '%identity%staging%'"
         ).fetchone()
     assert not (
-        tmp_path / ("context.sqlite3" if kind == "repository" else "core.sqlite3")
+        tmp_path / ("context.sqlite3" if kind == "repository" else "repository.sqlite3")
     ).exists()
 
 
@@ -227,11 +231,11 @@ def test_repository_identity_rejects_bad_times_false_verification_and_implicit_s
         fake = Provenance(
             "reported-source", "original", "identity", "json", "1", "receiver_intrinsic"
         )
-        with pytest.raises(CoreFailure, match="reported provenance"):
+        with pytest.raises(RepositoryFailure, match="reported provenance"):
             service.admit("relation", first, fake)
-        with pytest.raises(CoreFailure, match="owning authority"):
+        with pytest.raises(RepositoryFailure, match="owning authority"):
             service.admit("relation", assertion("service", a, b), original(first))
-        with pytest.raises(CoreFailure, match="identity authority"):
+        with pytest.raises(RepositoryFailure, match="identity authority"):
             service.admit("cancellation", cancellation(first), original(first))
         assert not service.status()["identity_relations"]
 
@@ -275,7 +279,7 @@ def test_identity_rows_are_append_only_and_finite_read_refusal_does_not_stop(
     with authority.open(write=True) as service:
         service.admit("relation", first, original(first))
         service.admit("cancellation", before, original(before), entity_kind=kind)
-    role = "core" if kind == "repository" else "context"
+    role = "repository" if kind == "repository" else "context"
     with closing(connect(tmp_path / f"{role}.sqlite3", role)) as db:
         for suffix in ("assertions", "cancellations"):
             table = f"{kind}_identity_{suffix}"

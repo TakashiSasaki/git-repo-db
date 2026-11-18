@@ -5,7 +5,6 @@ import sqlite3
 
 import pytest
 
-from repo_catalog.adapters.sqlite.core_recovery import RecoveryWorkBudget
 from repo_catalog.adapters.sqlite.p1_context import ContextStore
 from repo_catalog.adapters.sqlite.p1_schema import (
     expected_schema,
@@ -15,6 +14,7 @@ from repo_catalog.adapters.sqlite.p1_schema import (
 from repo_catalog.adapters.sqlite.recovery_validation import (
     verify_existing_context_text,
 )
+from repo_catalog.adapters.sqlite.repository_recovery import RecoveryWorkBudget
 from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import (
     FieldCandidate,
@@ -22,7 +22,7 @@ from repo_catalog.domain.p1_context import (
     ResourceKey,
     canonical,
 )
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 from repo_catalog.domain.recovery import CorruptionDetectedError
 from tests.integration.p7.test_context_corruption_stop import (
     _candidate as _text_candidate,
@@ -104,7 +104,7 @@ def test_missing_referenced_metadata_copy_stops_instead_of_reinsertion(
     restored_catalog, tmp_path
 ):
     candidate = _candidate(restored_catalog, "retained_metadata")
-    _delete(restored_catalog, "core", "retained_metadata")
+    _delete(restored_catalog, "repository", "retained_metadata")
     before = _authority(restored_catalog)
     with pytest.raises(
         CorruptionDetectedError, match="required retained metadata copy is missing"
@@ -122,7 +122,7 @@ def test_absence_check_stops_at_finite_vm_work_without_claiming_healthy(
     )
     with sqlite3.connect(restored_catalog / "context.sqlite3") as db:
         work = RecoveryWorkBudget(work_limits={"metadata_units": 2})
-        with pytest.raises(CoreFailure) as failure:
+        with pytest.raises(RepositoryFailure) as failure:
             verify_existing_context_text(db, "f" * 64, b"new", 1024, work)
         assert failure.value.code == "BUDGET"
         assert work.usage["metadata_units"] == 2

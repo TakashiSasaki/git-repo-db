@@ -292,7 +292,7 @@ def test_path_policy(path, kind):
         AccessRegistry(target)
 
 
-def test_access_stop_blocks_new_and_existing_handles_without_core_stop(path):
+def test_access_stop_blocks_new_and_existing_handles_without_repository_stop(path):
     with AccessRegistry(path) as store:
         schema.persist_stop(path)
         with pytest.raises(AccessRegistryError, match="STOPPED"):

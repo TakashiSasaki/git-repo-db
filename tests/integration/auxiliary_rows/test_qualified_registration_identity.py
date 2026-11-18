@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import initialize
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.domain.context_admission import (
@@ -13,7 +13,7 @@ from repo_catalog.domain.context_admission import (
     DependencySet,
     create_local_admission_service,
 )
-from repo_catalog.domain.p1_core import Provenance, RepositoryClaim
+from repo_catalog.domain.p1_repository import Provenance, RepositoryClaim
 from repo_catalog.domain.shared_values import encode
 
 
@@ -54,7 +54,7 @@ def test_same_names_and_uuid_looking_descriptions_never_select_or_merge_registra
         with pytest.raises(ValueError):
             context.source("same name", left)
         assert context.db.execute("SELECT count(*) FROM sources").fetchone()[0] == 2
-    assert not (tmp_path / "core.sqlite3").exists()
+    assert not (tmp_path / "repository.sqlite3").exists()
 
 
 @pytest.mark.parametrize(
@@ -80,18 +80,22 @@ def test_repository_name_claim_replay_and_equal_names_keep_independent_originals
     tmp_path,
 ):
     repository, instance, other = (str(uuid4()) for _ in range(3))
-    initialize(tmp_path / "core.sqlite3", "core", repository, instance)
+    initialize(tmp_path / "repository.sqlite3", "repository", repository, instance)
     original = Provenance("synthetic", "original", "capture", "parser", "1", "reported")
-    with closing(GitCore(tmp_path / "core.sqlite3")) as core:
-        core.admit_repository(other)
+    with closing(
+        GitRepositoryStore(tmp_path / "repository.sqlite3")
+    ) as repository_store:
+        repository_store.admit_repository(other)
         for owner in (repository, other):
             claim = RepositoryClaim(owner, "name", "historical same name", original)
-            core.admit_repository_claim(claim)
-            core.admit_repository_claim(claim)
-        rows = core.sql(
+            repository_store.admit_repository_claim(claim)
+            repository_store.admit_repository_claim(claim)
+        rows = repository_store.sql(
             "SELECT repository_uuidv4,field,value,provenance FROM repository_claims ORDER BY repository_uuidv4"
         )
         assert len(rows) == 2 and {row[0] for row in rows} == {repository, other}
         assert rows[0][1:] == rows[1][1:]
-        assert len(core.sql("SELECT repository_uuidv4 FROM repositories")) == 2
+        assert (
+            len(repository_store.sql("SELECT repository_uuidv4 FROM repositories")) == 2
+        )
     assert not (tmp_path / "context.sqlite3").exists()

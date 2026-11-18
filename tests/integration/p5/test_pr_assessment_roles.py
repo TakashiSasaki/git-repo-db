@@ -11,7 +11,7 @@ from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.application.provider_acquisition import ProviderAcquisition
 from repo_catalog.domain.acquisition_errors import AcquisitionError
 from repo_catalog.domain.p1_context import FieldCandidate, FieldClock, canonical
-from repo_catalog.domain.p1_core import OID
+from repo_catalog.domain.p1_repository import OID
 from repo_catalog.domain.pr_assessment import anchored_code_scope
 from repo_catalog.domain.provider_acquisition import (
     ProviderCommitContextIntake,
@@ -68,7 +68,10 @@ def test_exact_actual_current_role_targets_control_assessment_even_after_complet
     fixture.auth, _ = fixture_service(fixture.grants)
     fixture.admission = fixture_context(fixture.auth)
     fixture.api = ProviderAcquisition(
-        tmp_path, core=tmp_path, authorization=fixture.auth, admission=fixture.admission
+        tmp_path,
+        repository_store=tmp_path,
+        authorization=fixture.auth,
+        admission=fixture.admission,
     )
     fixture.anchor = make_provenance("actual-role-fixture", {"read": role})
     fixture.admit(
@@ -269,7 +272,10 @@ def test_actual_commit_listing_with_other_object_format_never_proves_sha1_compar
     fixture.auth, _ = fixture_service(fixture.grants)
     fixture.admission = fixture_context(fixture.auth)
     fixture.api = ProviderAcquisition(
-        tmp_path, core=tmp_path, authorization=fixture.auth, admission=fixture.admission
+        tmp_path,
+        repository_store=tmp_path,
+        authorization=fixture.auth,
+        admission=fixture.admission,
     )
     original = make_provenance("actual-role-fixture", {"read": str(uuid4())})
     fixture.admit(
@@ -344,7 +350,10 @@ def test_captured_review_target_roles_require_actual_commit_metadata_without_inv
     fixture.auth, _ = fixture_service(fixture.grants)
     fixture.admission = fixture_context(fixture.auth)
     fixture.api = ProviderAcquisition(
-        tmp_path, core=tmp_path, authorization=fixture.auth, admission=fixture.admission
+        tmp_path,
+        repository_store=tmp_path,
+        authorization=fixture.auth,
+        admission=fixture.admission,
     )
     oid = {
         "verified": fixture.head.object_oid,

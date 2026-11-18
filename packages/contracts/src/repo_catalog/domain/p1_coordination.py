@@ -21,7 +21,7 @@ class CoordinationError(RuntimeError):
 class SnapshotToken:
     repository_uuidv4: str
     catalog_instance_uuidv4: str
-    core_sha256: str
+    repository_sha256: str
     context_sha256: str
 
     def encode(self) -> str:
@@ -30,7 +30,7 @@ class SnapshotToken:
 
 @dataclass(frozen=True)
 class PairAdmission:
-    core_committed: bool
+    repository_committed: bool
     context_committed: bool
 
 
@@ -40,7 +40,7 @@ class AdmissionFailure(CoordinationError):
     def __init__(self, outcome: PairAdmission, cause: Exception):
         self.outcome = outcome
         self.cause = cause
-        super().__init__("ADMISSION_FAILED", "core+context", str(cause))
+        super().__init__("ADMISSION_FAILED", "repository+context", str(cause))
 
 
 @dataclass(frozen=True)

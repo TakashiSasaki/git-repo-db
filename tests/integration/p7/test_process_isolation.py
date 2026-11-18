@@ -21,7 +21,7 @@ import pytest
 
 from repo_catalog.adapters.git.native import GitNativeSource
 from repo_catalog.adapters.sqlite.acquisition import UnlimitedWorkBudget
-from repo_catalog.adapters.sqlite.git_core import GitCore
+from repo_catalog.adapters.sqlite.git_repository import GitRepositoryStore
 from repo_catalog.adapters.sqlite.p1_schema import connect
 from repo_catalog.adapters.sqlite.production_context import Context
 from repo_catalog.adapters.sqlite.recovery import SQLiteRecoveryAdapter
@@ -31,8 +31,8 @@ from repo_catalog.application.recovery import RecoveryService
 from repo_catalog.domain.acquisition import GitNativeAcquisitionRequest
 from repo_catalog.domain.context_admission import DependencySet
 from repo_catalog.domain.p1_context import FieldClock, ResourceKey, canonical
-from repo_catalog.domain.p1_core import OID, CoreFailure
-from repo_catalog.domain.production_context import CoreReference
+from repo_catalog.domain.p1_repository import OID, RepositoryFailure
+from repo_catalog.domain.production_context import RepositoryReference
 from repo_catalog.domain.production_query import SearchQuery
 from repo_catalog.domain.recovery import BackupScope
 from tests.integration.p5.conftest import build_sample_git_repo
@@ -71,27 +71,27 @@ def _evidence_hashes(directory):
 
 @pytest.fixture
 def committed_p1_wal(synthetic_catalog):
-    """Keep real typed Core + Context commits exclusively in uncheckpointed WAL."""
+    """Keep real typed Repository + Context commits exclusively in uncheckpointed WAL."""
     tree = make_tree("sha1", [(b"100644", b"wal-file", "a" * 40)])
     commit = make_commit(
         "sha1", tree.object_oid.object_oid, [], message="Committed in WAL\n"
     )
     text = "P1 Context text committed in genuine WAL frames"
-    core_db = connect(synthetic_catalog / "core.sqlite3", "core")
+    repository_db = connect(synthetic_catalog / "repository.sqlite3", "repository")
     context_db = connect(synthetic_catalog / "context.sqlite3", "context")
     try:
-        for db in (core_db, context_db):
+        for db in (repository_db, context_db):
             assert db.execute("PRAGMA journal_mode=WAL").fetchone()[0] == "wal"
             db.execute("PRAGMA wal_autocheckpoint=0")
-        core_db.execute("BEGIN IMMEDIATE")
-        with GitCore.for_transaction(core_db) as core:
-            core.admit_metadata(tree, str(uuid4()), UnlimitedWorkBudget())
-            core.admit_metadata(commit, str(uuid4()), UnlimitedWorkBudget())
-        core_db.commit()
+        repository_db.execute("BEGIN IMMEDIATE")
+        with GitRepositoryStore.for_transaction(repository_db) as repository_store:
+            repository_store.admit_metadata(tree, str(uuid4()), UnlimitedWorkBudget())
+            repository_store.admit_metadata(commit, str(uuid4()), UnlimitedWorkBudget())
+        repository_db.commit()
         digest = admit_context_text(context_db, text)
         for role, query, args in (
             (
-                "core",
+                "repository",
                 "SELECT count(*) FROM retained_metadata WHERE object_oid=?",
                 (commit.object_oid.object_oid,),
             ),
@@ -108,7 +108,7 @@ def committed_p1_wal(synthetic_catalog):
             assert path.with_name(path.name + "-shm").is_file()
         yield synthetic_catalog, commit, text
     finally:
-        core_db.close()
+        repository_db.close()
         context_db.close()
 
 
@@ -153,7 +153,7 @@ def test_actual_p1_wal_candidates_and_process_writer_cut(
 
 COPY_CRASH = r"""
 import pathlib,sys
-from repo_catalog.adapters.sqlite import core_recovery as recovery
+from repo_catalog.adapters.sqlite import repository_recovery as recovery
 from repo_catalog.application.recovery import RecoveryService
 
 def pause():
@@ -259,7 +259,7 @@ def test_stop_fences_actual_p5_acquisition_and_p6_query_search(
         lambda: query.search(SearchQuery("review")),
         query.rebuild_search,
     ):
-        with pytest.raises(CoreFailure) as error:
+        with pytest.raises(RepositoryFailure) as error:
             operation()
         assert error.value.code == "RECOVERY_STOP"
     assert _evidence_hashes(synthetic_catalog) == before
@@ -292,7 +292,7 @@ from repo_catalog.application.acquisition import GitAcquisition
 from repo_catalog.application.production_query import ProductionQueryService
 from repo_catalog.domain.acquisition import GitNativeAcquisitionRequest
 from repo_catalog.domain.production_query import SearchQuery
-from repo_catalog.domain.p1_core import CoreFailure
+from repo_catalog.domain.p1_repository import RepositoryFailure
 catalog, native = Path(sys.argv[1]), Path(sys.argv[2])
 request = GitNativeAcquisitionRequest(sys.argv[3], str(uuid4()), str(uuid4()), "restart", 1)
 acquisition = GitAcquisition(catalog, operational=catalog / "operational.sqlite3")
@@ -305,7 +305,7 @@ for operation in (
 ):
     try:
         operation()
-    except CoreFailure as error:
+    except RepositoryFailure as error:
         assert error.code == "RECOVERY_STOP"
         print(error.code)
     else:
@@ -320,7 +320,7 @@ def test_actual_unresolved_context_reference_survives_restore_and_salvage(
     key = ResourceKey.from_native(service_id, "pull_request", "unresolved-1")
     missing = OID("sha1", "e" * 40)
     provenance = canonical({"source": "test", "evidence": "original-reference"})
-    reference = CoreReference(key, "head", missing, provenance)
+    reference = RepositoryReference(key, "head", missing, provenance)
     authorization, _ = fixture_service(
         DependencySet(
             resources={key},
@@ -334,7 +334,7 @@ def test_actual_unresolved_context_reference_survives_restore_and_salvage(
         context.provider(service_id, "github", admission=admission)
         context.repository(repo_uuid, admission=admission)
         context.resource(key, repo_uuid, admission=admission)
-        context.report_core_reference(
+        context.report_repository_reference(
             reference,
             clock=FieldClock("provider.updated_at", 9),
             observed_at_us=10,
@@ -348,11 +348,11 @@ def test_actual_unresolved_context_reference_survives_restore_and_salvage(
     restored = tmp_path / "unresolved-restored"
     service.restore_backup(backup, restored, repo_uuid)
     view = ProductionQueryService(restored).get_paired_resource(key)
-    assert len(view.core_resolutions) == 1
-    resolution = view.core_resolutions[0]
+    assert len(view.repository_resolutions) == 1
+    resolution = view.repository_resolutions[0]
     assert resolution.reference == reference
-    assert not resolution.available_in_core
-    assert not resolution.core_required
+    assert not resolution.available_in_repository
+    assert not resolution.repository_required
     assert resolution.object_view is None
     output = tmp_path / "unresolved.jsonl"
     receipt = service.extract_salvage(synthetic_catalog, output)
@@ -361,7 +361,7 @@ def test_actual_unresolved_context_reference_survives_restore_and_salvage(
     candidates = [
         r
         for r in records
-        if r["payload"].get("field_name") == "reported_core_reference:head"
+        if r["payload"].get("field_name") == "reported_repository_reference:head"
     ]
     assert len(candidates) == 1
     candidate = candidates[0]

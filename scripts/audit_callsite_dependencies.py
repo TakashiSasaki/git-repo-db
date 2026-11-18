@@ -155,7 +155,7 @@ def build():
                 for token in (
                     "local_revision",
                     "advance_local_revision",
-                    "core_revision_fence",
+                    "repository_revision_fence",
                     ".revision()",
                 )
             ):

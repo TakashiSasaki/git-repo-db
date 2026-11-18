@@ -29,7 +29,7 @@ def test_reported_notes_visible_without_capture(acquisition, paired, capsys):
         root_object_oid=None,
         provenance=replace(value.claims[0].provenance, coordinate="unknown"),
     )
-    from repo_catalog.domain.p1_core import OID
+    from repo_catalog.domain.p1_repository import OID
 
     alternative = replace(
         value.claims[0],
@@ -55,7 +55,7 @@ def test_reported_notes_visible_without_capture(acquisition, paired, capsys):
     assert encoded["observation"]["ref_observation"]["ref_name_bytes"] == {
         "bytes_hex": value.observation.ref_name_bytes.hex()
     }
-    assert not app.core.sql(
+    assert not app.repository_store.sql(
         "SELECT 1 FROM sqlite_schema WHERE type='table' AND name='captures'"
     )
     assert main(["ref-observations", "--catalog", str(path.parent)]) == 0

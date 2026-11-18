@@ -31,7 +31,7 @@ sys.meta_path.insert(0, AbsentModules())
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_search_storage_works_without_core_context_or_paired_imports(tmp_path):
+def test_search_storage_works_without_repository_context_or_paired_imports(tmp_path):
     _run_without_imports(
         """
 from pathlib import Path
@@ -44,7 +44,7 @@ from repo_catalog.domain.search_query import SearchQuery
 directory = Path(sys.argv[1])
 adapter = ProductionSearchAdapter(directory)
 token = SnapshotFenceToken(
-    "core_only", "00000000-0000-4000-8000-000000000001",
+    "repository_only", "00000000-0000-4000-8000-000000000001",
     "00000000-0000-4000-8000-000000000002", "1" * 64,
 ).encode()
 key = canonical_json(["scalar", "test"])
@@ -59,19 +59,19 @@ with sqlite3.connect(adapter.path) as db:
 assert adapter.query_candidates("git_metadata", token, "needle", 1) is None
 assert not (directory / "p1-recovery-stop.json").exists()
 assert not any((directory / name).exists() for name in (
-    "core.sqlite3", "context.sqlite3", "operational.sqlite3", "access.sqlite3"
+    "repository.sqlite3", "context.sqlite3", "operational.sqlite3", "access.sqlite3"
 ))
 """,
         (
-            "repo_catalog.adapters.sqlite.git_core",
-            "repo_catalog.adapters.sqlite.p1_core",
-            "repo_catalog.adapters.sqlite.core_coordination",
+            "repo_catalog.adapters.sqlite.git_repository",
+            "repo_catalog.adapters.sqlite.p1_repository",
+            "repo_catalog.adapters.sqlite.repository_coordination",
             "repo_catalog.adapters.sqlite.p1_context",
             "repo_catalog.adapters.sqlite.production_context",
             "repo_catalog.adapters.sqlite.p1_coordination",
-            "repo_catalog.domain.p1_core",
+            "repo_catalog.domain.p1_repository",
             "repo_catalog.domain.p1_context",
-            "repo_catalog.domain.core_query",
+            "repo_catalog.domain.repository_query",
             "repo_catalog.domain.context_query",
             "repo_catalog.domain.production_query",
         ),
@@ -83,7 +83,7 @@ assert not any((directory / name).exists() for name in (
     ("module", "forbidden"),
     [
         (
-            "repo_catalog.adapters.sqlite.search_core",
+            "repo_catalog.adapters.sqlite.search_repository",
             (
                 "repo_catalog.adapters.sqlite.p1_context",
                 "repo_catalog.adapters.sqlite.production_context",
@@ -95,12 +95,12 @@ assert not any((directory / name).exists() for name in (
         (
             "repo_catalog.adapters.sqlite.search_context",
             (
-                "repo_catalog.adapters.sqlite.git_core",
-                "repo_catalog.adapters.sqlite.p1_core",
-                "repo_catalog.adapters.sqlite.core_coordination",
+                "repo_catalog.adapters.sqlite.git_repository",
+                "repo_catalog.adapters.sqlite.p1_repository",
+                "repo_catalog.adapters.sqlite.repository_coordination",
                 "repo_catalog.adapters.sqlite.p1_coordination",
-                "repo_catalog.domain.p1_core",
-                "repo_catalog.domain.core_query",
+                "repo_catalog.domain.p1_repository",
+                "repo_catalog.domain.repository_query",
             ),
         ),
     ],

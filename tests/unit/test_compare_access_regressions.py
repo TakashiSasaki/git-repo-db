@@ -613,7 +613,7 @@ def test_admission_matching_permission_denied_accepted():
 
 def test_admission_refusal_progress_to_wire_identification_barrier_accepted():
     """Progress from baseline admission refusal (PERMISSION_DENIED) to wire identification barrier is accepted as PROGRESS_KNOWN_BARRIER for reviewed node."""
-    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_repository_effects"
     b_info = {
         "node_id": target_node,
         "phase": "call",
@@ -638,7 +638,7 @@ def test_admission_refusal_progress_to_wire_identification_barrier_accepted():
 
 def test_counterexample1_baseline_invalid_identification_rejected():
     """Counterexample 1: Baseline AdmissionRefused/INVALID_IDENTIFICATION transitioning to ExchangeError/INVALID_IDENTIFICATION must be rejected as CHANGED_FAILURE."""
-    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_repository_effects"
     b_info = {
         "node_id": target_node,
         "phase": "call",
@@ -663,7 +663,7 @@ def test_counterexample1_baseline_invalid_identification_rejected():
 
 def test_counterexample2_assertion_error_with_substring_rejected():
     """Counterexample 2: Baseline AdmissionRefused/PERMISSION_DENIED transitioning to AssertionError whose text contains substring 'ExchangeError INVALID_IDENTIFICATION' must be rejected as CHANGED_FAILURE."""
-    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_core_effects"
+    target_node = "tests.integration.p1.test_generalized_resources::test_selected_real_wire_without_identification_refuses_before_repository_effects"
     b_info = {
         "node_id": target_node,
         "phase": "call",

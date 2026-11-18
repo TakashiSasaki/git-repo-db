@@ -4,8 +4,8 @@ import json
 from dataclasses import replace
 
 from repo_catalog.adapters.sqlite.acquisition import OperationalAcquisitionLedger
-from repo_catalog.application.core_query import CoreQueryService
 from repo_catalog.application.git_acquisition import GitAcquisition
+from repo_catalog.application.repository_query import RepositoryQueryService
 from repo_catalog.domain.git_native import (
     DECODER,
     DECODER_VERSION,
@@ -13,10 +13,10 @@ from repo_catalog.domain.git_native import (
     parse_metadata,
     parse_tree,
 )
-from repo_catalog.domain.p1_core import (
+from repo_catalog.domain.p1_repository import (
     OID,
-    CoreFailure,
     Provenance,
+    RepositoryFailure,
     ScalarClaim,
     account_verification,
     encode,
@@ -50,7 +50,7 @@ class RetainedReparseSource:
             try:
                 return raw.decode(encoding, errors)
             except UnicodeError as error:
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "PARSER_DECODE", subject, "Git metadata decoding failed"
                 ) from error
 
@@ -63,7 +63,7 @@ class RetainedReparseSource:
         # claims. Strict decoding failure cannot leave a partial decoder report.
         for fmt, oid, copy in self.intent["selected_copies"]:
             object_oid = OID(fmt, oid)
-            row = self.snapshot.core.read_metadata_copy(
+            row = self.snapshot.repository_store.read_metadata_copy(
                 object_oid, copy, work, max_bytes=maximum
             )
             with account_verification(work):
@@ -205,8 +205,8 @@ def reparse(
         _, _, work, progress = ledger.create_budget(
             scope=scope, request=request, new_request=new_request
         )
-        reader = CoreQueryService(directory, mode="core_only")
-        with reader.open_snapshot(required_store="core") as snapshot:
+        reader = RepositoryQueryService(directory, mode="repository_only")
+        with reader.open_snapshot(required_store="repository") as snapshot:
             selection_scope = encode(
                 [
                     "retained-reparse-source",
@@ -218,7 +218,7 @@ def reparse(
             if original is None:
                 copies = []
                 for object_oid in objects:
-                    rows = snapshot.core.sql(
+                    rows = snapshot.repository_store.sql(
                         "SELECT physical_copy_uuidv4 FROM retained_metadata WHERE object_format=? AND object_oid=? ORDER BY physical_copy_uuidv4 LIMIT 1",
                         object_oid.key,
                     )
@@ -250,7 +250,7 @@ def reparse(
                     snapshot.token.catalog_instance_uuidv4,
                 )
             ):
-                raise CoreFailure(
+                raise RepositoryFailure(
                     "INCOMPATIBLE_REPLAY",
                     "metadata-reparse",
                     "original retained selection changed",
