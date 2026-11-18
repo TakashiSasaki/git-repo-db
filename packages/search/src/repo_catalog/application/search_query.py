@@ -170,7 +170,7 @@ class SearchReader:
                 for kind in kinds:
                     if (
                         kind in ("git_metadata", "notes")
-                        and getattr(snap, "repository", None) is None
+                        and getattr(snap, "repository_store", None) is None
                         or kind == "context_text"
                         and getattr(snap, "context", None) is None
                     ):
@@ -228,7 +228,7 @@ class SearchReader:
             for kind in projection_kinds:
                 if (
                     kind in ("git_metadata", "notes")
-                    and getattr(snap, "repository", None) is None
+                    and getattr(snap, "repository_store", None) is None
                 ):
                     continue
                 if kind == "context_text" and getattr(snap, "context", None) is None:
@@ -290,7 +290,7 @@ class SearchReader:
             for kind in query.projection_kinds:
                 if (
                     kind in ("git_metadata", "notes")
-                    and getattr(snap, "repository", None) is None
+                    and getattr(snap, "repository_store", None) is None
                 ):
                     continue
                 if kind == "context_text" and getattr(snap, "context", None) is None:
