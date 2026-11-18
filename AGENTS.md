@@ -70,6 +70,15 @@ offline CI work. Apply the [efficient agent execution policy](#efficient-agent-e
   `row_type`; do not hand-edit generated modules or force partial/body-avoiding
   projections to load full rows. Each domain's generated module is stdlib-only.
 
+- When visualizing persistence design, always include a **persistence boundary
+  diagram (永続化境界図)**. Label each in-scope boundary with its responsibility
+  domain and SQLite database filename. Show each displayed persistent class
+  alongside its mapped table inside that boundary. Use solid lines for physical
+  foreign keys within the same database file, dashed lines for cross-database
+  references, and dotted lines for derivations. Base implemented mappings and
+  relationships on the relevant DDL and canonical class mapping. Label proposed
+  changes as proposals.
+
 - [ADR 0039](docs/adr/0039-independent-filesystem-and-worktree-catalogs.md) adds
   independent filesystem and worktree authorities and an optional DB-free local
   composition package. They are outside the existing P1 store/pair factory.
