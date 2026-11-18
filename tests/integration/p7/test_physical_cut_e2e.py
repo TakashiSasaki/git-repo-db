@@ -119,7 +119,7 @@ def test_ref_only_transport_backup_and_corrupt_source_recovery(
     scope = BackupScope.PAIRED if paired else BackupScope.GIT_ONLY
     assert adapter.create_consistent_backup(path.parent, backup, scope).verified_clean
     manifest = json.loads((backup / "manifest.json").read_text())
-    assert manifest["manifest_version"] == 3
+    assert manifest["manifest_version"] == 4
     # A genuinely new post-backup subject must arrive through typed salvage.
     late = replace(
         value.observation,
