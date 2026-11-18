@@ -1076,6 +1076,8 @@ class GitAcquisition:
             if _after_ref_scan is not None:
                 _after_ref_scan(tuple(ref_enumerations))
             selected = request.select_object_oids
+            explicit_objects = frozenset(selected)
+            observed_explicit_objects: set[OID] = set()
             missing = request.nominal_missing_object_oids
             if _metadata_walk is not None:
                 selected, discovered_missing = _metadata_walk.discover(active_work)
@@ -1179,6 +1181,8 @@ class GitAcquisition:
                                 and target_object_oid not in metadata_only_order
                             ):
                                 metadata_only_order.append(target_object_oid)
+                if object_oid in explicit_objects:
+                    observed_explicit_objects.add(object_oid)
 
             for claim in request.extra_scalar_claims:
                 _charge(active_work, "metadata_units", 1)
@@ -1322,6 +1326,7 @@ class GitAcquisition:
                 coverage_claims=(cov_claim,),
                 failure_code=failure_code,
                 failure_detail=failure_detail,
+                selected_metadata_count=len(observed_explicit_objects),
             )
             return _finish_ref_inventories(
                 _defer_ref_work(report, request.notes, notes_src),

@@ -709,6 +709,14 @@ def test_cli_interactive_acquires_actual_git(setup, monkeypatch, capsys, notes):
     result = json.loads(capsys.readouterr().out)
     assert result["git_acquired"] is True
     assert result["repository_uuidv4"] == setup["target"]
+    assert result["acquisition_scope"] == {
+        "object_format": setup["fmt"],
+        "selected_objects": 1,
+        "selected_objects_with_metadata": 1,
+        "refs_requested": True,
+        "notes_requested": notes,
+        "retain_metadata_bytes": True,
+    }
     assert rows(setup, "retained_metadata")
     assert result["retained_notes_count"] == int(notes)
     assert len(rows(setup, "ref_retained_notes")) == (2 if notes else 0)
@@ -884,3 +892,22 @@ def test_r226_02_access_tiny_budget_stops_before_encoding_or_activation(
         assert failure.value.code == "BUDGET"
     assert not rows(setup, "ref_observations")
     assert not (setup["cat"] / "p1-recovery-stop.json").exists()
+
+
+def test_native_scope_counts_real_metadata_separately_from_nominal_objects(setup):
+    missing = OID(setup["fmt"], "f" * len(setup["objects"]["commit2"].object_oid))
+    commit = setup["objects"]["commit2"]
+    report = acquire(
+        setup,
+        unit=replace(
+            setup["unit"],
+            select_object_oids=(commit, missing),
+            include_refs=False,
+            retain_bytes=False,
+        ),
+        new_request=True,
+    )
+    assert report.status == "partial"
+    assert report.selected_metadata_count == 1
+    assert missing in report.admitted_objects
+    assert report.nominal_missing_objects == (missing,)

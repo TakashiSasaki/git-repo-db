@@ -53,6 +53,7 @@ class GitHistoryQuery(RepositoryQueryService):
 
     def _history(self, repository_store, token, start, limit, first_parent):
         pending, seen, items, missing, reported = [start], set(), [], [], []
+        missing_details = []
         while pending and len(items) < limit:
             object_oid = pending.pop()
             if object_oid.key in seen:
@@ -64,12 +65,39 @@ class GitHistoryQuery(RepositoryQueryService):
             parents, parent_projection = self._members(
                 repository_store, object_oid, "commit_parents"
             )
+            key = list(object_oid.key)
             if tree is None or parents is None:
-                missing.append(list(object_oid.key))
-            elif (
-                tree_projection.canonical is None or parent_projection.canonical is None
+                missing.append(key)
+                incomplete = {
+                    name: (
+                        "conflicting"
+                        if projection.reported_conflict
+                        else "incomplete"
+                        if projection.canonical is not None or projection.alternatives
+                        else "unobserved"
+                    )
+                    for name, members, projection in (
+                        ("commit_tree", tree, tree_projection),
+                        ("commit_parents", parents, parent_projection),
+                    )
+                    if members is None
+                }
+                missing_details.append(
+                    {
+                        "object_oid": key,
+                        "oid_known": bool(
+                            repository_store.sql(
+                                "SELECT 1 FROM git_objects WHERE object_format=? AND object_oid=?",
+                                object_oid.key,
+                            )
+                        ),
+                        "relations": incomplete,
+                    }
+                )
+            if (tree is not None and tree_projection.canonical is None) or (
+                parents is not None and parent_projection.canonical is None
             ):
-                reported.append(list(object_oid.key))
+                reported.append(key)
             items.append(
                 {
                     "object_oid": list(object_oid.key),
@@ -90,6 +118,7 @@ class GitHistoryQuery(RepositoryQueryService):
         return {
             "items": items,
             "missing": missing,
+            "missing_details": missing_details,
             "reported_topology": reported,
             "has_more": bool(pending),
             "status": "partial" if missing or pending or reported else "complete",

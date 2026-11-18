@@ -118,3 +118,116 @@ def test_normal_cli_ordered_merge_graph_compare_empty_tree_and_exact_repeat(
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
     assert not (catalog / "context.sqlite3").exists()
     assert not (catalog / "search.sqlite3").exists()
+
+
+def test_history_distinguishes_known_parent_from_unknown_oid(tmp_path, capsys):
+    catalog = tmp_path / "catalog"
+    identity = init(capsys, catalog)
+    init(capsys, catalog, "operational")
+    parent = OID("sha1", "a" * 40)
+    body = (
+        f"tree {native_object_oid('sha1', 'tree', b'')}\n"
+        f"parent {parent.object_oid}\n"
+        "author Test <test@example.test> 0 +0000\n"
+        "committer Test <test@example.test> 0 +0000\n\n"
+        "selected commit\n"
+    ).encode()
+    head = OID("sha1", native_object_oid("sha1", "commit", body))
+    unit = GitMetadataInput(
+        identity["repository_uuidv4"],
+        str(uuid4()),
+        str(uuid4()),
+        "selected-commit-history",
+        1,
+        native_objects=(
+            NativeObject(
+                head, "commit", body, len(body), hashlib.sha256(body).hexdigest()
+            ),
+        ),
+    )
+    run(
+        capsys,
+        "acquire",
+        "git-metadata",
+        "--catalog",
+        catalog,
+        "--input",
+        document(tmp_path, "single-commit.json", unit),
+        "--new-request",
+    )
+    unknown = OID("sha1", "b" * 40)
+    for start, missing, known in ((head, parent, True), (unknown, unknown, False)):
+        history = run(
+            capsys,
+            "query",
+            "log",
+            "--catalog",
+            catalog,
+            "--object-oid",
+            start.object_oid,
+        )
+        assert history["status"] == "partial"
+        assert history["missing"] == [list(missing.key)]
+        assert history["missing_details"] == [
+            {
+                "object_oid": list(missing.key),
+                "oid_known": known,
+                "relations": {
+                    "commit_tree": "unobserved",
+                    "commit_parents": "unobserved",
+                },
+            }
+        ]
+
+
+def test_history_reports_attributed_parent_when_tree_is_unobserved(tmp_path, capsys):
+    from repo_catalog.domain.p1_repository import (
+        Provenance,
+        RelationGroup,
+        RelationMember,
+    )
+
+    catalog = tmp_path / "catalog"
+    identity = init(capsys, catalog)
+    init(capsys, catalog, "operational")
+    head, parent = OID("sha1", "1" * 40), OID("sha1", "2" * 40)
+    provenance = Provenance(
+        "parent-source", "original-observation", "parents", "decoder", "1"
+    )
+    unit = GitMetadataInput(
+        identity["repository_uuidv4"],
+        str(uuid4()),
+        str(uuid4()),
+        "parent-source",
+        1,
+        relation_groups=(
+            RelationGroup(
+                head,
+                "commit_parents",
+                "actual",
+                "complete",
+                (RelationMember(0, parent),),
+                provenance,
+            ),
+        ),
+    )
+    run(
+        capsys,
+        "acquire",
+        "git-metadata",
+        "--catalog",
+        catalog,
+        "--input",
+        document(tmp_path, "reported-parent.json", unit),
+        "--new-request",
+    )
+    history = run(
+        capsys, "query", "log", "--catalog", catalog, "--object-oid", head.object_oid
+    )
+    assert history["status"] == "partial"
+    assert [row["object_oid"] for row in history["items"]] == [
+        list(head.key),
+        list(parent.key),
+    ]
+    assert history["missing_details"][0]["relations"] == {"commit_tree": "unobserved"}
+    assert history["reported_topology"] == [list(head.key)]

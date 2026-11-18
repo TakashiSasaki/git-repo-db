@@ -93,6 +93,15 @@ catalog administration retain their own verification surfaces. Optional FTS or
 Operational telemetry availability does not establish domain completeness or
 invalidate sound authoritative facts.
 
+For native local `acquire git` operations, `acquisition_scope` reports the
+number of distinct explicitly selected objects, how many of those objects had
+metadata admitted, the ref and Notes selection, and the requested byte
+retention policy. A complete result describes the requested acquisition.
+History queries may encounter additional parents. For `query log`,
+`missing_details` reports whether each unresolved OID exists in the catalog
+and which commit relations are unobserved, incomplete or conflicting.
+`reported_topology` identifies traversed topology backed by attributed reports.
+
 ## Current and captured PR queries
 
 `query pr-code --listing-kind pr_files` assesses the requested current file

@@ -25,3 +25,7 @@ validates the database plus its SHA-256 manifest.
 Git registration and per-checkout inspections are observations made over an
 interval, not an atomic filesystem snapshot. An interrupted or bounded discovery
 reports partial scope while preserving the topology already observed.
+
+Discovery reports `WORKTREE_PATH_MISSING` on a registered worktree with a
+missing path. The entry and its recorded Git listing fields remain available
+in the partial observation.
