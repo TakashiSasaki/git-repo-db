@@ -65,8 +65,8 @@ class GitHistoryQuery(RepositoryQueryService):
             parents, parent_projection = self._members(
                 repository_store, object_oid, "commit_parents"
             )
+            key = list(object_oid.key)
             if tree is None or parents is None:
-                key = list(object_oid.key)
                 missing.append(key)
                 incomplete = {
                     name: (
@@ -94,10 +94,10 @@ class GitHistoryQuery(RepositoryQueryService):
                         "relations": incomplete,
                     }
                 )
-            elif (
-                tree_projection.canonical is None or parent_projection.canonical is None
+            if (tree is not None and tree_projection.canonical is None) or (
+                parents is not None and parent_projection.canonical is None
             ):
-                reported.append(list(object_oid.key))
+                reported.append(key)
             items.append(
                 {
                     "object_oid": list(object_oid.key),

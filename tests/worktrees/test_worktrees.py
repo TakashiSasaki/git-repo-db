@@ -282,3 +282,44 @@ def test_windows_unc_volume_root_and_drive_relative_paths(monkeypatch):
     assert native_path("C:\\") == b"C:\\"
     with pytest.raises(WorktreeError, match="drive-relative"):
         native_path("C:relative")
+
+
+@pytest.mark.parametrize(
+    ("replacement", "reason"),
+    [
+        ("empty-directory", "TOPOLOGY_CHANGED"),
+        ("parent-file", "WORKTREE_PATH_MISSING"),
+        ("root-file", "WORKTREE_PATH_MISSING"),
+    ],
+)
+def test_bad_registered_worktree_does_not_lose_the_observation(
+    tmp_path, replacement, reason
+):
+    primary = repository(tmp_path / "primary")
+    parent = primary / "nested"
+    parent.mkdir()
+    checkout = parent / "checkout"
+    git(primary, "worktree", "add", "--detach", checkout, "HEAD")
+    db_path = tmp_path / "worktrees.sqlite3"
+    with WorktreeCatalog.initialize(db_path) as catalog:
+        first = catalog.discover(primary)
+        assert first.status == "complete"
+        shutil.rmtree(checkout)
+        if replacement == "empty-directory":
+            checkout.mkdir()
+        elif replacement == "parent-file":
+            parent.rmdir()
+            parent.write_text("blocking file")
+        else:
+            checkout.write_text("blocking file")
+        latest = catalog.discover(primary)
+        assert latest.status == "partial"
+        assert latest.errors == (reason,)
+
+    with WorktreeCatalog.open(db_path, readonly=True) as catalog:
+        assert catalog.get_discovery(first.observation_uuid).status == "complete"
+        saved = catalog.get_discovery(latest.observation_uuid)
+        assert {entry.root_path: entry.error for entry in saved.entries} == {
+            native_path(primary): None,
+            native_path(checkout): reason,
+        }

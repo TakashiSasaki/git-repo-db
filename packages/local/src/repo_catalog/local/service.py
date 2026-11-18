@@ -56,8 +56,20 @@ def _key(value: str | bytes | os.PathLike) -> bytes:
     return os.fsencode(_path(value))
 
 
+def _windows_commonpath_arg(path: bytes) -> bytes:
+    path = path.replace(b"/", b"\\")
+    drive, tail = ntpath.splitdrive(path)
+    # Make the separator explicit on a bare UNC share root.
+    if not tail and drive.startswith(b"\\\\"):
+        return drive + b"\\"
+    return path
+
+
 def _within(child: bytes, parent: bytes, *, dialect: str | None = None) -> bool:
     paths = ntpath if dialect == "nt" else posixpath if dialect == "posix" else os.path
+    if paths is ntpath:
+        child = _windows_commonpath_arg(child)
+        parent = _windows_commonpath_arg(parent)
     try:
         return paths.commonpath((child, parent)) == parent
     except ValueError:
@@ -240,18 +252,16 @@ class LocalCatalog:
         return paths
 
     def verify(self, *, repository_database: Path | None = None):
-        """Verify selected stores and their recorded references without scanning sources."""
+        """Check references in the opened catalogs."""
         worktrees = self.worktrees
         if worktrees is None:
             raise ValueError(
                 "Reference verification requires an explicit Worktrees database"
             )
-        topology = worktrees.verify()
         # Scan references are committed after the target scan. Read the
         # reference list before looking up targets in the other store.
         references = worktrees.list_scan_references()
         links = worktrees.list_repository_links()
-        filesystem = self.filesystem.verify()
         scans = {}
         target_statuses = Counter()
         issues = []
@@ -282,8 +292,6 @@ class LocalCatalog:
         repositories = _verify_repository_links(links, repository_database)
         return {
             "status": "partial" if issues or repositories["issues"] else "complete",
-            "filesystem": filesystem,
-            "worktrees": topology,
             "scan_references": {
                 "checked": len(references),
                 "matched_target_statuses": dict(target_statuses),

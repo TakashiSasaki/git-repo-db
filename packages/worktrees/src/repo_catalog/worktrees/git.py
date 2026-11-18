@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import stat
 import subprocess
 import threading
 import time
@@ -249,16 +250,24 @@ def discover_topology(
                         actual = initial
                     else:
                         try:
-                            os.stat(entry.root_path)
-                        except FileNotFoundError:
+                            is_directory = stat.S_ISDIR(
+                                os.stat(entry.root_path).st_mode
+                            )
+                        except (FileNotFoundError, NotADirectoryError):
+                            is_directory = False
+                        if not is_directory:
                             raise WorktreeError(
                                 "WORKTREE_PATH_MISSING",
-                                "registered worktree path is missing",
-                            ) from None
+                                "registered worktree directory is unavailable",
+                            )
                         actual = _inspect(git, entry.root_path)
-                    if actual.common_dir != common:
+                    if (
+                        actual.root_path != entry.root_path
+                        or actual.common_dir != common
+                    ):
                         raise WorktreeError(
-                            "TOPOLOGY_CHANGED", "worktree common directory changed"
+                            "TOPOLOGY_CHANGED",
+                            "worktree root or common directory changed",
                         )
                     entries.append(
                         replace(actual, locked=entry.locked, prunable=entry.prunable)

@@ -7805,7 +7805,7 @@
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
       "owner": "repo-catalog-local",
-      "sha256": "e6bbc71ef20ddd8f4e1f75a2a200623c3ceaf863ed94d3039cc4c55faf590849",
+      "sha256": "e19c83006fbe75e30321941244c30430602d30d2809b594ebc6a8bfbc4119444",
       "direct_product_imports": [
         "repo_catalog.application.separated_initialization",
         "repo_catalog.application.separated_initialization.read_role_snapshot",
@@ -7836,114 +7836,119 @@
           "end_line": 56
         },
         {
-          "name": "_within",
+          "name": "_windows_commonpath_arg",
           "line": 59,
-          "end_line": 64
+          "end_line": 65
+        },
+        {
+          "name": "_within",
+          "line": 68,
+          "end_line": 76
         },
         {
           "name": "_display",
-          "line": 67,
-          "end_line": 72
+          "line": 79,
+          "end_line": 84
         },
         {
           "name": "_physical_key",
-          "line": 75,
-          "end_line": 83
+          "line": 87,
+          "end_line": 95
         },
         {
           "name": "_git_marker",
-          "line": 86,
-          "end_line": 106
+          "line": 98,
+          "end_line": 118
         },
         {
           "name": "_root_exclusions",
-          "line": 109,
-          "end_line": 122
+          "line": 121,
+          "end_line": 134
         },
         {
           "name": "_verify_repository_links",
-          "line": 125,
-          "end_line": 159
+          "line": 137,
+          "end_line": 171
         },
         {
           "name": "__init__",
-          "line": 165,
-          "end_line": 169
+          "line": 177,
+          "end_line": 181
         },
         {
           "name": "initialize",
-          "line": 172,
-          "end_line": 197
+          "line": 184,
+          "end_line": 209
         },
         {
           "name": "open",
-          "line": 200,
-          "end_line": 217
+          "line": 212,
+          "end_line": 229
         },
         {
           "name": "close",
-          "line": 219,
-          "end_line": 224
+          "line": 231,
+          "end_line": 236
         },
         {
           "name": "__enter__",
-          "line": 226,
-          "end_line": 227
+          "line": 238,
+          "end_line": 239
         },
         {
           "name": "__exit__",
-          "line": 229,
-          "end_line": 230
+          "line": 241,
+          "end_line": 242
         },
         {
           "name": "_catalog_paths",
-          "line": 232,
-          "end_line": 240
+          "line": 244,
+          "end_line": 252
         },
         {
           "name": "verify",
-          "line": 242,
-          "end_line": 293
+          "line": 254,
+          "end_line": 301
         },
         {
           "name": "scan",
-          "line": 295,
-          "end_line": 402
+          "line": 303,
+          "end_line": 410
         },
         {
           "name": "add_target",
-          "line": 313,
-          "end_line": 317
+          "line": 321,
+          "end_line": 325
         },
         {
           "name": "discover",
-          "line": 319,
-          "end_line": 340
+          "line": 327,
+          "end_line": 348
         },
         {
           "name": "walk_error",
-          "line": 355,
-          "end_line": 356
+          "line": 363,
+          "end_line": 364
         },
         {
           "name": "export_efu",
-          "line": 404,
-          "end_line": 525
+          "line": 412,
+          "end_line": 533
         },
         {
           "name": "enrich",
-          "line": 449,
-          "end_line": 499
+          "line": 457,
+          "end_line": 507
         },
         {
           "name": "values",
-          "line": 468,
-          "end_line": 476
+          "line": 476,
+          "end_line": 484
         },
         {
           "name": "entries",
-          "line": 501,
-          "end_line": 503
+          "line": 509,
+          "end_line": 511
         }
       ]
     },
@@ -11244,7 +11249,7 @@
     {
       "path": "packages/repository/src/repo_catalog/application/git_history_query.py",
       "owner": "repo-catalog-repository",
-      "sha256": "599bce09a7f4ff85063f59825583d0dc42da8bd7c0a9cf126e0d32a706cb7425",
+      "sha256": "1db10f1a93c750c85170471971a007e53880897df158d1b688f9bc41ca9d3705",
       "direct_product_imports": [
         "repo_catalog.application.repository_query",
         "repo_catalog.application.repository_query.RepositoryQueryService",
@@ -14483,7 +14488,7 @@
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
       "owner": "repo-catalog-worktrees",
-      "sha256": "d3bd9b0e50575ee9b756b6733f366f76996e27a9acb595c4dca04602ee6c060e",
+      "sha256": "22c696d967478c173a797892a4fcbdacd6409f8e6d613e174cb252624afff152",
       "direct_product_imports": [
         "repo_catalog.worktrees.models",
         "repo_catalog.worktrees.models.DiscoveryResult",
@@ -14495,43 +14500,43 @@
       "functions": [
         {
           "name": "__init__",
-          "line": 23,
-          "end_line": 50
+          "line": 24,
+          "end_line": 51
         },
         {
           "name": "run",
-          "line": 52,
-          "end_line": 115
+          "line": 53,
+          "end_line": 116
         },
         {
           "name": "read_output",
-          "line": 84,
-          "end_line": 95
+          "line": 85,
+          "end_line": 96
         },
         {
           "name": "value",
-          "line": 117,
-          "end_line": 123
+          "line": 118,
+          "end_line": 124
         },
         {
           "name": "_inspect",
-          "line": 126,
-          "end_line": 144
+          "line": 127,
+          "end_line": 145
         },
         {
           "name": "_porcelain",
-          "line": 147,
-          "end_line": 179
+          "line": 148,
+          "end_line": 180
         },
         {
           "name": "_git_marker",
-          "line": 182,
-          "end_line": 195
+          "line": 183,
+          "end_line": 196
         },
         {
           "name": "discover_topology",
-          "line": 198,
-          "end_line": 275
+          "line": 199,
+          "end_line": 284
         }
       ]
     },
@@ -29458,7 +29463,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 141,
+      "line": 153,
       "function": "_verify_repository_links",
       "subjects": [
         "repositories"
@@ -29469,7 +29474,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 166,
+      "line": 178,
       "function": "__init__",
       "subjects": [
         "worktrees"
@@ -29478,7 +29483,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 169,
+      "line": 181,
       "function": "__init__",
       "subjects": [
         "worktrees"
@@ -29487,16 +29492,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 190,
-      "function": "initialize",
-      "subjects": [
-        "worktrees"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 197,
+      "line": 202,
       "function": "initialize",
       "subjects": [
         "worktrees"
@@ -29506,6 +29502,15 @@
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
       "line": 209,
+      "function": "initialize",
+      "subjects": [
+        "worktrees"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/local/src/repo_catalog/local/service.py",
+      "line": 221,
       "function": "open",
       "subjects": [
         "worktrees"
@@ -29514,7 +29519,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 217,
+      "line": 229,
       "function": "open",
       "subjects": [
         "worktrees"
@@ -29523,7 +29528,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 223,
+      "line": 235,
       "function": "close",
       "subjects": [
         "worktrees"
@@ -29532,7 +29537,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 224,
+      "line": 236,
       "function": "close",
       "subjects": [
         "worktrees"
@@ -29541,7 +29546,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 234,
+      "line": 246,
       "function": "_catalog_paths",
       "subjects": [
         "worktrees"
@@ -29550,18 +29555,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 243,
-      "function": "verify",
-      "subjects": [
-        "sources"
-      ],
-      "sql_operations": [
-        "REFERENCES"
-      ]
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 244,
+      "line": 256,
       "function": "verify",
       "subjects": [
         "worktrees"
@@ -29570,7 +29564,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 245,
+      "line": 257,
       "function": "verify",
       "subjects": [
         "worktrees"
@@ -29579,16 +29573,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 249,
-      "function": "verify",
-      "subjects": [
-        "worktrees"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 252,
+      "line": 263,
       "function": "verify",
       "subjects": [
         "worktrees"
@@ -29599,19 +29584,10 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 253,
+      "line": 264,
       "function": "verify",
       "subjects": [
         "worktrees"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 255,
-      "function": "verify",
-      "subjects": [
-        "scans"
       ],
       "sql_operations": []
     },
@@ -29626,7 +29602,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 267,
+      "line": 275,
       "function": "verify",
       "subjects": [
         "scans"
@@ -29635,7 +29611,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 269,
+      "line": 277,
       "function": "verify",
       "subjects": [
         "scans"
@@ -29644,7 +29620,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 270,
+      "line": 279,
       "function": "verify",
       "subjects": [
         "scans"
@@ -29653,7 +29629,16 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 273,
+      "line": 280,
+      "function": "verify",
+      "subjects": [
+        "scans"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/local/src/repo_catalog/local/service.py",
+      "line": 283,
       "function": "verify",
       "subjects": [
         "worktrees"
@@ -29662,7 +29647,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 282,
+      "line": 292,
       "function": "verify",
       "subjects": [
         "repositories"
@@ -29671,7 +29656,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 284,
+      "line": 294,
       "function": "verify",
       "subjects": [
         "repositories"
@@ -29680,16 +29665,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 286,
-      "function": "verify",
-      "subjects": [
-        "worktrees"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 287,
+      "line": 295,
       "function": "verify",
       "subjects": [
         "scan_references"
@@ -29698,7 +29674,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 292,
+      "line": 300,
       "function": "verify",
       "subjects": [
         "repositories",
@@ -29708,7 +29684,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 298,
+      "line": 306,
       "function": "scan",
       "subjects": [
         "worktrees"
@@ -29717,37 +29693,10 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 304,
+      "line": 312,
       "function": "scan",
       "subjects": [
         "scans"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 321,
-      "function": "discover",
-      "subjects": [
-        "worktrees"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 327,
-      "function": "discover",
-      "subjects": [
-        "entries"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 328,
-      "function": "discover",
-      "subjects": [
-        "entries"
       ],
       "sql_operations": []
     },
@@ -29762,7 +29711,34 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 345,
+      "line": 335,
+      "function": "discover",
+      "subjects": [
+        "entries"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/local/src/repo_catalog/local/service.py",
+      "line": 336,
+      "function": "discover",
+      "subjects": [
+        "entries"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/local/src/repo_catalog/local/service.py",
+      "line": 337,
+      "function": "discover",
+      "subjects": [
+        "worktrees"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/local/src/repo_catalog/local/service.py",
+      "line": 353,
       "function": "scan",
       "subjects": [
         "entries"
@@ -29771,7 +29747,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 348,
+      "line": 356,
       "function": "scan",
       "subjects": [
         "entries"
@@ -29780,7 +29756,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 386,
+      "line": 394,
       "function": "scan",
       "subjects": [
         "scans"
@@ -29789,7 +29765,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 388,
+      "line": 396,
       "function": "scan",
       "subjects": [
         "entries"
@@ -29798,7 +29774,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 392,
+      "line": 400,
       "function": "scan",
       "subjects": [
         "worktrees"
@@ -29807,7 +29783,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 402,
+      "line": 410,
       "function": "scan",
       "subjects": [
         "scans"
@@ -29816,7 +29792,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 435,
+      "line": 443,
       "function": "export_efu",
       "subjects": [
         "observations"
@@ -29825,7 +29801,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 436,
+      "line": 444,
       "function": "export_efu",
       "subjects": [
         "worktrees"
@@ -29834,7 +29810,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 437,
+      "line": 445,
       "function": "export_efu",
       "subjects": [
         "scan_references",
@@ -29846,7 +29822,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 441,
+      "line": 449,
       "function": "export_efu",
       "subjects": [
         "worktrees"
@@ -29855,7 +29831,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 444,
+      "line": 452,
       "function": "export_efu",
       "subjects": [
         "entries"
@@ -29864,7 +29840,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 446,
+      "line": 454,
       "function": "export_efu",
       "subjects": [
         "observations"
@@ -29873,7 +29849,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 447,
+      "line": 455,
       "function": "export_efu",
       "subjects": [
         "observations"
@@ -29882,7 +29858,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 456,
+      "line": 464,
       "function": "enrich",
       "subjects": [
         "worktrees"
@@ -29891,7 +29867,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 461,
+      "line": 469,
       "function": "enrich",
       "subjects": [
         "observations"
@@ -29900,7 +29876,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 478,
+      "line": 486,
       "function": "enrich",
       "subjects": [
         "repositories"
@@ -29909,7 +29885,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 480,
+      "line": 488,
       "function": "enrich",
       "subjects": [
         "worktrees"
@@ -29918,7 +29894,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 481,
+      "line": 489,
       "function": "enrich",
       "subjects": [
         "repositories"
@@ -29929,7 +29905,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 482,
+      "line": 490,
       "function": "enrich",
       "subjects": [
         "repository_links",
@@ -29939,7 +29915,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 494,
+      "line": 502,
       "function": "enrich",
       "subjects": [
         "repositories"
@@ -29950,7 +29926,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 501,
+      "line": 509,
       "function": "entries",
       "subjects": [
         "entries"
@@ -29959,7 +29935,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 506,
+      "line": 514,
       "function": "export_efu",
       "subjects": [
         "worktrees"
@@ -29968,7 +29944,7 @@
     },
     {
       "path": "packages/local/src/repo_catalog/local/service.py",
-      "line": 512,
+      "line": 520,
       "function": "export_efu",
       "subjects": [
         "entries"
@@ -38404,7 +38380,7 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 150,
+      "line": 151,
       "function": "_porcelain",
       "subjects": [
         "entries"
@@ -38413,7 +38389,7 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 165,
+      "line": 166,
       "function": "_porcelain",
       "subjects": [
         "entries"
@@ -38422,7 +38398,7 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 177,
+      "line": 178,
       "function": "_porcelain",
       "subjects": [
         "entries"
@@ -38431,7 +38407,7 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 179,
+      "line": 180,
       "function": "_porcelain",
       "subjects": [
         "entries"
@@ -38440,7 +38416,7 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 215,
+      "line": 216,
       "function": "discover_topology",
       "subjects": [
         "entries"
@@ -38449,7 +38425,7 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 237,
+      "line": 238,
       "function": "discover_topology",
       "subjects": [
         "entries"
@@ -38458,32 +38434,12 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 245,
+      "line": 246,
       "function": "discover_topology",
       "subjects": [
         "entries"
       ],
       "sql_operations": []
-    },
-    {
-      "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 263,
-      "function": "discover_topology",
-      "subjects": [
-        "entries"
-      ],
-      "sql_operations": []
-    },
-    {
-      "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 268,
-      "function": "discover_topology",
-      "subjects": [
-        "entries"
-      ],
-      "sql_operations": [
-        "REPLACE"
-      ]
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
@@ -38496,7 +38452,27 @@
     },
     {
       "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
-      "line": 274,
+      "line": 277,
+      "function": "discover_topology",
+      "subjects": [
+        "entries"
+      ],
+      "sql_operations": [
+        "REPLACE"
+      ]
+    },
+    {
+      "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
+      "line": 281,
+      "function": "discover_topology",
+      "subjects": [
+        "entries"
+      ],
+      "sql_operations": []
+    },
+    {
+      "path": "packages/worktrees/src/repo_catalog/worktrees/git.py",
+      "line": 283,
       "function": "discover_topology",
       "subjects": [
         "entries"

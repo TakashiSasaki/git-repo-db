@@ -365,11 +365,13 @@ def test_physical_root_alias_is_scanned_once_and_self_databases_stay_excluded(tm
         )
 
 
-def test_verify_selected_catalog_references(tmp_path, capsys):
+def test_verify_selected_catalog_references(tmp_path, capsys, monkeypatch):
     from uuid import uuid4
 
     from repo_catalog.adapters.sqlite.p1_schema import initialize
+    from repo_catalog.filesystem import FilesystemCatalog
     from repo_catalog.local.cli import main
+    from repo_catalog.worktrees import WorktreeCatalog
 
     source = repository(tmp_path / "inputs" / "repo")
     filesystem_db = tmp_path / "filesystem.sqlite3"
@@ -396,9 +398,20 @@ def test_verify_selected_catalog_references(tmp_path, capsys):
         "--worktrees-db",
         str(worktrees_db),
     ]
+    calls = []
+    for catalog_type in (FilesystemCatalog, WorktreeCatalog):
+        original = catalog_type.verify
+
+        def record_verify(store, verify=original):
+            calls.append(type(store))
+            return verify(store)
+
+        monkeypatch.setattr(catalog_type, "verify", record_verify)
+
     paths = (filesystem_db, worktrees_db, repository_db)
     before = [path.read_bytes() for path in paths]
     assert main(args) == 0
+    assert calls == [FilesystemCatalog, WorktreeCatalog]
     result = json.loads(capsys.readouterr().out)
     assert result["scan_references"] == {
         "checked": 1,
@@ -451,3 +464,20 @@ def test_verify_selected_catalog_references(tmp_path, capsys):
         "REPOSITORY_UUID_NOT_IN_SELECTED_DB"
     ]
     assert before == [path.read_bytes() for path in paths]
+
+
+@pytest.mark.parametrize(
+    ("child", "parent", "expected"),
+    [
+        (rb"\\server\share\repo", rb"\\server\share", True),
+        (rb"\\server\share\repo", b"\\\\server\\share\\", True),
+        (rb"\\server\share", rb"\\server\share", True),
+        (b"//server/share/repo", b"//server/share", True),
+        (rb"\\server\other\repo", rb"\\server\share", False),
+        (rb"C:\repo", b"C:", False),
+    ],
+)
+def test_windows_scope_includes_bare_unc_share_root(child, parent, expected):
+    from repo_catalog.local.service import _within
+
+    assert _within(child, parent, dialect="nt") is expected

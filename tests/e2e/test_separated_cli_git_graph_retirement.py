@@ -178,3 +178,56 @@ def test_history_distinguishes_known_parent_from_unknown_oid(tmp_path, capsys):
                 },
             }
         ]
+
+
+def test_history_reports_attributed_parent_when_tree_is_unobserved(tmp_path, capsys):
+    from repo_catalog.domain.p1_repository import (
+        Provenance,
+        RelationGroup,
+        RelationMember,
+    )
+
+    catalog = tmp_path / "catalog"
+    identity = init(capsys, catalog)
+    init(capsys, catalog, "operational")
+    head, parent = OID("sha1", "1" * 40), OID("sha1", "2" * 40)
+    provenance = Provenance(
+        "parent-source", "original-observation", "parents", "decoder", "1"
+    )
+    unit = GitMetadataInput(
+        identity["repository_uuidv4"],
+        str(uuid4()),
+        str(uuid4()),
+        "parent-source",
+        1,
+        relation_groups=(
+            RelationGroup(
+                head,
+                "commit_parents",
+                "actual",
+                "complete",
+                (RelationMember(0, parent),),
+                provenance,
+            ),
+        ),
+    )
+    run(
+        capsys,
+        "acquire",
+        "git-metadata",
+        "--catalog",
+        catalog,
+        "--input",
+        document(tmp_path, "reported-parent.json", unit),
+        "--new-request",
+    )
+    history = run(
+        capsys, "query", "log", "--catalog", catalog, "--object-oid", head.object_oid
+    )
+    assert history["status"] == "partial"
+    assert [row["object_oid"] for row in history["items"]] == [
+        list(head.key),
+        list(parent.key),
+    ]
+    assert history["missing_details"][0]["relations"] == {"commit_tree": "unobserved"}
+    assert history["reported_topology"] == [list(head.key)]
